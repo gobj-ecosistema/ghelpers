@@ -388,6 +388,22 @@ PUBLIC json_t * kw_duplicate_without_metadata(
 );
 
 /**rst**
+    HACK Convention: private data begins with "_".
+    Delete private keys
+**rst**/
+PUBLIC int kw_delete_private_keys(
+    json_t *kw  // NOT owned
+);
+
+/**rst**
+    HACK Convention: no-persistent metadata begins with "__".
+    Delete metadata keys
+**rst**/
+PUBLIC int kw_delete_metadata_keys(
+    json_t *kw  // NOT owned
+);
+
+/**rst**
     Return a new kw only with the keys.
     If `keys` is null then return a duplicate of kw.
     A key can be repeated by the tree.

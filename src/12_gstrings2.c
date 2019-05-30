@@ -24,12 +24,12 @@
  ***************************************************************/
 
 /***************************************************************************
- *  Split a string by delimiter and save in `list`, a user pointer array
- *  of `list_size` size.
- *  The maximum items of list items is `list_size`.
- *  The maximum length of a string item is BUFSIZ.
- *  WARNING: Remember gbmem_free **list content with split_gbmem_free().
- *  Return the list length.
+   Split a string by delimiter and save in `list`,
+   a user pointer array of `list_size` size.
+   The maximum items of list items is `list_size`.
+   The maximum length of a string item is BUFSIZ.
+   WARNING: Remember free **list content with split_free().
+   Return the list length.
  ***************************************************************************/
 PUBLIC int split(const char *str, const char *delim, char **list, int list_size)
 {
@@ -68,12 +68,9 @@ PUBLIC void split_free(char **list, int list_size)
 }
 
 /***************************************************************************
- *  Split a string by delimiter and save in `list`, a user pointer array
- *  of `list_size` size.
- *  The maximum items of list items is `list_size`.
- *  The maximum length of a string item is BUFSIZ.
- *  WARNING: Remember gbmem_free **list content with split_gbmem_free().
- *  Return the list length.
+    Split a string by delim returning the list of strings.
+    Fill list_size if not null.
+    WARNING Remember free with split_free2().
  ***************************************************************************/
 PUBLIC const char ** split2(const char *str, const char *delim, int *plist_size)
 {

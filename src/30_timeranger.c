@@ -1788,10 +1788,11 @@ PUBLIC int tranger_append_record(
             "process",      "%s", get_process_name(),
             "hostname",     "%s", get_host_name(),
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Only master can append record",
+            "msg",          "%s", "Cannot append record, NO master",
             "topic",        "%s", topic_name,
             NULL
         );
+        log_debug_json(0, jn_record, "Cannot append record, NO master");
         json_decref(jn_record);
         return -1;
     }
@@ -1804,11 +1805,12 @@ PUBLIC int tranger_append_record(
             "process",      "%s", get_process_name(),
             "hostname",     "%s", get_host_name(),
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot open topic",
+            "msg",          "%s", "Cannot append record, Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
             NULL
         );
+        log_debug_json(0, jn_record, "Cannot append record, Cannot open topic");
         json_decref(jn_record);
         return -1;
     }
@@ -1843,11 +1845,12 @@ PUBLIC int tranger_append_record(
                 "process",      "%s", get_process_name(),
                 "hostname",     "%s", get_host_name(),
                 "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "lseek64() FAILED",
+                "msg",          "%s", "Cannot append record, lseek64() FAILED",
                 "topic",        "%s", topic_name,
                 "errno",        "%s", strerror(errno),
                 NULL
             );
+            log_debug_json(0, jn_record, "Cannot append record, lseek64() FAILED");
             json_decref(jn_record);
             return -1;
         }
@@ -1903,11 +1906,12 @@ PUBLIC int tranger_append_record(
                     "hostname",     "%s", get_host_name(),
                     "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_JSON_ERROR,
-                    "msg",          "%s", "Cannot append record. Record without pkey",
+                    "msg",          "%s", "Cannot append record, Record without pkey",
                     "topic",        "%s", topic_name,
                     "pkey",         "%s", pkey,
                     NULL
                 );
+                log_debug_json(0, jn_record, "Cannot append record, Record without pkey");
                 json_decref(jn_record);
                 return -1;
             }
@@ -1974,10 +1978,11 @@ PUBLIC int tranger_append_record(
                 "hostname",     "%s", get_host_name(),
                 "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_JSON_ERROR,
-                "msg",          "%s", "Cannot append record. json_dumps() FAILED",
+                "msg",          "%s", "Cannot append record, json_dumps() FAILED",
                 "topic",        "%s", topic_name,
                 NULL
             );
+            log_debug_json(0, jn_record, "Cannot append record, json_dumps() FAILED");
             json_decref(jn_record);
             return -1;
         }
@@ -1992,10 +1997,11 @@ PUBLIC int tranger_append_record(
                 "hostname",     "%s", get_host_name(),
                 "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "Cannot save record. gbuf_create() FAILED",
+                "msg",          "%s", "Cannot append record. gbuf_create() FAILED",
                 "topic",        "%s", topic_name,
                 NULL
             );
+            log_debug_json(0, jn_record, "Cannot append record, gbuf_create() FAILED");
             json_decref(jn_record);
             return -1;
         }
@@ -2042,11 +2048,12 @@ PUBLIC int tranger_append_record(
                 "process",      "%s", get_process_name(),
                 "hostname",     "%s", get_host_name(),
                 "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "Cannot save record, write FAILED",
+                "msg",          "%s", "Cannot append record, write FAILED",
                 "topic",        "%s", topic_name,
                 "errno",        "%s", strerror(errno),
                 NULL
             );
+            log_debug_json(0, jn_record, "Cannot append record, write FAILED");
             json_decref(jn_record);
             return -1;
         }

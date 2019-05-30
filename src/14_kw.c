@@ -1731,6 +1731,66 @@ PUBLIC json_t * kw_duplicate_without_metadata(
 }
 
 /***************************************************************************
+    HACK Convention: private data begins with "_".
+    Delete private keys
+ ***************************************************************************/
+PUBLIC int kw_delete_private_keys(
+    json_t *kw  // NOT owned
+)
+{
+    int underscores = 1;
+
+    const char *key;
+    json_t *value;
+    void *n;
+    json_object_foreach_safe(kw, n, key, value) {
+        if(underscores) {
+            int u;
+            for(u=0; u<strlen(key); u++) {
+                if(key[u] != '_') {
+                    break;
+                }
+            }
+            if(u == underscores) {
+                json_object_del(kw, key);
+            }
+        }
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+    HACK Convention: no-persistent metadata begins with "__".
+    Delete metadata keys
+ ***************************************************************************/
+PUBLIC int kw_delete_metadata_keys(
+    json_t *kw  // NOT owned
+)
+{
+    int underscores = 2;
+
+    const char *key;
+    json_t *value;
+    void *n;
+    json_object_foreach_safe(kw, n, key, value) {
+        if(underscores) {
+            int u;
+            for(u=0; u<strlen(key); u++) {
+                if(key[u] != '_') {
+                    break;
+                }
+            }
+            if(u == underscores) {
+                json_object_del(kw, key);
+            }
+        }
+    }
+
+    return 0;
+}
+
+/***************************************************************************
     Return a new kw only with the filter keys.
     If `keys` is null then return a clone of kw.
     A key can be repeated by the tree.
