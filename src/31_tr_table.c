@@ -351,7 +351,7 @@ PRIVATE int load_record_callback(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_list_messages(
+PUBLIC json_t *trtb_open_list(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_filter  // owned
@@ -464,7 +464,8 @@ PUBLIC json_t *trtb_instances(
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
 PUBLIC json_t *trtb_records(
-    json_t *list
+    json_t *list,
+    BOOL with_metadata
 )
 {
     json_t *jn_records = json_array();
@@ -479,14 +480,16 @@ PUBLIC json_t *trtb_records(
                 "content"
             )
         );
-        json_object_set(
-            jn_record,
-            "__md_tranger__",
-            json_object_get(
-                json_object_get(jn_value, "active"),
-                "__md_tranger__"
-            )
-        );
+        if(with_metadata) {
+            json_object_set(
+                jn_record,
+                "__md_tranger__",
+                json_object_get(
+                    json_object_get(jn_value, "active"),
+                    "__md_tranger__"
+                )
+            );
+        }
         json_array_append_new(jn_records, jn_record);
     }
 
@@ -499,7 +502,8 @@ PUBLIC json_t *trtb_records(
  ***************************************************************************/
 PUBLIC json_t *trtb_record_instances(
     json_t *list,
-    const char *key
+    const char *key,
+    BOOL with_metadata
 )
 {
     json_t *jn_records = json_array();
@@ -512,11 +516,13 @@ PUBLIC json_t *trtb_record_instances(
         json_t *jn_record = json_deep_copy(
             json_object_get(jn_value, "content")
         );
-        json_object_set(
-            jn_record,
-            "__md_tranger__",
-            json_object_get(jn_value, "__md_tranger__")
-        );
+        if(with_metadata) {
+            json_object_set(
+                jn_record,
+                "__md_tranger__",
+                json_object_get(jn_value, "__md_tranger__")
+            );
+        }
         json_array_append_new(jn_records, jn_record);
     }
 

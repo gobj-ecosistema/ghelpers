@@ -195,7 +195,7 @@ typedef int (*trtb_instance_callback_t)(
     json_t *instance    // not yours
 );
 
-PUBLIC json_t *trtb_list_messages(
+PUBLIC json_t *trtb_open_list(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_filter  // owned
@@ -215,8 +215,9 @@ PUBLIC json_t *trtb_backup_topic( // TODO not implemented
     tranger_backup_deleting_callback_t tranger_backup_deleting_callback
 );
 
+
 /*
- *  Functions returning items of list (NOT YOURS)
+ *  Functions returning items of list (NOT YOURS).
  */
 PUBLIC json_t *trtb_get_messages( // Return (NOT yours) dict: messages`
     json_t *list
@@ -238,12 +239,14 @@ PUBLIC json_t *trtb_instances( // Return (NOT yours) list: messages`message(key)
     const char *key
 );
 
+
 /*
  *  Return a list of records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
 PUBLIC json_t *trtb_records(
-    json_t *list
+    json_t *list,
+    BOOL with_metadata
 );
 
 /*
@@ -252,7 +255,8 @@ PUBLIC json_t *trtb_records(
  */
 PUBLIC json_t *trtb_record_instances(
     json_t *list,
-    const char *key
+    const char *key,
+    BOOL with_metadata
 );
 
 #ifdef __cplusplus
