@@ -46,9 +46,14 @@ PUBLIC tr_queue trq_open(
 );
 
 /**rst**
-    Close queue
+    Close queue and shutdown tranger
 **rst**/
 PUBLIC void trq_close(tr_queue trq);
+
+/**rst**
+    Close queue and not shutdown tranger
+**rst**/
+PUBLIC void trq_close_not_shutdown(tr_queue trq);
 
 /**rst**
     Return size of queue (messages in queue)

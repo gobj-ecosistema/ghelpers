@@ -117,6 +117,15 @@ PUBLIC void trq_close(tr_queue trq)
 }
 
 /***************************************************************************
+    Close queue
+ ***************************************************************************/
+PUBLIC void trq_close_not_shutdown(tr_queue trq)
+{
+    dl_flush(&((tr_queue_t *)trq)->dl_q_msg, free_msg);
+    gbmem_free(trq);
+}
+
+/***************************************************************************
     Return size of queue (messages in queue)
  ***************************************************************************/
 PUBLIC size_t trq_size(tr_queue trq)
