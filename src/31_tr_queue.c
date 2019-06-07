@@ -44,7 +44,7 @@ PRIVATE void free_msg(void *msg_);
     Open queue
  ***************************************************************************/
 PUBLIC tr_queue trq_open(
-    json_t *jn_tranger,
+    json_t *tranger,
     const char *topic_name,
     const char *pkey,
     const char *tkey,
@@ -66,15 +66,7 @@ PUBLIC tr_queue trq_open(
         );
         return 0;
     }
-
-    /*-------------------------------*
-     *  Startup TimeRanger
-     *-------------------------------*/
-    trq->tranger = tranger_startup(jn_tranger);
-    if(!trq->tranger) {
-        trq_close(trq);
-        return 0;
-    }
+    trq->tranger = tranger;
 
     /*-------------------------------*
      *  Open/Create topic
@@ -107,19 +99,9 @@ PUBLIC tr_queue trq_open(
 }
 
 /***************************************************************************
-    Close queue
+    Close queue (After close the queue remember tranger_shutdown())
  ***************************************************************************/
 PUBLIC void trq_close(tr_queue trq)
-{
-    dl_flush(&((tr_queue_t *)trq)->dl_q_msg, free_msg);
-    tranger_shutdown(((tr_queue_t *)trq)->tranger);
-    gbmem_free(trq);
-}
-
-/***************************************************************************
-    Close queue
- ***************************************************************************/
-PUBLIC void trq_close_not_shutdown(tr_queue trq)
 {
     dl_flush(&((tr_queue_t *)trq)->dl_q_msg, free_msg);
     gbmem_free(trq);

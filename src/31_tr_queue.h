@@ -34,10 +34,10 @@ typedef void *q_msg;
  ***************************************************************/
 
 /**rst**
-    Open queue
+    Open queue (Remember previously open tranger_startup())
 **rst**/
 PUBLIC tr_queue trq_open(
-    json_t *jn_tranger,
+    json_t *tranger,
     const char *topic_name,
     const char *pkey,
     const char *tkey,
@@ -46,14 +46,9 @@ PUBLIC tr_queue trq_open(
 );
 
 /**rst**
-    Close queue and shutdown tranger
+    Close queue (After close the queue, remember do tranger_shutdown())
 **rst**/
 PUBLIC void trq_close(tr_queue trq);
-
-/**rst**
-    Close queue and not shutdown tranger
-**rst**/
-PUBLIC void trq_close_not_shutdown(tr_queue trq);
 
 /**rst**
     Return size of queue (messages in queue)

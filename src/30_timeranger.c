@@ -113,7 +113,7 @@ PRIVATE json_t *load_persistent_json(
             "hostname",     "%s", get_host_name(),
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot open json file.",
+            "msg",          "%s", "Cannot open json file",
             "path",         "%s", full_path,
             "errno",        "%s", strerror(errno),
             NULL
@@ -173,7 +173,7 @@ PRIVATE json_t *load_variable_json(
             "hostname",     "%s", get_host_name(),
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot open json file.",
+            "msg",          "%s", "Cannot open json file",
             "path",         "%s", full_path,
             "errno",        "%s", strerror(errno),
             NULL

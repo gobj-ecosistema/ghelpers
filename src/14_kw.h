@@ -302,7 +302,7 @@ PUBLIC uint32_t * kw_get_bin_uint32_array(
     Return a new dict only with {"ids": [json_expand_integer_list(ids) | id]}
 **rst**/
 PUBLIC json_t *kwids_extract_and_expand_ids(
-    json_t *kw  // not owned
+    json_t *kw  // NOT owned
 );
 
 /**rst**
@@ -312,7 +312,7 @@ PUBLIC json_t *kwids_extract_and_expand_ids(
     Return a new dict only with {"ids": [ids[0] | id]}
 **rst**/
 PUBLIC json_t *kwids_extract_id(
-    json_t *kw  // not owned
+    json_t *kw  // NOT owned
 );
 
 /**rst**
@@ -320,7 +320,7 @@ PUBLIC json_t *kwids_extract_id(
     Return dict with {"ids": [json_expand_integer_list(jn_id)]}
 **rst**/
 PUBLIC json_t *kwids_json2kwids(
-    json_t *jn_ids  // not owned
+    json_t *jn_ids  // NOT owned
 );
 
 /**rst**
@@ -357,7 +357,6 @@ PUBLIC char *jn2string(
     WARNING
 
     **duplicate** is a copy with new references
-                and processing serialized fields
 
     **clone** is a copy with incref references
 
@@ -368,28 +367,28 @@ PUBLIC char *jn2string(
    WARNING near as json_deep_copy(), but processing serialized fields and with new references
 **rst**/
 PUBLIC json_t *kw_duplicate(
-    json_t *kw  // not owned
+    json_t *kw  // NOT owned
 );
 
 /**rst**
     HACK Convention: private data begins with "_".
     This function return a duplicate of kw removing all private data
 **rst**/
-PUBLIC json_t * kw_duplicate_without_private(
-    json_t *kw  // NOT owned
+PUBLIC json_t *kw_filter_private(
+    json_t *kw  // owned
 );
 
 /**rst**
     HACK Convention: no-persistent metadata begins with "__".
     This function return a duplicate of kw removing all no-persistent metadata
 **rst**/
-PUBLIC json_t * kw_duplicate_without_metadata(
-    json_t *kw  // NOT owned
+PUBLIC json_t *kw_filter_metadata(
+    json_t *kw  // owned
 );
 
 /**rst**
     HACK Convention: private data begins with "_".
-    Delete private keys
+    Delete private keys (only first level)
 **rst**/
 PUBLIC int kw_delete_private_keys(
     json_t *kw  // NOT owned
@@ -397,7 +396,7 @@ PUBLIC int kw_delete_private_keys(
 
 /**rst**
     HACK Convention: no-persistent metadata begins with "__".
-    Delete metadata keys
+    Delete metadata keys (only first level)
 **rst**/
 PUBLIC int kw_delete_metadata_keys(
     json_t *kw  // NOT owned
@@ -409,7 +408,7 @@ PUBLIC int kw_delete_metadata_keys(
     A key can be repeated by the tree.
 **rst**/
 PUBLIC json_t *kw_duplicate_with_only_keys(
-    json_t *kw,     // not owned
+    json_t *kw,     // NOT owned
     const char **keys
 );
 
@@ -441,7 +440,7 @@ PUBLIC json_t *kw_clone_by_keys(
     First level only
 **rst**/
 PUBLIC void kw_update_except(
-    json_t *kw,  // not owned
+    json_t *kw,  // NOT owned
     json_t *other,  // owned
     const char **except_keys
 );
@@ -450,8 +449,8 @@ PUBLIC void kw_update_except(
     Compare two json and return TRUE if they are identical.
 **rst**/
 PUBLIC BOOL kw_is_identical(
-    json_t *kw1,    // not owned
-    json_t *kw2     // not owned
+    json_t *kw1,    // NOT owned
+    json_t *kw2     // NOT owned
 );
 
 /**rst**
@@ -460,8 +459,8 @@ PUBLIC BOOL kw_is_identical(
     Return lower, iqual, higher (-1, 0, 1), like strcmp
 **rst**/
 PUBLIC int cmp_two_simple_json(
-    json_t *jn_var1,    // not owned
-    json_t *jn_var2     // not owned
+    json_t *jn_var1,    // NOT owned
+    json_t *jn_var2     // NOT owned
 );
 
 /**rst**
@@ -469,11 +468,11 @@ PUBLIC int cmp_two_simple_json(
     Only compare str/int/real/bool items
 **rst**/
 PUBLIC BOOL kw_match_simple(
-    json_t *kw,         // not owned
+    json_t *kw,         // NOT owned
     json_t *jn_filter   // owned
 );
 typedef BOOL (*kw_match_fn)(
-    json_t *kw,         // not owned
+    json_t *kw,         // NOT owned
     json_t *jn_filter   // owned
 );
 
@@ -484,11 +483,11 @@ typedef BOOL (*kw_match_fn)(
     If match_fn is 0 then kw_match_simple is used.
 **rst**/
 PUBLIC json_t *kw_select(
-    json_t *kw,         // not owned
+    json_t *kw,         // NOT owned
     const char **keys,
     json_t *jn_filter,  // owned
     BOOL (*match_fn) (
-        json_t *kw,         // not owned
+        json_t *kw,         // NOT owned
         json_t *jn_filter   // owned
     )
 );
@@ -498,7 +497,7 @@ PUBLIC json_t *kw_select(
     Arrays are navigated if contains `pkey` (id) field (string or integer ONLY).
 **rst**/
 PUBLIC int kw_navigate(
-    json_t *kw,         // not owned
+    json_t *kw,         // NOT owned
     const char *pkey,
     int (*navigate_callback)(
         const char *path, json_t *kw, void *param1, void *param2, void *param3
@@ -514,7 +513,7 @@ PUBLIC int kw_navigate(
     Arrays of dicts are identify by the `pkey` (id) field.
 **rst**/
 PUBLIC json_t *kw_get_propagated_key_values(
-    json_t *kw,         // not owned
+    json_t *kw,         // NOT owned
     const char *pkey,
     const char **keys
 );
@@ -523,7 +522,7 @@ PUBLIC json_t *kw_get_propagated_key_values(
     Restore values of propagated `keys`
 **rst**/
 PUBLIC int kw_put_propagated_key_values(
-    json_t *kw,         // not owned
+    json_t *kw,         // NOT owned
     const char *pkey,
     json_t *propagated_keys
 );
@@ -542,7 +541,7 @@ PUBLIC int kw_set_key_value(
     Get the dict of dict's array with `pkey` field (id)
 **rst**/
 json_t *kw_get_record(
-    json_t *dict_list, // not owned
+    json_t *dict_list, // NOT owned
     const char *pkey,
     json_t *pkey_value  // owned
 );
@@ -551,7 +550,7 @@ json_t *kw_get_record(
     Insert dict in dict's array ordered by field pkey
 **rst**/
 int kw_insert_ordered_record(
-    json_t *dict_list, // not owned
+    json_t *dict_list, // NOT owned
     const char *pkey,
     json_t *record  // owned
 );
@@ -561,8 +560,8 @@ int kw_insert_ordered_record(
     Return a new kw applying __json_config_variables__
 **rst**/
 PUBLIC json_t *kw_apply_json_config_variables(
-    json_t *kw,          // not owned
-    json_t *jn_global    // not owned
+    json_t *kw,          // NOT owned
+    json_t *jn_global    // NOT owned
 );
 
 /**rst**
@@ -570,8 +569,8 @@ PUBLIC json_t *kw_apply_json_config_variables(
     kw2 can be a string, dict, or list.
 **rst**/
 PUBLIC int kw_pop(
-    json_t *kw1, // not owned
-    json_t *kw2  // not owned
+    json_t *kw1, // NOT owned
+    json_t *kw2  // NOT owned
 );
 
 
