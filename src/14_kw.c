@@ -39,6 +39,10 @@ PRIVATE serialize_fields_t serialize_fields[MAX_SERIALIZED_FIELDS+1];
  ****************************************************************/
 PRIVATE json_t * _duplicate_array(json_t *kw, const char **keys, int underscores, BOOL serialize);
 PRIVATE json_t * _duplicate_object(json_t *kw, const char **keys, int underscores, BOOL serialize);
+PRIVATE int _walk_object(
+    json_t *kw,
+    int (*callback)(json_t *kw, const char *key, json_t *value)
+);
 PRIVATE json_t *_kw_search_path(json_t *kw, const char *path);
 PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag);
 
@@ -1535,6 +1539,61 @@ PRIVATE serialize_fields_t * get_serialize_field(const char *binary_field_name)
         pf++;
     }
     return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int _walk_object(
+    json_t *kw,
+    int (*callback)(json_t *kw, const char *key, json_t *value)
+)
+{
+    const char *key;
+    json_t *value;
+    json_object_foreach(kw, key, value) {
+        json_type type = json_typeof(value);
+        switch(type) {
+        case JSON_OBJECT:
+            if(_walk_object(value, callback)<0) {
+                return -1;
+            }
+            break;
+        case JSON_ARRAY:
+        default:
+            if(callback(kw, key, value)<0) {
+                return -1;
+            }
+            break;
+        }
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+ *  Walk over an object
+ ***************************************************************************/
+PUBLIC int kw_walk(
+    json_t *kw, // not owned
+    int (*callback)(json_t *kw, const char *key, json_t *value)
+)
+{
+    if(json_is_object(kw)) {
+        return _walk_object(kw, callback);
+    } else {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "json to duplicate must be an object or array",
+            NULL
+        );
+        return -1;
+    }
 }
 
 /***************************************************************************
