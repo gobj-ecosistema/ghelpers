@@ -18,6 +18,7 @@
 typedef struct {
     json_t *tranger;
     json_t *topic;
+    int maximum_retries;
     dl_list_t dl_q_msg;
 } tr_queue_t;
 
@@ -28,6 +29,7 @@ typedef struct {
     md_record_t md_record;
     uint64_t mark;          // soft mark.
     time_t timeout_ack;
+    int retries;
     json_t *jn_record;
 } q_msg_t;
 
@@ -207,6 +209,7 @@ PRIVATE void free_msg(void *msg_)
 {
     q_msg_t *msg = msg_;
     JSON_DECREF(msg->jn_record);
+    memset(msg, 0, sizeof(q_msg_t));
     gbmem_free(msg);
 }
 
@@ -457,6 +460,41 @@ PUBLIC void trq_clear_ack_timer(q_msg msg)
 PUBLIC BOOL trq_test_ack_timer(q_msg msg)
 {
     return test_sectimer(((q_msg_t *)msg)->timeout_ack);
+}
+
+/***************************************************************************
+    Set maximum retries
+ ***************************************************************************/
+PUBLIC void trq_set_maximum_retries(tr_queue trq, int maximum_retries)
+{
+    ((tr_queue_t *)trq)->maximum_retries = maximum_retries;
+}
+
+/***************************************************************************
+    Add retries
+ ***************************************************************************/
+PUBLIC void trq_add_retries(q_msg msg, int retries)
+{
+    ((q_msg_t *)msg)->retries += retries;
+}
+
+/***************************************************************************
+    Clear retries
+ ***************************************************************************/
+PUBLIC void trq_clear_retries(q_msg msg)
+{
+    ((q_msg_t *)msg)->retries = 0;
+}
+
+/***************************************************************************
+    Test retries
+ ***************************************************************************/
+PUBLIC BOOL trq_test_retries(q_msg msg)
+{
+    if( ((q_msg_t *)msg)->trq->maximum_retries == 0) {
+        return 0;
+    }
+    return (((q_msg_t *)msg)->retries >= ((q_msg_t *)msg)->trq->maximum_retries)?TRUE:FALSE;
 }
 
 /***************************************************************************

@@ -138,12 +138,37 @@ PUBLIC void trq_clear_ack_timer(q_msg msg);
 PUBLIC BOOL trq_test_ack_timer(q_msg msg);
 
 /**rst**
+    Set maximum retries
+**rst**/
+PUBLIC void trq_set_maximum_retries(tr_queue trq, int maximum_retries);
+
+/**rst**
+    Add retries
+**rst**/
+PUBLIC void trq_add_retries(q_msg msg, int retries);
+
+/**rst**
+    Clear retries
+**rst**/
+PUBLIC void trq_clear_retries(q_msg msg);
+
+/**rst**
+    Test retries
+**rst**/
+PUBLIC BOOL trq_test_retries(q_msg msg);
+
+/**rst**
     Walk over instances
 **rst**/
 #define qmsg_foreach_forward(trq, msg) \
     for(msg = trq_first_msg(trq); \
         msg!=0 ; \
         msg = trq_next_msg(msg))
+
+#define qmsg_foreach_forward_safe(trq, msg, next) \
+    for(msg = trq_first_msg(trq), n = trq_next_msg(msg); \
+        msg!=0 ; \
+        msg = n, n = trq_next_msg(msg))
 
 #define qmsg_foreach_backward(trq, msg) \
     for(msg = trq_last_msg(trq); \
