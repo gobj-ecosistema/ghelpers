@@ -99,14 +99,16 @@ PUBLIC json_t *kw_deserialize(
 /**rst**
    This functions does json_incref
    but also it does incref of binary fields like gbuffer.
+   Return the input parameter.
 **rst**/
-PUBLIC void kw_incref(json_t *kw);
+PUBLIC json_t *kw_incref(json_t *kw);
 
 /**rst**
    This functions does json_decref
    but also it does decref of binary fields like gbuffer.
+   Return the input parameter.
 **rst**/
-PUBLIC void kw_decref(json_t *kw);
+PUBLIC json_t *kw_decref(json_t *kw);
 
 /**rst**
    Return TRUE if the dictionary ``kw`` has the key ``key``.

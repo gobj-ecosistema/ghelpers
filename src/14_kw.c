@@ -210,7 +210,7 @@ PUBLIC json_t *kw_deserialize(
 /***************************************************************************
  *  Incref json kw and his binary fields
  ***************************************************************************/
-PUBLIC void kw_incref(json_t *kw)
+PUBLIC json_t *kw_incref(json_t *kw)
 {
     if(!kw || kw->refcount <= 0) {
         log_error(LOG_OPT_TRACE_STACK,
@@ -223,7 +223,7 @@ PUBLIC void kw_incref(json_t *kw)
             "msg",          "%s", "BAD kw_incref()",
             NULL
         );
-        return;
+        return kw;
     }
 
     serialize_fields_t * pf = serialize_fields;
@@ -250,13 +250,14 @@ PUBLIC void kw_incref(json_t *kw)
         }
         pf++;
     }
-    JSON_INCREF(kw);
+    json_incref(kw);
+    return kw;
 }
 
 /***************************************************************************
  *  Decref json kw and his binary fields
  ***************************************************************************/
-PUBLIC void kw_decref(json_t* kw)
+PUBLIC json_t *kw_decref(json_t* kw)
 {
     if(!kw || kw->refcount <= 0) {
         log_error(LOG_OPT_TRACE_STACK,
@@ -269,7 +270,7 @@ PUBLIC void kw_decref(json_t* kw)
             "msg",          "%s", "BAD kw_decref()",
             NULL
         );
-        return;
+        return kw;
     }
 
     serialize_fields_t * pf = serialize_fields;
@@ -295,7 +296,11 @@ PUBLIC void kw_decref(json_t* kw)
         }
         pf++;
     }
-    JSON_DECREF(kw);
+    json_decref(kw);
+    if(kw->refcount <= 0) {
+        kw = 0;
+    }
+    return kw;
 }
 
 /***************************************************************************

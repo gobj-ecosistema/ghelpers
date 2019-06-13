@@ -18,6 +18,7 @@
 typedef struct {
     json_t *tranger;
     json_t *topic;
+    char topic_name[128];
     int maximum_retries;
     dl_list_t dl_q_msg;
 } tr_queue_t;
@@ -69,6 +70,7 @@ PUBLIC tr_queue trq_open(
         return 0;
     }
     trq->tranger = tranger;
+    snprintf(trq->topic_name, sizeof(trq->topic_name), "%s", topic_name);
 
     /*-------------------------------*
      *  Open/Create topic
@@ -257,7 +259,7 @@ PUBLIC int trq_load(tr_queue trq_)
     first_rowid = 0;
 
     json_t *jn_list = json_pack("{s:s, s:o, s:I, s:I}",
-        "topic_name", tranger_topic_name(trq->topic),
+        "topic_name", trq->topic_name,
         "match_cond", match_cond,
         "load_record_callback", (json_int_t)(size_t)load_record_callback,
         "trq", (json_int_t)trq
@@ -613,6 +615,7 @@ PUBLIC int trq_check_backup(tr_queue trq_)
         if(tranger_topic_size(trq->topic) > backup_queue_size) {
             char *topic_name = gbmem_strdup(tranger_topic_name(trq->topic));
             if(topic_name) {
+                trq_set_first_rowid(trq, tranger_topic_size(trq->topic)); // WARNING danger change?!
                 trq->topic = tranger_backup_topic(
                     trq->tranger,
                     topic_name,
