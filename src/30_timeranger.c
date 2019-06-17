@@ -1793,7 +1793,7 @@ PUBLIC int tranger_append_record(
             NULL
         );
         log_debug_json(0, jn_record, "Cannot append record, NO master");
-        json_decref(jn_record);
+        JSON_DECREF(jn_record);
         return -1;
     }
 
@@ -1811,7 +1811,7 @@ PUBLIC int tranger_append_record(
             NULL
         );
         log_debug_json(0, jn_record, "Cannot append record, Cannot open topic");
-        json_decref(jn_record);
+        JSON_DECREF(jn_record);
         return -1;
     }
 
@@ -1851,7 +1851,7 @@ PUBLIC int tranger_append_record(
                 NULL
             );
             log_debug_json(0, jn_record, "Cannot append record, lseek64() FAILED");
-            json_decref(jn_record);
+            JSON_DECREF(jn_record);
             return -1;
         }
     }
@@ -1912,7 +1912,7 @@ PUBLIC int tranger_append_record(
                     NULL
                 );
                 log_debug_json(0, jn_record, "Cannot append record, Record without pkey");
-                json_decref(jn_record);
+                JSON_DECREF(jn_record);
                 return -1;
             }
             const char *key_value = kw_get_str(jn_record, pkey, 0, KW_REQUIRED);
@@ -1983,7 +1983,7 @@ PUBLIC int tranger_append_record(
                 NULL
             );
             log_debug_json(0, jn_record, "Cannot append record, json_dumps() FAILED");
-            json_decref(jn_record);
+            JSON_DECREF(jn_record);
             return -1;
         }
         size_t size = strlen(srecord);
@@ -2002,7 +2002,7 @@ PUBLIC int tranger_append_record(
                 NULL
             );
             log_debug_json(0, jn_record, "Cannot append record, gbuf_create() FAILED");
-            json_decref(jn_record);
+            JSON_DECREF(jn_record);
             return -1;
         }
         gbuf_append(gbuf, srecord, strlen(srecord));
@@ -2054,7 +2054,7 @@ PUBLIC int tranger_append_record(
                 NULL
             );
             log_debug_json(0, jn_record, "Cannot append record, write FAILED");
-            json_decref(jn_record);
+            JSON_DECREF(jn_record);
             return -1;
         }
     }
@@ -2095,7 +2095,7 @@ PUBLIC int tranger_append_record(
             );
             if(load_record_callback) {
                 // Inform user list: record in real time
-                json_incref(jn_record);
+                JSON_INCREF(jn_record);
                 int ret = load_record_callback(
                     tranger,
                     jn_list,
@@ -2135,7 +2135,7 @@ PUBLIC int tranger_append_record(
         }
     }
 
-    json_decref(jn_record);
+    JSON_DECREF(jn_record);
 
     return 0;
 }

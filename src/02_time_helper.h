@@ -37,6 +37,8 @@ PUBLIC char *current_timestamp(char *bf, int bfsize);
 PUBLIC char *tm2timestamp(char *bf, int bfsize, struct tm *tm);
 
 // tz values in https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+// Example: time_t offset = gmtime2timezone(0, ":America/Panama", 0, 0); WARNING use ':' in TZ name
+
 PUBLIC time_t gmtime2timezone(time_t t, const char *tz, struct tm *ltm, time_t *offset);
 
 /*

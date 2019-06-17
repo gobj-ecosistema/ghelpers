@@ -243,7 +243,7 @@ PUBLIC json_t *trtb_get_active_md( // Return (NOT yours) dict: messages`message(
     json_t *list,
     const char *key
 );
-PUBLIC json_t *trtb_instances( // Return (NOT yours) list: messages`message(key)`instances
+PUBLIC json_t *trtb_get_instances( // Return (NOT yours) list: messages`message(key)`instances
     json_t *list,
     const char *key
 );
@@ -253,7 +253,7 @@ PUBLIC json_t *trtb_instances( // Return (NOT yours) list: messages`message(key)
  *  Return a list of records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
-PUBLIC json_t *trtb_records(
+PUBLIC json_t *trtb_active_records(
     json_t *list,
     BOOL with_metadata
 );
@@ -266,6 +266,21 @@ PUBLIC json_t *trtb_record_instances(
     json_t *list,
     const char *key,
     BOOL with_metadata
+);
+
+/*
+ *  Foreach active records
+ */
+PUBLIC int trtb_foreach_active_records(
+    json_t *list,
+    BOOL with_metadata,
+    int (*callback)( // Return < 0 break the foreach
+        void *user_data,
+        json_t *list,  // Not yours!
+        const char *key,
+        json_t *record // It's yours, Must be owned
+    ),
+    void *user_data
 );
 
 #ifdef __cplusplus

@@ -445,7 +445,7 @@ PUBLIC json_t *trtb_get_active_md(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_instances(
+PUBLIC json_t *trtb_get_instances(
     json_t *list,
     const char *key
 )
@@ -463,7 +463,7 @@ PUBLIC json_t *trtb_instances(
  *  Return a list of records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
-PUBLIC json_t *trtb_records(
+PUBLIC json_t *trtb_active_records(
     json_t *list,
     BOOL with_metadata
 )
@@ -472,11 +472,11 @@ PUBLIC json_t *trtb_records(
     json_t *messages = trtb_get_messages(list);
 
     const char *key;
-    json_t *jn_value;
-    json_object_foreach(messages, key, jn_value) {
+    json_t *message;
+    json_object_foreach(messages, key, message) {
         json_t *jn_record = json_deep_copy(
             json_object_get(
-                json_object_get(jn_value, "active"),
+                json_object_get(message, "active"),
                 "content"
             )
         );
@@ -485,7 +485,7 @@ PUBLIC json_t *trtb_records(
                 jn_record,
                 "__md_tranger__",
                 json_object_get(
-                    json_object_get(jn_value, "active"),
+                    json_object_get(message, "active"),
                     "__md_tranger__"
                 )
             );
@@ -508,7 +508,7 @@ PUBLIC json_t *trtb_record_instances(
 {
     json_t *jn_records = json_array();
 
-    json_t *instances = trtb_instances(list, key);
+    json_t *instances = trtb_get_instances(list, key);
 
     int idx;
     json_t *jn_value;
@@ -528,3 +528,49 @@ PUBLIC json_t *trtb_record_instances(
 
     return jn_records;
 }
+
+/***************************************************************************
+ *  Foreach records
+ ***************************************************************************/
+PUBLIC int trtb_foreach_active_records(
+    json_t *list,
+    BOOL with_metadata,
+    int (*callback)( // Return < 0 break the foreach
+        void *user_data,
+        json_t *list,  // Not yours!
+        const char *key,
+        json_t *record // It's yours, Must be owned
+    ),
+    void *user_data
+)
+{
+    json_t *messages = trtb_get_messages(list);
+
+    const char *key;
+    json_t *message;
+    void *n;
+    json_object_foreach_safe(messages, n, key, message) {
+        json_t *jn_record = json_deep_copy(
+            json_object_get(
+                json_object_get(message, "active"),
+                "content"
+            )
+        );
+        if(with_metadata) {
+            json_object_set(
+                jn_record,
+                "__md_tranger__",
+                json_object_get(
+                    json_object_get(message, "active"),
+                    "__md_tranger__"
+                )
+            );
+        }
+        if(callback(user_data, list, key, jn_record)<0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
