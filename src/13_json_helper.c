@@ -152,7 +152,7 @@ PUBLIC int print_json2(const char *label, json_t *jn)
         return -1;
     }
     size_t flags = JSON_INDENT(4); //JSON_SORT_KEYS |
-    fprintf(stdout, "%s==>\n", label);
+    fprintf(stdout, "%s ==>\n", label);
     json_dumpf(jn, stdout, flags);
     fprintf(stdout, "\n");
     return 0;

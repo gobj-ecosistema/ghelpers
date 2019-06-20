@@ -283,6 +283,21 @@ PUBLIC int trtb_foreach_active_records(
     void *user_data
 );
 
+/*
+ *  Foreach instances records
+ */
+PUBLIC int trtb_foreach_instances_records(
+    json_t *list,
+    BOOL with_metadata,
+    int (*callback)( // Return < 0 break the foreach
+        void *user_data,
+        json_t *list,  // Not yours!
+        const char *key,
+        json_t *instances // It's yours, Must be owned
+    ),
+    void *user_data
+);
+
 #ifdef __cplusplus
 }
 #endif

@@ -473,24 +473,28 @@ PUBLIC json_t *trtb_active_records(
 
     const char *key;
     json_t *message;
-    json_object_foreach(messages, key, message) {
-        json_t *jn_record = json_deep_copy(
+    void *n;
+    json_object_foreach_safe(messages, n, key, message) {
+        json_t *active = json_object_get(message, "active");
+        json_t *jn_active = json_deep_copy(
             json_object_get(
-                json_object_get(message, "active"),
+                active,
                 "content"
             )
         );
         if(with_metadata) {
-            json_object_set(
-                jn_record,
+            json_object_set_new(
+                jn_active,
                 "__md_tranger__",
-                json_object_get(
-                    json_object_get(message, "active"),
-                    "__md_tranger__"
+                json_deep_copy(
+                    json_object_get(
+                        active,
+                        "__md_tranger__"
+                    )
                 )
             );
         }
-        json_array_append_new(jn_records, jn_record);
+        json_array_append_new(jn_records, jn_active);
     }
 
     return jn_records;
@@ -513,7 +517,7 @@ PUBLIC json_t *trtb_record_instances(
     int idx;
     json_t *jn_value;
     json_array_foreach(instances, idx, jn_value) {
-        json_t *jn_record = json_deep_copy(
+        json_t *jn_record = json_deep_copy( // Your copy
             json_object_get(jn_value, "content")
         );
         if(with_metadata) {
@@ -530,7 +534,7 @@ PUBLIC json_t *trtb_record_instances(
 }
 
 /***************************************************************************
- *  Foreach records
+ *  Foreach active records
  ***************************************************************************/
 PUBLIC int trtb_foreach_active_records(
     json_t *list,
@@ -550,23 +554,27 @@ PUBLIC int trtb_foreach_active_records(
     json_t *message;
     void *n;
     json_object_foreach_safe(messages, n, key, message) {
-        json_t *jn_record = json_deep_copy(
+        json_t *active = json_object_get(message, "active");
+        json_t *jn_active = json_deep_copy( // Your copy
             json_object_get(
-                json_object_get(message, "active"),
+                active,
                 "content"
             )
         );
         if(with_metadata) {
-            json_object_set(
-                jn_record,
+            json_object_set_new(
+                jn_active,
                 "__md_tranger__",
-                json_object_get(
-                    json_object_get(message, "active"),
-                    "__md_tranger__"
+                json_deep_copy(
+                    json_object_get(
+                        active,
+                        "__md_tranger__"
+                    )
                 )
             );
         }
-        if(callback(user_data, list, key, jn_record)<0) {
+
+        if(callback(user_data, list, key, jn_active)<0) {
             return -1;
         }
     }
@@ -574,3 +582,56 @@ PUBLIC int trtb_foreach_active_records(
     return 0;
 }
 
+/***************************************************************************
+ *  Foreach instances records
+ ***************************************************************************/
+PUBLIC int trtb_foreach_instances_records(
+    json_t *list,
+    BOOL with_metadata,
+    int (*callback)( // Return < 0 break the foreach
+        void *user_data,
+        json_t *list,  // Not yours!
+        const char *key,
+        json_t *instances // It's yours, Must be owned
+    ),
+    void *user_data
+)
+{
+    json_t *messages = trtb_get_messages(list);
+
+    const char *key;
+    json_t *message;
+    void *n;
+    json_object_foreach_safe(messages, n, key, message) {
+        json_t *instances = json_object_get(message, "instances");
+        json_t *jn_instances = json_array(); // Your copy
+        int idx;
+        json_t *instance;
+        json_array_foreach(instances, idx, instance) {
+            json_t *jn_instance = json_deep_copy(
+                json_object_get(
+                    instance,
+                    "content"
+                )
+            );
+            if(with_metadata) {
+                json_object_set_new(
+                    jn_instance,
+                    "__md_tranger__",
+                    json_deep_copy(
+                        json_object_get(
+                            instance,
+                            "__md_tranger__"
+                        )
+                    )
+                );
+            }
+            json_array_append_new(jn_instances, jn_instance);
+        }
+        if(callback(user_data, list, key, jn_instances)<0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
