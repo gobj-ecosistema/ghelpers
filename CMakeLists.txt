@@ -90,6 +90,7 @@ set (SRCS
 )
 
 set (HDRS
+    src/00_ansi_escape_codes.h
     src/00_asn1_snmp.h
     src/00_base64.h
     src/00_cpu.h

@@ -1573,7 +1573,7 @@ PUBLIC json_t * gbuf2json(
     json_t *jn_msg = json_load_callback(on_load_callback, gbuf, flags, &jn_error);
     if(!jn_msg) {
         if(verbose) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "process",      "%s", get_process_name(),

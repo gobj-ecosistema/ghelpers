@@ -328,6 +328,20 @@ PUBLIC q_msg trq_append(
 {
     register tr_queue_t *trq = trq_;
 
+    if(!jn_msg || jn_msg->refcount <= 0) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "jn_msg NULL",
+            "topic",        "%s", tranger_topic_name(trq->topic),
+            NULL
+        );
+        return 0;
+    }
+
     JSON_INCREF(jn_msg);
     md_record_t md_record;
     tranger_append_record(
@@ -553,6 +567,14 @@ PUBLIC json_t *trq_msg_json(q_msg msg_) // Return json is NOT YOURS!!
 PUBLIC uint64_t trq_msg_time(q_msg msg)
 {
     return ((q_msg_t *)msg)->md_record.__t__;
+}
+PUBLIC BOOL trq_msg_is_t_ms(q_msg msg)
+{
+    return (((q_msg_t *)msg)->md_record.__system_flag__ & sf_t_ms)?TRUE:FALSE;
+}
+PUBLIC BOOL trq_msg_is_tm_ms(q_msg msg)
+{
+    return (((q_msg_t *)msg)->md_record.__system_flag__ & sf_tm_ms)?TRUE:FALSE;
 }
 
 

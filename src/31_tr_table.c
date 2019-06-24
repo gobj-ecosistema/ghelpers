@@ -125,10 +125,16 @@ PUBLIC int trtb_add_instance(
     const char *topic_name,
     json_t *jn_msg_,  // owned
     uint32_t tag,
-    cols_flag_t cols_flag
+    cols_flag_t cols_flag,
+    md_record_t *md_record
 )
 {
+    md_record_t md_record_;
     json_t *jn_msg;
+    if(!md_record) {
+        md_record = &md_record_;
+    }
+
     if(cols_flag & fc_only_desc_cols) {
         json_t *topic = tranger_topic(tranger, topic_name);
         json_t *cols = kw_get_dict(topic, "cols", 0, 0);
@@ -139,13 +145,12 @@ PUBLIC int trtb_add_instance(
         jn_msg = jn_msg_;
     }
 
-    md_record_t md_record;
     if(tranger_append_record(
         tranger,
         topic_name,
         0, // __t__,         // if 0 then the time will be set by TimeRanger with now time
         tag, // user_flag,
-        &md_record,
+        md_record,
         jn_msg // owned
     )<0) {
         // Error already logged
@@ -205,6 +210,7 @@ PRIVATE int load_record_callback(
         if(match_fields) {
             JSON_INCREF(match_fields);
             if(!kw_match_simple(jn_record, match_fields)) {
+                JSON_DECREF(jn_record);
                 return 0;  // Timeranger does not load the record, it's me.
             }
         }

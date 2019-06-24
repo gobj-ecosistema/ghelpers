@@ -169,7 +169,8 @@ PUBLIC int trtb_add_instance(
     const char *topic_name,
     json_t *jn_msg,  // owned
     uint32_t tag,
-    cols_flag_t cols_flag
+    cols_flag_t cols_flag,
+    md_record_t *md_record
 );
 
 /*

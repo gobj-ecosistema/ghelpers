@@ -8,6 +8,7 @@
 #ifndef __GHELPERS_H
 #define __GHELPERS_H 1
 
+#include "00_ansi_escape_codes.h"
 #include "00_asn1_snmp.h"
 #include "00_base64.h"
 #include "00_cpu.h"
