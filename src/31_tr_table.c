@@ -546,12 +546,14 @@ PUBLIC int trtb_foreach_active_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
-        void *user_data,
         json_t *list,  // Not yours!
         const char *key,
-        json_t *record // It's yours, Must be owned
+        json_t *record, // It's yours, Must be owned
+        void *user_data1,
+        void *user_data2
     ),
-    void *user_data
+    void *user_data1,
+    void *user_data2
 )
 {
     json_t *messages = trtb_get_messages(list);
@@ -580,7 +582,7 @@ PUBLIC int trtb_foreach_active_records(
             );
         }
 
-        if(callback(user_data, list, key, jn_active)<0) {
+        if(callback(list, key, jn_active, user_data1, user_data2)<0) {
             return -1;
         }
     }
@@ -595,12 +597,14 @@ PUBLIC int trtb_foreach_instances_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
-        void *user_data,
         json_t *list,  // Not yours!
         const char *key,
-        json_t *instances // It's yours, Must be owned
+        json_t *instances, // It's yours, Must be owned
+        void *user_data1,
+        void *user_data2
     ),
-    void *user_data
+    void *user_data1,
+    void *user_data2
 )
 {
     json_t *messages = trtb_get_messages(list);
@@ -634,7 +638,7 @@ PUBLIC int trtb_foreach_instances_records(
             }
             json_array_append_new(jn_instances, jn_instance);
         }
-        if(callback(user_data, list, key, jn_instances)<0) {
+        if(callback(list, key, jn_instances, user_data1, user_data2)<0) {
             return -1;
         }
     }

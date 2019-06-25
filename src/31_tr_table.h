@@ -276,12 +276,14 @@ PUBLIC int trtb_foreach_active_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
-        void *user_data,
         json_t *list,  // Not yours!
         const char *key,
-        json_t *record // It's yours, Must be owned
+        json_t *record ,// It's yours, Must be owned
+        void *user_data1,
+        void *user_data2
     ),
-    void *user_data
+    void *user_data1,
+    void *user_data2
 );
 
 /*
@@ -291,12 +293,14 @@ PUBLIC int trtb_foreach_instances_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
-        void *user_data,
         json_t *list,  // Not yours!
         const char *key,
-        json_t *instances // It's yours, Must be owned
+        json_t *instances, // It's yours, Must be owned
+        void *user_data1,
+        void *user_data2
     ),
-    void *user_data
+    void *user_data1,
+    void *user_data2
 );
 
 #ifdef __cplusplus
