@@ -136,6 +136,7 @@ PUBLIC int trtb_add_instance(
     }
 
     if(cols_flag & fc_only_desc_cols) {
+        // TODO esto por cada inserción? you are fool!
         json_t *topic = tranger_topic(tranger, topic_name);
         json_t *cols = kw_get_dict(topic, "cols", 0, 0);
         const char **keys = extract_keys(cols, 0);

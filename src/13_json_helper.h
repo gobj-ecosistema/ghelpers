@@ -228,7 +228,7 @@ static const char *jn_xxx_desc[] = {
     // Name         Type        Default
     {"string",      "str",      ""},
     {"string2",     "str",      "Pepe"},
-    {"integer",     "int",      "0660"},     // beginning with "0":octal,"x":hexa, remains: integer
+    {"integer",     "int",      "0660"},     // beginning with "0":octal,"x":hexa, others: integer
     {"boolean",     "bool",     "false"},
     {0}   // HACK important, final null
 };

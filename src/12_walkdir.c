@@ -194,7 +194,8 @@ PUBLIC int walk_dir_tree(
         );
         return -1;
     }
-    if(regcomp(&r, pattern, REG_EXTENDED | REG_NOSUB)!=0) {
+    int ret = regcomp(&r, pattern, REG_EXTENDED | REG_NOSUB);
+    if(ret!=0) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -203,14 +204,13 @@ PUBLIC int walk_dir_tree(
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "regcomp() FAILED",
-            "error",        "%d", errno,
-            "strerror",     "%s", strerror(errno),
+            "error",        "%d", ret,
            NULL
         );
         return -1;
     }
 
-    int ret = _walk_tree(root_dir, &r, user_data, opt, 0, cb);
+    ret = _walk_tree(root_dir, &r, user_data, opt, 0, cb);
     regfree(&r);
     return ret;
 }
@@ -253,7 +253,8 @@ PUBLIC int get_number_of_files(
         );
         return 0;
     }
-    if(regcomp(&r, pattern, REG_EXTENDED | REG_NOSUB)) {
+    int ret = regcomp(&r, pattern, REG_EXTENDED | REG_NOSUB);
+    if(ret!=0) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -262,8 +263,7 @@ PUBLIC int get_number_of_files(
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "regcomp() FAILED",
-            "error",        "%d", errno,
-            "strerror",     "%s", strerror(errno),
+            "error",        "%d", ret,
            NULL
         );
         return -1;
@@ -356,7 +356,8 @@ PUBLIC char **get_ordered_filename_array(
         return 0;
     }
 
-    if(regcomp(&r, pattern, REG_EXTENDED | REG_NOSUB)) {
+    int ret = regcomp(&r, pattern, REG_EXTENDED | REG_NOSUB);
+    if(ret!=0) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -365,8 +366,7 @@ PUBLIC char **get_ordered_filename_array(
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "regcomp() FAILED",
-            "error",        "%d", errno,
-            "strerror",     "%s", strerror(errno),
+            "error",        "%d", ret,
            NULL
         );
         return 0;

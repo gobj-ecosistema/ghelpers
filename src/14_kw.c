@@ -387,7 +387,7 @@ PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag)
     if(!p) {
         // Last subdict
         json_t *leaf_dict = json_object_get(kw, path);
-        if(!leaf_dict && (flag & KW_CREATE)) {
+        if(!leaf_dict && (flag & KW_CREATE) && kw) {
             leaf_dict = json_object();
             json_object_set_new(kw, path, leaf_dict);
         }
@@ -401,7 +401,7 @@ PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag)
     char segment[256];
     snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
     json_t *node_dict = json_object_get(kw, segment);
-    if(!node_dict && (flag & KW_CREATE)) {
+    if(!node_dict && (flag & KW_CREATE) && kw) {
         node_dict = json_object();
         json_object_set_new(kw, segment, node_dict);
     }
@@ -611,7 +611,7 @@ PUBLIC json_t *kw_get_dict(
 {
     json_t *jn_dict = _kw_search_path(kw, path);
     if(!jn_dict) {
-        if((flag & KW_CREATE) && default_value) {
+        if((flag & KW_CREATE) && default_value && kw) {
             kw_set_dict_value(kw, path, default_value);
             return default_value;
         }
@@ -666,7 +666,7 @@ PUBLIC json_t *kw_get_list(
 {
     json_t *jn_list = _kw_search_path(kw, path);
     if(!jn_list) {
-        if((flag & KW_CREATE) && default_value) {
+        if((flag & KW_CREATE) && default_value && kw) {
             kw_set_dict_value(kw, path, default_value);
             return default_value;
         }
@@ -721,7 +721,7 @@ PUBLIC json_int_t kw_get_int(
 {
     json_t *jn_int = _kw_search_path(kw, path);
     if(!jn_int) {
-        if(flag & KW_CREATE) {
+        if((flag & KW_CREATE) && kw) {
             json_t *jn_new = json_integer(default_value);
             kw_set_dict_value(kw, path, jn_new);
             return default_value;
@@ -810,7 +810,7 @@ PUBLIC double kw_get_real(
 {
     json_t *jn_real = _kw_search_path(kw, path);
     if(!jn_real) {
-        if(flag & KW_CREATE) {
+        if((flag & KW_CREATE) && kw) {
             json_t *jn_new = json_real(default_value);
             kw_set_dict_value(kw, path, jn_new);
             return default_value;
@@ -892,7 +892,7 @@ PUBLIC BOOL kw_get_bool(
 {
     json_t *jn_bool = _kw_search_path(kw, path);
     if(!jn_bool) {
-        if(flag & KW_CREATE) {
+        if((flag & KW_CREATE) && kw) {
             json_t *jn_new = json_boolean(default_value);
             kw_set_dict_value(kw, path, jn_new);
             return default_value;
@@ -981,7 +981,7 @@ PUBLIC const char *kw_get_str(
 {
     json_t *jn_str = _kw_search_path(kw, path);
     if(!jn_str) {
-        if(flag & KW_CREATE) {
+        if((flag & KW_CREATE) && kw) {
             json_t *jn_new;
             if(!default_value) {
                 jn_new = json_null();
@@ -1053,7 +1053,7 @@ PUBLIC json_t *kw_get_dict_value(
 {
     json_t *jn_value = _kw_search_path(kw, path);
     if(!jn_value) {
-        if((flag & KW_CREATE) && default_value) {
+        if((flag & KW_CREATE) && default_value && kw) {
             kw_set_dict_value(kw, path, default_value);
             return default_value;
         }

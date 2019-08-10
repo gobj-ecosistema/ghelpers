@@ -2093,13 +2093,12 @@ PUBLIC GBUFFER *kw_get_gbuf_value(
         s = jn2string(jn_value);
     }
 
-    if(s && strlen(s)>0) {
-        if(!gbuf) {
-            gbuf = gbuf_create(strlen(s), strlen(s), 0, 0);
-        }
-        gbuf_append_string(gbuf, s);
-    }
     if(s) {
+        int ln = strlen(s) + 1;
+        if(!gbuf) {
+            gbuf = gbuf_create(ln, ln, 0, 0);
+        }
+        gbuf_append(gbuf, s, ln);
         gbmem_free(s);
     }
     return gbuf;
