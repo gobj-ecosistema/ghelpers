@@ -95,7 +95,7 @@ extern "C"{
 #define KEY_TYPE_MASK         0x0000000F
 #define NOT_INHERITED_MASK    0xFF000000
 
-typedef enum {
+typedef enum { // WARNING table with name's strings in 30_timeranger.c
     sf_string_key           = 0x00000001,
     sf_rowid_key            = 0x00000002,
     sf_int_key              = 0x00000004,
@@ -157,6 +157,11 @@ PUBLIC json_t *tranger_startup(
    Shutdown TimeRanger database
 **rst**/
 PUBLIC int tranger_shutdown(json_t *tranger);
+
+/**rst**
+   Convert string (..|..|...) to system_flag_t integer
+**rst**/
+PUBLIC system_flag_t tranger_str2system_flag(const char *system_flag);
 
 /**rst**
    Create topic if not exist. Alias create table.

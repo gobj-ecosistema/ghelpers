@@ -151,9 +151,14 @@ static topic_desc_t db_tranger_desc[] = {
 /***************************************************************
  *              Prototypes
  ***************************************************************/
-PUBLIC json_t *trtb_open_db(
+PUBLIC json_t *trtb_open_db( // Use C style
     json_t *jn_tranger,    // owned
     const topic_desc_t *descs
+);
+
+PUBLIC json_t *trtb_open_jdb( // Use json-schema style
+    json_t *jn_tranger,     // owned
+    json_t *jn_schema       // owned
 );
 
 PUBLIC void trtb_close_db(json_t *trdb);

@@ -31,6 +31,44 @@ PRIVATE const char *topic_fieds[] = {
     0
 };
 
+PRIVATE const char *sf_names[32+1] = {
+    "sf_string_key",            // 0x00000001
+    "sf_rowid_key",             // 0x00000002
+    "sf_int_key",               // 0x00000004
+    "",                         // 0x00000008
+    "sf_zip_record",            // 0x00000010
+    "sf_cipher_record",         // 0x00000020
+    "",                         // 0x00000040
+    "",                         // 0x00000080
+    "sf_t_ms",                  // 0x00000100
+    "sf_tm_ms",                 // 0x00000200
+    "",                         // 0x00000400
+    "",                         // 0x00000800
+    "sf_no_record_disk",        // 0x00001000
+    "sf_no_md_disk",            // 0x00002000
+//  "sf_no_disk",               // 0x00003000 CANNOT BE USE
+    "",                         // 0x00004000
+    "",                         // 0x00008000
+    "",                         // 0x00010000
+    "",                         // 0x00020000
+    "",                         // 0x00040000
+    "",                         // 0x00080000
+    "",                         // 0x00100000
+    "",                         // 0x00200000
+    "",                         // 0x00400000
+    "",                         // 0x00800000
+    "sf_loading_from_disk",     // 0x01000000
+    "",                         // 0x02000000
+    "",                         // 0x04000000
+    "",                         // 0x08000000
+    "",                         // 0x10000000
+    "",                         // 0x20000000
+    "",                         // 0x40000000
+    "sf_deleted_record",        // 0x80000000
+    0
+};
+
+
 /***************************************************************
  *              Structures
  ***************************************************************/
@@ -461,6 +499,28 @@ PUBLIC int tranger_shutdown(json_t *tranger)
     }
     JSON_DECREF(tranger);
     return 0;
+}
+
+/***************************************************************************
+   Convert string (..|..|...) to system_flag_t integer
+ ***************************************************************************/
+PUBLIC system_flag_t tranger_str2system_flag(const char *system_flag)
+{
+    uint32_t bitmask = 0;
+
+    int list_size;
+    const char **names = split2(system_flag, "|, ", &list_size);
+
+    for(int i=0; i<list_size; i++) {
+        int idx = idx_in_list(sf_names, *(names +i), TRUE);
+        if(idx > 0) {
+            bitmask |= 1 << (idx-1);
+        }
+    }
+
+    split_free2(names);
+
+    return bitmask;
 }
 
 /***************************************************************************

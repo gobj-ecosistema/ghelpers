@@ -74,6 +74,7 @@ PUBLIC json_t *trtb_open_db(
     for(int i=0; descs[i].topic_name!=0; i++) {
         const topic_desc_t *topic_desc = descs + i;
 
+        // OLD method
         tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_desc->topic_name,
@@ -84,7 +85,49 @@ PUBLIC json_t *trtb_open_db(
         );
     }
 
-    //log_debug_json(0, tranger, "XXX");
+    return tranger;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *trtb_open_jdb( // Use json-schema style
+    json_t *jn_tranger,     // owned
+    json_t *jn_schema       // owned
+)
+{
+    if(!jn_schema) {
+        return 0;
+    }
+
+    /*
+     *  At least 'tables' must be.
+     */
+    json_t *jn_tables = kw_get_dict(jn_schema, "tables", 0, KW_REQUIRED);
+    if(!jn_tables) {
+        JSON_DECREF(jn_schema);
+        return 0;
+    }
+
+    json_t *tranger = tranger_startup(
+        jn_tranger // owned
+    );
+
+    const char *table_name;
+    json_t *jn_desc;
+    json_object_foreach(jn_tables, table_name, jn_desc) {
+        // NEW method
+        tranger_create_topic(
+            tranger,    // If topic exists then only needs (tranger,name) parameters
+            table_name,
+            kw_get_str(jn_desc, "pkey", "", 0),
+            kw_get_str(jn_desc, "tkey", "", 0),
+            tranger_str2system_flag(kw_get_str(jn_desc, "system_flag", "", 0)),
+            json_incref(kw_get_dict(jn_desc, "cols", 0, 0))
+        );
+    }
+
+    json_object_set_new(tranger, "jn_schema", jn_schema); // Save schema in tranger
     return tranger;
 }
 
