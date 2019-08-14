@@ -84,8 +84,8 @@ extern "C"{
 /***************************************************************
  *              Structures
  ***************************************************************/
-typedef enum {
-    fc_only_desc_cols       = 0x00000001,   // save only cols defined in describe
+typedef enum { // add instance flags
+    fc_only_desc_cols       = 0x00000001,   // filter record by keys defined in cols
 } cols_flag_t;
 
 typedef struct {

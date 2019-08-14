@@ -40,7 +40,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "31_tr_table.h"
+#include "31_tr_msg.h"
 
 /***************************************************************
  *              Constants
@@ -127,7 +127,7 @@ PUBLIC json_t *trtb_open_jdb( // Use json-schema style
         );
     }
 
-    json_object_set_new(tranger, "jn_schema", jn_schema); // Save schema in tranger
+    JSON_DECREF(jn_schema);
     return tranger;
 }
 
@@ -173,13 +173,17 @@ PUBLIC int trtb_add_instance(
 )
 {
     md_record_t md_record_;
-    json_t *jn_msg;
+    json_t *jn_msg = 0;
     if(!md_record) {
         md_record = &md_record_;
     }
 
-    if(cols_flag & fc_only_desc_cols) {
-        // TODO esto por cada inserción? you are fool!
+    json_t *topic = tranger_topic(tranger, topic_name);
+    system_flag_t system_flag = kw_get_int(topic, "system_flag", 0, KW_REQUIRED);
+    if(system_flag & sf_json_schema) {
+        ; // TODO
+    } else if(cols_flag & fc_only_desc_cols) {
+        // Esto por cada inserción? you are fool!
         json_t *topic = tranger_topic(tranger, topic_name);
         json_t *cols = kw_get_dict(topic, "cols", 0, 0);
         const char **keys = extract_keys(cols, 0);

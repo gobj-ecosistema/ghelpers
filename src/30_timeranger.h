@@ -106,6 +106,7 @@ typedef enum { // WARNING table with name's strings in 30_timeranger.c
     sf_no_record_disk       = 0x00001000,
     sf_no_md_disk           = 0x00002000,
     sf_no_disk              = 0x00003000,   // sf_no_record_disk + sf_no_md_disk
+    sf_json_schema          = 0x00010000,
     sf_loading_from_disk    = 0x01000000,
     sf_deleted_record       = 0x80000000,
 } system_flag_t;

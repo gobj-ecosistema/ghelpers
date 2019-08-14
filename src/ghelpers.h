@@ -51,7 +51,8 @@
 #include "21_json_xml.h"
 #include "21_termbox.h"
 #include "30_timeranger.h"
-#include "31_tr_table.h"
+#include "31_tr_db.h"
+#include "31_tr_msg.h"
 #include "31_tr_queue.h"
 
 #ifdef __cplusplus

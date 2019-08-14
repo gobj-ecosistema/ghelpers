@@ -49,7 +49,7 @@ PRIVATE const char *sf_names[32+1] = {
 //  "sf_no_disk",               // 0x00003000 CANNOT BE USE
     "",                         // 0x00004000
     "",                         // 0x00008000
-    "",                         // 0x00010000
+    "sf_json_schema",           // 0x00010000
     "",                         // 0x00020000
     "",                         // 0x00040000
     "",                         // 0x00080000
@@ -67,7 +67,6 @@ PRIVATE const char *sf_names[32+1] = {
     "sf_deleted_record",        // 0x80000000
     0
 };
-
 
 /***************************************************************
  *              Structures
@@ -2817,6 +2816,7 @@ PUBLIC json_t *tranger_open_list(
                         jn_record // owned
                     );
                 } else { // == 0
+                    // user's callback manages the record
                     JSON_DECREF(jn_record);
                 }
             } else {
