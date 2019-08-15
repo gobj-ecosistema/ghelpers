@@ -112,11 +112,7 @@ PUBLIC int trmsg_add_instance(
         md_record = &md_record_;
     }
 
-    json_t *topic = tranger_topic(tranger, topic_name);
-    system_flag_t system_flag = kw_get_int(topic, "system_flag", 0, KW_REQUIRED);
-    if(system_flag & sf_json_schema) {
-        ; // TODO
-    } else if(cols_flag & fc_only_desc_cols) {
+    if(cols_flag & fc_only_desc_cols) {
         // Esto por cada inserción? you are fool!
         json_t *topic = tranger_topic(tranger, topic_name);
         json_t *cols = kw_get_dict(topic, "cols", 0, 0);
