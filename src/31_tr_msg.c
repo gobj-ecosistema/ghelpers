@@ -1,7 +1,7 @@
 /***********************************************************************
- *          TR_TABLE.C
+ *          TR_MSG.C
  *
- *          Table (topic) with TimeRanger
+ *          Messages with TimeRanger
  *
  *          Copyright (c) 2019 Niyamaka.
  *          All Rights Reserved.
@@ -11,29 +11,6 @@
         the active message of each key series is the **last** key instance.
     else:
         the active message is the **last** key instance with tag equal to topic tag.
-
-        Rules:  TODO
-            "[delimiter]var [[delimiter]var] op"
-
-                delimiter = apply in one or several segments, interpreta si hay signos como
-                            + todos los segments que se llamen asi
-                            - todos los segments que no se llamen asi
-                            ` ^ path system divisor
-                            .* u otros => regular expression
-
-                var = variable,path
-
-                op = operation:
-                    '=='    equal
-                    '!='    not equal
-                    '>='    greater or equal
-                    '<='    lower or equal
-                    '<'     lower
-                    '>'     greater
-                    're'    match the regular expression
-                    '!re'   not match the regular expression
-                    'in'    in a values set.
-                    '!in'   not in a values set.
 
 ***********************************************************************/
 #include <string.h>
@@ -62,7 +39,7 @@
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_open_db(
+PUBLIC json_t *trmsg_open_db(
     json_t *jn_tranger,    // owned
     const topic_desc_t *descs
 )
@@ -91,50 +68,7 @@ PUBLIC json_t *trtb_open_db(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_open_jdb( // Use json-schema style
-    json_t *jn_tranger,     // owned
-    json_t *jn_schema       // owned
-)
-{
-    if(!jn_schema) {
-        return 0;
-    }
-
-    /*
-     *  At least 'tables' must be.
-     */
-    json_t *jn_tables = kw_get_dict(jn_schema, "tables", 0, KW_REQUIRED);
-    if(!jn_tables) {
-        JSON_DECREF(jn_schema);
-        return 0;
-    }
-
-    json_t *tranger = tranger_startup(
-        jn_tranger // owned
-    );
-
-    const char *table_name;
-    json_t *jn_desc;
-    json_object_foreach(jn_tables, table_name, jn_desc) {
-        // NEW method
-        tranger_create_topic(
-            tranger,    // If topic exists then only needs (tranger,name) parameters
-            table_name,
-            kw_get_str(jn_desc, "pkey", "", 0),
-            kw_get_str(jn_desc, "tkey", "", 0),
-            tranger_str2system_flag(kw_get_str(jn_desc, "system_flag", "", 0)),
-            json_incref(kw_get_dict(jn_desc, "cols", 0, 0))
-        );
-    }
-
-    JSON_DECREF(jn_schema);
-    return tranger;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC void trtb_close_db(
+PUBLIC void trmsg_close_db(
     json_t *trdb
 )
 {
@@ -144,7 +78,7 @@ PUBLIC void trtb_close_db(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtb_set_topic_tag( // this change the active record, you must re-open lists of messages
+PUBLIC int trmsg_set_topic_tag( // this change the active record, you must re-open lists of messages
     json_t *tranger,
     const char *topic_name,
     uint32_t topic_tag
@@ -163,7 +97,7 @@ PUBLIC int trtb_set_topic_tag( // this change the active record, you must re-ope
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtb_add_instance(
+PUBLIC int trmsg_add_instance(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_msg_,  // owned
@@ -315,15 +249,15 @@ PRIVATE int load_record_callback(
     /*
      *  Filter by callback
      */
-    trtb_instance_callback_t trtb_instance_callback =
-        (trtb_instance_callback_t)(size_t)kw_get_int(
+    trmsg_instance_callback_t trmsg_instance_callback =
+        (trmsg_instance_callback_t)(size_t)kw_get_int(
         list,
-        "trtb_instance_callback",
+        "trmsg_instance_callback",
         0,
         0
     );
-    if(trtb_instance_callback) {
-        int ret = trtb_instance_callback(
+    if(trmsg_instance_callback) {
+        int ret = trmsg_instance_callback(
             tranger,
             list,
             is_active,
@@ -405,7 +339,7 @@ PRIVATE int load_record_callback(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_open_list(
+PUBLIC json_t *trmsg_open_list(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_filter  // owned
@@ -428,7 +362,7 @@ PUBLIC json_t *trtb_open_list(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtb_close_list(
+PUBLIC int trmsg_close_list(
     json_t *tranger,
     json_t *tr_list
 )
@@ -439,7 +373,7 @@ PUBLIC int trtb_close_list(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_get_messages(
+PUBLIC json_t *trmsg_get_messages(
     json_t *list
 )
 {
@@ -449,7 +383,7 @@ PUBLIC json_t *trtb_get_messages(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_get_message(
+PUBLIC json_t *trmsg_get_message(
     json_t *list,
     const char *key
 )
@@ -463,7 +397,7 @@ PUBLIC json_t *trtb_get_message(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_get_active_content(
+PUBLIC json_t *trmsg_get_active_content(
     json_t *list,
     const char *key
 )
@@ -481,7 +415,7 @@ PUBLIC json_t *trtb_get_active_content(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_get_active_md(
+PUBLIC json_t *trmsg_get_active_md(
     json_t *list,
     const char *key
 )
@@ -499,7 +433,7 @@ PUBLIC json_t *trtb_get_active_md(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtb_get_instances(
+PUBLIC json_t *trmsg_get_instances(
     json_t *list,
     const char *key
 )
@@ -517,13 +451,13 @@ PUBLIC json_t *trtb_get_instances(
  *  Return a list of records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
-PUBLIC json_t *trtb_active_records(
+PUBLIC json_t *trmsg_active_records(
     json_t *list,
     BOOL with_metadata
 )
 {
     json_t *jn_records = json_array();
-    json_t *messages = trtb_get_messages(list);
+    json_t *messages = trmsg_get_messages(list);
 
     const char *key;
     json_t *message;
@@ -558,7 +492,7 @@ PUBLIC json_t *trtb_active_records(
  *  Return a list of record's instances (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
-PUBLIC json_t *trtb_record_instances(
+PUBLIC json_t *trmsg_record_instances(
     json_t *list,
     const char *key,
     BOOL with_metadata
@@ -566,7 +500,7 @@ PUBLIC json_t *trtb_record_instances(
 {
     json_t *jn_records = json_array();
 
-    json_t *instances = trtb_get_instances(list, key);
+    json_t *instances = trmsg_get_instances(list, key);
 
     int idx;
     json_t *jn_value;
@@ -590,7 +524,7 @@ PUBLIC json_t *trtb_record_instances(
 /***************************************************************************
  *  Foreach active records
  ***************************************************************************/
-PUBLIC int trtb_foreach_active_records(
+PUBLIC int trmsg_foreach_active_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
@@ -604,7 +538,7 @@ PUBLIC int trtb_foreach_active_records(
     void *user_data2
 )
 {
-    json_t *messages = trtb_get_messages(list);
+    json_t *messages = trmsg_get_messages(list);
 
     const char *key;
     json_t *message;
@@ -641,7 +575,7 @@ PUBLIC int trtb_foreach_active_records(
 /***************************************************************************
  *  Foreach instances records
  ***************************************************************************/
-PUBLIC int trtb_foreach_instances_records(
+PUBLIC int trmsg_foreach_instances_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
@@ -655,7 +589,7 @@ PUBLIC int trtb_foreach_instances_records(
     void *user_data2
 )
 {
-    json_t *messages = trtb_get_messages(list);
+    json_t *messages = trmsg_get_messages(list);
 
     const char *key;
     json_t *message;

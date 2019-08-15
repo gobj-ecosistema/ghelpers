@@ -75,9 +75,9 @@ extern "C"{
 /***************************************************************
  *              Constants
  ***************************************************************/
-#define TRTB_CLOSE_LIST(tranger, tr_list) \
+#define TRMSG_CLOSE_LIST(tranger, tr_list) \
     if(tr_list) {\
-        trtb_close_list(tranger, tr_list);\
+        trmsg_close_list(tranger, tr_list);\
         tr_list=0;\
     }
 
@@ -151,25 +151,20 @@ static topic_desc_t db_tranger_desc[] = {
 /***************************************************************
  *              Prototypes
  ***************************************************************/
-PUBLIC json_t *trtb_open_db( // Use C style
+PUBLIC json_t *trmsg_open_db(
     json_t *jn_tranger,    // owned
     const topic_desc_t *descs
 );
 
-PUBLIC json_t *trtb_open_jdb( // Use json-schema style
-    json_t *jn_tranger,     // owned
-    json_t *jn_schema       // owned
-);
+PUBLIC void trmsg_close_db(json_t *trdb);
 
-PUBLIC void trtb_close_db(json_t *trdb);
-
-PUBLIC int trtb_set_topic_tag( // this change the active record, you must re-open lists of messages
+PUBLIC int trmsg_set_topic_tag( // this change the active record, you must re-open lists of messages
     json_t *tranger,
     const char *topic_name,
     uint32_t topic_tag
 );
 
-PUBLIC int trtb_add_instance(
+PUBLIC int trmsg_add_instance(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_msg,  // owned
@@ -189,7 +184,7 @@ PUBLIC int trtb_add_instance(
 
         order_by_tm         (bool) Not use with max_key_instances=1
 
-        trtb_instance_callback (int) callback function,
+        trmsg_instance_callback (int) callback function,
                                      inform of loaded instance, chance to change content
 
         select_fields       (dict or list of strings) Display ony selected fields
@@ -203,25 +198,25 @@ PUBLIC int trtb_add_instance(
  *      1 add record to returned list.data,
  *      -1 break the load
  */
-typedef int (*trtb_instance_callback_t)(
+typedef int (*trmsg_instance_callback_t)(
     json_t *tranger,    // not yours
     json_t *list,       // not yours
     BOOL is_active,
     json_t *instance    // not yours
 );
 
-PUBLIC json_t *trtb_open_list(
+PUBLIC json_t *trmsg_open_list(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_filter  // owned
 );
 
-PUBLIC int trtb_close_list(
+PUBLIC int trmsg_close_list(
     json_t *tranger,
     json_t *tr_list
 );
 
-PUBLIC json_t *trtb_backup_topic( // TODO not implemented
+PUBLIC json_t *trmsg_backup_topic( // TODO not implemented
     json_t *tranger,
     const char *topic_name,
     const char *backup_path,
@@ -234,22 +229,22 @@ PUBLIC json_t *trtb_backup_topic( // TODO not implemented
 /*
  *  Functions returning items of list (NOT YOURS).
  */
-PUBLIC json_t *trtb_get_messages( // Return (NOT yours) dict: messages`
+PUBLIC json_t *trmsg_get_messages( // Return (NOT yours) dict: messages`
     json_t *list
 );
-PUBLIC json_t *trtb_get_message( // Return (NOT yours) dict: "active" (dict) and "instances" (list)
+PUBLIC json_t *trmsg_get_message( // Return (NOT yours) dict: "active" (dict) and "instances" (list)
     json_t *list,
     const char *key
 );
-PUBLIC json_t *trtb_get_active_content( // Return (NOT yours) dict: messages`message(key)`active`content
+PUBLIC json_t *trmsg_get_active_content( // Return (NOT yours) dict: messages`message(key)`active`content
     json_t *list,
     const char *key
 );
-PUBLIC json_t *trtb_get_active_md( // Return (NOT yours) dict: messages`message(key)`active`md
+PUBLIC json_t *trmsg_get_active_md( // Return (NOT yours) dict: messages`message(key)`active`md
     json_t *list,
     const char *key
 );
-PUBLIC json_t *trtb_get_instances( // Return (NOT yours) list: messages`message(key)`instances
+PUBLIC json_t *trmsg_get_instances( // Return (NOT yours) list: messages`message(key)`instances
     json_t *list,
     const char *key
 );
@@ -259,7 +254,7 @@ PUBLIC json_t *trtb_get_instances( // Return (NOT yours) list: messages`message(
  *  Return a list of records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
-PUBLIC json_t *trtb_active_records(
+PUBLIC json_t *trmsg_active_records(
     json_t *list,
     BOOL with_metadata
 );
@@ -268,7 +263,7 @@ PUBLIC json_t *trtb_active_records(
  *  Return a list of record's instances (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
-PUBLIC json_t *trtb_record_instances(
+PUBLIC json_t *trmsg_record_instances(
     json_t *list,
     const char *key,
     BOOL with_metadata
@@ -277,7 +272,7 @@ PUBLIC json_t *trtb_record_instances(
 /*
  *  Foreach active records
  */
-PUBLIC int trtb_foreach_active_records(
+PUBLIC int trmsg_foreach_active_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
@@ -294,7 +289,7 @@ PUBLIC int trtb_foreach_active_records(
 /*
  *  Foreach instances records
  */
-PUBLIC int trtb_foreach_instances_records(
+PUBLIC int trmsg_foreach_instances_records(
     json_t *list,
     BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
