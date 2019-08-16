@@ -51,7 +51,6 @@ PUBLIC json_t *trmsg_open_db(
     for(int i=0; descs[i].topic_name!=0; i++) {
         const topic_desc_t *topic_desc = descs + i;
 
-        // OLD method
         tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_desc->topic_name,
