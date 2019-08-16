@@ -55,7 +55,7 @@ PUBLIC int rotatory_start_up(void);
 PUBLIC void rotatory_end(void); // close all
 
 // Return NULL on error
-// Available mask for filename: "DD/MM/CCYY"
+// Available mask for filename: "DD/MM/CCYY-W-ZZZ"
 PUBLIC hrotatory_t rotatory_open(
     const char* path,
     size_t bf_size,                     // 0 = default 64K

@@ -28,8 +28,17 @@ PRIVATE const char *topic_fieds[] = {
     "tkey",
     "system_flag",
     "cols",
+    "directory",
+    "__last_rowid__",
+    "topic_idx_fd",
+    "topic_idx_file",
+    "fd_opened_files",
+    "file_opened_files",
+    "lists",
     0
 };
+
+
 
 PRIVATE const char *sf_names[32+1] = {
     "sf_string_key",            // 0x00000001
@@ -958,7 +967,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
     kw_get_int(topic, "topic_idx_file", 0, KW_CREATE);
     kw_get_dict(topic, "fd_opened_files", json_object(), KW_CREATE);
     kw_get_dict(topic, "file_opened_files", json_object(), KW_CREATE);
-    kw_get_dict(topic, "user_lists", json_array(), KW_CREATE);
+    kw_get_dict(topic, "lists", json_array(), KW_CREATE);
 
     /*
      *  Open topic index
@@ -2197,10 +2206,10 @@ PUBLIC int tranger_append_record(
     /*--------------------------------------------*
      *  Call callbacks
      *--------------------------------------------*/
-    json_t *user_lists = kw_get_list(topic, "user_lists", 0, KW_REQUIRED);
+    json_t *lists = kw_get_list(topic, "lists", 0, KW_REQUIRED);
     int idx;
     json_t *jn_list;
-    json_array_foreach(user_lists, idx, jn_list) {
+    json_array_foreach(lists, idx, jn_list) {
         if(tranger_match_record(
                 tranger,
                 topic,
@@ -2732,7 +2741,7 @@ PUBLIC json_t *tranger_open_list(
      *  Add list to topic
      */
     json_array_append_new(
-        kw_get_dict_value(topic, "user_lists", 0, KW_REQUIRED),
+        kw_get_dict_value(topic, "lists", 0, KW_REQUIRED),
         list
     );
     /*
@@ -2874,8 +2883,8 @@ PUBLIC int tranger_close_list(
     json_t *topic = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
     if(topic) {
         json_array_remove(
-            kw_get_dict_value(topic, "user_lists", 0, KW_REQUIRED),
-            json_array_find_idx(kw_get_dict_value(topic, "user_lists", 0, KW_REQUIRED), tr_list)
+            kw_get_dict_value(topic, "lists", 0, KW_REQUIRED),
+            json_array_find_idx(kw_get_dict_value(topic, "lists", 0, KW_REQUIRED), tr_list)
         );
     }
     return 0;
