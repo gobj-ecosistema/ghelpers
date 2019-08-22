@@ -105,16 +105,18 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
         "id",
         "",
         sf_rowid_key,
-        json_pack("[{s:s, s:s, s:s, s:s}, {s:s, s:s, s:s, s:s}]",
+        json_pack("[{s:s, s:s, s:s, s:[s,s]}, {s:s, s:s, s:s, s:[s,s]}]",
             "id", "id",
             "header", "Id",
             "type", "integer",
-            "flag", "persistent|required",
+            "flag",
+                "persistent","required",
 
             "id", "name",
             "header", "Name",
             "type", "string",
-            "flag", "persistent|required"
+            "flag",
+                "persistent", "required"
         )
     );
 
@@ -415,12 +417,29 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                 {
                     int idx; json_t *v;
                     json_array_foreach(value, idx, v) {
-                        if(!json_str_in_list(desc_enum, json_string_value(v), TRUE)) {
+                        switch(json_typeof(v)) {
+                        case JSON_STRING:
+                            if(!json_str_in_list(desc_enum, json_string_value(v), TRUE)) {
+                                log_error(0,
+                                    "gobj",         "%s", __FILE__,
+                                    "function",     "%s", __FUNCTION__,
+                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msg",          "%s", "Wrong enum type",
+                                    "topic",        "%s", topic_name,
+                                    "field",        "%s", desc_id,
+                                    "value",        "%s", json_string_value(v),
+                                    "value_to_be",  "%j", desc_enum,
+                                    NULL
+                                );
+                                ret += -1;
+                            }
+                            break;
+                        default:
                             log_error(0,
                                 "gobj",         "%s", __FILE__,
                                 "function",     "%s", __FUNCTION__,
                                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                                "msg",          "%s", "Wrong enum type",
+                                "msg",          "%s", "Case not implemented",
                                 "topic",        "%s", topic_name,
                                 "field",        "%s", desc_id,
                                 "value",        "%s", json_string_value(v),
@@ -428,7 +447,9 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                                 NULL
                             );
                             ret += -1;
+                            break;
                         }
+
                     }
                 }
                 break;

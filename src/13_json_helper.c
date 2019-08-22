@@ -289,14 +289,21 @@ PUBLIC BOOL json_str_in_list(json_t *jn_list, const char *str, BOOL ignore_case)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "list MUST BE a json array",
             NULL
         );
-        return 0;
+        return FALSE;
+    }
+    if(!str) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "str NULL",
+            NULL
+        );
+        return FALSE;
     }
 
     json_array_foreach(jn_list, idx, jn_str) {
