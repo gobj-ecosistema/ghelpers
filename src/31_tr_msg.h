@@ -151,24 +151,18 @@ static topic_desc_t db_tranger_desc[] = {
 /***************************************************************
  *              Prototypes
  ***************************************************************/
-PUBLIC json_t *trmsg_open_db(
-    json_t *jn_tranger,    // owned
-    const topic_desc_t *descs
-);
-
-PUBLIC void trmsg_close_db(json_t *trdb);
-
-PUBLIC int trmsg_set_topic_tag( // this change the active record, you must re-open lists of messages
+/**rst**
+    Open topics for messages (Remember previously open tranger_startup())
+**rst**/
+PUBLIC int trmsg_open_topics(
     json_t *tranger,
-    const char *topic_name,
-    uint32_t topic_tag
+    const topic_desc_t *descs
 );
 
 PUBLIC int trmsg_add_instance(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_msg,  // owned
-    uint32_t tag,
     cols_flag_t cols_flag,
     md_record_t *md_record
 );

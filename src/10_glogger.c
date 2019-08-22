@@ -1028,7 +1028,10 @@ PRIVATE void _log_jnbf(int priority, log_opt_t opt, va_list ap)
                 );
             }
             char *bf = json_get_buf(hgen);
-            (lh->hr->write_fn)(lh->h, priority, bf, strlen(bf));
+            int ret = (lh->hr->write_fn)(lh->h, priority, bf, strlen(bf));
+            if(ret < 0) { // Handler owns the message
+                break;
+            }
         }
         if(lh->hr->fwrite_fn) {
             if((opt & (LOG_OPT_TRACE_STACK|LOG_OPT_EXIT_NEGATIVE|LOG_OPT_ABORT)) ||
@@ -1081,7 +1084,10 @@ PUBLIC void _log_bf(int priority, log_opt_t opt, const char *bf, int len)
             continue;
         }
         if(lh->hr->write_fn) {
-            (lh->hr->write_fn)(lh->h, priority, bf, len);
+            int ret = (lh->hr->write_fn)(lh->h, priority, bf, len);
+            if(ret < 0) { // Handler owns the message
+                break;
+            }
         }
         if(lh->hr->fwrite_fn) {
             if(opt & (LOG_OPT_TRACE_STACK|LOG_OPT_EXIT_NEGATIVE|LOG_OPT_ABORT)) {
@@ -1274,10 +1280,11 @@ PRIVATE void json_append(hgen_t hgen, ...)
 PRIVATE void discover(hgen_t hgen)
 {
     json_append(hgen,
-        "app!name",     "%s", __app_name__,
-        "app!ver",      "%s", __app_version__,
-        "host",         "%s", get_host_name(),
-        NULL);
+        "process",      "%s", get_process_name(),
+        "hostname",     "%s", get_host_name(),
+        "pid",          "%d", get_pid(),
+        NULL
+    );
 }
 
 /***************************************************************************

@@ -146,6 +146,11 @@ typedef enum {
 /*
  *  Protypes for handlers
  */
+/*
+ *  HACK Return of callback:
+ *      0 continue with next loghandler
+ *      -1 break, don't continue with next handlers
+ */
 typedef void   (*loghandler_close_fn_t)(void *h);
 typedef int    (*loghandler_write_fn_t)(void *h, int priority, const char *bf, size_t len);
 typedef int    (*loghandler_fwrite_fn_t)(void *h, int priority, const char *format, ...);
@@ -180,8 +185,8 @@ PUBLIC int log_set_inform_cb(
 PUBLIC int log_register_handler(
     const char *handler_type,   // already registered: "stdout", "file", "udp"
     loghandler_close_fn_t close_fn,
-    loghandler_write_fn_t write_fn,
-    loghandler_fwrite_fn_t fwrite_fn
+    loghandler_write_fn_t write_fn,  // Used by all minus described below in fwrite_fn
+    loghandler_fwrite_fn_t fwrite_fn // Used by trace_hex_msg(),log_debug_dump(),log_debug_json() and LOG_OPT_TRACE_STACK option.
 );
 
 PUBLIC int log_add_handler(

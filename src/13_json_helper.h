@@ -244,6 +244,24 @@ PUBLIC json_t *create_json_record(
     const json_desc_t *json_desc
 );
 
+PUBLIC json_t *load_json_from_file(
+    const char *directory,
+    const char *filename,
+    log_opt_t on_critical_error
+);
+
+PUBLIC int save_json_to_file(
+    const char *directory,
+    const char *filename,
+    int xpermission,
+    int rpermission,
+    log_opt_t on_critical_error,
+    BOOL create,        // Create file if not exists or overwrite.
+    BOOL only_read,
+    json_t *jn_data     // owned
+);
+
+
 #ifdef __cplusplus
 }
 #endif

@@ -632,17 +632,20 @@ PUBLIC json_t *kw_get_dict(
         return default_value;
     }
     if(!json_is_object(jn_dict)) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path MUST BE a json dict",
-            "path",         "%s", path,
-            NULL
-        );
+        if(!(flag & KW_DONT_LOG)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json dict, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
+            log_debug_json(0, kw, "path '%s' MUST BE a json dict, default value returned", path);
+        }
         return default_value;
     }
     JSON_DECREF(default_value);
@@ -687,17 +690,19 @@ PUBLIC json_t *kw_get_list(
         return default_value;
     }
     if(!json_is_array(jn_list)) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path MUST BE a json list",
-            "path",         "%s", path,
-            NULL
-        );
+        if(!(flag & KW_DONT_LOG)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json list",
+                "path",         "%s", path,
+                NULL
+            );
+        }
         return default_value;
     }
     JSON_DECREF(default_value);
@@ -744,17 +749,19 @@ PUBLIC json_int_t kw_get_int(
     }
     if(!json_is_integer(jn_int)) {
         if(!(flag & KW_WILD_NUMBER)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json integer",
-                "path",         "%s", path,
-                NULL
-            );
+            if(!(flag & KW_DONT_LOG)) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "process",      "%s", get_process_name(),
+                    "hostname",     "%s", get_host_name(),
+                    "pid",          "%d", get_pid(),
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "path MUST BE a json integer",
+                    "path",         "%s", path,
+                    NULL
+                );
+            }
             if(!json_is_number(jn_int) && !json_is_boolean(jn_int)) {
                 return default_value;
             }
@@ -780,17 +787,19 @@ PUBLIC json_int_t kw_get_int(
     } else if(json_is_null(jn_int)) {
         value = 0;
     } else {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path MUST BE a simple json element",
-            "path",         "%s", path,
-            NULL
-        );
+        if(!(flag & KW_DONT_LOG)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a simple json element",
+                "path",         "%s", path,
+                NULL
+            );
+        }
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -833,17 +842,19 @@ PUBLIC double kw_get_real(
     }
     if(!json_is_real(jn_real)) {
         if(!(flag & KW_WILD_NUMBER)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json real",
-                "path",         "%s", path,
-                NULL
-            );
+            if(!(flag & KW_DONT_LOG)) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "process",      "%s", get_process_name(),
+                    "hostname",     "%s", get_host_name(),
+                    "pid",          "%d", get_pid(),
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "path MUST BE a json real",
+                    "path",         "%s", path,
+                    NULL
+                );
+            }
             if(!json_is_number(jn_real) && !json_is_boolean(jn_real)) {
                 return default_value;
             }
@@ -862,17 +873,19 @@ PUBLIC double kw_get_real(
     } else if(json_is_null(jn_real)) {
         value = 0;
     } else {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path MUST BE a simple json element",
-            "path",         "%s", path,
-            NULL
-        );
+        if(!(flag & KW_DONT_LOG)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a simple json element",
+                "path",         "%s", path,
+                NULL
+            );
+        }
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -915,17 +928,19 @@ PUBLIC BOOL kw_get_bool(
     }
     if(!json_is_boolean(jn_bool)) {
         if(!(flag & KW_WILD_NUMBER)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json bool",
-                "path",         "%s", path,
-                NULL
-            );
+            if(!(flag & KW_DONT_LOG)) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "process",      "%s", get_process_name(),
+                    "hostname",     "%s", get_host_name(),
+                    "pid",          "%d", get_pid(),
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "path MUST BE a json bool",
+                    "path",         "%s", path,
+                    NULL
+                );
+            }
             if(!json_is_number(jn_bool) && !json_is_boolean(jn_bool)) {
                 return default_value;
             }
@@ -951,17 +966,19 @@ PUBLIC BOOL kw_get_bool(
     } else if(json_is_null(jn_bool)) {
         value = 0;
     } else {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path MUST BE a simple json element",
-            "path",         "%s", path,
-            NULL
-        );
+        if(!(flag & KW_DONT_LOG)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a simple json element",
+                "path",         "%s", path,
+                NULL
+            );
+        }
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -1009,17 +1026,19 @@ PUBLIC const char *kw_get_str(
     }
     if(!json_is_string(jn_str)) {
         if(!json_is_null(jn_str)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json str",
-                "path",         "%s", path,
-                NULL
-            );
+            if(!(flag & KW_DONT_LOG)) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "process",      "%s", get_process_name(),
+                    "hostname",     "%s", get_host_name(),
+                    "pid",          "%d", get_pid(),
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "path MUST BE a json str",
+                    "path",         "%s", path,
+                    NULL
+                );
+            }
         }
         return default_value;
     }
@@ -1185,16 +1204,18 @@ PUBLIC json_t *kw_get_list_value(
     kw_flag_t flag)
 {
     if(!json_is_array(kw)) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "kw MUST BE a json array",
-            NULL
-        );
+        if(!(flag & KW_DONT_LOG)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "kw MUST BE a json array",
+                NULL
+            );
+        }
         return 0;
     }
     if(idx >= json_array_size(kw)) {
@@ -1213,7 +1234,13 @@ PUBLIC json_t *kw_get_list_value(
         }
         return 0;
     }
-    return json_array_get(kw, idx);
+
+    json_t *v = json_array_get(kw, idx);
+    if(v && (flag & KW_EXTRACT)) {
+        JSON_INCREF(v);
+        json_array_remove(kw, idx);
+    }
+    return v;
 }
 
 /***************************************************************************
@@ -2643,3 +2670,67 @@ PUBLIC int kw_pop(
     return 0;
 }
 
+/***************************************************************************
+    Has word? Can be in string, list or dict.
+    options: "recursive", "verbose"
+
+    Use to configurate:
+
+        "opt2"              No has word "opt1"
+        "opt1|opt2"         Yes, has word "opt1"
+        ["opt1", "opt2"]    Yes, has word "opt1"
+        {
+            "opt1": true,   Yes, has word "opt1"
+            "opt2": false   No has word "opt1"
+        }
+ ***************************************************************************/
+PUBLIC BOOL kw_has_word(
+    json_t *kw,  // NOT owned
+    const char *word,
+    const char *options
+)
+{
+    switch(json_typeof(kw)) {
+    case JSON_OBJECT:
+        if(kw_has_key(kw, word)) {
+            return json_is_true(json_object_get(kw, word))?TRUE:FALSE;
+        } else {
+            return FALSE;
+        }
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(kw, idx, jn_value) {
+                if(json_is_string(jn_value)) {
+                    if(strstr(json_string_value(jn_value), word)) {
+                        return TRUE;
+                    }
+                } else if(options && strstr(options, "recursive")) {
+                    if(kw_has_word(jn_value, word, options)) {
+                        return TRUE;
+                    }
+                }
+            }
+            return FALSE;
+        }
+    case JSON_STRING:
+        if(strstr(json_string_value(kw), word)) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+    default:
+        if(options && strstr(options, "verbose")) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "Searching word needs object,array,string",
+                "word",         "%s", word,
+                NULL
+            );
+            log_debug_json(0, kw, "Searching word needs object,array,string");
+        }
+        return FALSE;
+    }
+}

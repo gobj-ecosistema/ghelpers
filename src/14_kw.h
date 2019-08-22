@@ -38,6 +38,7 @@ typedef enum {
     KW_CREATE           = 0x0002,   // Create if not exist
     KW_WILD_NUMBER      = 0x0004,   // For numbers work indistinctly with real/int/bool/string without error logging
     KW_EXTRACT          = 0x0008,   // Extract (delete) the key on read from dictionary.
+    KW_DONT_LOG         = 0x0010,   // Don't log errors TODO not implemented in all functions
 } kw_flag_t;
 
 typedef void (*incref_fn_t)(void *);
@@ -578,6 +579,26 @@ PUBLIC json_t *kw_apply_json_config_variables(
 PUBLIC int kw_pop(
     json_t *kw1, // NOT owned
     json_t *kw2  // NOT owned
+);
+
+/**rst**
+    Has word? Search in string, list or dict.
+    options: "recursive", "verbose"
+
+    Use to configurate:
+
+        "opt2"              No has word "opt1"
+        "opt1|opt2"         Yes, has word "opt1"
+        ["opt1", "opt2"]    Yes, has word "opt1"
+        {
+            "opt1": true,   Yes, has word "opt1"
+            "opt2": false   No has word "opt1"
+        }
+**rst**/
+PUBLIC BOOL kw_has_word(
+    json_t *kw,  // NOT owned
+    const char *word,
+    const char *options
 );
 
 

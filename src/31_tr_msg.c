@@ -37,17 +37,13 @@
  ***************************************************************/
 
 /***************************************************************************
- *
+    Open topics for messages (Remember previously open tranger_startup())
  ***************************************************************************/
-PUBLIC json_t *trmsg_open_db(
-    json_t *jn_tranger,    // owned
+PUBLIC int trmsg_open_topics(
+    json_t *tranger,
     const topic_desc_t *descs
 )
 {
-    json_t *tranger = tranger_startup(
-        jn_tranger // owned
-    );
-
     for(int i=0; descs[i].topic_name!=0; i++) {
         const topic_desc_t *topic_desc = descs + i;
 
@@ -61,36 +57,7 @@ PUBLIC json_t *trmsg_open_db(
         );
     }
 
-    return tranger;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC void trmsg_close_db(
-    json_t *trdb
-)
-{
-    tranger_shutdown(trdb);
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC int trmsg_set_topic_tag( // this change the active record, you must re-open lists of messages
-    json_t *tranger,
-    const char *topic_name,
-    uint32_t topic_tag
-)
-{
-    json_t *jn_topic_var = json_object();
-    json_object_set_new(jn_topic_var, "topic_tag", json_integer(topic_tag));
-
-    return tranger_write_topic_var(
-        tranger,
-        topic_name,
-        jn_topic_var  // owned
-    );
+    return 0;
 }
 
 /***************************************************************************
@@ -100,7 +67,6 @@ PUBLIC int trmsg_add_instance(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_msg_,  // owned
-    uint32_t tag,
     cols_flag_t cols_flag,
     md_record_t *md_record
 )
@@ -126,7 +92,7 @@ PUBLIC int trmsg_add_instance(
         tranger,
         topic_name,
         0, // __t__,         // if 0 then the time will be set by TimeRanger with now time
-        tag, // user_flag,
+        0, // user_flag,
         md_record,
         jn_msg // owned
     )<0) {
@@ -142,18 +108,12 @@ PUBLIC int trmsg_add_instance(
  ***************************************************************************/
 PRIVATE int load_record_callback(
     json_t *tranger,
+    json_t *topic,
     json_t *list,
     md_record_t *md_record,
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
-    json_t *topic = tranger_topic(tranger, kw_get_str(list, "topic_name", "", KW_REQUIRED));
-    if(0) {
-        char title[256];
-        print_md1_record(tranger, topic, md_record, title, sizeof(title));
-        printf("%s\n", title);
-    }
-
     json_t *jn_messages = kw_get_dict(list, "messages", 0, KW_REQUIRED);
     json_t *jn_filter2 = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
 
@@ -231,15 +191,9 @@ PRIVATE int load_record_callback(
 
     /*
      *  Check active
-     *  If tag is 0 then the last loaded msg will be the active msg
+     *  The last loaded msg will be the active msg
      */
-    uint32_t instance_tag = md_record->__user_flag__;
-    uint32_t topic_tag = kw_get_int(topic, "topic_tag", 0, 0);
-
-    BOOL is_active = FALSE;
-    if(topic_tag==0 || instance_tag == topic_tag) {
-        is_active = TRUE;
-    }
+    BOOL is_active = TRUE;
 
     /*
      *  Filter by callback

@@ -222,6 +222,7 @@ static uint64_t first_rowid = 0;  // usado temporalmente
 
 PRIVATE int load_record_callback(
     json_t *tranger,
+    json_t *topic,
     json_t *list,
     md_record_t *md_record,
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk

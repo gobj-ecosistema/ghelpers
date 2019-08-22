@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include "13_json_helper.h"
 
 /***************************************************************************
@@ -1061,6 +1062,151 @@ PUBLIC json_t *create_json_record(
     }
 
     return jn;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *load_json_from_file(
+    const char *directory,
+    const char *filename,
+    log_opt_t on_critical_error
+)
+{
+    /*
+     *  Full path
+     */
+    char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+
+    if(access(full_path, 0)!=0) {
+        return 0;
+    }
+
+    int fd = open(full_path, O_RDONLY|O_NOFOLLOW);
+    if(fd<0) {
+        log_critical(on_critical_error,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "Cannot open json file",
+            "path",         "%s", full_path,
+            "errno",        "%s", strerror(errno),
+            NULL
+        );
+        return 0;
+    }
+
+    json_t *jn = json_loadfd(fd, 0, 0);
+    if(!jn) {
+        log_critical(on_critical_error,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_JSON_ERROR,
+            "msg",          "%s", "Cannot load json file, bad json",
+            NULL
+        );
+    }
+    close(fd);
+    return jn;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int save_json_to_file(
+    const char *directory,
+    const char *filename,
+    int xpermission,
+    int rpermission,
+    log_opt_t on_critical_error,
+    BOOL create,        // Create file if not exists or overwrite.
+    BOOL only_read,
+    json_t *jn_data     // owned
+)
+{
+    /*-----------------------------------*
+     *  Create directory if not exists
+     *-----------------------------------*/
+    if(!is_directory(directory)) {
+        if(!create) {
+            JSON_DECREF(jn_data);
+            return -1;
+        }
+        if(mkrdir(directory, 0, xpermission)<0) {
+            log_critical(on_critical_error,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msg",          "%s", "Cannot create directory",
+                "directory",    "%s", directory,
+                "errno",        "%s", strerror(errno),
+                NULL
+            );
+            JSON_DECREF(jn_data);
+            return -1;
+        }
+    }
+
+    /*
+     *  Full path
+     */
+    char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+
+    /*
+     *  Create file
+     */
+    int fp = newfile(full_path, rpermission, create);
+    if(fp < 0) {
+        log_critical(on_critical_error,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "Cannot create json file",
+            "filename",     "%s", full_path,
+            "errno",        "%d", errno,
+            "serrno",       "%s", strerror(errno),
+            NULL
+        );
+        JSON_DECREF(jn_data);
+        return -1;
+    }
+
+    if(json_dumpfd(jn_data, fp, JSON_INDENT(4))<0) {
+        log_critical(on_critical_error,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_JSON_ERROR,
+            "msg",          "%s", "Cannot write in json file",
+            "errno",        "%s", strerror(errno),
+            NULL
+        );
+        JSON_DECREF(jn_data);
+        return -1;
+    }
+    close(fp);
+    if(only_read) {
+        chmod(full_path, 0440);
+    }
+    JSON_DECREF(jn_data);
+
+    return 0;
 }
 
 

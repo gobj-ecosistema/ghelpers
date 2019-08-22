@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
         DEFAULTS
             printf("No match\n");
             break;
-    } switchs_end;
+    } SWITCHS_END;
 
     return 0;
 }

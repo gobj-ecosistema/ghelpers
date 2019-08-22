@@ -38,8 +38,6 @@ PRIVATE const char *topic_fieds[] = {
     0
 };
 
-
-
 PRIVATE const char *sf_names[32+1] = {
     "sf_string_key",            // 0x00000001
     "sf_rowid_key",             // 0x00000002
@@ -55,10 +53,10 @@ PRIVATE const char *sf_names[32+1] = {
     "",                         // 0x00000800
     "sf_no_record_disk",        // 0x00001000
     "sf_no_md_disk",            // 0x00002000
-//  "sf_no_disk",               // 0x00003000 CANNOT BE USE
+//  "sf_no_disk",               // 0x00003000 Combinated flags CANNOT BE USE by name
     "",                         // 0x00004000
     "",                         // 0x00008000
-    "sf_json_schema",           // 0x00010000
+    "",                         // 0x00010000
     "",                         // 0x00020000
     "",                         // 0x00040000
     "",                         // 0x00080000
@@ -348,7 +346,7 @@ PUBLIC json_t *tranger_startup(
     /*
      *  Como parámetro de entrada "jn_tanger",
      *  se clona para no joder el original,
-     *  y porque se añaden campos de instancia, por ejemplo "opened_files"
+     *  y porque se añaden campos de instancia, por ejemplo "fd_opened_files"
      */
     json_t *tranger = create_json_record(tranger_json_desc);
     json_object_update_existing(tranger, jn_tranger);
@@ -476,10 +474,10 @@ PUBLIC json_t *tranger_startup(
     /*
      *  Load Only read, volatil, defining in run-time
      */
-    kw_get_dict(tranger, "opened_files", json_object(), KW_CREATE);
+    kw_get_dict(tranger, "fd_opened_files", json_object(), KW_CREATE);
 
     if(fd != -1) {
-        kw_set_subdict_value(tranger, "opened_files", "__timeranger__.json", json_integer(fd));
+        kw_set_subdict_value(tranger, "fd_opened_files", "__timeranger__.json", json_integer(fd));
     }
 
     return tranger;
@@ -492,7 +490,7 @@ PUBLIC int tranger_shutdown(json_t *tranger)
 {
     const char *key;
     json_t *jn_value;
-    json_t *opened_files = kw_get_dict(tranger, "opened_files", 0, KW_REQUIRED);
+    json_t *opened_files = kw_get_dict(tranger, "fd_opened_files", 0, KW_REQUIRED);
     json_object_foreach(opened_files, key, jn_value) {
         int fd = kw_get_int(opened_files, key, 0, KW_REQUIRED);
         if(fd >= 0) {
@@ -907,8 +905,8 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
                 "hostname",     "%s", get_host_name(),
                 "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "database",     "%s", kw_get_str(tranger, "directory", "", KW_REQUIRED),
-                "msg",          "%s", "tranger_open_topic(): Topic not found",
+                "msg",          "%s", "tranger_open_topic(): directory not found",
+                "directory",    "%s", kw_get_str(tranger, "directory", "", KW_REQUIRED),
                 NULL
             );
         }
@@ -1560,7 +1558,7 @@ PUBLIC int tranger_write_topic_cols(
         );
         return -1;
     }
-    if(!json_is_object(jn_topic_cols)) {
+    if(!json_is_object(jn_topic_cols) && !json_is_array(jn_topic_cols)) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -1568,7 +1566,7 @@ PUBLIC int tranger_write_topic_cols(
             "hostname",     "%s", get_host_name(),
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "jn_topic_cols is NOT DICT",
+            "msg",          "%s", "jn_topic_cols MUST BE dict or list",
             NULL
         );
         JSON_DECREF(jn_topic_cols);
@@ -1895,8 +1893,8 @@ PUBLIC int tranger_append_record(
     const char *topic_name,
     uint64_t __t__,         // if 0 then the time will be set by TimeRanger with now time
     uint32_t user_flag,
-    md_record_t *md_record,
-    json_t *jn_record      // owned
+    md_record_t *md_record, // required
+    json_t *jn_record       // owned
 )
 {
     if(!jn_record || jn_record->refcount <= 0) {
@@ -2208,25 +2206,25 @@ PUBLIC int tranger_append_record(
      *--------------------------------------------*/
     json_t *lists = kw_get_list(topic, "lists", 0, KW_REQUIRED);
     int idx;
-    json_t *jn_list;
-    json_array_foreach(lists, idx, jn_list) {
+    json_t *list;
+    json_array_foreach(lists, idx, list) {
         if(tranger_match_record(
                 tranger,
                 topic,
-                kw_get_dict(jn_list, "match_cond", 0, 0),
+                kw_get_dict(list, "match_cond", 0, 0),
                 md_record,
                 0
             )) {
             tranger_record_loaded_callback_t record_loaded_callback =
                 (tranger_record_loaded_callback_t )(size_t)kw_get_int(
-                jn_list,
+                list,
                 "record_loaded_callback",
                 0,
                 0
             );
             tranger_load_record_callback_t load_record_callback =
                 (tranger_load_record_callback_t)(size_t)kw_get_int(
-                jn_list,
+                list,
                 "load_record_callback",
                 0,
                 0
@@ -2236,7 +2234,8 @@ PUBLIC int tranger_append_record(
                 JSON_INCREF(jn_record);
                 int ret = load_record_callback(
                     tranger,
-                    jn_list,
+                    topic,
+                    list,
                     md_record,
                     jn_record
                 );
@@ -2245,28 +2244,30 @@ PUBLIC int tranger_append_record(
                 } else if(ret>0) {
                     json_object_set_new(jn_record, "__md_tranger__", tranger_md2json(md_record));
                     json_array_append(
-                        kw_get_list(jn_list, "data", 0, KW_REQUIRED),
+                        kw_get_list(list, "data", 0, KW_REQUIRED),
                         jn_record
                     );
                     if(record_loaded_callback) {
                         // Inform user list: record in real time
                         record_loaded_callback(
                             tranger,
-                            jn_list
+                            topic,
+                            list
                         );
                     }
                 }
             } else {
                 json_object_set_new(jn_record, "__md_tranger__", tranger_md2json(md_record));
                 json_array_append(
-                    kw_get_list(jn_list, "data", 0, KW_REQUIRED),
+                    kw_get_list(list, "data", 0, KW_REQUIRED),
                     jn_record
                 );
                 if(record_loaded_callback) {
                     // Inform user list: record in real time
                     record_loaded_callback(
                         tranger,
-                        jn_list
+                        topic,
+                        list
                     );
                 }
             }
@@ -2807,6 +2808,7 @@ PUBLIC json_t *tranger_open_list(
                 JSON_INCREF(jn_record);
                 int ret = load_record_callback(
                     tranger,
+                    topic,
                     list,
                     &md_record,
                     jn_record

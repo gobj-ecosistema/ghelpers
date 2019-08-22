@@ -106,7 +106,6 @@ typedef enum { // WARNING table with name's strings in 30_timeranger.c
     sf_no_record_disk       = 0x00001000,
     sf_no_md_disk           = 0x00002000,
     sf_no_disk              = 0x00003000,   // sf_no_record_disk + sf_no_md_disk
-    sf_json_schema          = 0x00010000,
     sf_loading_from_disk    = 0x01000000,
     sf_deleted_record       = 0x80000000,
 } system_flag_t;
@@ -289,8 +288,8 @@ PUBLIC int tranger_append_record(
     const char *topic_name,
     uint64_t __t__,         // if 0 then the time will be set by TimeRanger with now time
     uint32_t user_flag,
-    md_record_t *md_record,
-    json_t *jn_record      // owned
+    md_record_t *md_record, // required
+    json_t *jn_record       // owned
 );
 
 /**rst**
@@ -376,6 +375,7 @@ PUBLIC uint32_t tranger_read_user_flag(
  */
 typedef int (*tranger_load_record_callback_t)(
     json_t *tranger,
+    json_t *topic,
     json_t *list,
     md_record_t *md_record,
     /*
@@ -385,13 +385,12 @@ typedef int (*tranger_load_record_callback_t)(
 );
 typedef int (*tranger_record_loaded_callback_t)(
     json_t *tranger,
+    json_t *topic,
     json_t *list
 );
 
 /**rst**
     Open list, load records in memory
-    If match_cond is null then only metadata is loaded.
-    Sin condiciones carga solo metadata
 **rst**/
 static const json_desc_t list_json_desc[] = {
 // Name                     Type        Default
