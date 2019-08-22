@@ -570,17 +570,17 @@ PRIVATE int set_id(
 )
 {
     const char *pkey = kw_get_str(topic, "pkey", "", KW_REQUIRED);
-    json_t *cols = kw_get_list(topic, "cols", 0, KW_REQUIRED);
 
-    json_t *col = kw_select(
-        cols,
+    json_t *cols = kw_select(
+        kw_get_list(topic, "cols", 0, KW_REQUIRED),
         0,
         json_pack("{s:s}",
             "id", pkey
         ),
         0
     );
-    if(json_array_size(col) != 1) {
+    json_t *col = kw_get_list_value(cols, 0, KW_REQUIRED);
+    if(!col) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -592,6 +592,44 @@ PRIVATE int set_id(
         JSON_DECREF(col);
         return -1;
     }
+
+    const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
+    if(!type) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Col desc without type",
+            "pkey",         "%s", pkey,
+            NULL
+        );
+        JSON_DECREF(col);
+        return -1;
+    }
+
+    SWITCHS(type) {
+        CASES("string")
+            char *v = jn2string(id);
+            json_object_set_new(record, pkey, json_string(v));
+            gbmem_free(v);
+            break;
+        CASES("integer")
+            json_int_t v = jn2integer(id);
+            json_object_set_new(record, pkey, json_integer(v));
+            break;
+        DEFAULTS
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "Col type unknown",
+                "pkey",         "%s", pkey,
+                "type",         "%s", type,
+                NULL
+            );
+            JSON_DECREF(col);
+            return -1;
+    } SWITCHS_END;
 
     JSON_DECREF(col);
     return 0;
