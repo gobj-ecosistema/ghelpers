@@ -2240,7 +2240,8 @@ PUBLIC int tranger_append_record(
                     jn_record
                 );
                 if(ret < 0) {
-                    ;
+                    JSON_DECREF(jn_record);
+                    return -1;
                 } else if(ret>0) {
                     json_object_set_new(jn_record, "__md_tranger__", tranger_md2json(md_record));
                     json_array_append(
@@ -2275,7 +2276,6 @@ PUBLIC int tranger_append_record(
     }
 
     JSON_DECREF(jn_record);
-
     return 0;
 }
 

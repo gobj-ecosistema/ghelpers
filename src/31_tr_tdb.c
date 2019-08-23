@@ -48,13 +48,53 @@ PRIVATE json_t *topic_cols_desc = 0;
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE char *build_trtdb_data_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    snprintf(bf, bfsize, "treedbs`%s`%s`data", treedb_name, topic_name);
+    strtolower(bf);
+    return bf;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE char *build_trtdb_indexes_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    snprintf(bf, bfsize, "treedbs`%s`%s`indexes", treedb_name, topic_name);
+    strtolower(bf);
+    return bf;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
-    json_t *jn_schema       // owned
+    json_t *jn_schema,  // owned
+    json_t *jn_options  // owned
 )
 {
     if(!jn_schema) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "TreeDB without schema.",
+            "treedb_name",  "%s", treedb_name,
+            NULL
+        );
+        JSON_DECREF(jn_options)
         return 0;
     }
 
@@ -70,9 +110,10 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     /*
      *  At least 'topics' must be.
      */
-    json_t *jn_topics = kw_get_list(jn_schema, "topics", 0, KW_REQUIRED);
-    if(!jn_topics) {
+    json_t *jn_schema_topics = kw_get_list(jn_schema, "topics", 0, KW_REQUIRED);
+    if(!jn_schema_topics) {
         JSON_DECREF(jn_schema);
+        JSON_DECREF(jn_options)
         return 0;
     }
 
@@ -90,18 +131,18 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
             NULL
         );
         JSON_DECREF(jn_schema);
+        JSON_DECREF(jn_options)
         return 0;
     }
 
-    /*
+    /*-------------------------------*
      *  Open/Create "system" topics
-     */
-    char tags_name[NAME_MAX];
-    snprintf(tags_name, sizeof(tags_name), "__tags_%s__", treedb_name);
+     *-------------------------------*/
+    char *tags_topic_name = "__tags__";
 
     json_t *tags_topic = tranger_create_topic(
         tranger,    // If topic exists then only needs (tranger,name) parameters
-        tags_name,
+        tags_topic_name,
         "id",
         "",
         sf_rowid_key,
@@ -120,59 +161,66 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
         )
     );
 
-// print_json(topic_cols_desc);
-// print_json(kw_get_list(tags_topic, "cols", 0, KW_REQUIRED));
+    parse_schema_cols(
+        tags_topic_name,
+        topic_cols_desc,
+        kw_get_list(tags_topic, "cols", 0, KW_REQUIRED)
+    );
 
-    parse_schema_cols(tags_name, topic_cols_desc, kw_get_list(tags_topic, "cols", 0, KW_REQUIRED));
-
-    /*
+    /*------------------------------*
      *  Open/Create "user" topics
-     */
+     *------------------------------*/
     int idx;
-    json_t *jn_desc;
-    json_array_foreach(jn_topics, idx, jn_desc) {
-        const char *topic_name = kw_get_str(jn_desc, "topic_name", "", 0);
+    json_t *schema_topic;
+    json_array_foreach(jn_schema_topics, idx, schema_topic) {
+        const char *topic_name = kw_get_str(schema_topic, "topic_name", "", 0);
         if(empty_string(topic_name)) {
             continue;
         }
         tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_name,
-            kw_get_str(jn_desc, "pkey", "", 0),
-            kw_get_str(jn_desc, "tkey", "", 0),
-            tranger_str2system_flag(kw_get_str(jn_desc, "system_flag", "", 0)),
-            json_incref(kw_get_list(jn_desc, "cols", 0, 0))
+            kw_get_str(schema_topic, "pkey", "", 0),
+            kw_get_str(schema_topic, "tkey", "", 0),
+            tranger_str2system_flag(kw_get_str(schema_topic, "system_flag", "", 0)),
+            json_incref(kw_get_list(schema_topic, "cols", 0, 0))
         );
     }
 
-    /*
+    /*------------------------------*
      *  Create the root of treedb
-     */
+     *------------------------------*/
     json_t *treedbs = kw_get_dict(tranger, "treedbs", json_object(), KW_CREATE);
     trtdb = kw_get_dict(treedbs, treedb_name, json_object(), KW_CREATE);
 
-    /*
+    /*------------------------------*
      *  Open "system" lists
-     */
+     *------------------------------*/
     json_t *jn_filter = json_pack("{}");
     json_t *jn_list = json_pack("{s:s, s:o, s:I}",
-        "topic_name", tags_name,
+        "topic_name", tags_topic_name,
         "match_cond", jn_filter,
         "load_record_callback", (json_int_t)(size_t)load_record_callback
     );
-    tranger_open_list(
+    json_t *list = tranger_open_list(
         tranger,
         jn_list // owned
     );
 
-    kw_get_subdict_value(trtdb, "__tags__", "data", json_array(), KW_CREATE);
-    kw_get_subdict_value(trtdb, "__tags__", "indexes", json_object(), KW_CREATE);
+    char path[NAME_MAX];
+    build_trtdb_data_path(path, sizeof(path), treedb_name, tags_topic_name);
+    kw_get_str(list, "trtdb_data_path", path, KW_CREATE);
+    build_trtdb_indexes_path(path, sizeof(path), treedb_name, tags_topic_name);
+    kw_get_str(list, "trtdb_indexes_path", path, KW_CREATE);
 
-    /*
+    kw_get_subdict_value(trtdb, tags_topic_name, "data", json_array(), KW_CREATE);
+    kw_get_subdict_value(trtdb, tags_topic_name, "indexes", json_object(), KW_CREATE);
+
+    /*------------------------------*
      *  Open "user" lists
-     */
-    json_array_foreach(jn_topics, idx, jn_desc) {
-        const char *topic_name = kw_get_str(jn_desc, "topic_name", "", 0);
+     *------------------------------*/
+    json_array_foreach(jn_schema_topics, idx, schema_topic) {
+        const char *topic_name = kw_get_str(schema_topic, "topic_name", "", 0);
         if(empty_string(topic_name)) {
             continue;
         }
@@ -182,16 +230,22 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
             "match_cond", jn_filter,
             "load_record_callback", (json_int_t)(size_t)load_record_callback
         );
-        tranger_open_list(
+        list = tranger_open_list(
             tranger,
             jn_list // owned
         );
+
+        build_trtdb_data_path(path, sizeof(path), treedb_name, topic_name);
+        kw_get_str(list, "trtdb_data_path", path, KW_CREATE);
+        build_trtdb_indexes_path(path, sizeof(path), treedb_name, topic_name);
+        kw_get_str(list, "trtdb_indexes_path", path, KW_CREATE);
 
         kw_get_subdict_value(trtdb, topic_name, "data", json_array(), KW_CREATE);
         kw_get_subdict_value(trtdb, topic_name, "indexes", json_object(), KW_CREATE);
     }
 
     JSON_DECREF(jn_schema);
+    JSON_DECREF(jn_options)
     return trtdb;
 }
 
@@ -589,7 +643,7 @@ PRIVATE int set_id(
             "pkey",         "%s", pkey,
             NULL
         );
-        JSON_DECREF(col);
+        JSON_DECREF(cols);
         return -1;
     }
 
@@ -603,7 +657,7 @@ PRIVATE int set_id(
             "pkey",         "%s", pkey,
             NULL
         );
-        JSON_DECREF(col);
+        JSON_DECREF(cols);
         return -1;
     }
 
@@ -627,11 +681,11 @@ PRIVATE int set_id(
                 "type",         "%s", type,
                 NULL
             );
-            JSON_DECREF(col);
+            JSON_DECREF(cols);
             return -1;
     } SWITCHS_END;
 
-    JSON_DECREF(col);
+    JSON_DECREF(cols);
     return 0;
 }
 
@@ -645,27 +699,52 @@ PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
     json_t *id,     // owned, Can be: integer,string, [integer], [string], [keys]
     json_t *fields, // owned, Return only this fields. Can be: string, [string], [keys]
     json_t *kw,     // owned, Being filter on reading or record on writting
-    const char *options // "create", "delete", "critical", "verbose", "metadata"
+    const char *options // "create", "delete", "verbose", "metadata"
 )
 {
-    json_t *record = 0;
-
     /*-------------------------------*
-     *      Get topic data
+     *      Get data and indexes
      *-------------------------------*/
     char path[NAME_MAX];
-    snprintf(path, sizeof(path), "treedbs`%s`%s`data", treedb_name, topic_name);
-    strtolower(path);
-    json_t *data = kw_get_list(tranger, path, 0, KW_REQUIRED);
+    build_trtdb_data_path(path, sizeof(path), treedb_name, topic_name);
+    json_t *data = kw_get_list(
+        tranger,
+        path,
+        0,
+        KW_REQUIRED
+    );
+    build_trtdb_indexes_path(path, sizeof(path), treedb_name, topic_name);
+    json_t *indexes = kw_get_dict(
+        tranger,
+        path,
+        0,
+        KW_REQUIRED
+    );
     if(!data) {
         if(options && strstr(options, "verbose")) {
             log_error(
-                LOG_OPT_TRACE_STACK|
-                    (options && strstr(options, "critical"))?LOG_OPT_EXIT_ZERO:0,
+                LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
                 "msg",          "%s", "TreeDb Topic data NOT FOUND",
+                "path",         "%s", path,
+                NULL
+            );
+        }
+        JSON_DECREF(id);
+        JSON_DECREF(fields);
+        JSON_DECREF(kw);
+        return 0;
+    }
+    if(!indexes) {
+        if(options && strstr(options, "verbose")) {
+            log_error(
+                LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
                 "path",         "%s", path,
                 NULL
             );
@@ -680,49 +759,113 @@ PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
         /*-------------------------------*
          *      Working with id
          *-------------------------------*/
-        JSON_INCREF(fields);
+        char *id_ = jn2string(id);
+        json_t *record = kw_get_dict(indexes, id_, 0, 0);
+        gbmem_free(id_);
+        if(record) {
+            /*
+             *  Found
+             */
+            JSON_DECREF(id);
+            JSON_DECREF(kw);
+            // TODO filtra por fields
+            JSON_DECREF(fields);
+            return record;
+        }
+        /*
+         *  Not found, create if option
+         */
+        if(!(options && strstr(options, "create"))) {
+            JSON_DECREF(id);
+            JSON_DECREF(fields);
+            JSON_DECREF(kw);
+            return 0;
+        }
         JSON_INCREF(id);
-        record = _trtdb_select(
+        JSON_INCREF(kw);
+        int ret = trtdb_write_node(
+            tranger,
+            treedb_name,
+            topic_name,
+            id, // owned
+            kw, // owned
+            options
+        );
+        if(ret < 0) {
+            JSON_DECREF(id);
+            JSON_DECREF(fields);
+            JSON_DECREF(kw);
+            return 0;
+        }
+        return trtdb_read_node(
+            tranger,
+            treedb_name,
+            topic_name,
+            id,     // owned
+            fields, // owned
+            kw,     // owned
+            options
+        );
+    } else {
+        /*-------------------------------*
+         *      Working without id
+         *-------------------------------*/
+        JSON_INCREF(fields);
+        json_t *record = _trtdb_select(
             data,   // not owned
             fields, // owned, fields
             id,     // owned, filter
             0       // match fn
         );
-        if(json_array_size(record)==0) {
-            JSON_DECREF(record);
-            if(options && strstr(options, "create")) {
-                JSON_INCREF(id);
-                JSON_INCREF(kw);
-                record = trtdb_write_node(
-                    tranger,
-                    treedb_name,
-                    topic_name,
-                    id, // owned
-                    kw, // owned
-                    options // "inmediate"
-                );
-            }
+        if(json_array_size(record)>0) {
+            /*
+             *  Found
+             */
+            JSON_DECREF(kw);
+            // TODO filtra por fields
+            JSON_DECREF(fields);
+            return record;
         }
-    } else {
-        /*-------------------------------*
-         *      Working without id
-         *-------------------------------*/
-        // TODO
+        JSON_DECREF(record);
+
+        /*
+         *  Not found, create if option
+         */
+        if(!(options && strstr(options, "create"))) {
+            JSON_DECREF(fields);
+            JSON_DECREF(kw);
+            return 0;
+        }
+        JSON_INCREF(kw);
+        int ret = trtdb_write_node(
+            tranger,
+            treedb_name,
+            topic_name,
+            0,
+            kw, // owned
+            options
+        );
+        if(ret < 0) {
+            JSON_DECREF(fields);
+            JSON_DECREF(kw);
+            return 0;
+        }
+        return trtdb_read_node(
+            tranger,
+            treedb_name,
+            topic_name,
+            0,      // owned
+            fields, // owned
+            kw,     // owned
+            options
+        );
     }
-
-    // TODO if fields clone by fields else return original?
-
-
-    JSON_DECREF(id);
-    JSON_DECREF(fields);
-    JSON_DECREF(kw);
-    return record;
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtdb_write_node( // Return IS NOT YOURS!
+PUBLIC int trtdb_write_node( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -732,86 +875,63 @@ PUBLIC json_t *trtdb_write_node( // Return IS NOT YOURS!
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
-    json_t *record = 0;
-
-    /*-------------------------------*
-     *      Get topic data
-     *-------------------------------*/
-    char path[NAME_MAX];
-    snprintf(path, sizeof(path), "treedbs`%s`%s`data", treedb_name, topic_name);
-    strtolower(path);
-    json_t *data = kw_get_list(tranger, path, 0, KW_REQUIRED);
-    if(!data) {
-        if(options && strstr(options, "verbose")) {
-            log_error(
-                LOG_OPT_TRACE_STACK|
-                    (options && strstr(options, "critical"))?LOG_OPT_EXIT_ZERO:0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "TreeDb Topic data NOT FOUND",
-                "path",         "%s", path,
-                NULL
-            );
-        }
-        JSON_DECREF(id);
-        JSON_DECREF(kw);
-        return 0;
-    }
 
     // TODO check cols, id with uuid
     // parse_schema_cols(tranger_topic_name(topic), topic_cols_desc, json_array_get(col, 0));
-
 
     if(id) {
         /*-------------------------------*
          *      Working with id
          *-------------------------------*/
-
         /*
          *  Duplicate (new references) the kw to build the new recod
          */
-        record = json_deep_copy(kw);
-        set_id(topic, id, record);
+        json_t *new_record = json_deep_copy(kw); // TODO cambia, que no carge variables _ __
+                                                // u option, que sea estricto con el desc,
+                                                // y que deje salvar las _ __
+        set_id(topic, id, new_record);
 
         /*
          *  Validate record
          */
-        if(!validate_topic(topic, record, options)) {
+        if(!validate_topic(topic, new_record, options)) {
             // TODO log_error if verbose
-            JSON_DECREF(record);
+            JSON_DECREF(new_record);
             JSON_DECREF(id);
             JSON_DECREF(kw);
-            return 0;
+            return -1;
         }
 
         /*
          *  Write record
          */
-        JSON_INCREF(record);
         md_record_t md_record;
-        if(tranger_append_record(
+        int ret = tranger_append_record(
             tranger,
             topic_name,
             0, // __t__,         // if 0 then the time will be set by TimeRanger with now time
             0, // user_flag,
             &md_record, // md_record,
-            record // owned
-        )<0) {
-            // Error already logged
-            JSON_DECREF(record);
-        }
+            new_record // owned
+        );
+        JSON_DECREF(id);
+        JSON_DECREF(kw);
+        return ret;
+
     } else {
         /*-------------------------------*
          *      Working without id
          *-------------------------------*/
         // TODO
+        JSON_DECREF(id);
+        JSON_DECREF(kw);
+        return -1;
     }
 
 
     JSON_DECREF(id);
     JSON_DECREF(kw);
-    return record;
+    return 0;
 }
 
 /***************************************************************************
@@ -825,9 +945,6 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
-    json_t *jn_messages = kw_get_dict(list, "messages", 0, KW_REQUIRED);
-    json_t *jn_filter2 = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
-
     char *key = md_record->key.s; // convierte las claves int a string
     char key_[64];
     if(md_record->__system_flag__ & (sf_int_key|sf_rowid_key)) {
@@ -836,169 +953,55 @@ PRIVATE int load_record_callback(
     }
 
     /*
-     *  Search the message for this key
+     *  Search the record of this key
      */
-    json_t *message = kw_get_dict_value(jn_messages, key, json_object(), KW_CREATE);
-    json_t *instances = kw_get_list(message, "instances", json_array(), KW_CREATE);
-    json_t *active = kw_get_dict(message, "active", json_object(), KW_CREATE);
-
-    /*---------------------------------*
-     *  Apply filter of second level
-     *---------------------------------*/
-    /*
-     *  Match fields
-     */
-    if(jn_record) {
-        json_t *match_fields = kw_get_dict_value(
-            jn_filter2,
-            "match_fields",
-            0,
-            0
-        );
-        if(match_fields) {
-            JSON_INCREF(match_fields);
-            if(!kw_match_simple(jn_record, match_fields)) {
-                JSON_DECREF(jn_record);
-                return 0;  // Timeranger does not load the record, it's me.
-            }
-        }
+    /*-------------------------------*
+     *      Get data and indexes
+     *-------------------------------*/
+    json_t *data = kw_get_list(
+        tranger,
+        kw_get_str(list, "trtdb_data_path", 0, KW_REQUIRED),
+        0,
+        KW_REQUIRED
+    );
+    json_t *indexes = kw_get_dict(
+        tranger,
+        kw_get_str(list, "trtdb_indexes_path", 0, KW_REQUIRED),
+        0,
+        KW_REQUIRED
+    );
+    if(!data || !indexes) {
+        return -1;
     }
 
     /*
-     *  Select fields
+     *  Exists already the id?
      */
-    if(jn_record) {
-        json_t *select_fields = kw_get_dict_value(
-            jn_filter2,
-            "select_fields",
-            0,
-            0
-        );
-        if(select_fields) {
-            JSON_INCREF(select_fields);
-            jn_record = kw_clone_by_keys(jn_record, select_fields, TRUE);
-        }
+    json_t *record = kw_get_dict(indexes, key, 0, 0);
+    if(!record) {
+        /*
+         *  New record
+         */
+        json_object_set(indexes, key, jn_record);
+        json_array_append_new(data, jn_record);
+        return 0;  // Timeranger does not load the record, it's me.
     }
 
     /*
-     *  Create instance
-     */
-    json_t *instance = json_object();
-    json_t *jn_record_md = tranger_md2json(md_record);
-    json_object_set_new(instance, "__md_tranger__", jn_record_md);
-
-    json_t *user_keys = kw_get_dict_value(list, "match_cond", 0, 0); // user keys shared in all instances
-    if(kw_get_bool(jn_filter2, "clone_user_keys", 0, 0)) { // Now are not shared.
-        json_t *user_keys_ = user_keys;
-        user_keys = json_deep_copy(user_keys);
-        json_decref(user_keys_);
-    }
-
-    if(jn_record) {
-        json_object_set_new(instance, "content", jn_record);
-    } else {
-        json_object_set_new(instance, "content", json_null());
-    }
-
-    /*
-     *  Check active
+     *  Check tag TODO pendiente de implementar los tag
      *  If tag is 0 then the last loaded msg will be the active msg
      */
-    uint32_t instance_tag = md_record->__user_flag__;
-    uint32_t topic_tag = kw_get_int(topic, "topic_tag", 0, 0);
-
-    BOOL is_active = FALSE;
-    if(topic_tag==0 || instance_tag == topic_tag) {
-        is_active = TRUE;
-    }
-
-    /*
-     *  Filter by callback
-     */
-// TODO    trtdb_instance_callback_t trtdb_instance_callback =
-//         (trtdb_instance_callback_t)(size_t)kw_get_int(
-//         list,
-//         "trtdb_instance_callback",
-//         0,
-//         0
-//     );
-//     if(trtdb_instance_callback) {
-//         int ret = trtdb_instance_callback(
-//             tranger,
-//             list,
-//             is_active,
-//             instance
-//         );
+//     uint32_t instance_tag = md_record->__user_flag__;
+//     uint32_t topic_tag = kw_get_int(topic, "topic_tag", 0, 0);
 //
-//         if(ret < 0) {
-//             JSON_DECREF(instance);
-//             return -1;  // break the load
-//         } else if(ret>0) {
-//             // continue below, add the instance
-//         } else { // == 0
-//             JSON_DECREF(instance);
-//             return 0;  // Timeranger does not load the record, it's me.
-//         }
+//     BOOL is_active = FALSE;
+//     if(topic_tag==0 || instance_tag == topic_tag) {
+//         is_active = TRUE;
 //     }
 
-    /*
-     *  max_key_instances
-     */
-    unsigned max_key_instances = kw_get_int(
-        jn_filter2,
-        "max_key_instances",
-        0,
-        KW_WILD_NUMBER
-    );
-    if(max_key_instances > 0) {
-        if(json_array_size(instances) >= max_key_instances) {
-            json_t *instance2remove = json_array_get(instances, 0);
-            if(instance2remove != instance) {
-                json_array_remove(instances, 0);
-            } else {
-                instance2remove = json_array_get(instances, 1);
-                json_array_remove(instances, 1);
-            }
-            if(instance2remove == active) {
-                json_object_set_new(message, "active", json_object());
-            }
-        }
-    }
+    json_object_update(record, jn_record);
 
-    /*
-     *  Inserta
-     */
-    if(kw_get_bool(jn_filter2, "order_by_tm", 0, 0)) {
-        /*
-         *  Order by tm
-         */
-        json_int_t tm = kw_get_int(instance, "__md_tranger__`__tm__", 0, KW_REQUIRED);
-        json_int_t last_instance = json_array_size(instances);
-        json_int_t idx = last_instance;
-        while(idx > 0) {
-            json_t *instance_ = json_array_get(instances, idx-1);
-            json_int_t tm_ = kw_get_int(instance_, "__md_tranger__`__tm__", 0, KW_REQUIRED);
-            if(tm >= tm_) {
-                break;
-            }
-            idx--;
-        }
-        json_array_insert_new(instances, idx, instance);
-
-    } else {
-        /*
-         *  Order by rowid
-         */
-        json_array_append_new(instances, instance);
-    }
-
-    /*
-     *  Set active
-     */
-    if(is_active) {
-        json_object_set(message, "active", instance);
-    }
-
+    JSON_DECREF(jn_record);
     return 0;  // Timeranger does not load the record, it's me.
 }
 
