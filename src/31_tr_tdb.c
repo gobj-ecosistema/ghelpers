@@ -618,9 +618,9 @@ PUBLIC int parse_schema_cols(
  *
  ***************************************************************************/
 PRIVATE int set_id(
+    json_t *record, // not owned
     json_t *topic,
-    json_t *id,     // not owned
-    json_t *record  // not owned
+    json_t *id     // not owned
 )
 {
     const char *pkey = kw_get_str(topic, "pkey", "", KW_REQUIRED);
@@ -836,6 +836,10 @@ PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
             JSON_DECREF(kw);
             return 0;
         }
+
+        /*
+         *  Not found, create if option
+         */
         JSON_INCREF(kw);
         int ret = trtdb_write_node(
             tranger,
@@ -879,59 +883,45 @@ PUBLIC int trtdb_write_node( // Return IS NOT YOURS!
     // TODO check cols, id with uuid
     // parse_schema_cols(tranger_topic_name(topic), topic_cols_desc, json_array_get(col, 0));
 
+    /*
+     *  Duplicate (new references) the kw to build the new recod
+     */
+    json_t *new_record = json_deep_copy(kw); // TODO cambia, que no carge variables _ __
+                                            // u option, que sea estricto con el desc,
+                                            // y que deje salvar las _ __
     if(id) {
-        /*-------------------------------*
-         *      Working with id
-         *-------------------------------*/
         /*
-         *  Duplicate (new references) the kw to build the new recod
+         *  Explicit id
          */
-        json_t *new_record = json_deep_copy(kw); // TODO cambia, que no carge variables _ __
-                                                // u option, que sea estricto con el desc,
-                                                // y que deje salvar las _ __
-        set_id(topic, id, new_record);
+        set_id(new_record, topic, id);
+    }
 
-        /*
-         *  Validate record
-         */
-        if(!validate_topic(topic, new_record, options)) {
-            // TODO log_error if verbose
-            JSON_DECREF(new_record);
-            JSON_DECREF(id);
-            JSON_DECREF(kw);
-            return -1;
-        }
-
-        /*
-         *  Write record
-         */
-        md_record_t md_record;
-        int ret = tranger_append_record(
-            tranger,
-            topic_name,
-            0, // __t__,         // if 0 then the time will be set by TimeRanger with now time
-            0, // user_flag,
-            &md_record, // md_record,
-            new_record // owned
-        );
-        JSON_DECREF(id);
-        JSON_DECREF(kw);
-        return ret;
-
-    } else {
-        /*-------------------------------*
-         *      Working without id
-         *-------------------------------*/
-        // TODO
+    /*
+     *  Validate record
+     */
+    if(!validate_topic(topic, new_record, options)) {
+        // TODO log_error if verbose
+        JSON_DECREF(new_record);
         JSON_DECREF(id);
         JSON_DECREF(kw);
         return -1;
     }
 
-
+    /*
+     *  Write record
+     */
+    md_record_t md_record;
+    int ret = tranger_append_record(
+        tranger,
+        topic_name,
+        0, // __t__,         // if 0 then the time will be set by TimeRanger with now time
+        0, // user_flag,
+        &md_record, // md_record,
+        new_record // owned
+    );
     JSON_DECREF(id);
     JSON_DECREF(kw);
-    return 0;
+    return ret;
 }
 
 /***************************************************************************
@@ -1025,7 +1015,7 @@ PRIVATE json_t *_trtdb_select(
         match_fn = kw_match_simple;
     }
     json_t *kw_new = json_array();
-
+?
 //     if(json_is_array(kw)) {
 //         size_t idx;
 //         json_t *jn_value;
