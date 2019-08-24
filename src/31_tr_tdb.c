@@ -1097,23 +1097,6 @@ PRIVATE json_t *_trtdb_select(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtdb_select_nodes(
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    const char *filter,
-    const char *options // "delete", "recursive", "verbose", "metadata"
-)
-{
-    json_t *list = 0;
-    // TODO
-
-    return list;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PUBLIC json_t *trtdb_link_node(
     json_t *tranger,
     json_t *kw_parent,
