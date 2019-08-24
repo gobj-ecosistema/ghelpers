@@ -51,18 +51,6 @@ PUBLIC int trtdb_close_db(
     const char *treedb_name
 );
 
-PUBLIC int trtdb_tag( // tag the current tree db TODO
-    json_t *tranger,
-    const char *treedb_name,
-    const char *tag
-);
-
-PUBLIC int trtdb_reopen_db( // TODO
-    json_t *tranger,
-    const char *treedb_name,
-    const char *tag  // If empty tag then free the tree, active record will be the last record.
-);
-
 /*------------------------------------*
  *      Testing
  *------------------------------------*/
@@ -97,32 +85,23 @@ PUBLIC int trtdb_write_node(
 
 PUBLIC json_t *trtdb_link_node(
     json_t *tranger,
+    const char *treedb_name,
+    const char *topic_parent,
+    const char *topic_child,
+    const char *link,
     json_t *kw_parent,
     json_t *kw_child,
-    const char *options  // "return-child" (default), "return-parent"
+    const char *options  // TODO "return-child" (default), "return-parent"
 );
 PUBLIC json_t *trtdb_unlink_node( // TODO
     json_t *tranger,
+    const char *treedb_name,
+    const char *topic_parent,
+    const char *topic_child,
+    const char *link,
     json_t *kw_parent,
     json_t *kw_child,
-    const char *options  // "return-parent" (default), "return-child"
-);
-
-/*------------------------------------*
- *      Transactions
- *------------------------------------*/
-PUBLIC int trtdb_begin_transaction( // TODO
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    const char *options
-);
-
-PUBLIC int trtdb_end_transaction( // TODO
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    const char *options
+    const char *options  // TODO "return-parent" (default), "return-child"
 );
 
 

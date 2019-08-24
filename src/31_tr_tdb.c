@@ -1099,9 +1099,13 @@ PRIVATE json_t *_trtdb_select(
  ***************************************************************************/
 PUBLIC json_t *trtdb_link_node(
     json_t *tranger,
+    const char *treedb_name,
+    const char *topic_parent,
+    const char *topic_child,
+    const char *link,
     json_t *kw_parent,
     json_t *kw_child,
-    const char *options  // "return-child" (default), "return-parent"
+    const char *options  // TODO "return-child" (default), "return-parent"
 )
 {
     json_t *child = 0;
@@ -1115,6 +1119,10 @@ PUBLIC json_t *trtdb_link_node(
  ***************************************************************************/
 PUBLIC json_t *trtdb_unlink_node(
     json_t *tranger,
+    const char *treedb_name,
+    const char *topic_parent,
+    const char *topic_child,
+    const char *link,
     json_t *kw_parent,
     json_t *kw_child,
     const char *options  // "return-parent" (default), "return-child"
@@ -1146,6 +1154,7 @@ PUBLIC int trtdb_begin_transaction(
     const char *options
 )
 {
+    // TODO
     return 0;
 }
 
@@ -1156,6 +1165,7 @@ PUBLIC int trtdb_end_transaction(
     const char *options
 )
 {
+    // TODO
     return 0;
 }
 
