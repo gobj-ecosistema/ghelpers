@@ -76,14 +76,14 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/
-PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
+PUBLIC json_t *trtdb_read_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *id,     // owned, Explicit id. Can be: integer,string, [integer], [string], [keys]
     json_t *fields, // owned, Return only this fields. Can be: string, [string], [keys]
     json_t *kw,     // owned, Being filter on reading or record on writting
-    const char *options // "create", "delete", "verbose", "metadata"
+    const char *options // "create", TODO "delete", "metadata"
 );
 
 PUBLIC int trtdb_write_node(
@@ -92,7 +92,7 @@ PUBLIC int trtdb_write_node(
     const char *topic_name,
     json_t *id, // owned, Explicit id. Can be: integer,string
     json_t *kw, // owned
-    const char *options // "inmediate"
+    const char *options // ""
 );
 
 PUBLIC json_t *trtdb_select_nodes(

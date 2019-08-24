@@ -2813,7 +2813,12 @@ PUBLIC json_t *tranger_open_list(
                     &md_record,
                     jn_record
                 );
-
+                /*
+                 *  Return:
+                 *      0 do nothing (callback will create their own list, or not),
+                 *      1 add record to returned list.data,
+                 *      -1 break the load
+                 */
                 if(ret < 0) {
                     JSON_DECREF(jn_record);
                     break;

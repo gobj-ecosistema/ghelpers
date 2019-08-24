@@ -617,47 +617,99 @@ PUBLIC int parse_schema_cols(
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE json_t *get_pkey_desc( // Return is not YOURS!
+    json_t *topic
+)
+{
+    const char *pkey = kw_get_str(topic, "pkey", "", KW_REQUIRED);
+    json_t *cols = kw_get_list(topic, "cols", 0, KW_REQUIRED);
+
+    int idx; json_t *v;
+    json_array_foreach(cols, idx, v) {
+        if(kw_has_key(v, pkey)) {
+            return v;
+        }
+    }
+    log_error(LOG_OPT_TRACE_STACK,
+        "gobj",         "%s", __FILE__,
+        "function",     "%s", __FUNCTION__,
+        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+        "msg",          "%s", "Cannot get pkey col desc",
+        "topic",        "%s", kw_get_str(topic, "topic_name", "", KW_REQUIRED),
+        "pkey",         "%s", pkey,
+        NULL
+    );
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *get_id( // Return is not YOURS!
+    json_t *topic,
+    json_t *record // not owned
+)
+{
+    json_t *col = get_pkey_desc(topic);
+
+    const char *pkey = kw_get_str(col, "id", 0, KW_REQUIRED);
+    if(!pkey) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Col desc without pkey",
+            "pkey",         "%s", pkey,
+            NULL
+        );
+        return 0;
+    }
+    return kw_get_dict_value(record, pkey, 0, 0);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int set_id(
     json_t *record, // not owned
     json_t *topic,
     json_t *id     // not owned
 )
 {
-    const char *pkey = kw_get_str(topic, "pkey", "", KW_REQUIRED);
-
-    json_t *cols = kw_select(
-        kw_get_list(topic, "cols", 0, KW_REQUIRED),
-        0,
-        json_pack("{s:s}",
-            "id", pkey
-        ),
-        0
-    );
-    json_t *col = kw_get_list_value(cols, 0, KW_REQUIRED);
+    json_t *col = get_pkey_desc(topic);
     if(!col) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Cannot get pkey col desc",
-            "pkey",         "%s", pkey,
+            "msg",          "%s", "Topic desc without pkey desc",
+            "topic",        "%j", topic,
             NULL
         );
-        JSON_DECREF(cols);
         return -1;
     }
-
     const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
     if(!type) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Col desc without type",
-            "pkey",         "%s", pkey,
+            "msg",          "%s", "Col desc without 'type'",
+            "topic",        "%j", topic,
             NULL
         );
-        JSON_DECREF(cols);
+        return -1;
+    }
+    const char *pkey = kw_get_str(col, "id", 0, KW_REQUIRED);
+    if(!pkey) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Col desc without 'id'",
+            "topic",        "%j", topic,
+            NULL
+        );
         return -1;
     }
 
@@ -681,25 +733,23 @@ PRIVATE int set_id(
                 "type",         "%s", type,
                 NULL
             );
-            JSON_DECREF(cols);
             return -1;
     } SWITCHS_END;
 
-    JSON_DECREF(cols);
     return 0;
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
+PUBLIC json_t *trtdb_read_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *id,     // owned, Can be: integer,string, [integer], [string], [keys]
     json_t *fields, // owned, Return only this fields. Can be: string, [string], [keys]
     json_t *kw,     // owned, Being filter on reading or record on writting
-    const char *options // "create", "delete", "verbose", "metadata"
+    const char *options // "create", TODO "delete", "metadata"
 )
 {
     /*-------------------------------*
@@ -721,38 +771,43 @@ PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
         KW_REQUIRED
     );
     if(!data) {
-        if(options && strstr(options, "verbose")) {
-            log_error(
-                LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "TreeDb Topic data NOT FOUND",
-                "path",         "%s", path,
-                NULL
-            );
-        }
+        log_error(
+            LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "TreeDb Topic data NOT FOUND",
+            "path",         "%s", path,
+            NULL
+        );
         JSON_DECREF(id);
         JSON_DECREF(fields);
         JSON_DECREF(kw);
         return 0;
     }
     if(!indexes) {
-        if(options && strstr(options, "verbose")) {
-            log_error(
-                LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
-                "path",         "%s", path,
-                NULL
-            );
-        }
+        log_error(
+            LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
+            "path",         "%s", path,
+            NULL
+        );
         JSON_DECREF(id);
         JSON_DECREF(fields);
         JSON_DECREF(kw);
         return 0;
+    }
+
+    /*-----------------------------------------*
+     *  With no id try to get id from record
+     *-----------------------------------------*/
+    if(!id) {
+        json_t *topic = tranger_topic(tranger, topic_name);
+        id = get_id(topic, kw); // Return is not YOURS!
+        JSON_INCREF(id);
     }
 
     if(id) {
@@ -770,12 +825,14 @@ PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
             JSON_DECREF(kw);
             // TODO filtra por fields
             JSON_DECREF(fields);
+            JSON_INCREF(record);
             return record;
         }
         /*
          *  Not found, create if option
          */
         if(!(options && strstr(options, "create"))) {
+            // No create
             JSON_DECREF(id);
             JSON_DECREF(fields);
             JSON_DECREF(kw);
@@ -811,10 +868,11 @@ PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
          *      Working without id
          *-------------------------------*/
         JSON_INCREF(fields);
+        JSON_INCREF(kw);
         json_t *record = _trtdb_select(
             data,   // not owned
             fields, // owned, fields
-            id,     // owned, filter
+            kw,     // owned, filter HACK use kw as filter
             0       // match fn
         );
         if(json_array_size(record)>0) {
@@ -869,13 +927,13 @@ PUBLIC json_t *trtdb_read_node( // Return IS NOT YOURS!
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_write_node( // Return IS NOT YOURS!
+PUBLIC int trtdb_write_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *id, // owned
     json_t *kw, // owned
-    const char *options // "inmediate"
+    const char *options // ""
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
@@ -961,7 +1019,8 @@ PRIVATE int load_record_callback(
         KW_REQUIRED
     );
     if(!data || !indexes) {
-        return -1;
+        JSON_DECREF(jn_record);
+        return -1;  // Timeranger: break the load
     }
 
     /*
@@ -977,22 +1036,10 @@ PRIVATE int load_record_callback(
         return 0;  // Timeranger does not load the record, it's me.
     }
 
-    /*
-     *  Check tag TODO pendiente de implementar los tag
-     *  If tag is 0 then the last loaded msg will be the active msg
-     */
-//     uint32_t instance_tag = md_record->__user_flag__;
-//     uint32_t topic_tag = kw_get_int(topic, "topic_tag", 0, 0);
-//
-//     BOOL is_active = FALSE;
-//     if(topic_tag==0 || instance_tag == topic_tag) {
-//         is_active = TRUE;
-//     }
-
     json_object_update(record, jn_record);
 
     JSON_DECREF(jn_record);
-    return 0;  // Timeranger does not load the record, it's me.
+    return 0;  // Timeranger: does not load the record, it's me.
 }
 
 /***************************************************************************
@@ -1015,37 +1062,35 @@ PRIVATE json_t *_trtdb_select(
         match_fn = kw_match_simple;
     }
     json_t *kw_new = json_array();
-?
-//     if(json_is_array(kw)) {
-//         size_t idx;
-//         json_t *jn_value;
-//         json_array_foreach(kw, idx, jn_value) {
-//             KW_INCREF(jn_filter);
-//             if(match_fn(jn_value, jn_filter)) {
-//                 json_t *jn_row = kw_duplicate_with_only_keys(jn_value, keys);
-//                 json_array_append_new(kw_new, jn_row);
-//             }
-//         }
-//     } else if(json_is_object(kw)) {
-//         KW_INCREF(jn_filter);
-//         if(match_fn(kw, jn_filter)) {
-//             json_t *jn_row = kw_duplicate_with_only_keys(kw, keys);
-//             json_array_append_new(kw_new, jn_row);
-//         }
-//
-//     } else  {
-//         log_error(LOG_OPT_TRACE_STACK,
-//             "gobj",         "%s", __FILE__,
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-//             "msg",          "%s", "kw MUST BE a json array or object",
-//             NULL
-//         );
-//         return kw_new;
-//     }
+    if(json_is_array(kw)) {
+        size_t idx;
+        json_t *jn_value;
+        json_array_foreach(kw, idx, jn_value) {
+            KW_INCREF(jn_filter);
+            if(match_fn(jn_value, jn_filter)) {
+                json_array_append(kw_new, jn_value);
+            }
+        }
+    } else if(json_is_object(kw)) {
+        KW_INCREF(jn_filter);
+        if(match_fn(kw, jn_filter)) {
+            json_array_append(kw_new, kw);
+        }
 
-    KW_DECREF(jn_fields);
-    KW_DECREF(jn_filter);
+    } else  {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw MUST BE a json array or object",
+            NULL
+        );
+        JSON_DECREF(kw_new);
+        return 0;
+    }
+
+    JSON_DECREF(jn_fields);
+    JSON_DECREF(jn_filter);
     return kw_new;
 }
 

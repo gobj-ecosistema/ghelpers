@@ -2266,7 +2266,7 @@ PUBLIC BOOL kw_match_simple(
 
 /***************************************************************************
     Being `kw` a row's list or list of dicts [{},...],
-    return a new kw filtering the rows by `jn_filter` (where),
+    return a new list of **duplicated** kw filtering the rows by `jn_filter` (where),
     and returning the `keys` fields of row (select).
     If match_fn is 0 then kw_match_simple is used.
  ***************************************************************************/
