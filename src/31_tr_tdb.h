@@ -86,8 +86,6 @@ PUBLIC int trtdb_write_node(
 PUBLIC json_t *trtdb_link_node(
     json_t *tranger,
     const char *treedb_name,
-    const char *topic_parent,
-    const char *topic_child,
     const char *link,
     json_t *kw_parent,
     json_t *kw_child,
@@ -96,8 +94,6 @@ PUBLIC json_t *trtdb_link_node(
 PUBLIC json_t *trtdb_unlink_node( // TODO
     json_t *tranger,
     const char *treedb_name,
-    const char *topic_parent,
-    const char *topic_child,
     const char *link,
     json_t *kw_parent,
     json_t *kw_child,

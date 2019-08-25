@@ -350,12 +350,13 @@ PUBLIC json_t *_trtdb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s], s:s}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
             "enum",
-                "","persistent","required","volatil","pkey","uuid","link","reverse","include",
+                "","persistent","required","volatil",
+                "pkey","uuid","include",
             "flag",
                 ""
         )
@@ -398,10 +399,6 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
 {
     int ret = 0;
 
-// printf("======>\n"); // TODO TEST
-// print_json(desc);
-// print_json(data);
-
     /*
      *  Get description of field
      */
@@ -416,6 +413,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Field 'id' required",
             "topic",        "%s", topic_name,
+            "data",         "%j", data,
             NULL
         );
         return -1;
@@ -427,6 +425,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Field 'type' required",
             "topic",        "%s", topic_name,
+            "data",         "%j", data,
             NULL
         );
         return -1;
@@ -449,6 +448,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "Field required",
                 "topic",        "%s", topic_name,
+                "data",         "%j", data,
                 "field",        "%s", desc_id,
                 NULL
             );
@@ -480,6 +480,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                                     "msg",          "%s", "Wrong enum type",
                                     "topic",        "%s", topic_name,
+                                    "data",         "%j", data,
                                     "field",        "%s", desc_id,
                                     "value",        "%s", json_string_value(v),
                                     "value_to_be",  "%j", desc_enum,
@@ -495,6 +496,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                                 "msg",          "%s", "Case not implemented",
                                 "topic",        "%s", topic_name,
+                                "data",         "%j", data,
                                 "field",        "%s", desc_id,
                                 "value",        "%s", json_string_value(v),
                                 "value_to_be",  "%j", desc_enum,
@@ -515,6 +517,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                         "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                         "msg",          "%s", "Wrong enum type",
                         "topic",        "%s", topic_name,
+                        "data",         "%j", data,
                         "field",        "%s", desc_id,
                         "value",        "%s", json_string_value(value),
                         "value_to_be",  "%j", desc_enum,
@@ -530,6 +533,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "Enum value must be string or string's array",
                     "topic",        "%s", topic_name,
+                    "data",         "%j", data,
                     "field",        "%s", desc_id,
                     "value",        "%s", json_string_value(value),
                     "value_to_be",  "%j", desc_enum,
@@ -551,6 +555,7 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "Wrong basic type",
                     "topic",        "%s", topic_name,
+                    "data",         "%j", data,
                     "field",        "%s", desc_id,
                     "value",        "%s", value_type,
                     "value_to_be",  "%j", desc_type,
@@ -777,7 +782,7 @@ PUBLIC json_t *trtdb_read_node(
             LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "TreeDb Topic data NOT FOUND",
             "path",         "%s", path,
             NULL
@@ -792,7 +797,7 @@ PUBLIC json_t *trtdb_read_node(
             LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
             "path",         "%s", path,
             NULL
@@ -929,6 +934,19 @@ PUBLIC json_t *trtdb_read_node(
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE json_t *create_record(
+    json_t *cols,  // not owned
+    json_t *kw  // not owned
+)
+{
+    json_t *new_record = 0;
+
+    return new_record;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC int trtdb_write_node(
     json_t *tranger,
     const char *treedb_name,
@@ -939,21 +957,24 @@ PUBLIC int trtdb_write_node(
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
+    json_t *cols = kw_get_list(topic, "cols", 0, KW_REQUIRED);
 
     // TODO check cols, id with uuid
-    // parse_schema_cols(tranger_topic_name(topic), topic_cols_desc, json_array_get(col, 0));
+    parse_schema_cols(
+        topic_name,
+        topic_cols_desc,
+        cols
+    );
 
     /*
-     *  Duplicate (new references) the kw to build the new recod
+     *
      */
-    json_t *new_record = json_deep_copy(kw); // TODO cambia, que no carge variables _ __
-                                            // u option, que sea estricto con el desc,
-                                            // y que deje salvar las _ __
+    json_t *new_record = create_record(cols, kw);
     if(id) {
         /*
          *  Explicit id
          */
-        set_id(new_record, topic, id);
+        set_id(new_record, topic, id); // TODO muevelo a create_record
     }
 
     /*
@@ -1121,14 +1142,69 @@ PRIVATE json_t *_trtdb_select(
 PUBLIC json_t *trtdb_link_node(
     json_t *tranger,
     const char *treedb_name,
-    const char *topic_parent,
-    const char *topic_child,
-    const char *link,
+    const char *slink,
     json_t *kw_parent,
     json_t *kw_child,
     const char *options  // TODO "return-child" (default), "return-parent"
 )
 {
+    // TODO mira si en un explicito de un link multiple split(slink, ".")
+
+    json_t *link = kw_get_dict_value(kw_parent, slink, 0, 0);
+    if(!link) {
+        log_error(
+            LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Property 'link' not found",
+            "data",         "%j", kw_parent,
+            NULL
+        );
+        return 0;
+    }
+    switch(json_typeof(link)) {
+    case JSON_ARRAY:
+        // TODO el split tiene que venir
+        log_error(
+            LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "'link' bad type",
+            "link",         "%j", link,
+            NULL
+        );
+        break;
+    case JSON_STRING:
+        {
+            kw_set_dict_value(
+                kw_parent,
+                json_string_value(link),
+                get_id(
+                    tranger_topic(
+                        tranger,
+                        kw_get_str(kw_child, "__md_treedb__`topic_name", 0, KW_REQUIRED)
+                    ),
+                    kw_child
+                )
+            );
+        }
+        break;
+    default:
+        log_error(
+            LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "'link' bad type",
+            "link",         "%j", link,
+            NULL
+        );
+        break;
+    }
+
+
     json_t *child = 0;
     // TODO
 
@@ -1141,8 +1217,6 @@ PUBLIC json_t *trtdb_link_node(
 PUBLIC json_t *trtdb_unlink_node(
     json_t *tranger,
     const char *treedb_name,
-    const char *topic_parent,
-    const char *topic_child,
     const char *link,
     json_t *kw_parent,
     json_t *kw_child,
