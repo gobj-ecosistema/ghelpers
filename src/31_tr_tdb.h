@@ -44,7 +44,7 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
-    json_t *jn_options  // owned
+    const char *options
 );
 PUBLIC int trtdb_close_db(
     json_t *tranger,
@@ -71,7 +71,7 @@ PUBLIC json_t *trtdb_read_node(
     json_t *id,     // owned, Explicit id. Can be: integer,string, [integer], [string], [keys]
     json_t *fields, // owned, Return only this fields. Can be: string, [string], [keys]
     json_t *kw,     // owned, Being filter on reading or record on writting
-    const char *options // "create", TODO "delete", "metadata"
+    const char *options // "create", TODO "delete",
 );
 
 PUBLIC int trtdb_write_node(

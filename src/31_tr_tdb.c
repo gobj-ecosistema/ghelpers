@@ -82,7 +82,7 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
-    json_t *jn_options  // owned
+    const char *options
 )
 {
     if(!jn_schema) {
@@ -94,7 +94,6 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
             "treedb_name",  "%s", treedb_name,
             NULL
         );
-        JSON_DECREF(jn_options)
         return 0;
     }
 
@@ -113,7 +112,6 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     json_t *jn_schema_topics = kw_get_list(jn_schema, "topics", 0, KW_REQUIRED);
     if(!jn_schema_topics) {
         JSON_DECREF(jn_schema);
-        JSON_DECREF(jn_options)
         return 0;
     }
 
@@ -131,7 +129,6 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
             NULL
         );
         JSON_DECREF(jn_schema);
-        JSON_DECREF(jn_options)
         return 0;
     }
 
@@ -245,7 +242,6 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     }
 
     JSON_DECREF(jn_schema);
-    JSON_DECREF(jn_options)
     return trtdb;
 }
 
@@ -308,6 +304,7 @@ PRIVATE BOOL validate_topic(
     const char *options
 )
 {
+    // TODO
     return TRUE;
 }
 
@@ -464,6 +461,9 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
      */
     const char *my_desc_type = my_json_type(desc_type);
     SWITCHS(my_desc_type) {
+        /*----------------------------*
+         *      Enum
+         *----------------------------*/
         CASES("enum")
             json_t *desc_enum = kw_get_list(desc, "enum", 0, 0);
             switch(json_typeof(value)) {
@@ -540,7 +540,9 @@ PRIVATE int check_field(const char *topic_name, json_t *desc, json_t *data)
             }
             break;
 
-        // Json basic types
+        /*----------------------------*
+         *      Json basic types
+         *----------------------------*/
         DEFAULTS
             if(!kw_has_word(desc_type, value_type, 0)) {
                 log_error(0,
@@ -749,7 +751,7 @@ PUBLIC json_t *trtdb_read_node(
     json_t *id,     // owned, Can be: integer,string, [integer], [string], [keys]
     json_t *fields, // owned, Return only this fields. Can be: string, [string], [keys]
     json_t *kw,     // owned, Being filter on reading or record on writting
-    const char *options // "create", TODO "delete", "metadata"
+    const char *options // "create", TODO "delete",
 )
 {
     /*-------------------------------*
@@ -983,6 +985,23 @@ PUBLIC int trtdb_write_node(
 }
 
 /***************************************************************************
+ *  Return json object with record metadata
+ ***************************************************************************/
+PRIVATE json_t *_md2json(json_t *topic, md_record_t *md_record)
+{
+    json_t *jn_md = json_object();
+    json_object_set(
+        jn_md,
+        "topic_name",
+        json_object_get(topic, "topic_name")
+    );
+    json_object_set_new(jn_md, "__rowid__", json_integer(md_record->__rowid__));
+    json_object_set_new(jn_md, "__t__", json_integer(md_record->__t__));
+    json_object_set_new(jn_md, "__tag__", json_integer(md_record->__user_flag__));
+
+    return jn_md;
+}
+/***************************************************************************
  *
  ***************************************************************************/
 PRIVATE int load_record_callback(
@@ -1031,6 +1050,8 @@ PRIVATE int load_record_callback(
         /*
          *  New record
          */
+        json_t *jn_record_md = _md2json(topic, md_record);
+        json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
         json_object_set(indexes, key, jn_record);
         json_array_append_new(data, jn_record);
         return 0;  // Timeranger does not load the record, it's me.
