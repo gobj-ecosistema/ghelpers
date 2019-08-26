@@ -63,7 +63,7 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/
-PUBLIC json_t *trtdb_read_node(
+PUBLIC json_t *trtdb_read_node( // Working with 'id' returns a dict, without returns a list
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,

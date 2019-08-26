@@ -687,6 +687,7 @@ PUBLIC json_t *trtdb_read_node(
     if(id) {
         /*-------------------------------*
          *      Working with id
+         *  NOTE Must return a dict
          *-------------------------------*/
         char *id_ = jn2string(id);
         json_t *record = kw_get_dict(indexes, id_, 0, 0);
@@ -740,6 +741,7 @@ PUBLIC json_t *trtdb_read_node(
     } else {
         /*-------------------------------*
          *      Working without id
+         *  NOTE Must return a list
          *-------------------------------*/
         JSON_INCREF(fields);
         JSON_INCREF(kw);
