@@ -742,15 +742,59 @@ PUBLIC json_t *trtdb_read_node(
          *      Working without id
          *-------------------------------*/
         JSON_INCREF(fields);
+        JSON_INCREF(kw);
         json_t *record = _trtdb_select(
             data,   // not owned
             fields, // owned, fields
             kw,     // owned, filter HACK use kw as filter
             0       // match fn
         );
-        // TODO filtra por fields
-        JSON_DECREF(fields);
-        return record;
+        if(json_array_size(record)>0) {
+            /*
+             *  Found
+             */
+            JSON_DECREF(kw);
+            // TODO filtra por fields
+            JSON_DECREF(fields);
+            return record;
+        }
+        JSON_DECREF(record);
+
+        /*
+         *  Not found, create if option
+         */
+        if(!(options && strstr(options, "create"))) {
+            JSON_DECREF(fields);
+            JSON_DECREF(kw);
+            return 0;
+        }
+
+        /*
+         *  Not found, create if option
+         */
+        JSON_INCREF(kw);
+        int ret = trtdb_write_node(
+            tranger,
+            treedb_name,
+            topic_name,
+            0,
+            kw, // owned
+            options
+        );
+        if(ret < 0) {
+            JSON_DECREF(fields);
+            JSON_DECREF(kw);
+            return json_array();
+        }
+        return trtdb_read_node(
+            tranger,
+            treedb_name,
+            topic_name,
+            0,      // owned
+            fields, // owned
+            kw,     // owned
+            options
+        );
     }
 }
 
