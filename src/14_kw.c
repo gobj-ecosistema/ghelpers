@@ -1559,6 +1559,29 @@ PUBLIC char *jn2string(json_t *jn_var)
 }
 
 /***************************************************************************
+ *  Simple json to bool
+ ***************************************************************************/
+PUBLIC BOOL jn2bool(json_t *jn_var)
+{
+    BOOL val = 0;
+    if(json_is_real(jn_var)) {
+        val = json_real_value(jn_var)?1:0;
+    } else if(json_is_integer(jn_var)) {
+        val = json_integer_value(jn_var)?1:0;
+    } else if(json_is_string(jn_var)) {
+        const char *v = json_string_value(jn_var);
+        val = empty_string(v)?0:1;
+    } else if(json_is_true(jn_var)) {
+        val = 1;
+    } else if(json_is_false(jn_var)) {
+        val = 0;
+    } else if(json_is_null(jn_var)) {
+        val = 0;
+    }
+    return val;
+}
+
+/***************************************************************************
  *  if binary is inside of kw, incref binary
  ***************************************************************************/
 PRIVATE serialize_fields_t * get_serialize_field(const char *binary_field_name)

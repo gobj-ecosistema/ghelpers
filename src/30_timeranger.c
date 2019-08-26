@@ -2034,42 +2034,45 @@ PUBLIC int tranger_append_record(
 
     switch(system_flag_key_type) {
         case sf_string_key:
-            if(!kw_has_path(jn_record, pkey)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
-                    "msgset",       "%s", MSGSET_JSON_ERROR,
-                    "msg",          "%s", "Cannot append record, Record without pkey",
-                    "topic",        "%s", topic_name,
-                    "pkey",         "%s", pkey,
-                    NULL
-                );
-                log_debug_json(0, jn_record, "Cannot append record, Record without pkey");
-                JSON_DECREF(jn_record);
-                return -1;
+            {
+                const char *key_value = kw_get_str(jn_record, pkey, 0, 0);
+                if(!key_value) {
+                    log_error(LOG_OPT_TRACE_STACK,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "process",      "%s", get_process_name(),
+                        "hostname",     "%s", get_host_name(),
+                        "pid",          "%d", get_pid(),
+                        "msgset",       "%s", MSGSET_JSON_ERROR,
+                        "msg",          "%s", "Cannot append record, Record without pkey",
+                        "topic",        "%s", topic_name,
+                        "pkey",         "%s", pkey,
+                        NULL
+                    );
+                    log_debug_json(0, jn_record, "Cannot append record, Record without pkey");
+                    JSON_DECREF(jn_record);
+                    return -1;
+                }
+                if(strlen(key_value) > sizeof(md_record->key.s)-1) {
+                    log_error(LOG_OPT_TRACE_STACK,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "process",      "%s", get_process_name(),
+                        "hostname",     "%s", get_host_name(),
+                        "pid",          "%d", get_pid(),
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "key value TOO large",
+                        "topic",        "%s", topic_name,
+                        "key_value",    "%s", pkey,
+                        "size",         "%d", strlen(key_value),
+                        "maxsize",      "%d", sizeof(md_record->key.s)-1,
+                        NULL
+                    );
+                }
+                strncpy(md_record->key.s, key_value, sizeof(md_record->key.s)-1);
             }
-            const char *key_value = kw_get_str(jn_record, pkey, 0, KW_REQUIRED);
-            if(strlen(key_value) > sizeof(md_record->key.s)-1) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "key value TOO large",
-                    "topic",        "%s", topic_name,
-                    "key_value",    "%s", pkey,
-                    "size",         "%d", strlen(key_value),
-                    "maxsize",      "%d", sizeof(md_record->key.s)-1,
-                    NULL
-                );
-            }
-            strncpy(md_record->key.s, key_value, sizeof(md_record->key.s)-1);
             break;
+
         case sf_int_key:
             if(kw_has_path(jn_record, pkey)) {
                 md_record->key.i = kw_get_int(
@@ -2087,6 +2090,7 @@ PUBLIC int tranger_append_record(
                 );
             }
             break;
+
         case sf_rowid_key:
             md_record->key.i = md_record->__rowid__;
             json_object_set_new(

@@ -1010,7 +1010,7 @@ PRIVATE void _log_jnbf(int priority, log_opt_t opt, va_list ap)
 
         if(lh->hr->write_fn) {
             // TODO with a hgen_dup analiza si es el mismo msg para no repetirlo
-            json_reset(hgen, 0);
+            json_reset(hgen, 2);
             va_list ap_;
             va_copy(ap_, ap);
             json_vappend(hgen, ap_);
@@ -1240,6 +1240,7 @@ PRIVATE void json_vappend(hgen_t hgen, va_list ap)
                                     JSON_INDENT(0) |
                                     JSON_REAL_PRECISION(get_real_precision());
                                 char *bf = json_dumps(jn, flags);
+                                helper_doublequote2quote(bf);
                                 if(bf) {
                                     json_add_string(hgen, key, bf);
                                     jsonp_free(bf) ;

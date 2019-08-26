@@ -356,6 +356,13 @@ PUBLIC char *jn2string(
     json_t *jn_var
 );
 
+/**rst**
+    Simple json to boolean
+**rst**/
+PUBLIC BOOL jn2bool(
+    json_t *jn_var
+);
+
 PUBLIC int kw_walk(
     json_t *kw, // not owned
     int (*callback)(json_t *kw, const char *key, json_t *value)

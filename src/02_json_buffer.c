@@ -371,7 +371,7 @@ PUBLIC hgen_t json_dict(void)
         );
         return 0;
     }
-    ul_buffer_reset(hgen, 0);
+    ul_buffer_reset(hgen, 1);
     return hgen;
 }
 

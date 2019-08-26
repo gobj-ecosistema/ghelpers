@@ -56,7 +56,6 @@ PUBLIC int trtdb_close_db(
  *------------------------------------*/
 PUBLIC json_t *_trtdb_create_topic_cols_desc(void);
 PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
-    const char *topic_name,
     json_t *cols_desc,
     json_t *data
 );
@@ -80,7 +79,7 @@ PUBLIC int trtdb_write_node(
     const char *topic_name,
     json_t *id, // owned, Explicit id. Can be: integer,string
     json_t *kw, // owned
-    const char *options // ""
+    const char *options // "strict"
 );
 
 PUBLIC json_t *trtdb_link_node(

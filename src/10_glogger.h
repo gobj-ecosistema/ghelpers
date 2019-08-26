@@ -20,6 +20,7 @@
 #include "02_dl_list.h"
 #include "02_time_helper.h"
 #include "02_json_buffer.h"
+#include "03_json_config.h"
 
 // Handlers included in ghelpers
 #include "02_stdout.h"              // "stdout"
