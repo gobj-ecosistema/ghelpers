@@ -114,6 +114,7 @@ typedef enum {
     LOG_HND_OPT_NOTIME          = 0x0800,
 
     LOG_HND_OPT_TRACE_STACK     = 0x1000,
+    LOG_HND_OPT_BEATIFUL_JSON   = 0x2000,
 } log_handler_opt_t;
 
 #define LOG_OPT_UP_ERROR \

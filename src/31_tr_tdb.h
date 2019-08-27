@@ -39,6 +39,8 @@ extern "C"{
     in pure-child or multi-parent mode.
     The tree in json too.
 
+    HACK Convention: the pkey of all topics must be "id".
+
 **rst**/
 PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
@@ -63,13 +65,12 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/
-PUBLIC json_t *trtdb_read_node( // Working with 'id' returns a dict, without returns a list
+PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, without returns a list
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *id,     // owned, Explicit id. Can be: integer,string, [integer], [string], [keys]
-    json_t *fields, // owned, Return only this fields. Can be: string, [string], [keys]
-    json_t *kw,     // owned, Being filter on reading or record on writting
+    json_t *kw,     // owned, HACK kw is `filter` on read/delete and `record` on create
     const char *options // "create", TODO "delete",
 );
 
@@ -82,21 +83,21 @@ PUBLIC int trtdb_write_node(
     const char *options // "strict"
 );
 
-PUBLIC json_t *trtdb_link_node(
+PUBLIC int trtdb_link_nodes(
     json_t *tranger,
     const char *treedb_name,
     const char *link,
-    json_t *kw_parent,
-    json_t *kw_child,
-    const char *options  // TODO "return-child" (default), "return-parent"
+    json_t *parent_records, // not owned
+    json_t *child_records,  // not owned
+    const char *options     //
 );
-PUBLIC json_t *trtdb_unlink_node( // TODO
+PUBLIC int trtdb_unlink_nodes( // TODO
     json_t *tranger,
     const char *treedb_name,
     const char *link,
-    json_t *kw_parent,
-    json_t *kw_child,
-    const char *options  // TODO "return-parent" (default), "return-child"
+    json_t *parent_records, // not owned
+    json_t *child_records,  // not owned
+    const char *options     //
 );
 
 

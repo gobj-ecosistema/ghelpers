@@ -1155,10 +1155,22 @@ PUBLIC json_t *kw_get_subdict_value(
 {
     json_t *jn_subdict = _kw_search_dict(kw, path, flag);
     if(!jn_subdict) {
-        JSON_DECREF(jn_default_value);
-        return 0;
+        return jn_default_value;
     }
-
+    if(empty_string(key)) {
+        if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "key NULL",
+                "path",         "%s", path,
+                "key",          "%s", key,
+                NULL
+            );
+        }
+        return jn_default_value;
+    }
     return kw_get_dict_value(jn_subdict, key, jn_default_value, flag);
 }
 
@@ -1181,9 +1193,6 @@ PUBLIC int kw_set_subdict_value(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "json_object_set_new() FAILED",
             "path",         "%s", path,
@@ -2293,7 +2302,7 @@ PUBLIC BOOL kw_match_simple(
     and returning the `keys` fields of row (select).
     If match_fn is 0 then kw_match_simple is used.
  ***************************************************************************/
-PUBLIC json_t *kw_select(
+PUBLIC json_t *kw_select( // WARNING return **duplicated** objects
     json_t *kw,         // not owned
     const char **keys,
     json_t *jn_filter,  // owned
@@ -2340,6 +2349,61 @@ PUBLIC json_t *kw_select(
     }
 
     KW_DECREF(jn_filter);
+    return kw_new;
+}
+
+/***************************************************************************
+    Being `kw` a row's list or list of dicts [{},...],
+    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    If match_fn is 0 then kw_match_simple is used.
+    NOTE Using JSON_INCREF/JSON_DECREF
+ ***************************************************************************/
+PUBLIC json_t *kw_collect( // WARNING be care, you can modify the original records
+    json_t *kw,         // not owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+)
+{
+    if(!kw) {
+        JSON_DECREF(jn_filter);
+        // silence
+        return 0;
+    }
+    if(!match_fn) {
+        match_fn = kw_match_simple;
+    }
+    json_t *kw_new = json_array();
+    if(json_is_array(kw)) {
+        size_t idx;
+        json_t *jn_value;
+        json_array_foreach(kw, idx, jn_value) {
+            JSON_INCREF(jn_filter);
+            if(match_fn(jn_value, jn_filter)) {
+                json_array_append(kw_new, jn_value);
+            }
+        }
+    } else if(json_is_object(kw)) {
+        JSON_INCREF(jn_filter);
+        if(match_fn(kw, jn_filter)) {
+            json_array_append(kw_new, kw);
+        }
+
+    } else  {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw MUST BE a json array or object",
+            NULL
+        );
+        JSON_DECREF(kw_new);
+        return 0;
+    }
+
+    JSON_DECREF(jn_filter);
     return kw_new;
 }
 

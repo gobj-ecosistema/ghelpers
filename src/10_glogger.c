@@ -1010,10 +1010,10 @@ PRIVATE void _log_jnbf(int priority, log_opt_t opt, va_list ap)
 
         if(lh->hr->write_fn) {
             // TODO with a hgen_dup analiza si es el mismo msg para no repetirlo
-            json_reset(hgen, 2);
+            json_reset(hgen, (lh->handler_options & LOG_HND_OPT_BEATIFUL_JSON)?TRUE:FALSE);
             va_list ap_;
             va_copy(ap_, ap);
-            json_vappend(hgen, ap_);
+            json_vappend(hgen, ap_); // TODO las keys repetidas APARECEN!! cambia el json!!
             va_end(ap_);
             if(priority <= LOG_CRIT || !(lh->handler_options & LOG_HND_OPT_NODISCOVER)) {
                 // LOG_EMERG LOG_ALERT LOG_CRIT always use discover()
