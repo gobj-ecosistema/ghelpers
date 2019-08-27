@@ -955,7 +955,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("array")
-            if(JSON_TYPEOF(value)==JSON_ARRAY) {
+            if(JSON_TYPEOF(value, JSON_ARRAY)) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_array());
@@ -963,7 +963,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("object")
-            if(JSON_TYPEOF(value)==JSON_OBJECT) {
+            if(JSON_TYPEOF(value, JSON_OBJECT)) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_object());
@@ -1225,6 +1225,10 @@ PRIVATE int link_node(
     }
 
     json_t *link_col = json_array_get(cols, 0);
+
+    /*-----------------------------------------------*
+     *  Link - parent container with info of child
+     *-----------------------------------------------*/
     json_t *link = kw_get_dict(link_col, "link", 0, 0);
     if(!link) {
         log_error(
@@ -1240,44 +1244,53 @@ PRIVATE int link_node(
         JSON_DECREF(cols);
         return -1;
     }
-
-print_json(link);
-
-    /*-----------------------------------------------*
-     *  Link - parent container with info of child
-     *-----------------------------------------------*/
-    BOOL found = FALSE;
-    const char *link_topic_name; json_t *field;
-    json_object_foreach(link, link_topic_name, field) {
-        if(strcmp(link_topic_name, child_topic_name)==0) {
-            const char *child_field = json_string_value(field);
-            json_t *child_hook = kw_get_dict_value(child_record, child_field, 0, 0);
-            if(!child_hook) {
-                break;
-            }
+    BOOL link_found = FALSE;
+    const char *hook_topic_name; json_t *hook_field_;
+    json_object_foreach(link, hook_topic_name, hook_field_) {
+        if(strcmp(child_topic_name, hook_topic_name)==0) {
+            const char *hook_field = json_string_value(hook_field_);
+            const char *id  = kw_get_str(child_record, hook_field, 0, 0);
             switch(json_typeof(parent_hook)) { // json_typeof PROTECTED
                 case JSON_STRING:
                     {
-                        const char *id  = kw_get_str(child_record, child_field, 0, 0);
                         if(json_object_set_new(parent_record, link_, json_string(id))==0) {
-                            found = TRUE;
+                            link_found = TRUE;
                         }
                     }
                     break;
                 case JSON_ARRAY:
                     {
-                        const char *id  = kw_get_str(child_record, child_field, 0, 0);
-                        if(json_array_append_new(parent_hook, json_string(id))==0) {
-                            found = TRUE;
+                        if(json_array_append(parent_hook, child_record)==0) {
+                            link_found = TRUE;
+                        }
+                    }
+                    break;
+                case JSON_OBJECT:
+                    {
+                        if(json_object_set(parent_hook, id, child_record)==0) {
+                            link_found = TRUE;
                         }
                     }
                     break;
                 default:
-                    break;
+                    log_error(
+                        LOG_OPT_TRACE_STACK,
+                        "gobj",                 "%s", __FILE__,
+                        "function",             "%s", __FUNCTION__,
+                        "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",                  "%s", "wrong parent hook type",
+                        "parent_topic_name",    "%s", parent_topic_name,
+                        "child_topic_name",     "%s", child_topic_name,
+                        "link",                 "%s", link_,
+                        "parent_hook",          "%j", parent_hook,
+                        NULL
+                    );
+                    JSON_DECREF(cols);
+                    return -1;
             }
         }
     }
-    if(!found) {
+    if(!link_found) {
         log_error(
             LOG_OPT_TRACE_STACK,
             "gobj",                 "%s", __FILE__,
@@ -1296,48 +1309,74 @@ print_json(link);
     /*--------------------------------------------------*
      *  Reverse - child container with info of parent
      *--------------------------------------------------*/
-print_json(parent_record);
-print_json(child_record);
-
-//     switch(json_typeof(link)) { // json_typeof CONTROLADO
-//     case JSON_ARRAY:
-//         // TODO el split tiene que venir
-//         log_error(
-//             LOG_OPT_TRACE_STACK,
-//             "gobj",         "%s", __FILE__,
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-//             "msg",          "%s", "'link' bad type",
-//             "link",         "%j", link,
-//             NULL
-//         );
-//         break;
-//     case JSON_STRING:
-//         {
-//             kw_set_dict_value(
-//                 parent_record,
-//                 json_string_value(link),
-//                 kw_get_dict_value(
-//                     child_record,
-//                     "id",
-//                     0,
-//                     KW_REQUIRED
-//                 )
-//             );
-//         }
-//         break;
-//     default:
-//         log_error(
-//             LOG_OPT_TRACE_STACK,
-//             "gobj",         "%s", __FILE__,
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-//             "msg",          "%s", "'link' bad type",
-//             "link",         "%j", link,
-//             NULL
-//         );
-//         break;
-//     }
+    json_t *reverse = kw_get_dict(link_col, "reverse", 0, 0);
+    if(reverse) {
+        BOOL reverse_found = FALSE;
+        const char *hook_topic_name; json_t *hook_field_;
+        json_object_foreach(reverse, hook_topic_name, hook_field_) {
+            if(strcmp(parent_topic_name, hook_topic_name)==0) {
+                const char *hook_field = json_string_value(hook_field_);
+                json_t *child_hook = kw_get_dict_value(child_record, hook_field, 0, 0);
+                if(!child_hook) {
+                    break;
+                }
+                const char *id  = kw_get_str(parent_record, "id", 0, 0);
+                switch(json_typeof(child_hook)) { // json_typeof PROTECTED
+                    case JSON_STRING:
+                        {
+                            if(json_object_set_new(child_record, hook_field, json_string(id))==0) {
+                                reverse_found = TRUE;
+                            }
+                        }
+                        break;
+                    case JSON_ARRAY:
+                        {
+                            if(json_array_append_new(child_hook, json_string(id))==0) {
+                                reverse_found = TRUE;
+                            }
+                        }
+                        break;
+                    case JSON_OBJECT:
+                        {
+                            if(json_object_set(child_hook, id, parent_record)==0) {
+                                reverse_found = TRUE;
+                            }
+                        }
+                        break;
+                    default:
+                        log_error(
+                            LOG_OPT_TRACE_STACK,
+                            "gobj",                 "%s", __FILE__,
+                            "function",             "%s", __FUNCTION__,
+                            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                            "msg",                  "%s", "wrong child hook type",
+                            "parent_topic_name",    "%s", parent_topic_name,
+                            "child_topic_name",     "%s", child_topic_name,
+                            "link",                 "%s", link_,
+                            "child_hook",           "%j", child_hook,
+                            NULL
+                        );
+                        JSON_DECREF(cols);
+                        return -1;
+                }
+            }
+        }
+        if(!reverse_found) {
+            log_error(
+                LOG_OPT_TRACE_STACK,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                "msg",                  "%s", "link to child failed",
+                "parent_topic_name",    "%s", parent_topic_name,
+                "child_topic_name",     "%s", child_topic_name,
+                "link",                 "%s", link_,
+                NULL
+            );
+            JSON_DECREF(cols);
+            return -1;
+        }
+    }
 
     JSON_DECREF(cols);
     return 0;

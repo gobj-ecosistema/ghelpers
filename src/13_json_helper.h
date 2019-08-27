@@ -58,7 +58,7 @@ extern "C"{
     }                                                               \
 }
 
-#define JSON_TYPEOF(json) (json && json_typeof(json))
+#define JSON_TYPEOF(json, tipo) (json && json_typeof(json)==tipo)
 
 /***********************************************************************
  *      Prototypes
