@@ -693,7 +693,7 @@ PRIVATE int parse_hooks(
                             "topic_name",       "%s", topic_name,
                             "id",               "%s", id,
                             "link_topic_name",  "%s", link_topic_name,
-                            "link_field",       "%j", link_field,
+                            "link_field",       "%s", json_string_value(link_field),
                             NULL
                         );
                         ret += -1;
@@ -725,7 +725,7 @@ PRIVATE int parse_hooks(
                             "msg",                  "%s", "reverse topic not found",
                             "topic_name",           "%s", topic_name,
                             "id",                   "%s", id,
-                            "reverse_topic_name",  "%s", reverse_topic_name,
+                            "reverse_topic_name",   "%s", reverse_topic_name,
                             NULL
                         );
                         ret += -1;
@@ -745,7 +745,7 @@ PRIVATE int parse_hooks(
                             "topic_name",           "%s", topic_name,
                             "id",                   "%s", id,
                             "reverse_topic_name",   "%s", reverse_topic_name,
-                            "reverse_field",        "%j", reverse_field,
+                            "reverse_field",        "%s", json_string_value(reverse_field),
                             NULL
                         );
                         ret += -1;
