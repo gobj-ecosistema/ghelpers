@@ -2770,6 +2770,7 @@ PUBLIC int kw_pop(
             "opt1": true,   Yes, has word "opt1"
             "opt2": false   No has word "opt1"
         }
+
  ***************************************************************************/
 PUBLIC BOOL kw_has_word(
     json_t *kw,  // NOT owned
@@ -2777,6 +2778,19 @@ PUBLIC BOOL kw_has_word(
     const char *options
 )
 {
+    if(!kw) {
+        if(options && strstr(options, "verbose")) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "kw_has_word() kw NULL",
+                NULL
+            );
+        }
+        return FALSE;
+    }
+
     switch(json_typeof(kw)) {
     case JSON_OBJECT:
         if(kw_has_key(kw, word)) {

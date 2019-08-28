@@ -30,6 +30,9 @@ PRIVATE int load_record_callback(
     md_record_t *md_record,
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 );
+PRIVATE int parse_hooks(
+    json_t *tranger
+);
 
 /***************************************************************
  *              Data
@@ -262,6 +265,11 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
         kw_get_subdict_value(trtdb, topic_name, "indexes", json_object(), KW_CREATE);
     }
 
+    /*------------------------------*
+     *  Parse hooks
+     *------------------------------*/
+    parse_hooks(tranger);
+
     JSON_DECREF(jn_schema);
     return trtdb;
 }
@@ -391,7 +399,7 @@ PUBLIC json_t *_trtdb_create_topic_cols_desc(void)
             "header", "Flag",
             "type", "enum",
             "enum",
-                "","persistent","required","fkey", "volatil","uuid","include",
+                "","persistent","required","fkey", "hook","uuid","include",
             "flag",
                 ""
         )
@@ -402,7 +410,7 @@ PUBLIC json_t *_trtdb_create_topic_cols_desc(void)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int check_field(json_t *desc, json_t *data)
+PRIVATE int check_desc_field(json_t *desc, json_t *data)
 {
     int ret = 0;
 
@@ -445,7 +453,7 @@ PRIVATE int check_field(json_t *desc, json_t *data)
     const char *value_type = my_json_type(value);
 
     /*
-     *  Check field required
+     *  Check required
      */
     if(kw_has_word(desc_flag, "required", 0)) {
         if(!value) {
@@ -489,7 +497,8 @@ PRIVATE int check_field(json_t *desc, json_t *data)
                                     "desc",         "%j", desc,
                                     "data",         "%j", data,
                                     "field",        "%s", desc_id,
-                                    "value",        "%s", json_string_value(v),
+                                    "value",        "%j", value,
+                                    "v",            "%j", v,
                                     "value_to_be",  "%j", desc_enum,
                                     NULL
                                 );
@@ -505,7 +514,8 @@ PRIVATE int check_field(json_t *desc, json_t *data)
                                 "desc",         "%j", desc,
                                 "data",         "%j", data,
                                 "field",        "%s", desc_id,
-                                "value",        "%s", json_string_value(v),
+                                "value",        "%j", value,
+                                "v",            "%j", v,
                                 "value_to_be",  "%j", desc_enum,
                                 NULL
                             );
@@ -526,7 +536,7 @@ PRIVATE int check_field(json_t *desc, json_t *data)
                         "desc",         "%j", desc,
                         "data",         "%j", data,
                         "field",        "%s", desc_id,
-                        "value",        "%s", json_string_value(value),
+                        "value",        "%j", value,
                         "value_to_be",  "%j", desc_enum,
                         NULL
                     );
@@ -542,7 +552,7 @@ PRIVATE int check_field(json_t *desc, json_t *data)
                     "desc",         "%j", desc,
                     "data",         "%j", data,
                     "field",        "%s", desc_id,
-                    "value",        "%s", json_string_value(value),
+                    "value",        "%j", value,
                     "value_to_be",  "%j", desc_enum,
                     NULL
                 );
@@ -564,7 +574,7 @@ PRIVATE int check_field(json_t *desc, json_t *data)
                     "desc",         "%j", desc,
                     "data",         "%j", data,
                     "field",        "%s", desc_id,
-                    "value",        "%s", value_type,
+                    "value_type",   "%s", value_type,
                     "value_to_be",  "%j", desc_type,
                     NULL
                 );
@@ -602,14 +612,146 @@ PUBLIC int parse_schema_cols(
 
     if(json_is_object(data)) {
         json_array_foreach(cols_desc, idx, desc) {
-            ret += check_field(desc, data);
+            ret += check_desc_field(desc, data);
         }
     } else if(json_is_array(data)) {
         int idx1; json_t *d;
         json_array_foreach(data, idx1, d) {
             int idx2;
             json_array_foreach(cols_desc, idx2, desc) {
-                ret += check_field(desc, d);
+                ret += check_desc_field(desc, d);
+            }
+        }
+    }
+
+    return ret;
+}
+
+/***************************************************************************
+ *  Return 0 if ok or # of errors in negative
+ ***************************************************************************/
+PRIVATE int parse_hooks(
+    json_t *tranger
+)
+{
+    int ret = 0;
+
+    json_t *topics = kw_get_dict(tranger, "topics", 0, 0);
+    const char *topic_name; json_t *topic;
+    json_object_foreach(topics, topic_name, topic) {
+        json_t *cols = kw_get_list(topic, "cols", 0, KW_REQUIRED);
+        int idx; json_t *col;
+        json_array_foreach(cols, idx, col) {
+            const char *id = kw_get_str(col, "id", 0, 0);
+            json_t *flag = kw_get_dict_value(col, "flag", 0, 0);
+            if(kw_has_word(flag, "hook", 0)) {
+                /*-------------------------*
+                *          link
+                *-------------------------*/
+                json_t *link = kw_get_dict(col, "link", 0, 0);
+                if(!link) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "hook without link",
+                        "topic_name",   "%s", topic_name,
+                        "id",           "%s", id,
+                        NULL
+                    );
+                    ret += -1;
+                    continue;
+                }
+                const char *link_topic_name; json_t *link_field;
+                json_object_foreach(link, link_topic_name, link_field) {
+                    json_t *link_topic = kw_get_subdict_value(tranger, "topics", link_topic_name, 0, 0);
+                    if(!link_topic) {
+                        log_error(0,
+                            "gobj",             "%s", __FILE__,
+                            "function",         "%s", __FUNCTION__,
+                            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+                            "msg",              "%s", "link topic not found",
+                            "topic_name",       "%s", topic_name,
+                            "id",               "%s", id,
+                            "link_topic_name",  "%s", link_topic_name,
+                            NULL
+                        );
+                        ret += -1;
+                        continue;
+                    }
+                    json_t *field = kw_collect(
+                        kw_get_list(link_topic, "cols", 0, KW_REQUIRED),
+                        json_pack("{s:s}", "id", json_string_value(link_field)),
+                        0
+                    );
+                    if(json_array_size(field)!=1) {
+                        log_error(0,
+                            "gobj",             "%s", __FILE__,
+                            "function",         "%s", __FUNCTION__,
+                            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+                            "msg",              "%s", "link field not found",
+                            "topic_name",       "%s", topic_name,
+                            "id",               "%s", id,
+                            "link_topic_name",  "%s", link_topic_name,
+                            "link_field",       "%j", link_field,
+                            NULL
+                        );
+                        ret += -1;
+                    }
+                    json_decref(field);
+                }
+
+                /*-------------------------*
+                *          reverse
+                *-------------------------*/
+                json_t *reverse = kw_get_dict(col, "reverse", 0, 0);
+                if(!reverse) {
+                    continue;
+                }
+                const char *reverse_topic_name; json_t *reverse_field;
+                json_object_foreach(reverse, reverse_topic_name, reverse_field) {
+                    json_t *reverse_topic = kw_get_subdict_value(
+                        tranger,
+                        "topics",
+                        reverse_topic_name,
+                        0,
+                        0
+                    );
+                    if(!reverse_topic) {
+                        log_error(0,
+                            "gobj",                 "%s", __FILE__,
+                            "function",             "%s", __FUNCTION__,
+                            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                            "msg",                  "%s", "reverse topic not found",
+                            "topic_name",           "%s", topic_name,
+                            "id",                   "%s", id,
+                            "reverse_topic_name",  "%s", reverse_topic_name,
+                            NULL
+                        );
+                        ret += -1;
+                        continue;
+                    }
+                    json_t *field = kw_collect(
+                        kw_get_list(reverse_topic, "cols", 0, KW_REQUIRED),
+                        json_pack("{s:s}", "id", json_string_value(reverse_field)),
+                        0
+                    );
+                    if(json_array_size(field)!=1) {
+                        log_error(0,
+                            "gobj",                 "%s", __FILE__,
+                            "function",             "%s", __FUNCTION__,
+                            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                            "msg",                  "%s", "reverse field not found",
+                            "topic_name",           "%s", topic_name,
+                            "id",                   "%s", id,
+                            "reverse_topic_name",   "%s", reverse_topic_name,
+                            "reverse_field",        "%j", reverse_field,
+                            NULL
+                        );
+                        ret += -1;
+                    }
+                    json_decref(field);
+                }
             }
         }
     }
@@ -872,7 +1014,7 @@ PRIVATE int set_field_value(
 
     BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
 
-    if(kw_has_word(desc_flag, "persistent", 0) || kw_has_word(desc_flag, "volatil", 0)) {
+    if(kw_has_word(desc_flag, "persistent", 0)) {
         // TODO
     }
 
@@ -1444,9 +1586,11 @@ PUBLIC int trtdb_unlink_node(
     const char *options     //
 )
 {
-    // TODO
+    int ret = 0;
 
-    return 0;
+    //TODO
+
+    return ret;
 }
 
 
