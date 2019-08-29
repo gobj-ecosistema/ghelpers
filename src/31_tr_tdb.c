@@ -679,9 +679,10 @@ PRIVATE int parse_hooks(
                         ret += -1;
                         continue;
                     }
+                    const char *s_link_field = json_string_value(link_field);
                     json_t *field = kw_collect(
                         kw_get_list(link_topic, "cols", 0, KW_REQUIRED),
-                        json_pack("{s:s}", "id", json_string_value(link_field)),
+                        json_pack("{s:s}", "id", s_link_field),
                         0
                     );
                     if(json_array_size(field)!=1) {
@@ -750,6 +751,9 @@ PRIVATE int parse_hooks(
                         );
                         ret += -1;
                     }
+
+                    // TODO CHEQUEA que tiene el flag fkey
+
                     json_decref(field);
                 }
             }
@@ -1348,8 +1352,8 @@ PRIVATE int link_node(
 
     json_t *child_md = kw_get_dict(child_record, "__md_treedb__", 0, 0);
     const char *child_topic_name = kw_get_str(child_md, "topic_name", 0, 0);
-    //json_t *child_topic = kw_get_subdict_value(tranger, "topics", child_topic_name, 0, 0);
-    //json_t *child_cols = kw_get_list(child_topic, "cols", 0, 0);
+    json_t *child_topic = kw_get_subdict_value(tranger, "topics", child_topic_name, 0, 0);
+    json_t *child_cols = kw_get_list(child_topic, "cols", 0, 0);
 
     json_t *cols = kw_collect(parent_cols, json_pack("{s:s}", "id", link_), 0);
     if(json_array_size(cols)!=1) {
@@ -1369,7 +1373,7 @@ PRIVATE int link_node(
     json_t *link_col = json_array_get(cols, 0);
 
     /*-----------------------------------------------*
-     *  Link - parent container with info of child
+     *  Link - parent container with id of child
      *-----------------------------------------------*/
     json_t *link = kw_get_dict(link_col, "link", 0, 0);
     if(!link) {
