@@ -136,14 +136,6 @@ PUBLIC BOOL kw_has_path(json_t *kw, const char *path);
 **rst**/
 PUBLIC int kw_delete_subkey(json_t *kw, const char *path, const char *key);
 
-/**rst**
-   Check if key's value of ``path`` in ``kw`` is a json_null
-**rst**/
-PUBLIC BOOL kw_value_is_null(
-    json_t *kw,
-    const char *path,
-    kw_flag_t flag
-);
 
 /**rst**
    Delete the dict's value searched by path

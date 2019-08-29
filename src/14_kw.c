@@ -468,39 +468,6 @@ PUBLIC BOOL kw_has_path(json_t *kw, const char *path)
 }
 
 /***************************************************************************
- *  Check if key's value of ``path`` in ``kw`` is a json_null
- ***************************************************************************/
-PUBLIC BOOL kw_value_is_null(
-    json_t *kw,
-    const char *path,
-    kw_flag_t flag
-)
-{
-    json_t *jn = _kw_search_path(kw, path);
-    if(!jn) {
-        if(flag & KW_REQUIRED) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path NOT FOUND",
-                "path",         "%s", path,
-                NULL
-            );
-        }
-        return FALSE;
-    }
-    if(json_is_null(jn)) {
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
-/***************************************************************************
  *   Delete subkey
  ***************************************************************************/
 PUBLIC int kw_delete_subkey(json_t *kw, const char *path, const char *key)
