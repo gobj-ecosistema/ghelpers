@@ -621,6 +621,7 @@ PUBLIC BOOL kw_has_word(
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
+        - path are convert to lower string WARNING
 **rst**/
 json_t *kwid_get(
     json_t *kw,  // NOT owned

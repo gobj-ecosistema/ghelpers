@@ -219,7 +219,7 @@ PUBLIC char *strtolower(char* s)
     if(!s)
         return 0;
 
-    char* p = s;
+    register char* p = s;
     while (*p != '\0') {
         *p = tolower(*p);
         p++;

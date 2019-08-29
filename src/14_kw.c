@@ -2655,7 +2655,8 @@ PUBLIC BOOL kw_has_word(
     Get a json item walking by the tree (routed by path)
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
-        - delimiter is '`' and '.'
+        - delimiter are '`' and '.'
+        - path are convert to lower string WARNING
  ***************************************************************************/
 json_t *kwid_get(
     json_t *kw,  // NOT owned
@@ -2679,6 +2680,8 @@ json_t *kwid_get(
         ap
     );
     va_end(ap);
+
+    strtolower(temp);
 
     int list_size;
     const char **segments = split2(temp, "`.", &list_size);
