@@ -62,9 +62,6 @@ PUBLIC int kw_add_binary_type(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "table serialize fields FULL",
             NULL
@@ -138,9 +135,6 @@ PUBLIC json_t *kw_serialize(
                     log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
-                        "process",      "%s", get_process_name(),
-                        "hostname",     "%s", get_host_name(),
-                        "pid",          "%d", get_pid(),
                         "msgset",       "%s", MSGSET_INTERNAL_ERROR,
                         "msg",          "%s", "serialize_fn() FAILED",
                         "key",          "%s", pf->binary_field_name,
@@ -216,9 +210,6 @@ PUBLIC json_t *kw_incref(json_t *kw)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "BAD kw_incref()",
             NULL
@@ -263,9 +254,6 @@ PUBLIC json_t *kw_decref(json_t* kw)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "BAD kw_decref()",
             NULL
@@ -328,9 +316,6 @@ PRIVATE json_t *_kw_search_path(json_t *kw, const char *path)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "path NULL",
             NULL
@@ -341,9 +326,6 @@ PRIVATE json_t *_kw_search_path(json_t *kw, const char *path)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "json refcount 0",
             "path",         "%s", path,
@@ -373,9 +355,6 @@ PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "path NULL",
             NULL
@@ -432,9 +411,6 @@ PUBLIC BOOL kw_has_subkey(json_t *kw, const char *path, const char *key)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "subdict not found",
             "subdict",      "%s", path,
@@ -477,9 +453,6 @@ PUBLIC int kw_delete_subkey(json_t *kw, const char *path, const char *key)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "subdict not found",
             "subdict",      "%s", path,
@@ -491,9 +464,6 @@ PUBLIC int kw_delete_subkey(json_t *kw, const char *path, const char *key)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "key not found",
             "subdict",      "%s", path,
@@ -518,9 +488,6 @@ PUBLIC int kw_delete(json_t *kw, const char *path)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "path NULL",
             NULL
@@ -531,9 +498,6 @@ PUBLIC int kw_delete(json_t *kw, const char *path)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "json refcount 0",
             "path",         "%s", path,
@@ -550,9 +514,6 @@ PUBLIC int kw_delete(json_t *kw, const char *path)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "path not found",
             "path",         "%s", path,
@@ -586,9 +547,6 @@ PUBLIC json_t *kw_get_dict(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path NOT FOUND, default value returned",
                 "path",         "%s", path,
@@ -603,9 +561,6 @@ PUBLIC json_t *kw_get_dict(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path MUST BE a json dict, default value returned",
                 "path",         "%s", path,
@@ -644,9 +599,6 @@ PUBLIC json_t *kw_get_list(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path NOT FOUND, default value returned",
                 "path",         "%s", path,
@@ -661,9 +613,6 @@ PUBLIC json_t *kw_get_list(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path MUST BE a json list",
                 "path",         "%s", path,
@@ -702,9 +651,6 @@ PUBLIC json_int_t kw_get_int(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path NOT FOUND, default value returned",
                 "path",         "%s", path,
@@ -720,9 +666,6 @@ PUBLIC json_int_t kw_get_int(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "path MUST BE a json integer",
                     "path",         "%s", path,
@@ -758,9 +701,6 @@ PUBLIC json_int_t kw_get_int(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path MUST BE a simple json element",
                 "path",         "%s", path,
@@ -795,9 +735,6 @@ PUBLIC double kw_get_real(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path NOT FOUND, default value returned",
                 "path",         "%s", path,
@@ -813,9 +750,6 @@ PUBLIC double kw_get_real(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "path MUST BE a json real",
                     "path",         "%s", path,
@@ -844,9 +778,6 @@ PUBLIC double kw_get_real(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path MUST BE a simple json element",
                 "path",         "%s", path,
@@ -881,9 +812,6 @@ PUBLIC BOOL kw_get_bool(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path NOT FOUND, default value returned",
                 "path",         "%s", path,
@@ -899,9 +827,6 @@ PUBLIC BOOL kw_get_bool(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "path MUST BE a json bool",
                     "path",         "%s", path,
@@ -937,9 +862,6 @@ PUBLIC BOOL kw_get_bool(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path MUST BE a simple json element",
                 "path",         "%s", path,
@@ -979,9 +901,6 @@ PUBLIC const char *kw_get_str(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path NOT FOUND, default value returned",
                 "path",         "%s", path,
@@ -997,9 +916,6 @@ PUBLIC const char *kw_get_str(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "path MUST BE a json str",
                     "path",         "%s", path,
@@ -1014,9 +930,6 @@ PUBLIC const char *kw_get_str(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Cannot extract a string",
             "path",         "%s", path,
@@ -1047,9 +960,6 @@ PUBLIC json_t *kw_get_dict_value(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "path NOT FOUND, default value returned",
                 "path",         "%s", path,
@@ -1080,9 +990,6 @@ PUBLIC int kw_set_dict_value(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "kw MUST BE a json object",
             "path",         "%s", path,
@@ -1184,9 +1091,6 @@ PUBLIC json_t *kw_get_list_value(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "kw MUST BE a json array",
                 NULL
@@ -1199,9 +1103,6 @@ PUBLIC json_t *kw_get_list_value(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "list idx NOT FOUND",
                 "idx",          "%d", (int)idx,
@@ -1231,9 +1132,6 @@ PUBLIC const char *kw_get_list_str(json_t *list, size_t idx)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "list MUST BE a json array",
             NULL);
@@ -1245,9 +1143,6 @@ PUBLIC const char *kw_get_list_str(json_t *list, size_t idx)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "value MUST BE a json string",
             NULL);
@@ -1267,9 +1162,6 @@ PUBLIC int kw_list_append(json_t *kw, const char *path, json_t *value)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "kw MUST BE a dict",
             "path",         "%s", path,
@@ -1299,9 +1191,6 @@ PUBLIC int kw_list_append(json_t *kw, const char *path, json_t *value)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "kw MUST BE a json array",
             "path",         "%s", path,
@@ -1346,9 +1235,6 @@ PUBLIC uint32_t * kw_get_bin_uint32_array(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_MEMORY_ERROR,
             "msg",          "%s", "no memory for int_array",
             "size",         "%d", sizeof(json_int_t) * items,
@@ -1363,9 +1249,6 @@ PUBLIC uint32_t * kw_get_bin_uint32_array(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_JSON_ERROR,
                 "msg",          "%s", "no integer item in int list",
                 "idx",          "%d", i,
@@ -1616,9 +1499,6 @@ PUBLIC int kw_walk(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "json to duplicate must be an object or array",
             NULL
@@ -1757,9 +1637,6 @@ PUBLIC json_t *kw_duplicate(json_t *kw) // not owned
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "json to duplicate must be an object or array",
             NULL
@@ -1785,9 +1662,6 @@ PUBLIC json_t *kw_filter_private(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "json to duplicate must be an object or array",
             NULL
@@ -1814,9 +1688,6 @@ PUBLIC json_t *kw_filter_metadata(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "json to duplicate must be an object or array",
             NULL
@@ -1904,9 +1775,6 @@ PUBLIC json_t *kw_duplicate_with_only_keys(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "json to duplicate (with only keys) must be an object or array",
             NULL
@@ -1984,9 +1852,6 @@ PUBLIC json_t *kw_clone_by_keys(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "key not found",
                     "key",          "%s", key,
@@ -2006,9 +1871,6 @@ PUBLIC json_t *kw_clone_by_keys(
                     log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
-                        "process",      "%s", get_process_name(),
-                        "hostname",     "%s", get_host_name(),
-                        "pid",          "%d", get_pid(),
                         "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                         "msg",          "%s", "key not found",
                         "key",          "%s", key,
@@ -2030,9 +1892,6 @@ PUBLIC json_t *kw_clone_by_keys(
                     log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
-                        "process",      "%s", get_process_name(),
-                        "hostname",     "%s", get_host_name(),
-                        "pid",          "%d", get_pid(),
                         "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                         "msg",          "%s", "key not found",
                         "key",          "%s", key,
@@ -2305,9 +2164,6 @@ PUBLIC json_t *kw_select( // WARNING return **duplicated** objects
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "kw MUST BE a json array or object",
             NULL
@@ -2547,9 +2403,6 @@ PUBLIC int kw_set_key_value(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "kw MUST BE a json object or array",
             "path",         "%s", path,
@@ -2574,9 +2427,6 @@ PUBLIC int kw_set_key_value(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "kw record not found",
                     "path",         "%s", path,
@@ -2603,9 +2453,6 @@ PUBLIC int kw_set_key_value(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "kw MUST BE a json object",
             "path",         "%s", path,
@@ -2801,4 +2648,88 @@ PUBLIC BOOL kw_has_word(
         }
         return FALSE;
     }
+}
+
+/***************************************************************************
+    Utility for databases.
+    Get a json item walking by the tree (routed by path)
+    Convention:
+        - all arrays are list of records (dicts) with "id" field as primary key
+        - delimiter is '`' and '.'
+ ***************************************************************************/
+json_t *kwid_get(
+    json_t *kw,  // NOT owned
+    const char *options, // "verbose"
+    const char *path,
+    ...
+)
+{
+    BOOL verbose = FALSE;
+    if(options && strstr(options, "verbose")) {
+        verbose = TRUE;
+    }
+    va_list ap;
+    char temp[4*1024]; temp[0] = 0;
+
+    va_start(ap, path);
+    vsnprintf(
+        temp,
+        sizeof(temp),
+        path,
+        ap
+    );
+    va_end(ap);
+
+    int list_size;
+    const char **segments = split2(temp, "`.", &list_size);
+
+    json_t *v = kw;
+    BOOL fin = FALSE;
+    for(int i=0; i<list_size && !fin; i++) {
+        const char *segment = *(segments +i);
+
+        if(!v) {
+            if(verbose) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "short path",
+                    "path",         "%s", temp,
+                    "segment",      "%s", segment,
+                    NULL
+                );
+            }
+            break;
+        }
+
+        switch(json_typeof(v)) {
+        case JSON_OBJECT:
+            v = json_object_get(v, segment);
+            if(!v) {
+                fin = TRUE;
+            }
+            break;
+        case JSON_ARRAY:
+            {
+                int idx; json_t *v_;
+                json_array_foreach(v, idx, v_) {
+                    const char *id = json_string_value(json_object_get(v_, "id"));
+                    if(id && strcmp(id, segment)==0) {
+                        break;
+                    }
+                }
+                v = 0;
+                fin = TRUE;
+            }
+            break;
+        default:
+            fin = TRUE;
+            break;
+        }
+    }
+
+    split_free2(segments);
+
+    return v;
 }

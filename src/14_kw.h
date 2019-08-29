@@ -38,7 +38,7 @@ typedef enum {
     KW_CREATE           = 0x0002,   // Create if not exist
     KW_WILD_NUMBER      = 0x0004,   // For numbers work indistinctly with real/int/bool/string without error logging
     KW_EXTRACT          = 0x0008,   // Extract (delete) the key on read from dictionary.
-    KW_DONT_LOG         = 0x0010,   // Don't log errors TODO not implemented in all functions
+    KW_DONT_LOG         = 0x0010,   // Don't log errors when types are wrong and returning default
 } kw_flag_t;
 
 typedef void (*incref_fn_t)(void *);
@@ -615,6 +615,19 @@ PUBLIC BOOL kw_has_word(
     const char *options
 );
 
+/**rst**
+    Utility for databases.
+    Get a json item walking by the tree (routed by path)
+    Convention:
+        - all arrays are list of records (dicts) with "id" field as primary key
+        - delimiter is '`' and '.'
+**rst**/
+json_t *kwid_get(
+    json_t *kw,  // NOT owned
+    const char *options, // "verbose"
+    const char *path,
+    ...
+);
 
 #ifdef __cplusplus
 }
