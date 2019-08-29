@@ -42,7 +42,7 @@ PRIVATE json_t *topic_cols_desc = 0;
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE char *build_trtdb_data_path(
+PRIVATE char *build_treedb_data_path(
     char *bf,
     int bfsize,
     const char *treedb_name,
@@ -57,7 +57,7 @@ PRIVATE char *build_trtdb_data_path(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE char *build_trtdb_indexes_path(
+PRIVATE char *build_treedb_indexes_path(
     char *bf,
     int bfsize,
     const char *treedb_name,
@@ -72,7 +72,7 @@ PRIVATE char *build_trtdb_indexes_path(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
+PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
@@ -95,7 +95,7 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
      *      Create desc of cols
      *--------------------------------*/
     if(!topic_cols_desc) {
-        topic_cols_desc = _trtdb_create_topic_cols_desc();
+        topic_cols_desc = _treedb_create_topic_cols_desc();
     } else {
         JSON_INCREF(topic_cols_desc);
     }
@@ -112,8 +112,8 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     /*
      *  The tree is built in tranger, check if already exits
      */
-    json_t *trtdb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
-    if(trtdb) {
+    json_t *treedb = kwid_get(tranger, 0, "treedbs`%s", treedb_name);
+    if(treedb) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -208,7 +208,7 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
      *  Create the root of treedb
      *------------------------------*/
     json_t *treedbs = kw_get_dict(tranger, "treedbs", json_object(), KW_CREATE);
-    trtdb = kw_get_dict(treedbs, treedb_name, json_object(), KW_CREATE);
+    treedb = kw_get_dict(treedbs, treedb_name, json_object(), KW_CREATE);
 
     /*------------------------------*
      *  Open "system" lists
@@ -227,13 +227,13 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
 
     char path[NAME_MAX];
-    build_trtdb_data_path(path, sizeof(path), treedb_name, tags_topic_name);
-    kw_get_str(list, "trtdb_data_path", path, KW_CREATE);
-    build_trtdb_indexes_path(path, sizeof(path), treedb_name, tags_topic_name);
-    kw_get_str(list, "trtdb_indexes_path", path, KW_CREATE);
+    build_treedb_data_path(path, sizeof(path), treedb_name, tags_topic_name);
+    kw_get_str(list, "treedb_data_path", path, KW_CREATE);
+    build_treedb_indexes_path(path, sizeof(path), treedb_name, tags_topic_name);
+    kw_get_str(list, "treedb_indexes_path", path, KW_CREATE);
 
-    kw_get_subdict_value(trtdb, tags_topic_name, "data", json_array(), KW_CREATE);
-    kw_get_subdict_value(trtdb, tags_topic_name, "indexes", json_object(), KW_CREATE);
+    kw_get_subdict_value(treedb, tags_topic_name, "data", json_array(), KW_CREATE);
+    kw_get_subdict_value(treedb, tags_topic_name, "indexes", json_object(), KW_CREATE);
 
     /*------------------------------*
      *  Open "user" lists
@@ -256,13 +256,13 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
 
         kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
 
-        build_trtdb_data_path(path, sizeof(path), treedb_name, topic_name);
-        kw_get_str(list, "trtdb_data_path", path, KW_CREATE);
-        build_trtdb_indexes_path(path, sizeof(path), treedb_name, topic_name);
-        kw_get_str(list, "trtdb_indexes_path", path, KW_CREATE);
+        build_treedb_data_path(path, sizeof(path), treedb_name, topic_name);
+        kw_get_str(list, "treedb_data_path", path, KW_CREATE);
+        build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
+        kw_get_str(list, "treedb_indexes_path", path, KW_CREATE);
 
-        kw_get_subdict_value(trtdb, topic_name, "data", json_array(), KW_CREATE);
-        kw_get_subdict_value(trtdb, topic_name, "indexes", json_object(), KW_CREATE);
+        kw_get_subdict_value(treedb, topic_name, "data", json_array(), KW_CREATE);
+        kw_get_subdict_value(treedb, topic_name, "indexes", json_object(), KW_CREATE);
     }
 
     /*------------------------------*
@@ -271,19 +271,19 @@ PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
     parse_hooks(tranger);
 
     JSON_DECREF(jn_schema);
-    return trtdb;
+    return treedb;
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_close_db(
+PUBLIC int treedb_close_db(
     json_t *tranger,
     const char *treedb_name
 )
 {
-    json_t *trtdb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, KW_EXTRACT);
-    JSON_DECREF(trtdb);
+    json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, KW_EXTRACT);
+    JSON_DECREF(treedb);
     JSON_DECREF(topic_cols_desc);
     return 0;
 }
@@ -291,7 +291,7 @@ PUBLIC int trtdb_close_db(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_tag( // tag the current tree db
+PUBLIC int treedb_tag( // tag the current tree db
     json_t *tranger,
     const char *treedb_name,
     const char *tag
@@ -304,7 +304,7 @@ PUBLIC int trtdb_tag( // tag the current tree db
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_reopen_db(
+PUBLIC int treedb_reopen_db(
     json_t *tranger,
     const char *treedb_name,
     const char *tag  // If empty tag then free the tree, active record will be the last record.
@@ -355,7 +355,7 @@ PRIVATE const char *my_json_type(json_t *field)
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *_trtdb_create_topic_cols_desc(void)
+PUBLIC json_t *_treedb_create_topic_cols_desc(void)
 {
     json_t *topic_cols_desc = json_array();
     json_array_append_new(
@@ -776,7 +776,7 @@ PRIVATE int parse_hooks(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, without returns a list
+PUBLIC json_t *treedb_read_node( // Working with explicit 'id' returns a dict, without returns a list
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -789,14 +789,14 @@ PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, wi
      *      Get data and indexes
      *-------------------------------*/
     char path[NAME_MAX];
-    build_trtdb_data_path(path, sizeof(path), treedb_name, topic_name);
+    build_treedb_data_path(path, sizeof(path), treedb_name, topic_name);
     json_t *data = kw_get_list(
         tranger,
         path,
         0,
         KW_REQUIRED
     );
-    build_trtdb_indexes_path(path, sizeof(path), treedb_name, topic_name);
+    build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
     json_t *indexes = kw_get_dict(
         tranger,
         path,
@@ -860,7 +860,7 @@ PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, wi
         }
         JSON_INCREF(id);
         JSON_INCREF(kw);
-        int ret = trtdb_write_node(
+        int ret = treedb_write_node(
             tranger,
             treedb_name,
             topic_name,
@@ -873,7 +873,7 @@ PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, wi
             JSON_DECREF(kw);
             return 0;
         }
-        return trtdb_read_node(
+        return treedb_read_node(
             tranger,
             treedb_name,
             topic_name,
@@ -913,7 +913,7 @@ PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, wi
          *  Not found, create if option
          */
         JSON_INCREF(kw);
-        int ret = trtdb_write_node(
+        int ret = treedb_write_node(
             tranger,
             treedb_name,
             topic_name,
@@ -925,7 +925,7 @@ PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, wi
             JSON_DECREF(kw);
             return json_array();
         }
-        return trtdb_read_node(
+        return treedb_read_node(
             tranger,
             treedb_name,
             topic_name,
@@ -1186,7 +1186,7 @@ PRIVATE json_t *create_record(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_write_node(
+PUBLIC int treedb_write_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -1270,13 +1270,13 @@ PRIVATE int load_record_callback(
      *-------------------------------*/
     json_t *data = kw_get_list(
         tranger,
-        kw_get_str(list, "trtdb_data_path", 0, KW_REQUIRED),
+        kw_get_str(list, "treedb_data_path", 0, KW_REQUIRED),
         0,
         KW_REQUIRED
     );
     json_t *indexes = kw_get_dict(
         tranger,
-        kw_get_str(list, "trtdb_indexes_path", 0, KW_REQUIRED),
+        kw_get_str(list, "treedb_indexes_path", 0, KW_REQUIRED),
         0,
         KW_REQUIRED
     );
@@ -1531,7 +1531,7 @@ PRIVATE int link_node(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_link_nodes(
+PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *treedb_name,
     const char *link,
@@ -1581,7 +1581,7 @@ PUBLIC int trtdb_link_nodes(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_unlink_node(
+PUBLIC int treedb_unlink_node(
     json_t *tranger,
     const char *treedb_name,
     const char *link_,
@@ -1610,7 +1610,7 @@ PUBLIC int trtdb_unlink_node(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trtdb_begin_transaction(
+PUBLIC int treedb_begin_transaction(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -1621,7 +1621,7 @@ PUBLIC int trtdb_begin_transaction(
     return 0;
 }
 
-PUBLIC int trtdb_end_transaction(
+PUBLIC int treedb_end_transaction(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,

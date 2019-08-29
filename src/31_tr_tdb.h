@@ -42,13 +42,13 @@ extern "C"{
     HACK Convention: the pkey of all topics must be "id".
 
 **rst**/
-PUBLIC json_t *trtdb_open_db( // Return IS NOT YOURS!
+PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
     const char *options
 );
-PUBLIC int trtdb_close_db(
+PUBLIC int treedb_close_db(
     json_t *tranger,
     const char *treedb_name
 );
@@ -56,7 +56,7 @@ PUBLIC int trtdb_close_db(
 /*------------------------------------*
  *      Testing
  *------------------------------------*/
-PUBLIC json_t *_trtdb_create_topic_cols_desc(void);
+PUBLIC json_t *_treedb_create_topic_cols_desc(void);
 PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
     json_t *cols_desc,
     json_t *data
@@ -65,7 +65,7 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/
-PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, without returns a list
+PUBLIC json_t *treedb_read_node( // Working with explicit 'id' returns a dict, without returns a list
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -74,7 +74,7 @@ PUBLIC json_t *trtdb_read_node( // Working with explicit 'id' returns a dict, wi
     const char *options // "create", TODO "delete",
 );
 
-PUBLIC int trtdb_write_node(
+PUBLIC int treedb_write_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -83,7 +83,7 @@ PUBLIC int trtdb_write_node(
     const char *options // "strict"
 );
 
-PUBLIC int trtdb_link_nodes(
+PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *treedb_name,
     const char *link,
@@ -91,7 +91,7 @@ PUBLIC int trtdb_link_nodes(
     json_t *child_records,  // not owned
     const char *options     //
 );
-PUBLIC int trtdb_unlink_nodes( // TODO
+PUBLIC int treedb_unlink_nodes( // TODO
     json_t *tranger,
     const char *treedb_name,
     const char *link,
