@@ -137,18 +137,20 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         "id",
         "",
         sf_rowid_key,
-        json_pack("[{s:s, s:s, s:s, s:[s,s]}, {s:s, s:s, s:s, s:[s,s]}]",
-            "id", "id",
-            "header", "Id",
-            "type", "integer",
-            "flag",
-                "persistent","required",
+        json_pack("{s:{s:s, s:s, s:s, s:[s,s]}, s:{s:s, s:s, s:s, s:[s,s]}}",
+            "id",
+                "id", "id",
+                "header", "Id",
+                "type", "integer",
+                "flag",
+                    "persistent","required",
 
-            "id", "name",
-            "header", "Name",
-            "type", "string",
-            "flag",
-                "persistent", "required"
+            "name",
+                "id", "name",
+                "header", "Name",
+                "type", "string",
+                "flag",
+                    "persistent", "required"
         )
     );
 
@@ -195,7 +197,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             pkey,
             kw_get_str(schema_topic, "tkey", "", 0),
             tranger_str2system_flag(kw_get_str(schema_topic, "system_flag", "", 0)),
-            kwid_new_list("verbose", schema_topic, "cols")
+            kwid_new_dict("verbose", schema_topic, "cols")
         );
 
         parse_schema_cols(
