@@ -58,8 +58,8 @@ PUBLIC int treedb_close_db(
  *------------------------------------*/
 PUBLIC json_t *_treedb_create_topic_cols_desc(void);
 PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
-    json_t *cols_desc,
-    json_t *data
+    json_t *cols_desc,  // not owned
+    json_t *data        // owned
 );
 
 /*------------------------------------*

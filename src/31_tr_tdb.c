@@ -112,7 +112,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     /*
      *  The tree is built in tranger, check if already exits
      */
-    json_t *treedb = kwid_get(tranger, 0, "treedbs`%s", treedb_name);
+    json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
     if(treedb) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
@@ -154,7 +154,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 
     parse_schema_cols(
         topic_cols_desc,
-        kw_get_list(tags_topic, "cols", 0, KW_REQUIRED)
+        kwid_new_list("verbose", tags_topic, "cols")
     );
 
     /*------------------------------*
@@ -195,12 +195,12 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             pkey,
             kw_get_str(schema_topic, "tkey", "", 0),
             tranger_str2system_flag(kw_get_str(schema_topic, "system_flag", "", 0)),
-            json_incref(kw_get_list(schema_topic, "cols", 0, 0))
+            kwid_new_list("verbose", schema_topic, "cols")
         );
 
         parse_schema_cols(
             topic_cols_desc,
-            kw_get_list(topic, "cols", 0, KW_REQUIRED)
+            kwid_new_list("verbose", topic, "cols")
         );
     }
 
@@ -591,7 +591,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
  ***************************************************************************/
 PUBLIC int parse_schema_cols(
     json_t *cols_desc,  // not owned
-    json_t *data  // not owned
+    json_t *data  // owned
 )
 {
     int ret = 0;
@@ -605,6 +605,7 @@ PUBLIC int parse_schema_cols(
             "cols_desc",    "%j", cols_desc,
             NULL
         );
+        JSON_DECREF(data);
         return -1;
     }
 
@@ -624,6 +625,8 @@ PUBLIC int parse_schema_cols(
         }
     }
 
+    JSON_DECREF(data);
+
     return ret;
 }
 
@@ -639,15 +642,18 @@ PRIVATE int parse_hooks(
     json_t *topics = kw_get_dict(tranger, "topics", 0, 0);
     const char *topic_name; json_t *topic;
     json_object_foreach(topics, topic_name, topic) {
-        json_t *cols = kw_get_list(topic, "cols", 0, KW_REQUIRED);
+        json_t *cols = kwid_new_list("verbose", topic, "cols");
+        if(!cols) {
+            continue;
+        }
         int idx; json_t *col;
         json_array_foreach(cols, idx, col) {
             const char *id = kw_get_str(col, "id", 0, 0);
             json_t *flag = kw_get_dict_value(col, "flag", 0, 0);
             if(kw_has_word(flag, "hook", 0)) {
                 /*-------------------------*
-                *          link
-                *-------------------------*/
+                 *          link
+                 *-------------------------*/
                 json_t *link = kw_get_dict(col, "link", 0, 0);
                 if(!link) {
                     log_error(0,
@@ -680,12 +686,12 @@ PRIVATE int parse_hooks(
                         continue;
                     }
                     const char *s_link_field = json_string_value(link_field);
-                    json_t *field = kw_collect(
-                        kw_get_list(link_topic, "cols", 0, KW_REQUIRED),
-                        json_pack("{s:s}", "id", s_link_field),
-                        0
+                    json_t *field = kwid_get("",
+                        link_topic,
+                        "cols`%s",
+                            s_link_field
                     );
-                    if(json_array_size(field)!=1) {
+                    if(!field) {
                         log_error(0,
                             "gobj",             "%s", __FILE__,
                             "function",         "%s", __FUNCTION__,
@@ -699,12 +705,11 @@ PRIVATE int parse_hooks(
                         );
                         ret += -1;
                     }
-                    json_decref(field);
                 }
 
                 /*-------------------------*
-                *          reverse
-                *-------------------------*/
+                 *          reverse
+                 *-------------------------*/
                 json_t *reverse = kw_get_dict(col, "reverse", 0, 0);
                 if(!reverse) {
                     continue;
@@ -732,12 +737,13 @@ PRIVATE int parse_hooks(
                         ret += -1;
                         continue;
                     }
-                    json_t *field = kw_collect(
-                        kw_get_list(reverse_topic, "cols", 0, KW_REQUIRED),
-                        json_pack("{s:s}", "id", json_string_value(reverse_field)),
-                        0
+
+                    json_t *field = kwid_get("",
+                        reverse_topic,
+                        "cols`%s",
+                            json_string_value(reverse_field)
                     );
-                    if(json_array_size(field)!=1) {
+                    if(!field) {
                         log_error(0,
                             "gobj",                 "%s", __FILE__,
                             "function",             "%s", __FUNCTION__,
@@ -753,11 +759,10 @@ PRIVATE int parse_hooks(
                     }
 
                     // TODO CHEQUEA que tiene el flag fkey
-
-                    json_decref(field);
                 }
             }
         }
+        JSON_DECREF(cols);
     }
 
     return ret;
@@ -1145,8 +1150,10 @@ PRIVATE json_t *create_record(
 )
 {
     const char *topic_name = kw_get_str(topic, "topic_name", "", KW_REQUIRED);
-    json_t *cols = kw_get_list(topic, "cols", 0, KW_REQUIRED);
-
+    json_t *cols = kwid_new_list("verbose", topic, "cols");
+    if(!cols) {
+        return 0;
+    }
     json_t *new_record = json_object();
 
     int idx; json_t *col;
@@ -1160,6 +1167,7 @@ PRIVATE json_t *create_record(
                 if(set_field_value(topic_name, col, new_record, id)<0) {
                     // Error already logged
                     JSON_DECREF(new_record);
+                    JSON_DECREF(cols);
                     return 0;
                 }
                 continue;
@@ -1169,6 +1177,7 @@ PRIVATE json_t *create_record(
         if(set_field_value(topic_name, col, new_record, kw_get_dict_value(kw, field, 0, 0))<0) {
             // Error already logged
             JSON_DECREF(new_record);
+            JSON_DECREF(cols);
             return 0;
         }
     }
@@ -1179,6 +1188,8 @@ PRIVATE json_t *create_record(
         json_object_update_missing(new_record, kw);
         json_object_del(new_record, "__md_treedb__");
     }
+
+    JSON_DECREF(cols);
 
     return new_record;
 }
@@ -1345,37 +1356,23 @@ PRIVATE int link_node(
         return -1;
     }
 
-    json_t *parent_md = kw_get_dict(parent_record, "__md_treedb__", 0, 0);
-    const char *parent_topic_name = kw_get_str(parent_md, "topic_name", 0, 0);
-    json_t *parent_topic = kw_get_subdict_value(tranger, "topics", parent_topic_name, 0, 0);
-    json_t *parent_cols = kw_get_list(parent_topic, "cols", 0, 0);
+    const char *parent_topic_name = json_string_value(
+        kwid_get("", parent_record, "__md_treedb__`topic_name")
+    );
+    json_t *hook_col = kwid_get("verbose,lower",
+        tranger,
+        "topics`%s`%s`%s",
+            parent_topic_name, "cols", link_
+    );
 
-    json_t *child_md = kw_get_dict(child_record, "__md_treedb__", 0, 0);
-    const char *child_topic_name = kw_get_str(child_md, "topic_name", 0, 0);
-    json_t *child_topic = kw_get_subdict_value(tranger, "topics", child_topic_name, 0, 0);
-    json_t *child_cols = kw_get_list(child_topic, "cols", 0, 0);
-
-    json_t *cols = kw_collect(parent_cols, json_pack("{s:s}", "id", link_), 0);
-    if(json_array_size(cols)!=1) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "link col desc not found",
-            "topic_name",   "%s", parent_topic_name,
-            "link",         "%s", link_,
-            NULL
-        );
-        JSON_DECREF(cols);
-        return -1;
-    }
-
-    json_t *link_col = json_array_get(cols, 0);
+    const char *child_topic_name = json_string_value(
+        kwid_get("", child_record, "__md_treedb__`topic_name")
+    );
 
     /*-----------------------------------------------*
      *  Link - parent container with id of child
      *-----------------------------------------------*/
-    json_t *link = kw_get_dict(link_col, "link", 0, 0);
+    json_t *link = kw_get_dict(hook_col, "link", 0, 0);
     if(!link) {
         log_error(
             LOG_OPT_TRACE_STACK,
@@ -1387,7 +1384,6 @@ PRIVATE int link_node(
             "link",         "%s", link_,
             NULL
         );
-        JSON_DECREF(cols);
         return -1;
     }
     BOOL link_found = FALSE;
@@ -1431,7 +1427,6 @@ PRIVATE int link_node(
                         "parent_hook",          "%j", parent_hook,
                         NULL
                     );
-                    JSON_DECREF(cols);
                     return -1;
             }
         }
@@ -1448,14 +1443,13 @@ PRIVATE int link_node(
             "link",                 "%s", link_,
             NULL
         );
-        JSON_DECREF(cols);
         return -1;
     }
 
     /*--------------------------------------------------*
      *  Reverse - child container with info of parent
      *--------------------------------------------------*/
-    json_t *reverse = kw_get_dict(link_col, "reverse", 0, 0);
+    json_t *reverse = kw_get_dict(hook_col, "reverse", 0, 0);
     if(reverse) {
         BOOL reverse_found = FALSE;
         const char *hook_topic_name; json_t *hook_field_;
@@ -1502,7 +1496,6 @@ PRIVATE int link_node(
                             "child_hook",           "%j", child_hook,
                             NULL
                         );
-                        JSON_DECREF(cols);
                         return -1;
                 }
             }
@@ -1519,12 +1512,10 @@ PRIVATE int link_node(
                 "link",                 "%s", link_,
                 NULL
             );
-            JSON_DECREF(cols);
             return -1;
         }
     }
 
-    JSON_DECREF(cols);
     return 0;
 }
 

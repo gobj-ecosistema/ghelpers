@@ -2656,35 +2656,24 @@ PUBLIC BOOL kw_has_word(
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter are '`' and '.'
-        - path are convert to lower string WARNING
  ***************************************************************************/
-json_t *kwid_get(
+PRIVATE json_t *_kwid_get(
+    const char *options, // "verbose", "lower"
     json_t *kw,  // NOT owned
-    const char *options, // "verbose"
-    const char *path,
-    ...
+    char *path
 )
 {
     BOOL verbose = FALSE;
     if(options && strstr(options, "verbose")) {
         verbose = TRUE;
     }
-    va_list ap;
-    char temp[4*1024]; temp[0] = 0;
 
-    va_start(ap, path);
-    vsnprintf(
-        temp,
-        sizeof(temp),
-        path,
-        ap
-    );
-    va_end(ap);
-
-    strtolower(temp);
+    if(options && strstr(options, "lower")) {
+        strtolower(path);
+    }
 
     int list_size;
-    const char **segments = split2(temp, "`.", &list_size);
+    const char **segments = split2(path, "`.", &list_size);
 
     json_t *v = kw;
     BOOL fin = FALSE;
@@ -2698,7 +2687,7 @@ json_t *kwid_get(
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "short path",
-                    "path",         "%s", temp,
+                    "path",         "%s", path,
                     "segment",      "%s", segment,
                     NULL
                 );
@@ -2716,14 +2705,19 @@ json_t *kwid_get(
         case JSON_ARRAY:
             {
                 int idx; json_t *v_;
+                BOOL found = FALSE;
                 json_array_foreach(v, idx, v_) {
                     const char *id = json_string_value(json_object_get(v_, "id"));
                     if(id && strcmp(id, segment)==0) {
+                        v = v_;
+                        found = TRUE;
                         break;
                     }
                 }
-                v = 0;
-                fin = TRUE;
+                if(!found) {
+                    v = 0;
+                    fin = TRUE;
+                }
             }
             break;
         default:
@@ -2736,3 +2730,180 @@ json_t *kwid_get(
 
     return v;
 }
+
+/***************************************************************************
+    Utility for databases.
+    Get a json item walking by the tree (routed by path)
+    Convention:
+        - all arrays are list of records (dicts) with "id" field as primary key
+        - delimiter are '`' and '.'
+ ***************************************************************************/
+PUBLIC json_t *kwid_get(
+    const char *options, // "verbose", "lower"
+    json_t *kw,  // NOT owned
+    const char *path,
+    ...
+)
+{
+    va_list ap;
+    char temp[4*1024]; temp[0] = 0;
+
+    va_start(ap, path);
+    vsnprintf(
+        temp,
+        sizeof(temp),
+        path,
+        ap
+    );
+
+    json_t *jn = _kwid_get(options, kw, temp);
+
+    va_end(ap);
+
+    return jn;
+}
+
+/***************************************************************************
+    Utility for databases.
+    Return a new list from a "dict of records" or "list of records"
+    WARNING the "id" of a dict's record is hardcorded to his key.
+    Convention:
+        - all arrays are list of records (dicts) with "id" field as primary key
+        - delimiter is '`' and '.'
+ ***************************************************************************/
+PUBLIC json_t *kwid_new_list(
+    const char *options, // "verbose", "lower"
+    json_t *kw,  // NOT owned
+    const char *path,
+    ...
+)
+{
+    va_list ap;
+    char temp[4*1024]; temp[0] = 0;
+
+    va_start(ap, path);
+    vsnprintf(
+        temp,
+        sizeof(temp),
+        path,
+        ap
+    );
+
+    json_t *jn = _kwid_get(options, kw, temp);
+
+    va_end(ap);
+
+    if(!jn) {
+        // Error already logged if verbose
+        return 0;
+    }
+    json_t *new_list = 0;
+
+    switch(json_typeof(jn)) {
+    case JSON_ARRAY:
+        {
+            new_list = jn;
+            json_incref(new_list);
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            new_list = json_array();
+            const char *key; json_t *v;
+            json_object_foreach(jn, key, v) {
+                json_object_set_new(v, "id", json_string(key)); // WARNING id hardcorded
+                json_array_append(new_list, v);
+            }
+        }
+        break;
+    default:
+        if(options && strstr(options, "verbose")) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "wrong type for list",
+                "path",         "%s", temp,
+                "jn",           "%j", jn,
+                NULL
+            );
+        }
+        break;
+    }
+
+    return new_list;
+}
+
+/***************************************************************************
+    Utility for databases.
+    Return a new dict from a "dict of records" or "list of records"
+    WARNING the "id" of a dict's record is hardcorded to his key.
+    Convention:
+        - all arrays are list of records (dicts) with "id" field as primary key
+        - delimiter is '`' and '.'
+ ***************************************************************************/
+PUBLIC json_t *kwid_new_dict(
+    const char *options, // "verbose", "lower"
+    json_t *kw,  // NOT owned
+    const char *path,
+    ...
+)
+{
+    va_list ap;
+    char temp[4*1024]; temp[0] = 0;
+
+    va_start(ap, path);
+    vsnprintf(
+        temp,
+        sizeof(temp),
+        path,
+        ap
+    );
+
+    json_t *jn = _kwid_get(options, kw, temp);
+
+    va_end(ap);
+
+    if(!jn) {
+        // Error already logged if verbose
+        return 0;
+    }
+
+    json_t *new_dict = 0;
+
+    switch(json_typeof(jn)) {
+    case JSON_ARRAY:
+        {
+            new_dict = json_object();
+            int idx; json_t *v;
+            json_array_foreach(jn, idx, v) {
+                const char *id = kw_get_str(v, "id", "", KW_REQUIRED);
+                json_object_set(new_dict, id, v); // WARNING id hardcorded
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            new_dict = jn;
+            json_incref(new_dict);
+        }
+        break;
+    default:
+        if(options && strstr(options, "verbose")) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "wrong type for dict",
+                "path",         "%s", temp,
+                "jn",           "%j", jn,
+                NULL
+            );
+        }
+        break;
+    }
+
+    return new_dict;
+}
+
+

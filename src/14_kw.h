@@ -621,11 +621,40 @@ PUBLIC BOOL kw_has_word(
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
-        - path are convert to lower string WARNING
 **rst**/
-json_t *kwid_get(
+PUBLIC json_t *kwid_get(
+    const char *options, // "verbose", "lower"
     json_t *kw,  // NOT owned
-    const char *options, // "verbose"
+    const char *path,
+    ...
+);
+
+/**rst**
+    Utility for databases.
+    Return a new list from a "dict of records" or "list of records"
+    WARNING the "id" of a dict's record is hardcorded to his key.
+    Convention:
+        - all arrays are list of records (dicts) with "id" field as primary key
+        - delimiter is '`' and '.'
+**rst**/
+PUBLIC json_t *kwid_new_list(
+    const char *options, // "verbose", "lower"
+    json_t *kw,  // NOT owned
+    const char *path,
+    ...
+);
+
+/**rst**
+    Utility for databases.
+    Return a new dict from a "dict of records" or "list of records"
+    WARNING the "id" of a dict's record is hardcorded to his key.
+    Convention:
+        - all arrays are list of records (dicts) with "id" field as primary key
+        - delimiter is '`' and '.'
+**rst**/
+PUBLIC json_t *kwid_new_dict(
+    const char *options, // "verbose", "lower"
+    json_t *kw,  // NOT owned
     const char *path,
     ...
 );

@@ -1240,8 +1240,8 @@ PRIVATE void json_vappend(hgen_t hgen, va_list ap)
                                     JSON_INDENT(0) |
                                     JSON_REAL_PRECISION(get_real_precision());
                                 char *bf = json_dumps(jn, flags);
-                                helper_doublequote2quote(bf);
                                 if(bf) {
+                                    helper_doublequote2quote(bf);
                                     json_add_string(hgen, key, bf);
                                     jsonp_free(bf) ;
                                 } else {
