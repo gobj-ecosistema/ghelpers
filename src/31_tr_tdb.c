@@ -684,7 +684,11 @@ PRIVATE int parse_hooks(
                 }
                 const char *link_topic_name; json_t *link_field;
                 json_object_foreach(link, link_topic_name, link_field) {
-                    json_t *link_topic = kw_get_subdict_value(tranger, "topics", link_topic_name, 0, 0);
+                    json_t *link_topic = kwid_get("",
+                        tranger,
+                        "topics`%s",
+                            link_topic_name
+                    );
                     if(!link_topic) {
                         log_error(0,
                             "gobj",             "%s", __FILE__,
@@ -730,12 +734,10 @@ PRIVATE int parse_hooks(
                 }
                 const char *reverse_topic_name; json_t *reverse_field;
                 json_object_foreach(reverse, reverse_topic_name, reverse_field) {
-                    json_t *reverse_topic = kw_get_subdict_value(
+                    json_t *reverse_topic = kwid_get("",
                         tranger,
-                        "topics",
-                        reverse_topic_name,
-                        0,
-                        0
+                        "topics`%s",
+                            reverse_topic_name
                     );
                     if(!reverse_topic) {
                         log_error(0,
@@ -771,13 +773,27 @@ PRIVATE int parse_hooks(
                         );
                         ret += -1;
                     }
-
-                    // TODO CHEQUEA que tiene el flag fkey
+                    // CHEQUEA que tiene el flag fkey
+                    if(!kw_has_word(kwid_get("", field, "flag"), "fkey", "")) {
+                        log_error(0,
+                            "gobj",                 "%s", __FILE__,
+                            "function",             "%s", __FUNCTION__,
+                            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                            "msg",                  "%s", "reverse field must have fkey flag",
+                            "topic_name",           "%s", topic_name,
+                            "id",                   "%s", id,
+                            "reverse_topic_name",   "%s", reverse_topic_name,
+                            "reverse_field",        "%s", json_string_value(reverse_field),
+                            NULL
+                        );
+                        ret += -1;
+                    }
                 }
             } else {
-                /*----------------------------*
-                 *  It's a not hook
-                 *----------------------------*/
+                /*---------------------------------*
+                 *  It's not a hook,
+                 *  check it hasn't link/reverse
+                 *---------------------------------*/
                 if(kw_has_key(col, "link")) {
                     log_error(0,
                         "gobj",         "%s", __FILE__,
