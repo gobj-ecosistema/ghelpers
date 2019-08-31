@@ -83,7 +83,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "TreeDB without schema.",
             "treedb_name",  "%s", treedb_name,
             NULL
@@ -117,7 +117,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "TreeDB ALREADY opened.",
             "treedb_name",  "%s", treedb_name,
             NULL
@@ -170,7 +170,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Schema topic without topic_name",
                 "treedb_name",  "%s", treedb_name,
                 "schema_topic", "%j", schema_topic,
@@ -183,7 +183,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Schema topic without pkey=id",
                 "treedb_name",  "%s", treedb_name,
                 "schema_topic", "%j", schema_topic,
@@ -427,7 +427,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Field 'id' required",
             "desc",         "%j", desc,
             "data",         "%j", data,
@@ -439,7 +439,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Field 'type' required",
             "desc",         "%j", desc,
             "data",         "%j", data,
@@ -462,7 +462,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Field required",
                 "desc",         "%j", desc,
                 "data",         "%j", data,
@@ -494,7 +494,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                                 log_error(0,
                                     "gobj",         "%s", __FILE__,
                                     "function",     "%s", __FUNCTION__,
-                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
                                     "msg",          "%s", "Wrong enum type",
                                     "desc",         "%j", desc,
                                     "data",         "%j", data,
@@ -511,7 +511,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                             log_error(0,
                                 "gobj",         "%s", __FILE__,
                                 "function",     "%s", __FUNCTION__,
-                                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                                 "msg",          "%s", "Case not implemented",
                                 "desc",         "%j", desc,
                                 "data",         "%j", data,
@@ -533,7 +533,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                     log_error(0,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
                         "msg",          "%s", "Wrong enum type",
                         "desc",         "%j", desc,
                         "data",         "%j", data,
@@ -549,7 +549,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                 log_error(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "Enum value must be string or string's array",
                     "desc",         "%j", desc,
                     "data",         "%j", data,
@@ -571,7 +571,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                 log_error(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "Wrong basic type",
                     "desc",         "%j", desc,
                     "data",         "%j", data,
@@ -602,7 +602,7 @@ PUBLIC int parse_schema_cols(
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Data must be an {} or [{}]",
             "cols_desc",    "%j", cols_desc,
             NULL
@@ -646,22 +646,34 @@ PRIVATE int parse_hooks(
     json_object_foreach(topics, topic_name, topic) {
         json_t *cols = kwid_new_list("verbose", topic, "cols");
         if(!cols) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "topic without cols",
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+            ret += -1;
             continue;
         }
         int idx; json_t *col;
         json_array_foreach(cols, idx, col) {
             const char *id = kw_get_str(col, "id", 0, 0);
             json_t *flag = kw_get_dict_value(col, "flag", 0, 0);
+            /*-------------------------*
+             *      Is a hook?
+             *-------------------------*/
             if(kw_has_word(flag, "hook", 0)) {
-                /*-------------------------*
-                 *          link
-                 *-------------------------*/
+                /*----------------------------*
+                 *  It's a hook, check link
+                 *----------------------------*/
                 json_t *link = kw_get_dict(col, "link", 0, 0);
                 if(!link) {
                     log_error(0,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
                         "msg",          "%s", "hook without link",
                         "topic_name",   "%s", topic_name,
                         "id",           "%s", id,
@@ -677,7 +689,7 @@ PRIVATE int parse_hooks(
                         log_error(0,
                             "gobj",             "%s", __FILE__,
                             "function",         "%s", __FUNCTION__,
-                            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+                            "msgset",           "%s", MSGSET_TREEDB_ERROR,
                             "msg",              "%s", "link topic not found",
                             "topic_name",       "%s", topic_name,
                             "id",               "%s", id,
@@ -697,7 +709,7 @@ PRIVATE int parse_hooks(
                         log_error(0,
                             "gobj",             "%s", __FILE__,
                             "function",         "%s", __FUNCTION__,
-                            "msgset",           "%s", MSGSET_PARAMETER_ERROR,
+                            "msgset",           "%s", MSGSET_TREEDB_ERROR,
                             "msg",              "%s", "link field not found",
                             "topic_name",       "%s", topic_name,
                             "id",               "%s", id,
@@ -710,7 +722,7 @@ PRIVATE int parse_hooks(
                 }
 
                 /*-------------------------*
-                 *          reverse
+                 *      Check reverse
                  *-------------------------*/
                 json_t *reverse = kw_get_dict(col, "reverse", 0, 0);
                 if(!reverse) {
@@ -729,7 +741,7 @@ PRIVATE int parse_hooks(
                         log_error(0,
                             "gobj",                 "%s", __FILE__,
                             "function",             "%s", __FUNCTION__,
-                            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                            "msgset",               "%s", MSGSET_TREEDB_ERROR,
                             "msg",                  "%s", "reverse topic not found",
                             "topic_name",           "%s", topic_name,
                             "id",                   "%s", id,
@@ -749,7 +761,7 @@ PRIVATE int parse_hooks(
                         log_error(0,
                             "gobj",                 "%s", __FILE__,
                             "function",             "%s", __FUNCTION__,
-                            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                            "msgset",               "%s", MSGSET_TREEDB_ERROR,
                             "msg",                  "%s", "reverse field not found",
                             "topic_name",           "%s", topic_name,
                             "id",                   "%s", id,
@@ -761,6 +773,34 @@ PRIVATE int parse_hooks(
                     }
 
                     // TODO CHEQUEA que tiene el flag fkey
+                }
+            } else {
+                /*----------------------------*
+                 *  It's a not hook
+                 *----------------------------*/
+                if(kw_has_key(col, "link")) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Not hook with a link",
+                        "topic_name",   "%s", topic_name,
+                        "id",           "%s", id,
+                        NULL
+                    );
+                    ret += -1;
+                }
+                if(kw_has_key(col, "reverse")) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Not hook with a reverse",
+                        "topic_name",   "%s", topic_name,
+                        "id",           "%s", id,
+                        NULL
+                    );
+                    ret += -1;
                 }
             }
         }
@@ -815,7 +855,7 @@ PUBLIC json_t *treedb_read_node( // Working with explicit 'id' returns a dict, w
             LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "TreeDb Topic data NOT FOUND",
             "path",         "%s", path,
             NULL
@@ -829,7 +869,7 @@ PUBLIC json_t *treedb_read_node( // Working with explicit 'id' returns a dict, w
             LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
             "path",         "%s", path,
             NULL
@@ -958,7 +998,7 @@ PRIVATE int set_field_value(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Col desc without 'id'",
             "topic_name",   "%s", topic_name,
             "col",          "%j", col,
@@ -971,7 +1011,7 @@ PRIVATE int set_field_value(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Col desc without 'type'",
             "topic_name",   "%s", topic_name,
             "col",          "%j", col,
@@ -990,7 +1030,7 @@ PRIVATE int set_field_value(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Field required",
                 "topic_name",   "%s", topic_name,
                 "field",        "%s", field,
@@ -1009,7 +1049,7 @@ PRIVATE int set_field_value(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Field cannot be null",
                 "topic_name",   "%s", topic_name,
                 "field",        "%s", field,
@@ -1043,7 +1083,7 @@ PRIVATE int set_field_value(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "Value must be string",
                     "topic_name",   "%s", topic_name,
                     "col",          "%j", col,
@@ -1067,7 +1107,7 @@ PRIVATE int set_field_value(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "Value must be integer",
                     "topic_name",   "%s", topic_name,
                     "col",          "%j", col,
@@ -1090,7 +1130,7 @@ PRIVATE int set_field_value(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "Value must be real",
                     "topic_name",   "%s", topic_name,
                     "col",          "%j", col,
@@ -1127,7 +1167,7 @@ PRIVATE int set_field_value(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Col type unknown",
                 "topic_name",   "%s", topic_name,
                 "col",          "%j", col,
@@ -1349,7 +1389,7 @@ PRIVATE int link_node(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "link col desc not found",
             "parent_record","%j", parent_record,
             "link",         "%s", link_,
@@ -1380,7 +1420,7 @@ PRIVATE int link_node(
             LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "link field not found",
             "topic_name",   "%s", parent_topic_name,
             "link",         "%s", link_,
@@ -1421,7 +1461,7 @@ PRIVATE int link_node(
                         LOG_OPT_TRACE_STACK,
                         "gobj",                 "%s", __FILE__,
                         "function",             "%s", __FUNCTION__,
-                        "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
                         "msg",                  "%s", "wrong parent hook type",
                         "parent_topic_name",    "%s", parent_topic_name,
                         "child_topic_name",     "%s", child_topic_name,
@@ -1438,7 +1478,7 @@ PRIVATE int link_node(
             LOG_OPT_TRACE_STACK,
             "gobj",                 "%s", __FILE__,
             "function",             "%s", __FUNCTION__,
-            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
             "msg",                  "%s", "link to child failed",
             "parent_topic_name",    "%s", parent_topic_name,
             "child_topic_name",     "%s", child_topic_name,
@@ -1490,7 +1530,7 @@ PRIVATE int link_node(
                             LOG_OPT_TRACE_STACK,
                             "gobj",                 "%s", __FILE__,
                             "function",             "%s", __FUNCTION__,
-                            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                            "msgset",               "%s", MSGSET_TREEDB_ERROR,
                             "msg",                  "%s", "wrong child hook type",
                             "parent_topic_name",    "%s", parent_topic_name,
                             "child_topic_name",     "%s", child_topic_name,
@@ -1507,7 +1547,7 @@ PRIVATE int link_node(
                 LOG_OPT_TRACE_STACK,
                 "gobj",                 "%s", __FILE__,
                 "function",             "%s", __FUNCTION__,
-                "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
                 "msg",                  "%s", "link to child failed",
                 "parent_topic_name",    "%s", parent_topic_name,
                 "child_topic_name",     "%s", child_topic_name,
@@ -1559,7 +1599,7 @@ PUBLIC int treedb_link_nodes(
             LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "parent or child types must be object or array",
             "parents",      "%j", parent_records,
             "childs",       "%j", child_records,

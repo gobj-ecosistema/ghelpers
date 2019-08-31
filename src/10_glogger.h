@@ -63,6 +63,7 @@ extern "C"{
 #define MSGSET_JSON_ERROR                   "Jansson Error"
 #define MSGSET_LIBUV_ERROR                  "Libuv Error"
 #define MSGSET_OAUTH_ERROR                  "OAuth Error"
+#define MSGSET_TREEDB_ERROR                 "TreeDb Error"
 
 // Info/Debug MSGSETs
 #define MSGSET_STATISTICS                   "Statistics"
