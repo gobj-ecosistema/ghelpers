@@ -1276,6 +1276,7 @@ PUBLIC int treedb_write_node(
 
     /*
      *  Write record
+     *  TODO salva solo los campos persistentes!!!
      */
     md_record_t md_record;
     int ret = tranger_append_record(
