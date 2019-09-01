@@ -412,7 +412,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int check_desc_field(json_t *desc, json_t *data)
+PRIVATE int check_desc_field(json_t *desc, json_t *dato)
 {
     int ret = 0;
 
@@ -430,7 +430,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Field 'id' required",
             "desc",         "%j", desc,
-            "data",         "%j", data,
+            "dato",         "%j", dato,
             NULL
         );
         return -1;
@@ -442,7 +442,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Field 'type' required",
             "desc",         "%j", desc,
-            "data",         "%j", data,
+            "dato",         "%j", dato,
             NULL
         );
         return -1;
@@ -451,7 +451,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
     /*
      *  Get value and type
      */
-    json_t *value = kw_get_dict_value(data, desc_id, 0, 0);
+    json_t *value = kw_get_dict_value(dato, desc_id, 0, 0);
     const char *value_type = my_json_type(value);
 
     /*
@@ -465,7 +465,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Field required",
                 "desc",         "%j", desc,
-                "data",         "%j", data,
+                "dato",         "%j", dato,
                 "field",        "%s", desc_id,
                 NULL
             );
@@ -497,7 +497,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
                                     "msg",          "%s", "Wrong enum type",
                                     "desc",         "%j", desc,
-                                    "data",         "%j", data,
+                                    "dato",         "%j", dato,
                                     "field",        "%s", desc_id,
                                     "value",        "%j", value,
                                     "v",            "%j", v,
@@ -514,7 +514,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                                 "msg",          "%s", "Case not implemented",
                                 "desc",         "%j", desc,
-                                "data",         "%j", data,
+                                "dato",         "%j", dato,
                                 "field",        "%s", desc_id,
                                 "value",        "%j", value,
                                 "v",            "%j", v,
@@ -536,7 +536,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
                         "msg",          "%s", "Wrong enum type",
                         "desc",         "%j", desc,
-                        "data",         "%j", data,
+                        "dato",         "%j", dato,
                         "field",        "%s", desc_id,
                         "value",        "%j", value,
                         "value_to_be",  "%j", desc_enum,
@@ -552,7 +552,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "Enum value must be string or string's array",
                     "desc",         "%j", desc,
-                    "data",         "%j", data,
+                    "dato",         "%j", dato,
                     "field",        "%s", desc_id,
                     "value",        "%j", value,
                     "value_to_be",  "%j", desc_enum,
@@ -574,7 +574,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "Wrong basic type",
                     "desc",         "%j", desc,
-                    "data",         "%j", data,
+                    "dato",         "%j", dato,
                     "field",        "%s", desc_id,
                     "value_type",   "%s", value_type,
                     "value_to_be",  "%j", desc_type,
@@ -593,12 +593,12 @@ PRIVATE int check_desc_field(json_t *desc, json_t *data)
  ***************************************************************************/
 PUBLIC int parse_schema_cols(
     json_t *cols_desc,  // not owned
-    json_t *data  // owned
+    json_t *dato  // owned
 )
 {
     int ret = 0;
 
-    if(!(json_is_object(data) || json_is_array(data))) {
+    if(!(json_is_object(dato) || json_is_array(dato))) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -607,19 +607,19 @@ PUBLIC int parse_schema_cols(
             "cols_desc",    "%j", cols_desc,
             NULL
         );
-        JSON_DECREF(data);
+        JSON_DECREF(dato);
         return -1;
     }
 
     int idx; json_t *desc;
 
-    if(json_is_object(data)) {
+    if(json_is_object(dato)) {
         json_array_foreach(cols_desc, idx, desc) {
-            ret += check_desc_field(desc, data);
+            ret += check_desc_field(desc, dato);
         }
-    } else if(json_is_array(data)) {
+    } else if(json_is_array(dato)) {
         int idx1; json_t *d;
-        json_array_foreach(data, idx1, d) {
+        json_array_foreach(dato, idx1, d) {
             int idx2;
             json_array_foreach(cols_desc, idx2, desc) {
                 ret += check_desc_field(desc, d);
@@ -627,7 +627,7 @@ PUBLIC int parse_schema_cols(
         }
     }
 
-    JSON_DECREF(data);
+    JSON_DECREF(dato);
 
     return ret;
 }
