@@ -1080,7 +1080,7 @@ PRIVATE int set_field_value(
     }
 
     BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
-    BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+    //BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
 
     SWITCHS(type) {
         CASES("string")
@@ -1161,7 +1161,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("array")
-            if(JSON_TYPEOF(value, JSON_ARRAY) && persistent) {
+            if(JSON_TYPEOF(value, JSON_ARRAY)) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_array());
@@ -1169,7 +1169,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("object")
-            if(JSON_TYPEOF(value, JSON_OBJECT) && persistent) {
+            if(JSON_TYPEOF(value, JSON_OBJECT)) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_object());
@@ -1418,6 +1418,9 @@ PRIVATE int link_node(
         "topics`%s`%s`%s",
             parent_topic_name, "cols", link_
     );
+
+    BOOL save_parent_record = kw_has_word(kwid_get("lower", hook_col, "flag"), "persistent", "");
+
     const char *child_topic_name = json_string_value(
         kwid_get("", child_record, "__md_treedb__`topic_name")
     );
@@ -1502,6 +1505,7 @@ PRIVATE int link_node(
     /*--------------------------------------------------*
      *  Reverse - child container with info of parent
      *--------------------------------------------------*/
+    BOOL save_child_record = FALSE;
     BOOL reverse_found = FALSE;
     json_t *reverse = kw_get_dict(hook_col, "reverse", 0, 0);
     if(reverse) {
@@ -1512,6 +1516,14 @@ PRIVATE int link_node(
                 json_t *child_field = kw_get_dict_value(child_record, reverse_field, 0, 0);
                 if(!child_field) {
                     break;
+                }
+                json_t *reverse_col_flag = kwid_get("verbose,lower",
+                    tranger,
+                    "topics`%s`%s`%s`flag",
+                        child_topic_name, "cols", reverse_field
+                );
+                if(kw_has_word(reverse_col_flag, "persistent", "")) {
+                    save_child_record = TRUE;
                 }
                 const char *id  = kw_get_str(parent_record, "id", 0, 0); // TODO y si es integer?
                 switch(json_typeof(child_field)) { // json_typeof PROTECTED
@@ -1573,7 +1585,7 @@ PRIVATE int link_node(
      *      Save persistents
      *----------------------------*/
     int ret = 0;
-    if(link_found) {
+    if(save_parent_record && link_found) {
         /*
          *  Write record
          */
@@ -1588,7 +1600,7 @@ PRIVATE int link_node(
         );
     }
 
-    if(reverse_found) {
+    if(save_child_record && reverse_found) {
         /*
          *  Write record
          */
