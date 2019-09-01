@@ -80,7 +80,7 @@ PUBLIC int treedb_write_node(
     const char *topic_name,
     json_t *id, // owned, Explicit id. Can be: integer,string
     json_t *kw, // owned
-    const char *options // "strict"
+    const char *options
 );
 
 PUBLIC int treedb_link_nodes(

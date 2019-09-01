@@ -1080,10 +1080,7 @@ PRIVATE int set_field_value(
     }
 
     BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
-
-    if(kw_has_word(desc_flag, "persistent", 0)) {
-        // TODO
-    }
+    BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
 
     SWITCHS(type) {
         CASES("string")
@@ -1164,7 +1161,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("array")
-            if(JSON_TYPEOF(value, JSON_ARRAY)) {
+            if(JSON_TYPEOF(value, JSON_ARRAY) && persistent) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_array());
@@ -1172,7 +1169,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("object")
-            if(JSON_TYPEOF(value, JSON_OBJECT)) {
+            if(JSON_TYPEOF(value, JSON_OBJECT) && persistent) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_object());
@@ -1200,7 +1197,7 @@ PRIVATE int set_field_value(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE json_t *create_record(
+PRIVATE json_t *create_new_record(
     json_t *topic,  // not owned
     json_t *id, // not owned
     json_t *kw,  // not owned
@@ -1213,6 +1210,8 @@ PRIVATE json_t *create_record(
         return 0;
     }
     json_t *new_record = json_object();
+
+    // TODO check cols id with uuid
 
     int idx; json_t *col;
     json_array_foreach(cols, idx, col) {
@@ -1240,12 +1239,8 @@ PRIVATE json_t *create_record(
         }
     }
 
-    // TODO check cols id with uuid
-
-    if(options && !strstr(options, "strict")) {
-        json_object_update_missing(new_record, kw);
-        json_object_del(new_record, "__md_treedb__");
-    }
+    json_object_update_missing(new_record, kw);
+    json_object_del(new_record, "__md_treedb__");
 
     JSON_DECREF(cols);
 
@@ -1265,7 +1260,7 @@ PUBLIC int treedb_write_node(
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
-    json_t *new_record = create_record(topic, id, kw, options);
+    json_t *new_record = create_new_record(topic, id, kw, options);
     if(!new_record) {
         // Error already logged
         JSON_DECREF(new_record);
@@ -1276,7 +1271,6 @@ PUBLIC int treedb_write_node(
 
     /*
      *  Write record
-     *  TODO salva solo los campos persistentes!!!
      */
     md_record_t md_record;
     int ret = tranger_append_record(
@@ -1287,6 +1281,7 @@ PUBLIC int treedb_write_node(
         &md_record, // md_record,
         new_record // owned
     );
+
     JSON_DECREF(id);
     JSON_DECREF(kw);
     return ret;
