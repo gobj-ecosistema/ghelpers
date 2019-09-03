@@ -659,6 +659,23 @@ PUBLIC json_t *kwid_new_dict(
     ...
 );
 
+/***************************************************************************
+    Utility for databases.
+    Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
+    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    If match_fn is 0 then kw_match_simple is used.
+    NOTE Using JSON_INCREF/JSON_DECREF
+ ***************************************************************************/
+PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original records
+    json_t *kw,         // not owned
+    json_t *ids,        // owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+);
+
 #ifdef __cplusplus
 }
 #endif

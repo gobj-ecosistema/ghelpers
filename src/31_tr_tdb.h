@@ -39,14 +39,16 @@ extern "C"{
     in pure-child or multi-parent mode.
     The tree in json too.
 
-    HACK Convention: the pkey of all topics must be "id".
+    HACK Conventions:
+        1) the pkey of all topics must be "id".
+        2) the "id" field (primary key) MUST be a string.
 
 **rst**/
 PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
-    const char *options
+    json_t *jn_options
 );
 PUBLIC int treedb_close_db(
     json_t *tranger,
@@ -65,41 +67,57 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/
-PUBLIC json_t *treedb_read_node( // Working with explicit 'id' returns a dict, without returns a list
+PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *id,     // owned, Explicit id. Can be: integer,string, [integer], [string], [keys]
-    json_t *kw,     // owned, HACK kw is `filter` on read/delete and `record` on create
-    const char *options // "create", TODO "delete",
+    json_t *kw // owned
 );
 
-PUBLIC int treedb_write_node(
+PUBLIC int treedb_update_node(
     json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    json_t *id, // owned, Explicit id. Can be: integer,string
-    json_t *kw, // owned
-    const char *options
+    json_t *node    // not owned
+);
+
+PUBLIC int treedb_delete_node(
+    json_t *tranger,
+    json_t *node    // owned
 );
 
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
-    const char *treedb_name,
-    const char *link,
-    json_t *parent_records, // not owned
-    json_t *child_records,  // not owned
-    const char *options     //
+    const char *hook,
+    json_t *parent_node,    // not owned
+    json_t *child_node      // not owned
 );
-PUBLIC int treedb_unlink_nodes( // TODO
+PUBLIC int treedb_unlink_nodes(
     json_t *tranger,
-    const char *treedb_name,
-    const char *link,
-    json_t *parent_records, // not owned
-    json_t *child_records,  // not owned
-    const char *options     //
+    const char *hook,
+    json_t *parent_node,    // not owned
+    json_t *child_node      // not owned
 );
 
+PUBLIC int treedb_link_multiple_nodes(
+    json_t *tranger,
+    const char *hook,
+    json_t *parent_nodes,   // not owned
+    json_t *child_nodes     // not owned
+);
+
+
+PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *jn_filter   // owned
+);
+
+PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *jn_id       // owned
+);
 
 #ifdef __cplusplus
 }

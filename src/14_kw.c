@@ -1397,7 +1397,7 @@ PUBLIC int64_t jn2integer(json_t *jn_var)
  ***************************************************************************/
 PUBLIC char *jn2string(json_t *jn_var)
 {
-    char temp[256];
+    char temp[PATH_MAX];
     char *s="";
 
     if(json_is_string(jn_var)) {
@@ -2904,6 +2904,72 @@ PUBLIC json_t *kwid_new_dict(
     }
 
     return new_dict;
+}
+
+/***************************************************************************
+    Utility for databases.
+    Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
+    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    If match_fn is 0 then kw_match_simple is used.
+    NOTE Using JSON_INCREF/JSON_DECREF
+ ***************************************************************************/
+PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original records
+    json_t *kw,         // not owned
+    json_t *ids,        // owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+)
+{
+    if(!kw) {
+        JSON_DECREF(ids);
+        JSON_DECREF(jn_filter);
+        // silence
+        return 0;
+    }
+    if(!match_fn) {
+        match_fn = kw_match_simple;
+    }
+
+    json_t *kw_new = json_array();
+
+    if(json_is_array(kw)) {
+        size_t idx;
+        json_t *jn_value;
+        json_array_foreach(kw, idx, jn_value) {
+            JSON_INCREF(jn_filter);
+            if(match_fn(jn_value, jn_filter)) {
+                json_array_append(kw_new, jn_value);
+            }
+        }
+    } else if(json_is_object(kw)) {
+        const char *id; json_t *jn_value;
+        json_object_foreach(kw, id, jn_value) {
+            if(ids && !json_str_in_list(ids, id, 0)) {
+                continue;
+            }
+            JSON_INCREF(jn_filter);
+            if(match_fn(kw, jn_filter)) {
+                json_array_append(kw_new, kw);
+            }
+        }
+
+    } else  {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw MUST BE a json array or object",
+            NULL
+        );
+        JSON_DECREF(kw_new);
+    }
+
+    JSON_DECREF(ids);
+    JSON_DECREF(jn_filter);
+    return kw_new;
 }
 
 
