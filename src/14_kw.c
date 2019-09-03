@@ -2908,6 +2908,51 @@ PUBLIC json_t *kwid_new_dict(
 
 /***************************************************************************
     Utility for databases.
+    Return TRUE if `id` is in the list/dict/str `ids`
+ ***************************************************************************/
+PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
+{
+    if(!ids || !id) {
+        return FALSE;
+    }
+    switch(json_typeof(ids)) {
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(ids, idx, jn_value) {
+                const char *value = json_string_value(jn_value);
+                if(value && strcmp(value, id)==0)  {
+                    return TRUE;
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            const char *key; json_t *jn_value;
+            json_object_foreach(ids, key, jn_value) {
+                if(strcmp(key, id)==0)  {
+                    return TRUE;
+                }
+            }
+        }
+        break;
+
+    case JSON_STRING:
+        if(strcmp(id, json_string_value(ids))==0) {
+            return TRUE;
+        }
+        break;
+
+    default:
+        break;
+
+    }
+    return FALSE;
+}
+
+/***************************************************************************
+    Utility for databases.
     Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
     return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
     If match_fn is 0 then kw_match_simple is used.
@@ -2939,6 +2984,9 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
         size_t idx;
         json_t *jn_value;
         json_array_foreach(kw, idx, jn_value) {
+            if(!kwid_match_id(ids, kw_get_str(jn_value, "id", 0, 0))) {
+                continue;
+            }
             JSON_INCREF(jn_filter);
             if(match_fn(jn_value, jn_filter)) {
                 json_array_append(kw_new, jn_value);
@@ -2947,7 +2995,7 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
     } else if(json_is_object(kw)) {
         const char *id; json_t *jn_value;
         json_object_foreach(kw, id, jn_value) {
-            if(ids && !json_str_in_list(ids, id, 0)) {
+            if(!kwid_match_id(ids, id)) {
                 continue;
             }
             JSON_INCREF(jn_filter);

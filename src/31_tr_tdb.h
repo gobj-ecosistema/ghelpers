@@ -104,11 +104,11 @@ PUBLIC int treedb_link_multiple_nodes(
     json_t *child_nodes     // not owned
 );
 
-
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
+    json_t *jn_ids,     // owned
     json_t *jn_filter   // owned
 );
 

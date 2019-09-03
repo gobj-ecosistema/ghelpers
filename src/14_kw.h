@@ -659,13 +659,22 @@ PUBLIC json_t *kwid_new_dict(
     ...
 );
 
-/***************************************************************************
+/**rst**
+    Utility for databases.
+    Return TRUE if `id` is in the list/dict/str `ids`
+**rst**/
+PUBLIC BOOL kwid_match_id(
+    json_t *ids,
+    const char *id
+);
+
+/**rst**
     Utility for databases.
     Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
     return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
     If match_fn is 0 then kw_match_simple is used.
     NOTE Using JSON_INCREF/JSON_DECREF
- ***************************************************************************/
+**rst**/
 PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original records
     json_t *kw,         // not owned
     json_t *ids,        // owned
