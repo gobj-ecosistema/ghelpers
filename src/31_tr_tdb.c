@@ -1734,32 +1734,16 @@ PUBLIC int treedb_link_nodes(
     int ret = 0;
     if(save_parent_node && hook_found) {
         /*
-         *  Write record
+         *  Update record
          */
-//         JSON_INCREF(parent_node);
-//         treedb_write_node(
-//             tranger,
-//             treedb_name,
-//             parent_topic_name,
-//             0,              // id: owned, Explicit id. Can be: integer,string
-//             parent_node,  // owned
-//             options
-//         );
+        ret += treedb_update_node(tranger, parent_node);
     }
 
     if(save_child_node && reverse_found) {
         /*
-         *  Write record
+         *  Update record
          */
-//         JSON_INCREF(child_node);
-//         treedb_write_node(
-//             tranger,
-//             treedb_name,
-//             child_topic_name,
-//             0,              // id
-//             child_node,   // owned
-//             options
-//         );
+        ret += treedb_update_node(tranger, child_node);
     }
 
     return ret;
