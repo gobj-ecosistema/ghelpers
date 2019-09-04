@@ -84,6 +84,21 @@ PUBLIC int treedb_delete_node(
     json_t *node    // owned
 );
 
+PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *jn_ids,     // owned
+    json_t *jn_filter   // owned
+);
+
+PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *jn_id       // owned
+);
+
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *hook,
@@ -102,21 +117,6 @@ PUBLIC int treedb_link_multiple_nodes(
     const char *hook,
     json_t *parent_nodes,   // not owned
     json_t *child_nodes     // not owned
-);
-
-PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    json_t *jn_ids,     // owned
-    json_t *jn_filter   // owned
-);
-
-PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    json_t *jn_id       // owned
 );
 
 #ifdef __cplusplus
