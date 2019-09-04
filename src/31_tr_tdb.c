@@ -60,7 +60,7 @@ PRIVATE char *build_treedb_indexes_path(
     const char *topic_name
 )
 {
-    snprintf(bf, bfsize, "treedbs`%s`%s`indexes", treedb_name, topic_name);
+    snprintf(bf, bfsize, "treedbs`%s`%s", treedb_name, topic_name);
     strtolower(bf);
     return bf;
 }
@@ -228,7 +228,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     build_treedb_indexes_path(path, sizeof(path), treedb_name, tags_topic_name);
     kw_get_str(list, "treedb_indexes_path", path, KW_CREATE);
 
-    kw_get_subdict_value(treedb, tags_topic_name, "indexes", json_object(), KW_CREATE);
+    kw_get_dict_value(treedb, tags_topic_name, json_object(), KW_CREATE);
 
     /*------------------------------*
      *  Open "user" lists
@@ -254,7 +254,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
         kw_get_str(list, "treedb_indexes_path", path, KW_CREATE);
 
-        kw_get_subdict_value(treedb, topic_name, "indexes", json_object(), KW_CREATE);
+        kw_get_dict_value(treedb, topic_name, json_object(), KW_CREATE);
     }
 
     /*------------------------------*
@@ -1108,60 +1108,6 @@ PRIVATE int load_record_callback(
         snprintf(key_, sizeof(key_), "%"PRIu64, md_record->key.i);
         key = key_;
     }
-
-    /*
-     *  Search the record of this key
-     */
-    /*-------------------------------*
-     *      Get data and indexes
-     *-------------------------------*/
-    json_t *data = kw_get_list(
-        tranger,
-        kw_get_str(list, "treedb_data_path", 0, KW_REQUIRED),
-        0,
-        KW_REQUIRED
-    );
-    json_t *indexes = kw_get_dict(
-        tranger,
-        kw_get_str(list, "treedb_indexes_path", 0, KW_REQUIRED),
-        0,
-        KW_REQUIRED
-    );
-    if(!data || !indexes) {
-        JSON_DECREF(jn_record);
-        return -1;  // Timeranger: break the load
-    }
-
-    /*
-     *  Build metadata
-     */
-    json_t *jn_record_md = _md2json(
-        kw_get_str(list, "treedb_name", "", KW_REQUIRED),
-        kw_get_str(list, "topic_name", "", KW_REQUIRED),
-        md_record
-    );
-
-    /*
-     *  Exists already the id?
-     */
-    json_t *record = kw_get_dict(indexes, key, 0, 0);
-    if(!record) {
-        /*
-         *  New record
-         */
-        json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
-        json_object_set(indexes, key, jn_record);
-        json_array_append_new(data, jn_record);
-        return 0;  // Timeranger does not load the record, it's me.
-    }
-
-    /*
-     *  Update record
-     */
-    json_object_clear(record);
-    json_object_update(record, jn_record);
-    json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
-
 #endif
     JSON_DECREF(jn_record);
     return 0;  // Timeranger: does not load the record, it's me.
@@ -1247,7 +1193,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Node already created",
+            "msg",          "%s", "Node already exists",
             "path",         "%s", path,
             "topic_name",   "%s", topic_name,
             "id",           "%s", sid,
