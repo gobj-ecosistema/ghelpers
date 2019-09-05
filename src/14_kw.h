@@ -612,7 +612,7 @@ PUBLIC int kw_pop(
 PUBLIC BOOL kw_has_word(
     json_t *kw,  // NOT owned
     const char *word,
-    const char *options
+    const char *options // "recursive", "verbose"
 );
 
 /**rst**
