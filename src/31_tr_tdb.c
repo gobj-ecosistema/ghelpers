@@ -54,14 +54,15 @@ PRIVATE json_t *topic_cols_desc = 0;
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE char *build_treedb_indexes_path(
+PRIVATE char *build_treedb_index_path(
     char *bf,
     int bfsize,
     const char *treedb_name,
-    const char *topic_name
+    const char *topic_name,
+    const char *key
 )
 {
-    snprintf(bf, bfsize, "treedbs`%s`%s", treedb_name, topic_name);
+    snprintf(bf, bfsize, "treedbs`%s`%s`%s", treedb_name, topic_name, key);
     strtolower(bf);
     return bf;
 }
@@ -226,10 +227,10 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
 
     char path[NAME_MAX];
-    build_treedb_indexes_path(path, sizeof(path), treedb_name, tags_topic_name);
-    kw_get_str(list, "treedb_indexes_path", path, KW_CREATE);
+    build_treedb_index_path(path, sizeof(path), treedb_name, tags_topic_name, "id");
+    kw_get_str(list, "treedb_index_path", path, KW_CREATE);
 
-    kw_get_dict_value(treedb, tags_topic_name, json_object(), KW_CREATE);
+    kw_get_subdict_value(treedb, tags_topic_name, "id", json_object(), KW_CREATE);
 
     /*------------------------------*
      *  Open "user" lists
@@ -252,10 +253,10 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 
         kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
 
-        build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
-        kw_get_str(list, "treedb_indexes_path", path, KW_CREATE);
+        build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+        kw_get_str(list, "treedb_index_path", path, KW_CREATE);
 
-        kw_get_dict_value(treedb, topic_name, json_object(), KW_CREATE);
+        kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
     }
 
     /*------------------------------*
@@ -382,17 +383,17 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
             "enum",
                 "string","integer","object","array","real","boolean",  "enum",
             "flag",
-                "required", "notnull", "wild"
+                "required", "notnull", "wild"  // TODO "wild" no veo claro que hace aqui
         )
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s], s:s}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
             "enum",
-                "","persistent","required","fkey", "hook","uuid","include",
+                "","persistent","required","fkey", "hook","uuid","include","notnull","wild",
             "flag",
                 ""
         )
@@ -908,6 +909,7 @@ PRIVATE int set_field_value(
     }
 
     BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
+    BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
     //BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
 
     SWITCHS(type) {
@@ -989,7 +991,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("array")
-            if(JSON_TYPEOF(value, JSON_ARRAY)) {
+            if(!is_hook && JSON_TYPEOF(value, JSON_ARRAY)) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_array());
@@ -997,7 +999,7 @@ PRIVATE int set_field_value(
             break;
 
         CASES("object")
-            if(JSON_TYPEOF(value, JSON_OBJECT)) {
+            if(!is_hook && JSON_TYPEOF(value, JSON_OBJECT)) {
                 json_object_set(record, field, value);
             } else {
                 json_object_set_new(record, field, json_object());
@@ -1133,22 +1135,22 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
 )
 {
     /*-------------------------------*
-     *      Get indexes
+     *      Get indexx
      *-------------------------------*/
     char path[NAME_MAX];
-    build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
-    json_t *indexes = kw_get_dict(
+    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
         KW_REQUIRED
     );
-    if(!indexes) {
+    if(!indexx) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
+            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
             "path",         "%s", path,
             "topic_name",   "%s", topic_name,
             NULL
@@ -1199,7 +1201,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(kw);
         return 0;
     }
-    json_t *record = kw_get_dict(indexes, sid, 0, 0);
+    json_t *record = kw_get_dict(indexx, sid, 0, 0);
     if(record) {
         /*
          *  Yes
@@ -1264,7 +1266,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Write node
      *-------------------------------*/
-    json_object_set_new(indexes, sid, record);
+    json_object_set_new(indexx, sid, record);
 
     gbmem_free(sid);
     JSON_DECREF(kw);
@@ -1340,22 +1342,22 @@ PUBLIC int treedb_delete_node(
     json_int_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
 
     /*-------------------------------*
-     *      Get indexes
+     *      Get indexx
      *-------------------------------*/
     char path[NAME_MAX];
-    build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
-    json_t *indexes = kw_get_dict(
+    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
         KW_REQUIRED
     );
-    if(!indexes) {
+    if(!indexx) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
+            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
             "path",         "%s", path,
             "topic_name",   "%s", topic_name,
             NULL
@@ -1389,7 +1391,7 @@ PUBLIC int treedb_delete_node(
      *-------------------------------*/
     if(tranger_delete_record(tranger, topic_name, __rowid__)==0) {
         char *sid = jn2string(id);
-        json_object_del(indexes, sid);
+        json_object_del(indexx, sid);
         gbmem_free(sid);
     }
 
@@ -1408,22 +1410,22 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
 )
 {
     /*-------------------------------*
-     *      Get indexes
+     *      Get indexx
      *-------------------------------*/
     char path[NAME_MAX];
-    build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
-    json_t *indexes = kw_get_dict(
+    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
         KW_REQUIRED
     );
-    if(!indexes) {
+    if(!indexx) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
+            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
             "path",         "%s", path,
             "topic_name",   "%s", topic_name,
             NULL
@@ -1435,12 +1437,34 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
      *      Read
      *-------------------------------*/
     json_t *list = kwid_collect(
-        indexes,    // not owned
+        indexx,    // not owned
         jn_ids,     // owned
         jn_filter,  // owned
         0           // match fn
     );
     return list;
+
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *treedb_get_index( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *index_name
+)
+{
+    char path[NAME_MAX];
+    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, index_name);
+    json_t *indexx = kw_get_dict(
+        tranger,
+        path,
+        0,
+        KW_REQUIRED
+    );
+    return indexx;
 
 }
 
@@ -1455,22 +1479,22 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
 )
 {
     /*-------------------------------*
-     *      Get indexes
+     *      Get indexx
      *-------------------------------*/
     char path[NAME_MAX];
-    build_treedb_indexes_path(path, sizeof(path), treedb_name, topic_name);
-    json_t *indexes = kw_get_dict(
+    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
         KW_REQUIRED
     );
-    if(!indexes) {
+    if(!indexx) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexes NOT FOUND",
+            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
             "path",         "%s", path,
             "topic_name",   "%s", topic_name,
             NULL
@@ -1483,7 +1507,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *      Get
      *-------------------------------*/
     char *sid = jn2string(jn_id);
-    json_t *record = kw_get_dict(indexes, sid, 0, 0);
+    json_t *record = kw_get_dict(indexx, sid, 0, 0);
     gbmem_free(sid);
 
     JSON_DECREF(jn_id);
