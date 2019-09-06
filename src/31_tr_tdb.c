@@ -1160,6 +1160,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Get the id, it's mandatory
      *-------------------------------*/
+    json_t *new_id = 0;
     json_t *id = kw_get_dict_value(kw, "id", 0, 0);
     if(!id) {
         json_t *id_col_flag = kwid_get("verbose,lower",
@@ -1172,7 +1173,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             uuid_t binuuid;
             uuid_generate_random(binuuid);
             uuid_unparse_lower(binuuid, uuid);
-            id = json_string(uuid);
+            new_id = id = json_string(uuid);
+            json_object_set_new(kw, "id", new_id);
         } else {
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -1184,10 +1186,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                 "kw",           "%j", kw,
                 NULL
             );
+            JSON_DECREF(kw);
+            return 0;
         }
-
-        JSON_DECREF(kw);
-        return 0;
     }
 
     /*-------------------------------*
@@ -1195,7 +1196,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *-------------------------------*/
     char *sid = jn2string(id);
     if(empty_string(sid)) {
-        // TODO
+        JSON_DECREF(kw);
+        return 0;
     }
     json_t *record = kw_get_dict(indexes, sid, 0, 0);
     if(record) {
