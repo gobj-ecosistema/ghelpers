@@ -27,7 +27,8 @@
 PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
-    json_t *kw  // not owned
+    json_t *kw,  // not owned
+    const char *options
 );
 PRIVATE json_t *_md2json(
     const char *treedb_name,
@@ -388,12 +389,13 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:s}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
             "enum",
-                "","persistent","required","fkey", "hook","uuid","include","notnull","wild",
+                "","persistent","volatil", "required","fkey",
+                "hook","uuid","include","notnull","wild",
             "flag",
                 ""
         )
@@ -779,6 +781,15 @@ PRIVATE int parse_hooks(
                             NULL
                         );
                         ret += -1;
+                    }  else {
+                        json_object_set_new(
+                            field,
+                            "fkey",
+                            json_pack("{s:s}",
+                                topic_name, id
+                            )
+                        );
+
                     }
                 }
             } else {
@@ -910,7 +921,6 @@ PRIVATE int set_field_value(
 
     BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
     BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
-    //BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
 
     SWITCHS(type) {
         CASES("string")
@@ -1030,7 +1040,8 @@ PRIVATE int set_field_value(
 PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
-    json_t *kw  // not owned
+    json_t *kw,  // not owned
+    const char *options
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
@@ -1050,15 +1061,23 @@ PRIVATE json_t *record2tranger(
 
     const char *field; json_t *col;
     json_object_foreach(cols, field, col) {
-        if(set_field_value(topic_name, col, new_record, kw_get_dict_value(kw, field, 0, 0))<0) {
-            // Error already logged
-            JSON_DECREF(new_record);
-            JSON_DECREF(cols);
-            return 0;
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+        BOOL volatil = kw_has_word(desc_flag, "volatil", 0)?TRUE:FALSE;
+        if(persistent || volatil) {
+            if(set_field_value(topic_name, col, new_record, kw_get_dict_value(kw, field, 0, 0))<0) {
+                // Error already logged
+                JSON_DECREF(new_record);
+                JSON_DECREF(cols);
+                return 0;
+            }
         }
+
     }
 
-    json_object_update_missing(new_record, kw);
+    if(options && strstr(options, "permissive")) {
+        json_object_update_missing(new_record, kw);
+    }
     json_object_del(new_record, "__md_treedb__");
 
     return new_record;
@@ -1131,7 +1150,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw // owned
+    json_t *kw, // owned
+    const char *options // "permissive"
 )
 {
     /*-------------------------------*
@@ -1224,7 +1244,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Create the record
      *-------------------------------*/
-    record = record2tranger(tranger, topic_name, kw);
+    record = record2tranger(tranger, topic_name, kw, options);
     if(!record) {
         // Error already logged
         gbmem_free(sid);
@@ -1290,7 +1310,7 @@ PUBLIC int treedb_update_node(
     /*-------------------------------*
      *  Create the record
      *-------------------------------*/
-    json_t *record = record2tranger(tranger, topic_name, node);
+    json_t *record = record2tranger(tranger, topic_name, node, "");
     if(!record) {
         // Error already logged
         return -1;
@@ -1578,6 +1598,7 @@ PUBLIC int treedb_link_nodes(
             switch(json_typeof(parent_hook)) { // json_typeof PROTECTED
                 case JSON_STRING:
                     {
+                        // TODO no está claro
                         if(json_object_set_new(parent_node, hook_, json_string(id))==0) {
                             hook_found = TRUE;
                         }
@@ -1618,10 +1639,10 @@ PUBLIC int treedb_link_nodes(
             "gobj",                 "%s", __FILE__,
             "function",             "%s", __FUNCTION__,
             "msgset",               "%s", MSGSET_TREEDB_ERROR,
-            "msg",                  "%s", "link to child failed",
+            "msg",                  "%s", "parent hook not found",
             "parent_topic_name",    "%s", parent_topic_name,
             "child_topic_name",     "%s", child_topic_name,
-            "link",                 "%s", hook_,
+            "hook",                 "%s", hook_,
             NULL
         );
         return -1;
@@ -1636,57 +1657,56 @@ PUBLIC int treedb_link_nodes(
     if(reverse) {
         const char *reverse_topic_name; json_t *reverse_field_;
         json_object_foreach(reverse, reverse_topic_name, reverse_field_) {
-            if(strcmp(parent_topic_name, reverse_topic_name)==0) {
-                const char *reverse_field = json_string_value(reverse_field_);
-                json_t *child_field = kw_get_dict_value(child_node, reverse_field, 0, 0);
-                if(!child_field) {
+            const char *reverse_field = json_string_value(reverse_field_);
+            json_t *child_field = kw_get_dict_value(child_node, reverse_field, 0, 0);
+            if(!child_field) {
+                break;
+            }
+            json_t *reverse_col_flag = kwid_get("verbose,lower",
+                tranger,
+                "topics`%s`%s`%s`flag",
+                    child_topic_name, "cols", reverse_field
+            );
+            if(kw_has_word(reverse_col_flag, "persistent", "")) {
+                save_child_node = TRUE;
+            }
+            const char *id  = kw_get_str(parent_node, "id", 0, 0); // TODO y si es integer?
+            switch(json_typeof(child_field)) { // json_typeof PROTECTED
+                case JSON_STRING:
+                    {
+                        if(json_object_set_new(
+                                child_node, reverse_field, json_string(id))==0) {
+                            reverse_found = TRUE;
+                        }
+                    }
                     break;
-                }
-                json_t *reverse_col_flag = kwid_get("verbose,lower",
-                    tranger,
-                    "topics`%s`%s`%s`flag",
-                        child_topic_name, "cols", reverse_field
-                );
-                if(kw_has_word(reverse_col_flag, "persistent", "")) {
-                    save_child_node = TRUE;
-                }
-                const char *id  = kw_get_str(parent_node, "id", 0, 0); // TODO y si es integer?
-                switch(json_typeof(child_field)) { // json_typeof PROTECTED
-                    case JSON_STRING:
-                        {
-                            if(json_object_set_new(child_node, reverse_field, json_string(id))==0) {
-                                reverse_found = TRUE;
-                            }
+                case JSON_ARRAY:
+                    {
+                        if(json_array_append_new(child_field, json_string(id))==0) {
+                            reverse_found = TRUE;
                         }
-                        break;
-                    case JSON_ARRAY:
-                        {
-                            if(json_array_append_new(child_field, json_string(id))==0) {
-                                reverse_found = TRUE;
-                            }
+                    }
+                    break;
+                case JSON_OBJECT:
+                    {
+                        if(json_object_set_new(child_field, id, json_true())==0) {
+                            reverse_found = TRUE;
                         }
-                        break;
-                    case JSON_OBJECT:
-                        {
-                            if(json_object_set(child_field, id, parent_node)==0) {
-                                reverse_found = TRUE;
-                            }
-                        }
-                        break;
-                    default:
-                        log_error(0,
-                            "gobj",                 "%s", __FILE__,
-                            "function",             "%s", __FUNCTION__,
-                            "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                            "msg",                  "%s", "wrong child hook type",
-                            "parent_topic_name",    "%s", parent_topic_name,
-                            "child_topic_name",     "%s", child_topic_name,
-                            "link",                 "%s", hook_,
-                            "child_field",          "%j", child_field,
-                            NULL
-                        );
-                        return -1;
-                }
+                    }
+                    break;
+                default:
+                    log_error(0,
+                        "gobj",                 "%s", __FILE__,
+                        "function",             "%s", __FUNCTION__,
+                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                        "msg",                  "%s", "wrong child hook type",
+                        "parent_topic_name",    "%s", parent_topic_name,
+                        "child_topic_name",     "%s", child_topic_name,
+                        "link",                 "%s", hook_,
+                        "child_field",          "%j", child_field,
+                        NULL
+                    );
+                    return -1;
             }
         }
         if(!reverse_found) {
@@ -1694,10 +1714,10 @@ PUBLIC int treedb_link_nodes(
                 "gobj",                 "%s", __FILE__,
                 "function",             "%s", __FUNCTION__,
                 "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                "msg",                  "%s", "link to child failed",
+                "msg",                  "%s", "hook reverse not found",
                 "parent_topic_name",    "%s", parent_topic_name,
                 "child_topic_name",     "%s", child_topic_name,
-                "link",                 "%s", hook_,
+                "hook",                 "%s", hook_,
                 NULL
             );
             return -1;

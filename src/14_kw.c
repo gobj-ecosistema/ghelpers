@@ -2878,7 +2878,9 @@ PUBLIC json_t *kwid_new_dict(
             int idx; json_t *v;
             json_array_foreach(jn, idx, v) {
                 const char *id = kw_get_str(v, "id", "", KW_REQUIRED);
-                json_object_set(new_dict, id, v); // WARNING id hardcorded
+                if(!empty_string(id)) {
+                    json_object_set(new_dict, id, v);
+                }
             }
         }
         break;
@@ -3020,4 +3022,52 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
     return kw_new;
 }
 
+/***************************************************************************
+    Utility for databases.
+    Being field `name` of `kw` a list of ids [id,...] or a dict of ids {id:true,...} or a string id
+    return a new list of all ids
+ ***************************************************************************/
+PUBLIC json_t *kwid_get_new_ids(
+    json_t *kw, // not owned
+    const char *name
+)
+{
+    json_t *ids = kw_get_dict_value(kw, name, 0, KW_REQUIRED);
+    if(!ids) {
+        return 0;
+    }
+    json_t *new_ids = json_array();
+
+    switch(json_typeof(ids)) {
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(ids, idx, jn_value) {
+                const char *value = json_string_value(jn_value);
+                if(value)  {
+                    json_array_append_new(new_ids, json_string(value));
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            const char *key; json_t *jn_value;
+            json_object_foreach(ids, key, jn_value) {
+                json_array_append_new(new_ids, json_string(key));
+            }
+        }
+        break;
+
+    case JSON_STRING:
+        json_array_append_new(new_ids, json_string(json_string_value(ids)));
+        break;
+
+    default:
+        break;
+
+    }
+
+    return new_ids;
+}
 

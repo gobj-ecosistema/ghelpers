@@ -685,6 +685,16 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
     )
 );
 
+/**rst**
+    Utility for databases.
+    Being field `name` of `kw` a list of ids [id,...] or a dict of ids {id:true,...} or a string id
+    return a new list of all ids
+**rst**/
+PUBLIC json_t *kwid_get_new_ids(
+    json_t *kw, // not owned
+    const char *name
+);
+
 #ifdef __cplusplus
 }
 #endif
