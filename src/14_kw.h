@@ -695,6 +695,11 @@ PUBLIC json_t *kwid_get_new_ids(
     const char *name
 );
 
+PUBLIC BOOL kw_check_refcounts(
+    json_t *kw, // not owned
+    int max_refcount
+);
+
 #ifdef __cplusplus
 }
 #endif

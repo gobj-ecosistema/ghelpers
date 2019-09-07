@@ -104,6 +104,14 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      */
     json_t *jn_schema_topics = kw_get_list(jn_schema, "topics", 0, KW_REQUIRED);
     if(!jn_schema_topics) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "No topics found",
+            "treedb_name",  "%s", treedb_name,
+            NULL
+        );
         JSON_DECREF(jn_schema);
         return 0;
     }
@@ -1660,6 +1668,16 @@ PUBLIC int treedb_link_nodes(
             const char *reverse_field = json_string_value(reverse_field_);
             json_t *child_field = kw_get_dict_value(child_node, reverse_field, 0, 0);
             if(!child_field) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "child field not found",
+                    "topic_name",   "%s", reverse_topic_name,
+                    "field",        "%s", reverse_field,
+                    NULL
+                );
+
                 break;
             }
             json_t *reverse_col_flag = kwid_get("verbose,lower",

@@ -3071,3 +3071,87 @@ PUBLIC json_t *kwid_get_new_ids(
     return new_ids;
 }
 
+/***************************************************************************
+ *  Check deeply the refcount of kw
+ ***************************************************************************/
+PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
+{
+    if(!kw) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "kw NULL",
+            NULL
+        );
+        return FALSE;
+    }
+
+    switch(json_typeof(kw)) {
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(kw, idx, jn_value) {
+                if(!kw_check_refcounts(jn_value, max_refcount)) {
+                    return FALSE;
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            const char *key; json_t *jn_value;
+            json_object_foreach(kw, key, jn_value) {
+                if(!kw_check_refcounts(jn_value, max_refcount)) {
+                    return FALSE;
+                }
+            }
+        }
+        break;
+
+    case JSON_INTEGER:
+    case JSON_REAL:
+    case JSON_STRING:
+        if(kw->refcount <= 0) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "refcount <= 0",
+                "refcount",     "%d", (int)kw->refcount,
+                NULL
+            );
+            return FALSE;
+        }
+        if(max_refcount > 0 && kw->refcount > max_refcount) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "refcount > max_refcount",
+                "refcount",     "%d", (int)kw->refcount,
+                "max_refcount", "%d", (int)max_refcount,
+                NULL
+            );
+            return FALSE;
+        }
+        break;
+    case JSON_TRUE:
+    case JSON_FALSE:
+    case JSON_NULL:
+        break;
+    default:
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "json corrupted",
+            "refcount",     "%d", (int)kw->refcount,
+            "max_refcount", "%d", (int)max_refcount,
+            NULL
+        );
+        return FALSE;
+    }
+
+    return TRUE;
+}
