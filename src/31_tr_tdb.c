@@ -1578,7 +1578,8 @@ PUBLIC int treedb_link_nodes(
             parent_topic_name, "cols", hook_name
     );
 
-    BOOL save_parent_node = kw_has_word(kwid_get("lower", hook_col_desc, "flag"), "persistent", "");
+    BOOL save_parent_node = FALSE; // Only fkeys are saved!
+    //kw_has_word(kwid_get("lower", hook_col_desc, "flag"), "persistent", "");
 
     const char *child_topic_name = json_string_value(
         kwid_get("", child_node, "__md_treedb__`topic_name")
@@ -1653,34 +1654,6 @@ PUBLIC int treedb_link_nodes(
     }
 
     /*--------------------------------------------------*
-     *  Save child content in parent hook data
-     *--------------------------------------------------*/
-    switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
-    case JSON_ARRAY:
-        {
-            json_array_append(parent_hook_data, child_node);
-        }
-        break;
-    case JSON_OBJECT:
-        {
-            json_object_set(parent_hook_data, child_id, child_node);
-        }
-        break;
-    default:
-        log_error(0,
-            "gobj",                 "%s", __FILE__,
-            "function",             "%s", __FUNCTION__,
-            "msgset",               "%s", MSGSET_TREEDB_ERROR,
-            "msg",                  "%s", "wrong parent hook type",
-            "parent_topic_name",    "%s", parent_topic_name,
-            "child_topic_name",     "%s", child_topic_name,
-            "link",                 "%s", hook_name,
-            NULL
-        );
-        return -1;
-    }
-
-    /*--------------------------------------------------*
      *  Reverse - child container with info of parent
      *--------------------------------------------------*/
     json_t *child_col_flag = kwid_get("verbose,lower",
@@ -1718,34 +1691,85 @@ PUBLIC int treedb_link_nodes(
         );
     }
 
+    /*--------------------------------------------------*
+     *      Checks
+     *--------------------------------------------------*/
+    switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
+    case JSON_ARRAY:
+    case JSON_OBJECT:
+        break;
+    default:
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "wrong parent hook type",
+            "parent_topic_name",    "%s", parent_topic_name,
+            "child_topic_name",     "%s", child_topic_name,
+            "link",                 "%s", hook_name,
+            NULL
+        );
+        return -1;
+    }
+
     switch(json_typeof(child_data)) { // json_typeof PROTECTED
-        case JSON_STRING:
-            {
-                json_object_set_new(child_node, child_field, json_string(parent_id));
-            }
-            break;
-        case JSON_ARRAY:
-            {
-                json_array_append_new(child_data, json_string(parent_id));
-            }
-            break;
-        case JSON_OBJECT:
-            {
-                json_object_set_new(child_data, parent_id, json_true());
-            }
-            break;
-        default:
-            log_error(0,
-                "gobj",                 "%s", __FILE__,
-                "function",             "%s", __FUNCTION__,
-                "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                "msg",                  "%s", "wrong child hook type",
-                "parent_topic_name",    "%s", parent_topic_name,
-                "child_topic_name",     "%s", child_topic_name,
-                "child_field",          "%j", child_field,
-                NULL
-            );
-            return -1;
+    case JSON_STRING:
+    case JSON_ARRAY:
+    case JSON_OBJECT:
+        break;
+    default:
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "wrong child hook type",
+            "parent_topic_name",    "%s", parent_topic_name,
+            "child_topic_name",     "%s", child_topic_name,
+            "child_field",          "%j", child_field,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------------------------*
+     *  Save child content in parent hook data
+     *--------------------------------------------------*/
+    switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
+    case JSON_ARRAY:
+        {
+            json_array_append(parent_hook_data, child_node);
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            json_object_set(parent_hook_data, child_id, child_node);
+        }
+        break;
+    default:
+        break;
+    }
+
+    /*--------------------------------------------------*
+     *  Save parent id child field
+     *--------------------------------------------------*/
+    switch(json_typeof(child_data)) { // json_typeof PROTECTED
+    case JSON_STRING:
+        {
+            json_object_set_new(child_node, child_field, json_string(parent_id));
+        }
+        break;
+    case JSON_ARRAY:
+        {
+            json_array_append_new(child_data, json_string(parent_id));
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            json_object_set_new(child_data, parent_id, json_true());
+        }
+        break;
+    default:
+        break;
     }
 
     /*----------------------------*
@@ -1821,16 +1845,265 @@ PUBLIC int treedb_link_multiple_nodes(
  ***************************************************************************/
 PUBLIC int treedb_unlink_node(
     json_t *tranger,
-    const char *treedb_name,
-    const char *link_,
-    json_t *parent_records, // not owned
-    json_t *child_records,  // not owned
-    const char *options     //
+    const char *hook_name,
+    json_t *parent_node,    // not owned
+    json_t *child_node      // not owned
 )
 {
-    int ret = 0;
+    /*---------------------------------------*
+     *  Check parent has `hook_name` field
+     *---------------------------------------*/
+    json_t *parent_hook_data = kw_get_dict_value(parent_node, hook_name, 0, 0);
+    if(!parent_hook_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "hook field not found",
+            "parent_node",  "%j", parent_node,
+            "hook_name",    "%s", hook_name,
+            NULL
+        );
+        return -1;
+    }
 
-    //TODO
+    /*--------------------------------------------------*
+     *  Get info of parent/child from their metadata
+     *--------------------------------------------------*/
+    const char *parent_topic_name = json_string_value(
+        kwid_get("", parent_node, "__md_treedb__`topic_name")
+    );
+    json_t *hook_col_desc = kwid_get("verbose,lower",
+        tranger,
+        "topics`%s`%s`%s",
+            parent_topic_name, "cols", hook_name
+    );
+
+    BOOL save_parent_node = FALSE; // Only fkeys are saved!
+    //kw_has_word(kwid_get("lower", hook_col_desc, "flag"), "persistent", "");
+
+    const char *child_topic_name = json_string_value(
+        kwid_get("", child_node, "__md_treedb__`topic_name")
+    );
+
+    /*----------------------*
+     *      Get hook desc
+     *----------------------*/
+    json_t *hook_desc = kw_get_dict(hook_col_desc, "hook", 0, 0);
+    if(!hook_desc) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "hook field not define topic desc",
+            "topic_name",   "%s", parent_topic_name,
+            "hook",         "%s", hook_name,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------------------------*
+     *  Check that this child topic is in the hook desc
+     *
+     *  Child topic name must be defined in hook links
+     *  with his child_field (fkey or hook)
+     *--------------------------------------------------*/
+    const char *child_field = kw_get_str(hook_desc, child_topic_name, 0, 0);
+    if(!child_field) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic child not defined in hook desc links",
+            "topic_name",   "%s", parent_topic_name,
+            "hook",         "%s", hook_name,
+            "child_topic",  "%s", child_topic_name,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------------------------*
+     *      Get ids
+     *--------------------------------------------------*/
+    const char *parent_id = kw_get_str(parent_node, "id", 0, 0);
+    if(!parent_id) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Parent 'id' not found",
+            "parent_topic", "%s", parent_topic_name,
+            "parent",       "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+    const char *child_id = kw_get_str(child_node, "id", 0, 0);
+    if(!child_id) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Child 'id' not found",
+            "child_topic",  "%s", child_topic_name,
+            "child",        "%j", child_node,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------------------------*
+     *  Reverse - child container with info of parent
+     *--------------------------------------------------*/
+    json_t *child_col_flag = kwid_get("verbose,lower",
+        tranger,
+        "topics`%s`%s`%s`flag",
+            child_topic_name, "cols", child_field
+    );
+    if(!child_col_flag) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "field child not define topic desc",
+            "topic_name",   "%s", child_topic_name,
+            "field",        "%s", child_field,
+            NULL
+        );
+    }
+
+    BOOL save_child_node = FALSE;
+    if(kw_has_word(child_col_flag, "persistent", "")) {
+        save_child_node = TRUE;
+    }
+
+    json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
+    if(!child_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "field not found in the node",
+            "topic_name",   "%s", child_topic_name,
+            "field",        "%s", child_field,
+            NULL
+        );
+    }
+
+    /*--------------------------------------------------*
+     *      Checks
+     *--------------------------------------------------*/
+    switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
+    case JSON_ARRAY:
+    case JSON_OBJECT:
+        break;
+    default:
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "wrong parent hook type",
+            "parent_topic_name",    "%s", parent_topic_name,
+            "child_topic_name",     "%s", child_topic_name,
+            "link",                 "%s", hook_name,
+            NULL
+        );
+        return -1;
+    }
+
+    switch(json_typeof(child_data)) { // json_typeof PROTECTED
+    case JSON_STRING:
+    case JSON_ARRAY:
+    case JSON_OBJECT:
+        break;
+    default:
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "wrong child hook type",
+            "parent_topic_name",    "%s", parent_topic_name,
+            "child_topic_name",     "%s", child_topic_name,
+            "child_field",          "%j", child_field,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------------------------*
+     *  Save child content in parent hook data
+     *--------------------------------------------------*/
+    switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
+    case JSON_ARRAY:
+        {
+            int idx; json_t *data;
+            json_array_foreach(parent_hook_data, idx, data) {
+                const char *id = kw_get_str(data, "id", 0, KW_REQUIRED);
+                if(strcmp(id, child_id)==0) {
+                    json_array_remove(parent_hook_data, idx);
+                    break;
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            json_object_del(parent_hook_data, child_id);
+        }
+        break;
+    default:
+        break;
+    }
+
+    /*--------------------------------------------------*
+     *  Save parent id child field
+     *--------------------------------------------------*/
+    switch(json_typeof(child_data)) { // json_typeof PROTECTED
+    case JSON_STRING:
+        {
+            json_object_set_new(child_node, child_field, json_string(""));
+        }
+        break;
+    case JSON_ARRAY:
+        {
+            int idx; json_t *data;
+            json_array_foreach(child_data, idx, data) {
+                const char *id = kw_get_str(data, "id", 0, KW_REQUIRED);
+                if(strcmp(id, parent_id)==0) {
+                    json_array_remove(child_data, idx);
+                    break;
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            json_object_del(child_data, parent_id);
+        }
+        break;
+    default:
+        break;
+    }
+
+    /*----------------------------*
+     *      Save persistents
+     *----------------------------*/
+    int ret = 0;
+    if(save_parent_node) {
+        /*
+         *  Update record
+         */
+        ret += treedb_update_node(tranger, parent_node);
+    }
+
+    if(save_child_node) {
+        /*
+         *  Update record
+         */
+        ret += treedb_update_node(tranger, child_node);
+    }
 
     return ret;
 }
