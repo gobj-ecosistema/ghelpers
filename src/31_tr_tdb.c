@@ -28,7 +28,8 @@ PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
     json_t *kw,  // not owned
-    const char *options
+    const char *options,
+    BOOL create // create or update
 );
 PRIVATE json_t *_md2json(
     const char *treedb_name,
@@ -864,7 +865,8 @@ PRIVATE int set_field_value(
     const char *topic_name,
     json_t *col,    // not owned
     json_t *record, // not owned
-    json_t *value  // not owned
+    json_t *value,  // not owned
+    BOOL create
 )
 {
     const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
@@ -939,8 +941,53 @@ PRIVATE int set_field_value(
 
     BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
     BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+    BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
 
     SWITCHS(type) {
+        CASES("array")
+            if(is_hook) {
+                json_object_set_new(record, field, json_array());
+            } else if(is_fkey) {
+                if(create) {
+                    json_object_set_new(record, field, json_array());
+                } else {
+                    if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                        json_object_set(record, field, value);
+                    } else {
+                        json_object_set_new(record, field, json_array());
+                    }
+                }
+            } else {
+                if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                    json_object_set(record, field, value);
+                } else {
+                    json_object_set_new(record, field, json_array());
+                }
+            }
+            break;
+
+        CASES("object")
+            if(is_hook) {
+                json_object_set_new(record, field, json_object());
+            } else if(is_fkey) {
+                if(create) {
+                    json_object_set_new(record, field, json_object());
+                } else {
+                    if(JSON_TYPEOF(value, JSON_OBJECT)) {
+                        json_object_set(record, field, value);
+                    } else {
+                        json_object_set_new(record, field, json_object());
+                    }
+                }
+            } else {
+                if(JSON_TYPEOF(value, JSON_OBJECT)) {
+                    json_object_set(record, field, value);
+                } else {
+                    json_object_set_new(record, field, json_object());
+                }
+            }
+            break;
+
         CASES("string")
             if(!value) {
                 json_object_set_new(record, field, json_string(""));
@@ -1018,22 +1065,6 @@ PRIVATE int set_field_value(
             json_object_set_new(record, field, v?json_true():json_false());
             break;
 
-        CASES("array")
-            if(!is_hook && JSON_TYPEOF(value, JSON_ARRAY)) {
-                json_object_set(record, field, value);
-            } else {
-                json_object_set_new(record, field, json_array());
-            }
-            break;
-
-        CASES("object")
-            if(!is_hook && JSON_TYPEOF(value, JSON_OBJECT)) {
-                json_object_set(record, field, value);
-            } else {
-                json_object_set_new(record, field, json_object());
-            }
-            break;
-
         DEFAULTS
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -1059,7 +1090,8 @@ PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
     json_t *kw,  // not owned
-    const char *options
+    const char *options,
+    BOOL create // create or update
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
@@ -1083,14 +1115,19 @@ PRIVATE json_t *record2tranger(
         BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
         BOOL volatil = kw_has_word(desc_flag, "volatil", 0)?TRUE:FALSE;
         if(persistent || volatil) {
-            if(set_field_value(topic_name, col, new_record, kw_get_dict_value(kw, field, 0, 0))<0) {
+            if(set_field_value(
+                    topic_name,
+                    col,
+                    new_record,
+                    kw_get_dict_value(kw, field, 0, 0),
+                    create
+                )<0) {
                 // Error already logged
                 JSON_DECREF(new_record);
                 JSON_DECREF(cols);
                 return 0;
             }
         }
-
     }
 
     if(options && strstr(options, "permissive")) {
@@ -1262,7 +1299,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Create the record
      *-------------------------------*/
-    record = record2tranger(tranger, topic_name, kw, options);
+    record = record2tranger(tranger, topic_name, kw, options, TRUE);
     if(!record) {
         // Error already logged
         gbmem_free(sid);
@@ -1328,7 +1365,7 @@ PUBLIC int treedb_update_node(
     /*-------------------------------*
      *  Create the record
      *-------------------------------*/
-    json_t *record = record2tranger(tranger, topic_name, node, "");
+    json_t *record = record2tranger(tranger, topic_name, node, "", FALSE);
     if(!record) {
         // Error already logged
         return -1;
