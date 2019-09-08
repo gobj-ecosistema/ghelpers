@@ -3139,6 +3139,7 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
     case JSON_TRUE:
     case JSON_FALSE:
     case JSON_NULL:
+        // These have -1 refcount
         break;
     default:
         log_error(0,

@@ -397,13 +397,13 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s], s:s}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
             "enum",
                 "","persistent","volatil", "required","fkey",
-                "hook","uuid","include","notnull","wild",
+                "hook","uuid","notnull","wild",
             "flag",
                 ""
         )
@@ -732,6 +732,16 @@ PRIVATE int parse_hooks(
                  *-------------------------*/
                 json_t *reverse = kw_get_dict(col, "reverse", 0, 0);
                 if(!reverse) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "hook without reverse",
+                        "topic_name",   "%s", topic_name,
+                        "id",           "%s", id,
+                        NULL
+                    );
+                    ret += -1;
                     continue;
                 }
                 const char *reverse_topic_name; json_t *reverse_field;
