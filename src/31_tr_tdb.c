@@ -1843,7 +1843,7 @@ PUBLIC int treedb_link_multiple_nodes(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_unlink_node(
+PUBLIC int treedb_unlink_nodes(
     json_t *tranger,
     const char *hook_name,
     json_t *parent_node,    // not owned
