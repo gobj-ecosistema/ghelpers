@@ -3156,3 +3156,17 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
 
     return TRUE;
 }
+
+/***************************************************************************
+    Utility for databases.
+    Being field `kw` a list of id record [{id...},...] return the record with `id`
+ ***************************************************************************/
+json_t kwid_find(
+    const char *options,
+    json_t *kw_list,
+    const char *id
+)
+{
+    TODO
+}
+

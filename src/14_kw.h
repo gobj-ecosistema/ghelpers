@@ -695,10 +695,24 @@ PUBLIC json_t *kwid_get_new_ids(
     const char *name
 );
 
+/**rst**
+    Check all refcounts
+**rst**/
 PUBLIC BOOL kw_check_refcounts(
     json_t *kw, // not owned
     int max_refcount
 );
+
+/**rst**
+    Utility for databases.
+    Being field `kw` a list of id record [{id...},...] return the record with `id`
+**rst**/
+json_t kwid_find(
+    const char *options,
+    json_t *kw_list,
+    const char *id
+);
+
 
 #ifdef __cplusplus
 }
