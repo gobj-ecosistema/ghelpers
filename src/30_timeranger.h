@@ -91,7 +91,7 @@ extern "C"{
  ***************************************************************/
 
 #define KEY_TYPE_MASK         0x0000000F
-#define NOT_INHERITED_MASK    0xFF000000
+#define NOT_INHERITED_MASK    0xFF000000 /* Remains will set to all records of topic */
 
 typedef enum { // WARNING table with name's strings in 30_timeranger.c
     sf_string_key           = 0x00000001,
@@ -105,6 +105,7 @@ typedef enum { // WARNING table with name's strings in 30_timeranger.c
     sf_no_md_disk           = 0x00002000,
     sf_no_disk              = 0x00003000,   // sf_no_record_disk + sf_no_md_disk
     sf_loading_from_disk    = 0x01000000,
+    sf_mark1                = 0x02000000,
     sf_deleted_record       = 0x80000000,
 } system_flag_t;
 
@@ -325,6 +326,16 @@ PUBLIC int tranger_delete_record(
     json_t *tranger,
     const char *topic_name,
     uint64_t rowid
+);
+
+/**rst**
+    Write record mark1
+**rst**/
+PUBLIC int tranger_write_mark1(
+    json_t *tranger,
+    const char *topic_name,
+    uint64_t rowid,
+    BOOL set
 );
 
 /**rst**

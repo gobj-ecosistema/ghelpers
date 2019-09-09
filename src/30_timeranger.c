@@ -64,7 +64,7 @@ PRIVATE const char *sf_names[32+1] = {
     "",                         // 0x00400000
     "",                         // 0x00800000
     "sf_loading_from_disk",     // 0x01000000
-    "",                         // 0x02000000
+    "sf_mark1",                 // 0x02000000
     "",                         // 0x04000000
     "",                         // 0x08000000
     "",                         // 0x10000000
@@ -2350,6 +2350,59 @@ PUBLIC int tranger_delete_record(
         return -1;
     }
 
+    return 0;
+}
+
+/***************************************************************************
+    Write record mark1
+ ***************************************************************************/
+PUBLIC int tranger_write_mark1(
+    json_t *tranger,
+    const char *topic_name,
+    uint64_t rowid,
+    BOOL set
+)
+{
+    json_t *topic = tranger_topic(tranger, topic_name);
+    if(!topic) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "Cannot open topic",
+            "topic",        "%s", topic_name,
+            "errno",        "%s", strerror(errno),
+            NULL
+        );
+        return -1;
+    }
+
+    md_record_t md_record;
+    if(_get_record_for_wr(
+        tranger,
+        topic,
+        rowid,
+        &md_record,
+        TRUE
+    )!=0) {
+        return -1;
+    }
+
+    if(set) {
+        /*
+         *  Set
+         */
+        md_record.__system_flag__ |= sf_mark1;
+    } else {
+        /*
+         *  Reset
+         */
+        md_record.__system_flag__ &= ~sf_mark1;
+    }
+
+    if(rewrite_md_record_to_file(tranger, topic, &md_record)<0) {
+        return -1;
+    }
     return 0;
 }
 

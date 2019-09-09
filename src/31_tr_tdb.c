@@ -1166,19 +1166,26 @@ PRIVATE int load_record_callback(
 )
 {
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
+        /*---------------------------------*
+         *  Loading treedb from disk
+         *---------------------------------*/
         JSON_INCREF(jn_record);
         json_t *record = treedb_create_node( // Return is NOT YOURS
             tranger,
             kw_get_str(list, "treedb_name", 0, KW_REQUIRED),
             kw_get_str(topic, "topic_name", 0, KW_REQUIRED),
             jn_record,
-            "strict"
+            ""
         );
         if(!record) {
             // The record with this key already exists
         } else {
             //print_json(record);
         }
+    } else {
+        /*---------------------------------*
+         *  Working in memory
+         *---------------------------------*/
     }
 
     JSON_DECREF(jn_record);
