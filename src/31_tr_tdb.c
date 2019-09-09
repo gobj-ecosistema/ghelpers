@@ -112,7 +112,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE char *build_treedb_index_path(
+PUBLIC char *build_treedb_index_path(
     char *bf,
     int bfsize,
     const char *treedb_name,
@@ -279,8 +279,14 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     /*------------------------------*
      *  Open "system" lists
      *------------------------------*/
-    json_t *jn_filter = json_pack("{}");
-    json_t *jn_list = json_pack("{s:s, s:o, s:I}",
+    char path[NAME_MAX];
+    build_treedb_index_path(path, sizeof(path), treedb_name, tags_topic_name, "id");
+
+    json_t *jn_filter = json_pack("{s:b}",
+        "backward", 1
+    );
+    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I}",
+        "id", path,
         "topic_name", tags_topic_name,
         "match_cond", jn_filter,
         "load_record_callback", (json_int_t)(size_t)load_record_callback
@@ -291,11 +297,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     );
 
     kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
-
-    char path[NAME_MAX];
-    build_treedb_index_path(path, sizeof(path), treedb_name, tags_topic_name, "id");
-    kw_get_str(list, "treedb_index_path", path, KW_CREATE);
-
     kw_get_subdict_value(treedb, tags_topic_name, "id", json_object(), KW_CREATE);
 
     /*------------------------------*
@@ -306,8 +307,13 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         if(empty_string(topic_name)) {
             continue;
         }
-        json_t *jn_filter = json_pack("{}"); // TODO pon el current tag
-        json_t *jn_list = json_pack("{s:s, s:o, s:I}",
+        build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+
+        json_t *jn_filter = json_pack("{s:b}", // TODO pon el current tag
+            "backward", 1
+        );
+        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I}",
+            "id", path,
             "topic_name", topic_name,
             "match_cond", jn_filter,
             "load_record_callback", (json_int_t)(size_t)load_record_callback
@@ -318,10 +324,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         );
 
         kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
-
-        build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-        kw_get_str(list, "treedb_index_path", path, KW_CREATE);
-
         kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
     }
 
@@ -342,7 +344,42 @@ PUBLIC int treedb_close_db(
     const char *treedb_name
 )
 {
+    /*------------------------------*
+     *  Close treedb lists
+     *------------------------------*/
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, KW_EXTRACT);
+    if(!treedb) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDB not found.",
+            "treedb_name",  "%s", treedb_name,
+            NULL
+        );
+        return -1;
+    }
+
+    char list_id[NAME_MAX];
+    const char *topic_name; json_t *topic_records;
+    json_object_foreach(treedb, topic_name, topic_records) {
+        build_treedb_index_path(list_id, sizeof(list_id), treedb_name, topic_name, "id");
+        json_t *list = tranger_get_list(tranger, list_id);
+        if(!list) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "List not found.",
+                "treedb_name",  "%s", treedb_name,
+                "list",         "%s", list_id,
+                NULL
+            );
+            continue;
+        }
+        tranger_close_list(tranger, list);
+    }
+
     JSON_DECREF(treedb);
     JSON_DECREF(topic_cols_desc);
     return 0;
@@ -1116,7 +1153,8 @@ PRIVATE json_t *_md2json(
 }
 
 /***************************************************************************
- *  TODO This callback para los que quiera notificaciones de escritura de topics
+ *  When record is loaded from disk then create the record
+ *  when is loaded from memory then notify to subscribers
  ***************************************************************************/
 PRIVATE int load_record_callback(
     json_t *tranger,
@@ -1126,14 +1164,17 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
-#ifdef PEPE
     char *key = md_record->key.s; // convierte las claves int a string
     char key_[64];
     if(md_record->__system_flag__ & (sf_int_key|sf_rowid_key)) {
         snprintf(key_, sizeof(key_), "%"PRIu64, md_record->key.i);
         key = key_;
     }
-#endif
+
+    if(md_record->__system_flag__ & (sf_loading_from_disk)) {
+        print_json(jn_record);
+    }
+
     JSON_DECREF(jn_record);
     return 0;  // Timeranger: does not load the record, it's me.
 }
@@ -1755,17 +1796,32 @@ PUBLIC int treedb_link_nodes(
     switch(json_typeof(child_data)) { // json_typeof PROTECTED
     case JSON_STRING:
         {
-            json_object_set_new(child_node, child_field, json_string(parent_id));
+            json_object_set_new(
+                child_node,
+                child_field,
+                json_sprintf("%s:%s", parent_topic_name, parent_id)
+            );
         }
         break;
     case JSON_ARRAY:
         {
-            json_array_append_new(child_data, json_string(parent_id));
+            char n[PATH_MAX];
+            snprintf(n, sizeof(n), "%s:%s", parent_topic_name, parent_id);
+            json_array_append_new(
+                child_data,
+                json_string(n)
+            );
         }
         break;
     case JSON_OBJECT:
         {
-            json_object_set_new(child_data, parent_id, json_true());
+            char n[PATH_MAX];
+            snprintf(n, sizeof(n), "%s:%s", parent_topic_name, parent_id);
+            json_object_set_new(
+                child_data,
+                n,
+                json_true()
+            );
         }
         break;
     default:
@@ -2068,10 +2124,17 @@ PUBLIC int treedb_unlink_nodes(
         break;
     case JSON_ARRAY:
         {
+            char n[PATH_MAX];
+            snprintf(n, sizeof(n), "%s:%s", parent_topic_name, parent_id);
+
             int idx; json_t *data;
             json_array_foreach(child_data, idx, data) {
-                const char *id = kw_get_str(data, "id", 0, KW_REQUIRED);
-                if(strcmp(id, parent_id)==0) {
+                char m[PATH_MAX];
+                snprintf(m, sizeof(m), "%s:%s",
+                    parent_topic_name,
+                    kw_get_str(data, "id", 0, KW_REQUIRED)
+                );
+                if(strcmp(n, m)==0) {
                     json_array_remove(child_data, idx);
                     break;
                 }
@@ -2080,9 +2143,12 @@ PUBLIC int treedb_unlink_nodes(
         break;
     case JSON_OBJECT:
         {
-            json_object_del(child_data, parent_id);
+            char n[PATH_MAX];
+            snprintf(n, sizeof(n), "%s:%s", parent_topic_name, parent_id);
+            json_object_del(child_data, n);
         }
         break;
+
     default:
         break;
     }

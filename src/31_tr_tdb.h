@@ -63,6 +63,13 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
     json_t *cols_desc,  // not owned
     json_t *data        // owned
 );
+PUBLIC char *build_treedb_index_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *key
+);
 
 /*------------------------------------*
  *      Manage the tree's nodes

@@ -2720,7 +2720,7 @@ PUBLIC json_t *tranger_get_list(
         int idx; json_t *list;
         json_array_foreach(lists, idx, list) {
             const char *list_id = kw_get_str(list, "id", "", 0);
-            if(strcmp(id, list_id)) {
+            if(strcmp(id, list_id)==0) {
                 return list;
             }
         }
