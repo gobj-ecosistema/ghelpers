@@ -111,7 +111,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *jn_id       // owned
+    const char *id
 );
 
 PUBLIC int treedb_link_nodes(

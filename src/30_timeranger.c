@@ -2344,7 +2344,6 @@ PUBLIC int tranger_delete_record(
         return -1;
     }
 
-
     md_record.__system_flag__ |= sf_deleted_record;
     if(rewrite_md_record_to_file(tranger, topic, &md_record)<0) {
         return -1;

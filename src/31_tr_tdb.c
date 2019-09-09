@@ -286,12 +286,13 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *jn_filter = json_pack("{s:b}",
         "backward", 1
     );
-    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s}",
+    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
         "id", path,
         "topic_name", tags_topic_name,
         "match_cond", jn_filter,
         "load_record_callback", (json_int_t)(size_t)load_record_callback,
-        "treedb_name", treedb_name
+        "treedb_name", treedb_name,
+        "deleted_records"
     );
     tranger_open_list(
         tranger,
@@ -314,12 +315,13 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         json_t *jn_filter = json_pack("{s:b}", // TODO pon el current tag
             "backward", 1
         );
-        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s}",
+        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
             "id", path,
             "topic_name", topic_name,
             "match_cond", jn_filter,
             "load_record_callback", (json_int_t)(size_t)load_record_callback,
-            "treedb_name", treedb_name
+            "treedb_name", treedb_name,
+            "deleted_records"
         );
         tranger_open_list(
             tranger,
@@ -1165,27 +1167,98 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
+    json_t *deleted_records = kw_get_dict(list, "deleted_records", 0, KW_REQUIRED);
+
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
         /*---------------------------------*
          *  Loading treedb from disk
          *---------------------------------*/
-        JSON_INCREF(jn_record);
-        json_t *record = treedb_create_node( // Return is NOT YOURS
-            tranger,
-            kw_get_str(list, "treedb_name", 0, KW_REQUIRED),
-            kw_get_str(topic, "topic_name", 0, KW_REQUIRED),
-            jn_record,
-            ""
-        );
-        if(!record) {
-            // The record with this key already exists
+        if(md_record->__system_flag__ & (sf_mark1)) {
+            /*---------------------------------*
+             *      Record deleted
+             *---------------------------------*/
+            json_object_set_new(
+                deleted_records,
+                md_record->key.s,
+                json_true()
+            );
         } else {
-            //print_json(record);
+            /*-------------------------------------*
+             *  If not deleted record append node
+             *-------------------------------------*/
+            if(!json_object_get(deleted_records, md_record->key.s)) {
+                /*-------------------------------*
+                 *      Get indexx
+                 *-------------------------------*/
+                const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
+                const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
+
+                char path[NAME_MAX];
+                build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+                json_t *indexx = kw_get_dict(
+                    tranger,
+                    path,
+                    0,
+                    KW_REQUIRED
+                );
+                if(!indexx) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                        "path",         "%s", path,
+                        "topic_name",   "%s", topic_name,
+                        NULL
+                    );
+                    JSON_DECREF(jn_record);
+                    return 0;  // Timeranger: does not load the record, it's mine.
+                }
+
+                /*-------------------------------*
+                 *  Exists already the node?
+                 *-------------------------------*/
+                if(kw_get_dict(
+                        indexx,
+                        md_record->key.s,
+                        0,
+                        0
+                    )!=0) {
+                    // The node with this key already exists
+                } else {
+                    /*-------------------------------*
+                     *  Append new node
+                     *-------------------------------*/
+                    /*-------------------------------*
+                     *  Build metadata
+                     *-------------------------------*/
+                    json_t *jn_record_md = _md2json(
+                        treedb_name,
+                        topic_name,
+                        md_record
+                    );
+                    json_object_set_new(jn_record_md, "__pending_links__", json_true());
+                    json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
+
+                    /*-------------------------------*
+                     *  Write node
+                     *-------------------------------*/
+                    json_object_set(
+                        indexx,
+                        md_record->key.s,
+                        jn_record
+                    );
+                }
+            }
         }
     } else {
         /*---------------------------------*
-         *  Working in memory
+         *      Working in memory
          *---------------------------------*/
+        if(json_object_get(deleted_records, md_record->key.s)) {
+            // This key is operative again
+            json_object_del(deleted_records, md_record->key.s);
+        }
     }
 
     JSON_DECREF(jn_record);
@@ -1210,7 +1283,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive"
+    const char *options // "permissive" "verbose"
 )
 {
     /*-------------------------------*
@@ -1241,21 +1314,20 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Get the id, it's mandatory
      *-------------------------------*/
-    json_t *new_id = 0;
-    json_t *id = kw_get_dict_value(kw, "id", 0, 0);
-    if(!id) {
+    char uuid[RECORD_KEY_VALUE_MAX+1];
+    const char *id = kw_get_str(kw, "id", 0, 0);
+    if(empty_string(id)) {
         json_t *id_col_flag = kwid_get("verbose",
             tranger,
             "topics`%s`cols`id`flag",
                 topic_name
         );
         if(kw_has_word(id_col_flag, "uuid", 0)) {
-            char uuid[50];
             uuid_t binuuid;
             uuid_generate_random(binuuid);
             uuid_unparse_lower(binuuid, uuid);
-            new_id = id = json_string(uuid);
-            json_object_set_new(kw, "id", new_id);
+            id = uuid;
+            json_object_set_new(kw, "id", json_string(id));
         } else {
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -1275,12 +1347,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Exists already the id?
      *-------------------------------*/
-    char *sid = jn2string(id);
-    if(empty_string(sid)) {
-        JSON_DECREF(kw);
-        return 0;
-    }
-    json_t *record = kw_get_dict(indexx, sid, 0, 0);
+    json_t *record = kw_get_dict(indexx, id, 0, 0);
     if(record) {
         /*
          *  Yes
@@ -1293,22 +1360,20 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                 "msg",          "%s", "Node already exists",
                 "path",         "%s", path,
                 "topic_name",   "%s", topic_name,
-                "id",           "%s", sid,
+                "id",           "%s", id,
                 NULL
             );
         }
-        gbmem_free(sid);
         JSON_DECREF(kw);
         return 0;
     }
 
-    /*-------------------------------*
-     *  Create the record
-     *-------------------------------*/
+    /*----------------------------------------*
+     *  Create the tranger record to create
+     *----------------------------------------*/
     record = record2tranger(tranger, topic_name, kw, options, TRUE);
     if(!record) {
         // Error already logged
-        gbmem_free(sid);
         JSON_DECREF(kw);
         return 0;
     }
@@ -1328,7 +1393,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     );
     if(ret < 0) {
         // Error already logged
-        gbmem_free(sid);
         JSON_DECREF(kw);
         JSON_DECREF(record);
         return 0;
@@ -1347,9 +1411,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Write node
      *-------------------------------*/
-    json_object_set_new(indexx, sid, record);
+    json_object_set_new(indexx, id, record);
 
-    gbmem_free(sid);
     JSON_DECREF(kw);
     return record;
 }
@@ -1368,9 +1431,9 @@ PUBLIC int treedb_update_node(
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
 
-    /*-------------------------------*
-     *  Create the record
-     *-------------------------------*/
+    /*---------------------------------------*
+     *  Create the tranger record to update
+     *---------------------------------------*/
     json_t *record = record2tranger(tranger, topic_name, node, "", FALSE);
     if(!record) {
         // Error already logged
@@ -1449,7 +1512,7 @@ PUBLIC int treedb_delete_node(
     /*-------------------------------*
      *  Get the id, it's mandatory
      *-------------------------------*/
-    json_t *id = kw_get_dict_value(node, "id", 0, 0);
+    const char *id = kw_get_str(node, "id", 0, 0);
     if(!id) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -1470,10 +1533,8 @@ PUBLIC int treedb_delete_node(
     /*-------------------------------*
      *  Delete the record
      *-------------------------------*/
-    if(tranger_delete_record(tranger, topic_name, __rowid__)==0) {
-        char *sid = jn2string(id);
-        json_object_del(indexx, sid);
-        gbmem_free(sid);
+    if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
+        json_object_del(indexx, id);
     }
 
     return 0;
@@ -1556,7 +1617,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *jn_id       // owned
+    const char *id
 )
 {
     /*-------------------------------*
@@ -1580,18 +1641,13 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
             "topic_name",   "%s", topic_name,
             NULL
         );
-        JSON_DECREF(jn_id);
         return 0;
     }
 
     /*-------------------------------*
      *      Get
      *-------------------------------*/
-    char *sid = jn2string(jn_id);
-    json_t *record = kw_get_dict(indexx, sid, 0, 0);
-    gbmem_free(sid);
-
-    JSON_DECREF(jn_id);
+    json_t *record = kw_get_dict(indexx, id, 0, 0);
     return record;
 }
 
