@@ -121,7 +121,6 @@ PUBLIC char *build_treedb_index_path(
 )
 {
     snprintf(bf, bfsize, "treedbs`%s`%s`%s", treedb_name, topic_name, key);
-    strtolower(bf);
     return bf;
 }
 
@@ -282,22 +281,23 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     char path[NAME_MAX];
     build_treedb_index_path(path, sizeof(path), treedb_name, tags_topic_name, "id");
 
+    kw_get_subdict_value(treedb, tags_topic_name, "id", json_object(), KW_CREATE);
+
     json_t *jn_filter = json_pack("{s:b}",
         "backward", 1
     );
-    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I}",
+    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s}",
         "id", path,
         "topic_name", tags_topic_name,
         "match_cond", jn_filter,
-        "load_record_callback", (json_int_t)(size_t)load_record_callback
+        "load_record_callback", (json_int_t)(size_t)load_record_callback,
+        "treedb_name", treedb_name
     );
-    json_t *list = tranger_open_list(
+    tranger_open_list(
         tranger,
         jn_list // owned
     );
 
-    kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
-    kw_get_subdict_value(treedb, tags_topic_name, "id", json_object(), KW_CREATE);
 
     /*------------------------------*
      *  Open "user" lists
@@ -309,22 +309,23 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         }
         build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
 
+        kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
+
         json_t *jn_filter = json_pack("{s:b}", // TODO pon el current tag
             "backward", 1
         );
-        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I}",
+        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s}",
             "id", path,
             "topic_name", topic_name,
             "match_cond", jn_filter,
-            "load_record_callback", (json_int_t)(size_t)load_record_callback
+            "load_record_callback", (json_int_t)(size_t)load_record_callback,
+            "treedb_name", treedb_name
         );
-        list = tranger_open_list(
+        tranger_open_list(
             tranger,
             jn_list // owned
         );
 
-        kw_get_str(list, "treedb_name", treedb_name, KW_CREATE);
-        kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
     }
 
     /*------------------------------*
@@ -1164,19 +1165,24 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
-    char *key = md_record->key.s; // convierte las claves int a string
-    char key_[64];
-    if(md_record->__system_flag__ & (sf_int_key|sf_rowid_key)) {
-        snprintf(key_, sizeof(key_), "%"PRIu64, md_record->key.i);
-        key = key_;
-    }
-
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
-        print_json(jn_record);
+        JSON_INCREF(jn_record);
+        json_t *record = treedb_create_node( // Return is NOT YOURS
+            tranger,
+            kw_get_str(list, "treedb_name", 0, KW_REQUIRED),
+            kw_get_str(topic, "topic_name", 0, KW_REQUIRED),
+            jn_record,
+            "strict"
+        );
+        if(!record) {
+            // The record with this key already exists
+        } else {
+            //print_json(record);
+        }
     }
 
     JSON_DECREF(jn_record);
-    return 0;  // Timeranger: does not load the record, it's me.
+    return 0;  // Timeranger: does not load the record, it's mine.
 }
 
 
@@ -1231,7 +1237,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *new_id = 0;
     json_t *id = kw_get_dict_value(kw, "id", 0, 0);
     if(!id) {
-        json_t *id_col_flag = kwid_get("verbose,lower",
+        json_t *id_col_flag = kwid_get("verbose",
             tranger,
             "topics`%s`cols`id`flag",
                 topic_name
@@ -1272,16 +1278,18 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         /*
          *  Yes
          */
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Node already exists",
-            "path",         "%s", path,
-            "topic_name",   "%s", topic_name,
-            "id",           "%s", sid,
-            NULL
-        );
+        if(strstr(options, "verbose")) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Node already exists",
+                "path",         "%s", path,
+                "topic_name",   "%s", topic_name,
+                "id",           "%s", sid,
+                NULL
+            );
+        }
         gbmem_free(sid);
         JSON_DECREF(kw);
         return 0;
@@ -1613,14 +1621,14 @@ PUBLIC int treedb_link_nodes(
     const char *parent_topic_name = json_string_value(
         kwid_get("", parent_node, "__md_treedb__`topic_name")
     );
-    json_t *hook_col_desc = kwid_get("verbose,lower",
+    json_t *hook_col_desc = kwid_get("verbose",
         tranger,
         "topics`%s`%s`%s",
             parent_topic_name, "cols", hook_name
     );
 
     BOOL save_parent_node = FALSE; // Only fkeys are saved!
-    //kw_has_word(kwid_get("lower", hook_col_desc, "flag"), "persistent", "");
+    //kw_has_word(kwid_get("", hook_col_desc, "flag"), "persistent", "");
 
     const char *child_topic_name = json_string_value(
         kwid_get("", child_node, "__md_treedb__`topic_name")
@@ -1697,7 +1705,7 @@ PUBLIC int treedb_link_nodes(
     /*--------------------------------------------------*
      *  Reverse - child container with info of parent
      *--------------------------------------------------*/
-    json_t *child_col_flag = kwid_get("verbose,lower",
+    json_t *child_col_flag = kwid_get("verbose",
         tranger,
         "topics`%s`%s`%s`flag",
             child_topic_name, "cols", child_field
@@ -1929,14 +1937,14 @@ PUBLIC int treedb_unlink_nodes(
     const char *parent_topic_name = json_string_value(
         kwid_get("", parent_node, "__md_treedb__`topic_name")
     );
-    json_t *hook_col_desc = kwid_get("verbose,lower",
+    json_t *hook_col_desc = kwid_get("verbose",
         tranger,
         "topics`%s`%s`%s",
             parent_topic_name, "cols", hook_name
     );
 
     BOOL save_parent_node = FALSE; // Only fkeys are saved!
-    //kw_has_word(kwid_get("lower", hook_col_desc, "flag"), "persistent", "");
+    //kw_has_word(kwid_get("", hook_col_desc, "flag"), "persistent", "");
 
     const char *child_topic_name = json_string_value(
         kwid_get("", child_node, "__md_treedb__`topic_name")
@@ -2013,7 +2021,7 @@ PUBLIC int treedb_unlink_nodes(
     /*--------------------------------------------------*
      *  Reverse - child container with info of parent
      *--------------------------------------------------*/
-    json_t *child_col_flag = kwid_get("verbose,lower",
+    json_t *child_col_flag = kwid_get("verbose",
         tranger,
         "topics`%s`%s`%s`flag",
             child_topic_name, "cols", child_field

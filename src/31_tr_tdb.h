@@ -79,7 +79,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive"
+    const char *options // "permissive" "verbose"
 );
 
 PUBLIC int treedb_update_node(
