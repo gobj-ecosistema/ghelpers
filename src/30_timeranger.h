@@ -406,11 +406,19 @@ PUBLIC json_t *tranger_open_list(
 );
 
 /**rst**
+    Get list by his id
+**rst**/
+PUBLIC json_t *tranger_get_list(
+    json_t *tranger,
+    const char *id
+);
+
+/**rst**
     Close list
 **rst**/
 PUBLIC int tranger_close_list(
     json_t *tranger,
-    json_t *tr_list
+    json_t *list
 );
 
 /**rst**
