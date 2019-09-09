@@ -90,8 +90,6 @@ extern "C"{
  *              Structures
  ***************************************************************/
 
-#pragma pack(1)
-
 #define KEY_TYPE_MASK         0x0000000F
 #define NOT_INHERITED_MASK    0xFF000000
 
@@ -111,6 +109,8 @@ typedef enum { // WARNING table with name's strings in 30_timeranger.c
 } system_flag_t;
 
 #define RECORD_KEY_VALUE_MAX   (48)
+
+#pragma pack(1)
 
 typedef struct { // Size: 96 bytes
     uint64_t __rowid__;

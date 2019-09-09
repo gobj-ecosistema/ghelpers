@@ -31,7 +31,6 @@ PRIVATE const char *topic_fieds[] = {
     "directory",
     "__last_rowid__",
     "topic_idx_fd",
-    "topic_idx_file",
     "fd_opened_files",
     "file_opened_files",
     "lists",
@@ -701,30 +700,6 @@ PRIVATE int get_topic_idx_fd(json_t *tranger, json_t *topic, BOOL verbose)
 }
 
 /***************************************************************************
- *
- ***************************************************************************/
-PRIVATE FILE *get_topic_idx_file(json_t *tranger, json_t *topic, BOOL verbose)
-{
-    /*-----------------------------*
-     *  Open topix idx for reading
-     *-----------------------------*/
-    FILE *file = (FILE *)(size_t)kw_get_int(topic, "topic_idx_file", 0, KW_REQUIRED);
-    if(!file) {
-        if(verbose) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "NO topic_idx_file",
-                NULL
-            );
-        }
-        return 0;
-    }
-    return file;
-}
-
-/***************************************************************************
    Write new record metadata to file
  ***************************************************************************/
 PRIVATE int new_record_md_to_file(
@@ -898,7 +873,6 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
     kw_get_str(topic, "directory", directory, KW_CREATE);
     kw_get_int(topic, "__last_rowid__", 0, KW_CREATE);
     kw_get_int(topic, "topic_idx_fd", -1, KW_CREATE);
-    kw_get_int(topic, "topic_idx_file", 0, KW_CREATE);
     kw_get_dict(topic, "fd_opened_files", json_object(), KW_CREATE);
     kw_get_dict(topic, "file_opened_files", json_object(), KW_CREATE);
     kw_get_dict(topic, "lists", json_array(), KW_CREATE);
@@ -935,23 +909,11 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
             return 0;
         }
         json_object_set_new(topic, "topic_idx_fd", json_integer(fd));
-        json_object_set_new(topic, "__last_rowid__", json_integer(get_last_rowid(tranger, topic, fd)));
-
-        FILE *file = fopen64(full_path, "r");
-        if(!file) {
-            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "Cannot open TimeRanger resource. open() FAILED",
-                "path",         "%s", full_path,
-                "errno",        "%s", strerror(errno),
-                NULL
-            );
-            json_decref(topic);
-            return 0;
-        }
-        json_object_set_new(topic, "topic_idx_file", json_integer((size_t)file));
+        json_object_set_new(
+            topic,
+            "__last_rowid__",
+            json_integer(get_last_rowid(tranger, topic, fd))
+        );
     }
 
     return topic;
@@ -1028,11 +990,6 @@ PUBLIC int tranger_close_topic(
     int fd = kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
     if(fd >= 0) {
         close(fd);
-    }
-
-    FILE *file = (FILE *)(size_t)kw_get_int(topic, "topic_idx_file", 0, KW_REQUIRED);
-    if(file) {
-        fclose(file);
     }
 
     const char *key;
@@ -2590,6 +2547,7 @@ PUBLIC json_t *tranger_open_list(
 
     BOOL end = FALSE;
     md_record_t md_record;
+    memset(&md_record, 0, sizeof(md_record_t));
     if(!backward) {
         json_int_t from_rowid = kw_get_int(match_cond, "from_rowid", 0, 0);
         if(from_rowid>0) {
@@ -2800,12 +2758,14 @@ PUBLIC int tranger_get_record(
         return -1;
     }
 
-    FILE *file = get_topic_idx_file(tranger, topic, FALSE);
-    if(!file) {
+    int fd = get_topic_idx_fd(tranger, topic, FALSE);
+    if(fd < 0) {
         // Error already logged
         return -1;
     }
-    if(fseeko64(file, (rowid-1) * sizeof(md_record_t), SEEK_SET)<0) {
+    uint64_t offset = (rowid-1) * sizeof(md_record_t);
+    uint64_t offset_ = lseek64(fd, offset, SEEK_SET);
+    if(offset != offset_) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -2816,13 +2776,20 @@ PUBLIC int tranger_get_record(
         );
         return -1;
     }
-    if(fread(md_record, sizeof(md_record_t), 1, file)<=0) {
+
+    int ln = read(
+        fd,
+        md_record,
+        sizeof(md_record_t)
+    );
+    if(ln != sizeof(md_record_t)) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "topic_idx.md corrupted, read() FAILED",
-            "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "Cannot read record metadata, read FAILED",
+            "topic",        "%s", tranger_topic_name(topic),
+            "errno",        "%s", strerror(errno),
             NULL
         );
         return -1;
