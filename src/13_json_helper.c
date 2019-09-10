@@ -1084,7 +1084,11 @@ PUBLIC json_t *load_json_from_file(
      *  Full path
      */
     char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+    if(empty_string(filename)) {
+        snprintf(full_path, sizeof(full_path), "%s", directory);
+    } else {
+        snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+    }
 
     if(access(full_path, 0)!=0) {
         return 0;
@@ -1168,7 +1172,11 @@ PUBLIC int save_json_to_file(
      *  Full path
      */
     char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+    if(empty_string(filename)) {
+        snprintf(full_path, sizeof(full_path), "%s", directory);
+    } else {
+        snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+    }
 
     /*
      *  Create file

@@ -12,6 +12,7 @@
  */
 #include <stdio.h>
 #include "01_print_error.h"
+#include "01_gstrings.h"
 
 #ifdef __cplusplus
 extern "C"{

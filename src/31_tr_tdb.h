@@ -48,7 +48,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
-    json_t *jn_options
+    const char *options
 );
 PUBLIC int treedb_close_db(
     json_t *tranger,

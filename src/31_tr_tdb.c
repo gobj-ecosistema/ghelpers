@@ -135,10 +135,55 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
-    json_t *jn_options
+    const char *options
 )
 {
-    if(!jn_schema) {
+    /*--------------------------------------------------------------*
+     *  Try to load the schema from file
+     *  File has precedence.
+     *  Once saved,
+     *      if you want to change the schema
+     *      then you must remove the file
+     *--------------------------------------------------------------*/
+    char schema_file_name[PATH_MAX];
+    snprintf(schema_file_name, sizeof(schema_file_name), "%s/%s",
+        kw_get_str(tranger, "directory", 0, KW_REQUIRED),
+        treedb_name
+    );
+
+    if(options && strstr(options,"persistent")) {
+        if(file_exists(schema_file_name, 0)) {
+            jn_schema = load_json_from_file(
+                schema_file_name,
+                "",
+                kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
+            );
+        } else if(jn_schema) {
+            JSON_INCREF(jn_schema);
+            save_json_to_file(
+                kw_get_str(tranger, "directory", 0, KW_REQUIRED),
+                schema_file_name,
+                kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+                kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+                kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                TRUE, // Create file if not exists or overwrite.
+                FALSE, // only_read
+                jn_schema     // owned
+            );
+        }
+        if(!jn_schema) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Cannot load TreeDB schema from file.",
+                "treedb_name",  "%s", treedb_name,
+                "schema_file",  "%s", schema_file_name,
+                NULL
+            );
+            return 0;
+        }
+    } else if(!jn_schema) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -1759,12 +1804,55 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     /*-------------------------------*
      *      Read
      *-------------------------------*/
-    json_t *list = kwid_collect(
-        indexx,    // not owned
-        jn_ids,     // owned
-        jn_filter,  // owned
-        0           // match fn
-    );
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    ) = 0;
+
+    if(!match_fn) {
+        match_fn = kw_match_simple;
+    }
+
+    json_t *list= json_array();
+
+    if(json_is_array(indexx)) {
+        size_t idx;
+        json_t *jn_value;
+        json_array_foreach(indexx, idx, jn_value) {
+            if(!kwid_match_id(jn_ids, kw_get_str(jn_value, "id", 0, 0))) {
+                continue;
+            }
+            JSON_INCREF(jn_filter);
+            if(match_fn(jn_value, jn_filter)) {
+                json_array_append(list, jn_value);
+            }
+        }
+    } else if(json_is_object(indexx)) {
+        const char *id; json_t *jn_value;
+        json_object_foreach(indexx, id, jn_value) {
+            if(!kwid_match_id(jn_ids, id)) {
+                continue;
+            }
+            JSON_INCREF(jn_filter);
+            if(match_fn(jn_value, jn_filter)) {
+                json_array_append(list, jn_value);
+            }
+        }
+
+    } else  {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "kw MUST BE a json array or object",
+            NULL
+        );
+        JSON_DECREF(list);
+    }
+
+    JSON_DECREF(jn_ids);
+    JSON_DECREF(jn_filter);
+
     return list;
 
 }

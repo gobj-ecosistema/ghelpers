@@ -253,7 +253,7 @@ PUBLIC json_t *load_json_from_file(
 
 PUBLIC int save_json_to_file(
     const char *directory,
-    const char *filename,
+    const char *filename, // Can't be empty
     int xpermission,
     int rpermission,
     log_opt_t on_critical_error,

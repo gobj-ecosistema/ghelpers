@@ -2915,8 +2915,18 @@ PUBLIC json_t *kwid_new_dict(
 PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
 {
     if(!ids || !id) {
-        return FALSE;
+        // Si no hay filtro pasan todos.
+        return TRUE;
     }
+    if(json_is_object(ids) && json_object_size(ids)==0) {
+        // A empty object at first level evaluate as true.
+        return TRUE;
+    }
+    if(json_is_array(ids) && json_array_size(ids)==0) {
+        // A empty object at first level evaluate as true.
+        return TRUE;
+    }
+
     switch(json_typeof(ids)) {
     case JSON_ARRAY:
         {
@@ -3001,8 +3011,8 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
                 continue;
             }
             JSON_INCREF(jn_filter);
-            if(match_fn(kw, jn_filter)) {
-                json_array_append(kw_new, kw);
+            if(match_fn(jn_value, jn_filter)) {
+                json_array_append(kw_new, jn_value);
             }
         }
 
