@@ -3161,12 +3161,43 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
     Utility for databases.
     Being field `kw` a list of id record [{id...},...] return the record with `id`
  ***************************************************************************/
-json_t kwid_find(
+json_t *kwid_find(
     const char *options,
     json_t *kw_list,
     const char *id
 )
 {
-    TODO
+    if(!id || !kw_list) {
+        if(options && strstr(options, "verbose")) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "id or kw_list NULL",
+                NULL
+            );
+        }
+        return 0;
+    }
+
+    int idx; json_t *record;
+    json_array_foreach(kw_list, idx, record) {
+        const char *id_ = kw_get_str(record, "id", 0, 0);
+        if(strcmp(id, id_)==0){
+            return record;
+        }
+    }
+
+    if(options && strstr(options, "verbose")) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "record not found in this list",
+            "id",           "%s", id,
+            NULL
+        );
+    }
+    return 0;
 }
 

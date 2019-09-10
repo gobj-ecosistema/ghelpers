@@ -707,7 +707,7 @@ PUBLIC BOOL kw_check_refcounts(
     Utility for databases.
     Being field `kw` a list of id record [{id...},...] return the record with `id`
 **rst**/
-json_t kwid_find(
+json_t *kwid_find(
     const char *options,
     json_t *kw_list,
     const char *id
