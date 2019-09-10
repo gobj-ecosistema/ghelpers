@@ -1292,55 +1292,55 @@ PRIVATE int load_hook_links(
     const char *topic_name; json_t *topic;
     json_object_foreach(topics, topic_name, topic) {
         /*
-         *  Loop desc cols searching fkey
+         *  Loop nodes searching links
          */
-        json_t *cols = kwid_new_dict("", topic, "cols");
-        const char *col_name; json_t *col;
-        json_object_foreach(cols, col_name, col) {
-            json_t *fkey = kwid_get("", col, "fkey");
-            if(!fkey) {
+        char path[NAME_MAX];
+        build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+        json_t *indexx = kw_get_dict(
+            tranger,
+            path,
+            0,
+            KW_REQUIRED
+        );
+
+        const char *child_id; json_t *child_node;
+        json_object_foreach(indexx, child_id, child_node) {
+            json_t *__md_treedb__ = kw_get_dict(child_node, "__md_treedb__", 0, KW_REQUIRED);
+            BOOL __pending_links__ = kw_get_bool(
+                __md_treedb__,
+                "__pending_links__",
+                0,
+                KW_EXTRACT
+            );
+            if(!__pending_links__) {
                 continue;
             }
+
             /*
-             *  Loop fkey desc searching reverse links
+             *  Loop desc cols searching fkey
              */
-            const char *parent_topic_name; json_t *jn_parent_field_name;
-            json_object_foreach(fkey, parent_topic_name, jn_parent_field_name) {
-                const char *hook_name = json_string_value(jn_parent_field_name);
+            json_t *cols = kwid_new_dict("", topic, "cols");
+            const char *col_name; json_t *col;
+            json_object_foreach(cols, col_name, col) {
+                json_t *fkey = kwid_get("", col, "fkey");
+                if(!fkey) {
+                    continue;
+                }
                 /*
-                 *  Loop nodes searching links
+                 *  Loop fkey desc searching reverse links
                  */
-                char path[NAME_MAX];
-                build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-                json_t *indexx = kw_get_dict(
-                    tranger,
-                    path,
-                    0,
-                    KW_REQUIRED
-                );
-
-                const char *child_id; json_t *child_node;
-                json_object_foreach(indexx, child_id, child_node) {
-                    json_t *__md_treedb__ = kw_get_dict(child_node, "__md_treedb__", 0, KW_REQUIRED);
-                    BOOL __pending_links__ = kw_get_bool(
-                        __md_treedb__,
-                        "__pending_links__",
-                        0,
-                        KW_EXTRACT
-                    );
-                    if(!__pending_links__) {
-                        continue;
-                    }
-
+                const char *parent_topic_name; json_t *jn_parent_field_name;
+                json_object_foreach(fkey, parent_topic_name, jn_parent_field_name) {
+                    const char *hook_name = json_string_value(jn_parent_field_name);
                     /*
-                     *  Get ids from child_node fkey field
-                     */
+                        *  Get ids from child_node fkey field
+                        */
                     json_t *ids = kwid_get_new_ids(child_node, col_name);
                     int ids_idx; json_t *jn_mix_id;
                     json_array_foreach(ids, ids_idx, jn_mix_id) {
                         /*
-                         *  Find the parent node
-                         */
+                        *  Find the parent node
+                        */
                         const char *topic_and_id = json_string_value(jn_mix_id);
                         if(empty_string((topic_and_id))) {
                             continue;
@@ -1395,8 +1395,8 @@ PRIVATE int load_hook_links(
                         split_free2(ss);
 
                         /*--------------------------------------------------*
-                         *  Save child content in parent hook data
-                         *--------------------------------------------------*/
+                        *  Save child content in parent hook data
+                        *--------------------------------------------------*/
                         json_t *parent_hook_data = kw_get_dict_value(parent_node, hook_name, 0, 0);
                         if(!parent_hook_data) {
                             log_error(0,
@@ -1440,8 +1440,8 @@ PRIVATE int load_hook_links(
                     JSON_DECREF(ids);
                 }
             }
+            JSON_DECREF(cols);
         }
-        JSON_DECREF(cols);
     }
 
     return ret;

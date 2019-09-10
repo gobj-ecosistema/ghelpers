@@ -705,12 +705,23 @@ PUBLIC BOOL kw_check_refcounts(
 
 /**rst**
     Utility for databases.
-    Being field `kw` a list of id record [{id...},...] return the record with `id`
+    Being field `kw` a list of id record [{id...},...] return the record idx with `id`
+    Return -1 if not found
 **rst**/
-json_t *kwid_find(
-    const char *options,
+size_t kwid_find_record_in_list(
+    const char *options, // "verbose"
     json_t *kw_list,
     const char *id
+);
+
+/**rst**
+    Get a the idx of simple json item in a json list.
+    Return -1 if not found
+**rst**/
+PUBLIC size_t kwid_find_json_in_list(
+    const char *options, // "verbose"
+    json_t *kw_list,
+    json_t *item
 );
 
 

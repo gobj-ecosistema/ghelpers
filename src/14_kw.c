@@ -3159,32 +3159,43 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
 
 /***************************************************************************
     Utility for databases.
-    Being field `kw` a list of id record [{id...},...] return the record with `id`
+    Being field `kw` a list of id record [{id...},...] return the record idx with `id`
+    Return -1 if not found
  ***************************************************************************/
-json_t *kwid_find(
-    const char *options,
+size_t kwid_find_record_in_list(
+    const char *options, // "verbose"
     json_t *kw_list,
     const char *id
 )
 {
-    if(!id || !kw_list) {
+    if(!id || !json_is_array(kw_list)) {
         if(options && strstr(options, "verbose")) {
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "id or kw_list NULL",
+                "msg",          "%s", "id NULL or kw_list is not a list",
                 NULL
             );
         }
-        return 0;
+        return -1;
     }
 
-    int idx; json_t *record;
+    size_t idx; json_t *record;
     json_array_foreach(kw_list, idx, record) {
         const char *id_ = kw_get_str(record, "id", 0, 0);
-        if(strcmp(id, id_)==0){
-            return record;
+        if(!id_) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "list item is not a id record",
+                NULL
+            );
+            return -1;
+        }
+        if(strcmp(id, id_)==0) {
+            return idx;
         }
     }
 
@@ -3199,5 +3210,50 @@ json_t *kwid_find(
         );
     }
     return 0;
+}
+
+/***************************************************************************
+    Get a the idx of simple json item in a json list.
+    Return -1 if not found
+ ***************************************************************************/
+PUBLIC size_t kwid_find_json_in_list(
+    const char *options, // "verbose"
+    json_t *kw_list,
+    json_t *item
+)
+{
+    if(!item || !json_is_array(kw_list)) {
+        if(options && strstr(options, "verbose")) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "item NULL or kw_list is not a list",
+                NULL
+            );
+        }
+        return -1;
+    }
+
+    size_t idx;
+    json_t *jn_item;
+
+    json_array_foreach(kw_list, idx, jn_item) {
+        if(kw_is_identical(item, jn_item)) {
+            return idx;
+        }
+    }
+
+    if(options && strstr(options, "verbose")) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "item not found in this list",
+            "item",         "%j", item,
+            NULL
+        );
+    }
+    return -1;
 }
 
