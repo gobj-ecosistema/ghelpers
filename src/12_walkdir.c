@@ -223,7 +223,7 @@ PRIVATE BOOL _nfiles_cb(
     wd_found_type type,
     const char *fullpath,
     const char *directory,
-    const char *filename,
+    char *filename, // dname[256]
     int level,
     int index)
 {
@@ -299,7 +299,7 @@ PRIVATE BOOL _fill_array_cb(
     wd_found_type type,
     const char *fullpath,
     const char *directory,
-    const char *filename,
+    char *filename, // dname[256]
     int level,
     int index)
 {
