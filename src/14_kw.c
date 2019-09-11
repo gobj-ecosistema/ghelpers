@@ -2738,7 +2738,7 @@ PRIVATE json_t *_kwid_get(
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter are '`' and '.'
  ***************************************************************************/
-PUBLIC json_t *kwid_get(
+PUBLIC json_t *kwid_get( // Return is NOT YOURS
     const char *options, // "verbose", "lower"
     json_t *kw,  // NOT owned
     const char *path,
@@ -3034,48 +3034,108 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
 
 /***************************************************************************
     Utility for databases.
-    Being field `name` of `kw` a list of ids [id,...] or a dict of ids {id:true,...} or a string id
-    return a new list of all ids
+    Being `ids` a:
+
+        "$id"
+
+        {
+            "$id": {
+                "id": "$id",
+                ...
+            }
+            ...
+        }
+
+        ["$id", ...]
+
+        [
+            {
+                "id":$id,
+                ...
+            },
+            ...
+        ]
+
+    return a new list of all ids (all duplicated items)
  ***************************************************************************/
 PUBLIC json_t *kwid_get_new_ids(
-    json_t *kw, // not owned
-    const char *name
+    json_t *ids // not owned
 )
 {
-    json_t *ids = kw_get_dict_value(kw, name, 0, KW_REQUIRED);
     if(!ids) {
         return 0;
     }
+
     json_t *new_ids = json_array();
 
     switch(json_typeof(ids)) {
+    case JSON_STRING:
+        /*
+            "$id"
+         */
+        json_array_append_new(new_ids, json_string(json_string_value(ids)));
+        break;
+
+    case JSON_OBJECT:
+        /*
+            {
+                "$id": {
+                    "id": "$id",
+                    ...
+                }
+                ...
+            }
+        */
+        {
+            const char *id; json_t *jn_value;
+            json_object_foreach(ids, id, jn_value) {
+                json_array_append_new(new_ids, json_string(id));
+            }
+        }
+        break;
+
     case JSON_ARRAY:
         {
             int idx; json_t *jn_value;
             json_array_foreach(ids, idx, jn_value) {
-                const char *value = json_string_value(jn_value);
-                if(value)  {
-                    json_array_append_new(new_ids, json_string(value));
+                switch(json_typeof(jn_value)) {
+                case JSON_STRING:
+                    /*
+                        ["$id", ...]
+                    */
+                    {
+                        const char *id = json_string_value(jn_value);
+                        if(!empty_string(id)) {
+                            json_array_append_new(new_ids, json_string(id));
+                        }
+                    }
+                    break;
+                case JSON_OBJECT:
+                    /*
+                        [
+                            {
+                                "id":$id,
+                                ...
+                            },
+                            ...
+                        ]
+                    */
+                    {
+                        const char *id = json_string_value(json_object_get(jn_value, "id"));
+                        if(!empty_string(id)) {
+                            json_array_append_new(new_ids, json_string(id));
+                        }
+                    }
+                    break;
+                default:
+                    break;
                 }
             }
         }
         break;
-    case JSON_OBJECT:
-        {
-            const char *key; json_t *jn_value;
-            json_object_foreach(ids, key, jn_value) {
-                json_array_append_new(new_ids, json_string(key));
-            }
-        }
-        break;
-
-    case JSON_STRING:
-        json_array_append_new(new_ids, json_string(json_string_value(ids)));
-        break;
 
     default:
         break;
-
     }
 
     return new_ids;

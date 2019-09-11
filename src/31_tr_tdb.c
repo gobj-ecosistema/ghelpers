@@ -146,8 +146,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *      then you must remove the file
      *--------------------------------------------------------------*/
     char schema_file_name[PATH_MAX];
-    snprintf(schema_file_name, sizeof(schema_file_name), "%s/%s",
-        kw_get_str(tranger, "directory", 0, KW_REQUIRED),
+    snprintf(schema_file_name, sizeof(schema_file_name), "%s.treedb_schema.json",
         treedb_name
     );
 
@@ -1380,7 +1379,7 @@ PRIVATE int load_hook_links(
                     /*
                         *  Get ids from child_node fkey field
                         */
-                    json_t *ids = kwid_get_new_ids(child_node, col_name);
+                    json_t *ids = kwid_get_new_ids(kw_get_dict_value(child_node, col_name, 0, 0));
                     int ids_idx; json_t *jn_mix_id;
                     json_array_foreach(ids, ids_idx, jn_mix_id) {
                         /*
@@ -1767,6 +1766,74 @@ PUBLIC int treedb_delete_node(
 }
 
 /***************************************************************************
+ * Return a list of hook field names of the topic.
+ * Return MUST be decref
+ ***************************************************************************/
+PUBLIC json_t *tranger_hook_names(
+    json_t *topic_desc
+)
+{
+    json_t *jn_hook_field_names = json_array();
+
+    int idx; json_t *col;
+    json_array_foreach(topic_desc, idx, col) {
+        json_t *flag = kw_get_dict_value(col, "flag", 0, 0);
+        /*-------------------------*
+         *      Is a hook?
+         *-------------------------*/
+        if(kw_has_word(flag, "hook", 0)) {
+            json_array_append(jn_hook_field_names, json_object_get(col, "id"));
+        }
+    }
+
+    return jn_hook_field_names;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
+    json_t *tranger,
+    const char *topic_name
+)
+{
+    json_t *topic = tranger_topic(tranger, topic_name);
+    return kwid_new_list("verbose", topic, "cols");
+}
+
+/***************************************************************************
+    Return a view of node with hook fields being collapsed
+ ***************************************************************************/
+PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
+    json_t *jn_hook_names, // not owned
+    json_t *node // not owned
+)
+{
+    json_t *node_view = json_object();
+
+    const char *topic_name = kw_get_str(node, "__treedb_md__`topic_name", 0, KW_REQUIRED);
+    if(!topic_name) {
+        return 0;
+    }
+    const char *field_name; json_t *field_value;
+    json_object_foreach(node, field_name, field_value) {
+        if(json_str_in_list(jn_hook_names, field_name, 0)) {
+            json_t *list = kw_get_subdict_value(
+                node_view,
+                field_name,
+                topic_name,
+                json_array(),
+                KW_CREATE
+            );
+            json_array_append_new(list, kwid_get_new_ids(field_value));
+        } else {
+            json_object_set(node_view, field_name, json_deep_copy(field_value));
+        }
+    }
+    return node_view;
+}
+
+/***************************************************************************
  *
  ***************************************************************************/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
@@ -1774,7 +1841,12 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_ids,     // owned
-    json_t *jn_filter   // owned
+    json_t *jn_filter,  // owned
+    json_t *jn_options, // owned "expand"
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
 )
 {
     /*-------------------------------*
@@ -1798,44 +1870,70 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(jn_ids);
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
     /*-------------------------------*
      *      Read
      *-------------------------------*/
-    BOOL (*match_fn) (
-        json_t *kw,         // not owned
-        json_t *jn_filter   // owned
-    ) = 0;
 
     if(!match_fn) {
         match_fn = kw_match_simple;
     }
 
+    BOOL expand = kw_get_bool(jn_options, "expand", 0, KW_WILD_NUMBER);
+    json_t *hook_names = tranger_hook_names(
+        tranger_topic_desc(tranger, topic_name)
+    );
+
     json_t *list= json_array();
 
     if(json_is_array(indexx)) {
         size_t idx;
-        json_t *jn_value;
-        json_array_foreach(indexx, idx, jn_value) {
-            if(!kwid_match_id(jn_ids, kw_get_str(jn_value, "id", 0, 0))) {
+        json_t *node;
+        json_array_foreach(indexx, idx, node) {
+            if(!kwid_match_id(jn_ids, kw_get_str(node, "id", 0, 0))) {
                 continue;
             }
             JSON_INCREF(jn_filter);
-            if(match_fn(jn_value, jn_filter)) {
-                json_array_append(list, jn_value);
+            if(match_fn(node, jn_filter)) {
+                if(expand) {
+                    // Full tree
+                    json_array_append(list, node);
+                } else {
+                    // Collapse records (hook fields)
+                    json_array_append_new(
+                        list,
+                        tranger_collapsed_view(
+                            hook_names,
+                            node
+                        )
+                    );
+                }
             }
         }
     } else if(json_is_object(indexx)) {
-        const char *id; json_t *jn_value;
-        json_object_foreach(indexx, id, jn_value) {
+        const char *id; json_t *node;
+        json_object_foreach(indexx, id, node) {
             if(!kwid_match_id(jn_ids, id)) {
                 continue;
             }
             JSON_INCREF(jn_filter);
-            if(match_fn(jn_value, jn_filter)) {
-                json_array_append(list, jn_value);
+            if(match_fn(node, jn_filter)) {
+                if(expand) {
+                    json_array_append(list, node);
+                } else {
+                    json_array_append_new(
+                        list,
+                        tranger_collapsed_view(
+                            hook_names,
+                            node
+                        )
+                    );
+                }
             }
         }
 
@@ -1852,6 +1950,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
 
     JSON_DECREF(jn_ids);
     JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
 
     return list;
 

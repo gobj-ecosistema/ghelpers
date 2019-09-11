@@ -622,7 +622,7 @@ PUBLIC BOOL kw_has_word(
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
 **rst**/
-PUBLIC json_t *kwid_get(
+PUBLIC json_t *kwid_get( // Return is NOT YOURS
     const char *options, // "verbose", "lower"
     json_t *kw,  // NOT owned
     const char *path,
@@ -687,12 +687,18 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
 
 /**rst**
     Utility for databases.
-    Being field `name` of `kw` a list of ids [id,...] or a dict of ids {id:true,...} or a string id
-    return a new list of all ids
+    Being `ids` a:
+        "$id"
+        ["$id", ...]
+        [{"id":$id, ...}, ...]
+        {
+            "$id": {}.
+            ...
+        }
+    return a new list of all ids (all duplicated items)
 **rst**/
 PUBLIC json_t *kwid_get_new_ids(
-    json_t *kw, // not owned
-    const char *name
+    json_t *ids // not owned
 );
 
 /**rst**

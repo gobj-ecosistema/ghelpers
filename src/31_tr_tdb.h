@@ -92,12 +92,34 @@ PUBLIC int treedb_delete_node(
     json_t *node    // owned
 );
 
+PUBLIC json_t *tranger_hooks( // Return a list of hook field names of the topic. Return MUST be decref
+    json_t *topic_desc
+);
+
+PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
+    json_t *tranger,
+    const char *topic_name
+);
+
+/**rst**
+    Return a view of node with hook fields being collapsed
+**rst**/
+PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
+    json_t *jn_hook_names, // not owned
+    json_t *node // not owned
+);
+
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_ids,     // owned
-    json_t *jn_filter   // owned
+    json_t *jn_filter,  // owned
+    json_t *jn_options, // owned "expand"
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
 );
 
 PUBLIC json_t *treedb_get_index( // Return is NOT YOURS
