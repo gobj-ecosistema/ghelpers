@@ -929,6 +929,41 @@ PRIVATE int parse_hooks(
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE BOOL json_empty(json_t *value)
+{
+    if(!value) {
+        return TRUE;
+    }
+    switch(json_typeof(value)) {
+    case JSON_ARRAY:
+        return json_array_size(value)==0?TRUE:FALSE;
+    case JSON_OBJECT:
+        return json_object_size(value)==0?TRUE:FALSE;
+    case JSON_STRING:
+        return strlen(json_string_value(value))==0?TRUE:FALSE;
+    default:
+        return TRUE;
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *collapse_id(json_t *value)
+{
+    char mix_id[NAME_MAX];
+
+    const char *id = kw_get_str(value, "id", 0, KW_REQUIRED);
+    const char *topic_name = json_string_value(kwid_get("", value, "__md_treedb__`topic_name"));
+
+    snprintf(mix_id, sizeof(mix_id), "%s:%s", topic_name, id);
+
+    return json_string(mix_id);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int set_field_value(
     const char *topic_name,
     json_t *col,    // not owned
@@ -1014,7 +1049,16 @@ PRIVATE int set_field_value(
     SWITCHS(type) {
         CASES("array")
             if(is_hook) {
-                json_object_set_new(record, field, json_array());
+                json_t *array = kw_get_list(record, field, json_array(), KW_CREATE);
+                if(!create) {
+                    if(!json_empty(value)) {
+                        json_array_append_new(
+                            array,
+                            collapse_id(value)
+                        );
+                    }
+                }
+
             } else if(is_fkey) {
                 if(create) {
                     json_object_set_new(record, field, json_array());
@@ -1036,9 +1080,20 @@ PRIVATE int set_field_value(
 
         CASES("object")
             if(is_hook) {
-                json_object_set_new(record, field, json_object());
+                json_t *dict = kw_get_dict(record, field, json_object(), KW_CREATE);
+                if(!create) {
+                    if(!json_empty(value)) {
+                        json_object_set_new(
+                            dict,
+                            json_string_value(collapse_id(value)),
+                            json_true()
+                        );
+                    }
+                }
+
             } else if(is_fkey) {
                 if(create) {
+                    // No dejes poner datos en la creación.
                     json_object_set_new(record, field, json_object());
                 } else {
                     if(JSON_TYPEOF(value, JSON_OBJECT)) {
@@ -2194,8 +2249,8 @@ PUBLIC int treedb_link_nodes(
             parent_topic_name, "cols", hook_name
     );
 
+    //BOOL save_parent_node = kw_has_word(kwid_get("", hook_col_desc, "flag"), "persistent", "");
     BOOL save_parent_node = FALSE; // Only fkeys are saved!
-    //kw_has_word(kwid_get("", hook_col_desc, "flag"), "persistent", "");
 
     const char *child_topic_name = json_string_value(
         kwid_get("", child_node, "__md_treedb__`topic_name")
