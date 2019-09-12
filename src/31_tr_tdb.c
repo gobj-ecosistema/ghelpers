@@ -145,15 +145,39 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *      if you want to change the schema
      *      then you must remove the file
      *--------------------------------------------------------------*/
-    char schema_file_name[PATH_MAX];
-    snprintf(schema_file_name, sizeof(schema_file_name), "%s.treedb_schema.json",
-        treedb_name
+    if(empty_string(treedb_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "treedb_name NULL",
+            NULL
+        );
+        JSON_DECREF(jn_schema);
+        return 0;
+    }
+
+    char schema_filename[NAME_MAX];
+    if(strstr(treedb_name, ".treedb_schema.json")) {
+        snprintf(schema_filename, sizeof(schema_filename), "%s",
+            treedb_name
+        );
+    } else {
+        snprintf(schema_filename, sizeof(schema_filename), "%s.treedb_schema.json",
+            treedb_name
+        );
+    }
+
+    char schema_full_path[NAME_MAX];
+    snprintf(schema_full_path, sizeof(schema_full_path), "%s/%s",
+        kw_get_str(tranger, "directory", "", KW_REQUIRED),
+        schema_filename
     );
 
     if(options && strstr(options,"persistent")) {
-        if(file_exists(schema_file_name, 0)) {
+        if(file_exists(schema_full_path, 0)) {
             jn_schema = load_json_from_file(
-                schema_file_name,
+                schema_full_path,
                 "",
                 kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
             );
@@ -161,7 +185,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             JSON_INCREF(jn_schema);
             save_json_to_file(
                 kw_get_str(tranger, "directory", 0, KW_REQUIRED),
-                schema_file_name,
+                schema_filename,
                 kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
                 kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
                 kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
@@ -177,7 +201,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Cannot load TreeDB schema from file.",
                 "treedb_name",  "%s", treedb_name,
-                "schema_file",  "%s", schema_file_name,
+                "schema_file",  "%s", schema_full_path,
                 NULL
             );
             return 0;
@@ -387,7 +411,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *  Load hook links
      *------------------------------*/
     load_hook_links(tranger, treedb_name);
-
 
     JSON_DECREF(jn_schema);
     return treedb;
@@ -1380,6 +1403,8 @@ PRIVATE int load_hook_links(
                         *  Get ids from child_node fkey field
                         */
                     json_t *ids = kwid_get_new_ids(kw_get_dict_value(child_node, col_name, 0, 0));
+// print_json(kw_get_dict_value(child_node, col_name, 0, 0));
+// print_json(ids);
                     int ids_idx; json_t *jn_mix_id;
                     json_array_foreach(ids, ids_idx, jn_mix_id) {
                         /*
@@ -1392,18 +1417,18 @@ PRIVATE int load_hook_links(
                         int list_size;
                         const char **ss = split2(topic_and_id, ":", &list_size);
                         if(list_size != 2) {
-                            log_error(0,
-                                "gobj",         "%s", __FILE__,
-                                "function",     "%s", __FUNCTION__,
-                                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                                "msg",          "%s", "Wrong mix fkey",
-                                "treedb_name",  "%s", treedb_name,
-                                "topic_name",   "%s", topic_name,
-                                "col_name",     "%s", col_name,
-                                "mix_id",       "%j", jn_mix_id,
-                                "record",       "%j", child_node,
-                                NULL
-                            );
+//                             log_error(0,
+//                                 "gobj",         "%s", __FILE__,
+//                                 "function",     "%s", __FUNCTION__,
+//                                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+//                                 "msg",          "%s", "Wrong mix fkey",
+//                                 "treedb_name",  "%s", treedb_name,
+//                                 "topic_name",   "%s", topic_name,
+//                                 "col_name",     "%s", col_name,
+//                                 "mix_id",       "%j", jn_mix_id,
+//                                 "record",       "%j", child_node,
+//                                 NULL
+//                             );
                             ret += -1;
                             split_free2(ss);
                             continue;
@@ -1811,7 +1836,7 @@ PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
 {
     json_t *node_view = json_object();
 
-    const char *topic_name = kw_get_str(node, "__treedb_md__`topic_name", 0, KW_REQUIRED);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     if(!topic_name) {
         return 0;
     }

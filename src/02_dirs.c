@@ -181,9 +181,15 @@ PUBLIC BOOL file_exists(const char *directory, const char *filename)
 {
     char full_path[PATH_MAX];
     if(empty_string(filename)) {
-        snprintf(full_path, sizeof(full_path), "%s", directory);
+        snprintf(full_path, sizeof(full_path), "%s",
+            directory
+        );
     } else {
-        snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+        snprintf(full_path, sizeof(full_path), "%s%s%s",
+            directory,
+            (directory[strlen(directory)-1]=='/')?"":"/",
+            filename
+        );
     }
     if(is_regular_file(full_path)) {
         return TRUE;

@@ -441,6 +441,7 @@ PUBLIC json_t *tranger_startup(
      *  Load Only read, volatil, defining in run-time
      */
     kw_get_dict(tranger, "fd_opened_files", json_object(), KW_CREATE);
+    kw_get_dict(tranger, "topics", json_object(), KW_CREATE);
 
     if(fd != -1) {
         kw_set_subdict_value(tranger, "fd_opened_files", "__timeranger__.json", json_integer(fd));
