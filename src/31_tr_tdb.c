@@ -1237,7 +1237,9 @@ PRIVATE json_t *record2tranger(
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
         BOOL volatil = kw_has_word(desc_flag, "volatil", 0)?TRUE:FALSE;
-        if(persistent || volatil) {
+        BOOL fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        BOOL hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        if(persistent || volatil || fkey || hook) {
             if(set_field_value(
                     topic_name,
                     col,
@@ -2249,7 +2251,6 @@ PUBLIC int treedb_link_nodes(
             parent_topic_name, "cols", hook_name
     );
 
-    //BOOL save_parent_node = kw_has_word(kwid_get("", hook_col_desc, "flag"), "persistent", "");
     BOOL save_parent_node = FALSE; // Only fkeys are saved!
 
     const char *child_topic_name = json_string_value(
@@ -2344,9 +2345,9 @@ PUBLIC int treedb_link_nodes(
         );
     }
 
-    BOOL save_child_node = FALSE;
-    if(kw_has_word(child_col_flag, "persistent", "")) {
-        save_child_node = TRUE;
+    BOOL save_child_node = TRUE;
+    if(kw_has_word(child_col_flag, "hook", "")) {
+        save_parent_node = TRUE;
     }
 
     json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
@@ -2566,7 +2567,6 @@ PUBLIC int treedb_unlink_nodes(
     );
 
     BOOL save_parent_node = FALSE; // Only fkeys are saved!
-    //kw_has_word(kwid_get("", hook_col_desc, "flag"), "persistent", "");
 
     const char *child_topic_name = json_string_value(
         kwid_get("", child_node, "__md_treedb__`topic_name")
@@ -2660,9 +2660,9 @@ PUBLIC int treedb_unlink_nodes(
         );
     }
 
-    BOOL save_child_node = FALSE;
-    if(kw_has_word(child_col_flag, "persistent", "")) {
-        save_child_node = TRUE;
+    BOOL save_child_node = TRUE;
+    if(kw_has_word(child_col_flag, "hook", "")) {
+        save_parent_node = TRUE;
     }
 
     json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
