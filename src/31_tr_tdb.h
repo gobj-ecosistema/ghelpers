@@ -92,8 +92,12 @@ PUBLIC int treedb_delete_node(
     json_t *node    // owned
 );
 
-PUBLIC json_t *tranger_hooks( // Return a list of hook field names of the topic. Return MUST be decref
-    json_t *topic_desc
+/***************************************************************************
+ * Return a list of hook field names of the topic.
+ * Return MUST be decref
+ ***************************************************************************/
+PUBLIC json_t *tranger_hook_names(
+    json_t *topic_desc // owned
 );
 
 PUBLIC json_t *tranger_topic_desc( // Return MUST be decref

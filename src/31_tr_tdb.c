@@ -866,7 +866,9 @@ PRIVATE int parse_hooks(
                             NULL
                         );
                         ret += -1;
-                    }  else {
+                        continue;
+                    }
+                    if(kw_has_word(jn_flag, "fkey", "")) {
                         json_object_set_new(
                             field,
                             "fkey",
@@ -874,7 +876,6 @@ PRIVATE int parse_hooks(
                                 topic_name, id
                             )
                         );
-
                     }
                 }
 
@@ -1417,18 +1418,18 @@ PRIVATE int load_hook_links(
                         int list_size;
                         const char **ss = split2(topic_and_id, ":", &list_size);
                         if(list_size != 2) {
-//                             log_error(0,
-//                                 "gobj",         "%s", __FILE__,
-//                                 "function",     "%s", __FUNCTION__,
-//                                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-//                                 "msg",          "%s", "Wrong mix fkey",
-//                                 "treedb_name",  "%s", treedb_name,
-//                                 "topic_name",   "%s", topic_name,
-//                                 "col_name",     "%s", col_name,
-//                                 "mix_id",       "%j", jn_mix_id,
-//                                 "record",       "%j", child_node,
-//                                 NULL
-//                             );
+                            log_error(0,
+                                "gobj",         "%s", __FILE__,
+                                "function",     "%s", __FUNCTION__,
+                                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                "msg",          "%s", "Wrong mix fkey",
+                                "treedb_name",  "%s", treedb_name,
+                                "topic_name",   "%s", topic_name,
+                                "col_name",     "%s", col_name,
+                                "mix_id",       "%j", jn_mix_id,
+                                "record",       "%j", child_node,
+                                NULL
+                            );
                             ret += -1;
                             split_free2(ss);
                             continue;
@@ -1795,7 +1796,7 @@ PUBLIC int treedb_delete_node(
  * Return MUST be decref
  ***************************************************************************/
 PUBLIC json_t *tranger_hook_names(
-    json_t *topic_desc
+    json_t *topic_desc // owned
 )
 {
     json_t *jn_hook_field_names = json_array();
@@ -1810,7 +1811,7 @@ PUBLIC json_t *tranger_hook_names(
             json_array_append(jn_hook_field_names, json_object_get(col, "id"));
         }
     }
-
+    JSON_DECREF(topic_desc);
     return jn_hook_field_names;
 }
 
@@ -1827,6 +1828,117 @@ PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
 }
 
 /***************************************************************************
+    Being `ids` a:
+
+        {
+            "$id": {
+                "id": "$id",
+                ...
+            }
+            ...
+        }
+
+        [
+            {
+                "id":$id,
+                ...
+            },
+            ...
+        ]
+
+    return a new list of all node's mix_id
+ ***************************************************************************/
+PRIVATE json_t *get_hook_mix_ids(
+    json_t *hook_data // not owned
+)
+{
+    char mix_id[NAME_MAX];
+    json_t *mix_ids = json_array();
+
+    switch(json_typeof(hook_data)) {
+    case JSON_OBJECT:
+        /*
+            {
+                "$id": {
+                    "id": "$id",
+                    ...
+                }
+                ...
+            }
+        */
+        {
+            const char *id; json_t *jn_value;
+            json_object_foreach(hook_data, id, jn_value) {
+                const char *topic_name = kw_get_str(
+                    jn_value,
+                    "__md_treedb__`topic_name",
+                    "",
+                    KW_REQUIRED
+                );
+                snprintf(mix_id, sizeof(mix_id), "%s:%s", topic_name, id);
+                json_array_append_new(mix_ids, json_string(mix_id));
+            }
+        }
+        break;
+
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(hook_data, idx, jn_value) {
+                switch(json_typeof(jn_value)) {
+                case JSON_OBJECT:
+                    /*
+                        [
+                            {
+                                "id":$id,
+                                ...
+                            },
+                            ...
+                        ]
+                    */
+                    {
+                        const char *id = kw_get_str(jn_value, "id", "", KW_REQUIRED);
+                        const char *topic_name = kw_get_str(
+                            jn_value,
+                            "__md_treedb__`topic_name",
+                            "",
+                            KW_REQUIRED
+                        );
+                        snprintf(mix_id, sizeof(mix_id), "%s:%s", topic_name, id);
+                        json_array_append_new(mix_ids, json_string(mix_id));
+                    }
+                    break;
+                default:
+                    log_error(0,
+                        "gobj",                 "%s", __FILE__,
+                        "function",             "%s", __FUNCTION__,
+                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                        "msg",                  "%s", "wrong array child hook type",
+                        "hook_data",            "%j", hook_data,
+                        NULL
+                    );
+                    break;
+                }
+            }
+        }
+        break;
+
+    default:
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "wrong child hook type",
+            "hook_data",            "%j", hook_data,
+            NULL
+        );
+        break;
+    }
+
+    return mix_ids;
+}
+
+/***************************************************************************
     Return a view of node with hook fields being collapsed
  ***************************************************************************/
 PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
@@ -1836,23 +1948,21 @@ PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
 {
     json_t *node_view = json_object();
 
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
-    if(!topic_name) {
-        return 0;
-    }
     const char *field_name; json_t *field_value;
     json_object_foreach(node, field_name, field_value) {
         if(json_str_in_list(jn_hook_names, field_name, 0)) {
-            json_t *list = kw_get_subdict_value(
+            json_t *list = kw_get_dict_value(
                 node_view,
                 field_name,
-                topic_name,
                 json_array(),
                 KW_CREATE
             );
-            json_array_append_new(list, kwid_get_new_ids(field_value));
+            json_t *childs_mix_id = get_hook_mix_ids(field_value);
+            json_array_extend(list, childs_mix_id);
+            json_decref(childs_mix_id);
+
         } else {
-            json_object_set(node_view, field_name, json_deep_copy(field_value));
+            json_object_set_new(node_view, field_name, json_deep_copy(field_value));
         }
     }
     return node_view;
@@ -1914,7 +2024,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         tranger_topic_desc(tranger, topic_name)
     );
 
-    json_t *list= json_array();
+    json_t *list = json_array();
 
     if(json_is_array(indexx)) {
         size_t idx;
@@ -1973,6 +2083,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         JSON_DECREF(list);
     }
 
+    json_decref(hook_names);
     JSON_DECREF(jn_ids);
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
