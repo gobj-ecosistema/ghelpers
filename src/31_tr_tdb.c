@@ -866,13 +866,28 @@ PUBLIC int parse_hooks(
                         continue;
                     }
 
-                    json_t *fkey = kw_get_dict(field, "fkey", json_object(), KW_CREATE);
-                    char pref[NAME_MAX];
-                    snprintf(pref, sizeof(pref), "%s^%s", topic_name, id);
+                    if(kw_has_word(field, "fkey", "")) {
+                        log_error(0,
+                            "gobj",             "%s", __FILE__,
+                            "function",         "%s", __FUNCTION__,
+                            "msgset",           "%s", MSGSET_TREEDB_ERROR,
+                            "msg",              "%s", "Only can be one fkey",
+                            "topic_name",       "%s", topic_name,
+                            "id",               "%s", id,
+                            "link_topic_name",  "%s", link_topic_name,
+                            "link_field",       "%s", s_link_field,
+                            NULL
+                        );
+                        ret += -1;
+                        continue;
+                    }
+
                     json_object_set_new(
-                        fkey,
-                        pref,
-                        json_true()
+                        field,
+                        "fkey",
+                        json_pack("{s:s}",
+                            topic_name, id
+                        )
                     );
                 }
 
@@ -1481,32 +1496,9 @@ PRIVATE int load_hook_links(
                     continue;
                 }
 
-
-                /*
-                 *  Loop fkey desc searching reverse links
-                 */
-                const char *pref; json_t *jn_bool;
-                json_object_foreach(fkey, pref, jn_bool) {
-                    int pref_size;
-                    const char **ff = split2(pref, "^", &pref_size);
-                    if(pref_size != 2) {
-                        log_error(0,
-                            "gobj",         "%s", __FILE__,
-                            "function",     "%s", __FUNCTION__,
-                            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                            "msg",          "%s", "Wrong fkey",
-                            "treedb_name",  "%s", treedb_name,
-                            "topic_name",   "%s", topic_name,
-                            "col_name",     "%s", col_name,
-                            "pref",         "%s", pref,
-                            NULL
-                        );
-                        ret += -1;
-                        split_free2(ff);
-                        continue;
-                    }
-                    const char *parent_topic_name = ff[0];
-                    const char *hook_name = ff[1];
+                const char *parent_topic_name; json_t *jn_parent_field_name;
+                json_object_foreach(fkey, parent_topic_name, jn_parent_field_name) {
+                    const char *hook_name = json_string_value(jn_parent_field_name);
                     /*
                      *  Get ids from child_node fkey field
                      */
@@ -1613,7 +1605,6 @@ PRIVATE int load_hook_links(
 
                     }
                     JSON_DECREF(ids);
-                    split_free2(ff);
                 }
             }
             JSON_DECREF(cols);
@@ -1622,6 +1613,7 @@ PRIVATE int load_hook_links(
 
     return ret;
 }
+
 
 
 
