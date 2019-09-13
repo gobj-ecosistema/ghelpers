@@ -2346,8 +2346,11 @@ PUBLIC int treedb_link_nodes(
     }
 
     BOOL save_child_node = TRUE;
+    BOOL is_child_hook = FALSE;
     if(kw_has_word(child_col_flag, "hook", "")) {
         save_parent_node = TRUE;
+        is_child_hook = TRUE;
+        // TODO save_child_node = FALSE;
     }
 
     json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
@@ -2403,18 +2406,31 @@ PUBLIC int treedb_link_nodes(
         return -1;
     }
 
+print_json(parent_hook_data);
+print_json(child_node);
+print_json(child_data);
     /*--------------------------------------------------*
      *  Save child content in parent hook data
      *--------------------------------------------------*/
+    // Si el hijo es hook, mete el campo especificado
     switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
     case JSON_ARRAY:
         {
-            json_array_append(parent_hook_data, child_node);
+            if(is_child_hook) {
+                json_array_append(parent_hook_data, child_data);
+
+            } else {
+                json_array_append(parent_hook_data, child_node);
+            }
         }
         break;
     case JSON_OBJECT:
         {
-            json_object_set(parent_hook_data, child_id, child_node);
+            if(is_child_hook) {
+                json_object_set(parent_hook_data, child_id, child_data);
+            } else {
+                json_object_set(parent_hook_data, child_id, child_node);
+            }
         }
         break;
     default:
@@ -2435,7 +2451,7 @@ PUBLIC int treedb_link_nodes(
         }
         break;
     case JSON_ARRAY:
-        {
+        if(!is_child_hook) {
             char n[PATH_MAX];
             snprintf(n, sizeof(n), "%s:%s", parent_topic_name, parent_id);
             json_array_append_new(
@@ -2445,7 +2461,7 @@ PUBLIC int treedb_link_nodes(
         }
         break;
     case JSON_OBJECT:
-        {
+        if(!is_child_hook) {
             char n[PATH_MAX];
             snprintf(n, sizeof(n), "%s:%s", parent_topic_name, parent_id);
             json_object_set_new(
@@ -2459,6 +2475,9 @@ PUBLIC int treedb_link_nodes(
         break;
     }
 
+print_json(parent_hook_data);
+print_json(child_node);
+print_json(child_data);
     /*----------------------------*
      *      Save persistents
      *----------------------------*/
