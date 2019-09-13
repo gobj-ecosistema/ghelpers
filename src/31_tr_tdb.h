@@ -31,6 +31,15 @@ extern "C"{
  *              Prototypes
  ***************************************************************/
 /**rst**
+
+    Rules:
+        - In links only fkeys are saved in tranger (child node info).
+        - Keys (id's) can't contain ` nor ^ characters.
+        - A fkey field only can be fkey once, i.e, only can have one parent
+
+**rst**/
+
+/**rst**
     Open tree db (Remember previously open tranger_startup())
 
     Tree of nodes of data. Node's data contains attributes, in json.
@@ -56,7 +65,7 @@ PUBLIC int treedb_close_db(
 );
 
 /*------------------------------------*
- *      Testing
+ *      Utils
  *------------------------------------*/
 PUBLIC json_t *_treedb_create_topic_cols_desc(void);
 PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
@@ -69,6 +78,9 @@ PUBLIC char *build_treedb_index_path(
     const char *treedb_name,
     const char *topic_name,
     const char *key
+);
+PUBLIC int parse_hooks(
+    json_t *tranger
 );
 
 /*------------------------------------*
