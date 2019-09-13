@@ -941,26 +941,6 @@ PUBLIC int parse_hooks(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE BOOL json_empty(json_t *value)
-{
-    if(!value) {
-        return TRUE;
-    }
-    switch(json_typeof(value)) {
-    case JSON_ARRAY:
-        return json_array_size(value)==0?TRUE:FALSE;
-    case JSON_OBJECT:
-        return json_object_size(value)==0?TRUE:FALSE;
-    case JSON_STRING:
-        return strlen(json_string_value(value))==0?TRUE:FALSE;
-    default:
-        return TRUE;
-    }
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PRIVATE json_t *collapse_id(json_t *value)
 {
     char mix_id[NAME_MAX];
@@ -2447,9 +2427,6 @@ PUBLIC int treedb_link_nodes(
         return -1;
     }
 
-// print_json(parent_hook_data);
-// print_json(child_node);
-// print_json(child_data);
     /*--------------------------------------------------*
      *  Save child content in parent hook data
      *--------------------------------------------------*/
@@ -2516,28 +2493,11 @@ PUBLIC int treedb_link_nodes(
         break;
     }
 
-// print_json(parent_hook_data);
-// print_json(child_node);
-// print_json(child_data);
     /*----------------------------*
      *      Save persistents
+     *  Only childs are saved
      *----------------------------*/
-    int ret = 0;
-    if(0) {
-        /*
-         *  Update record
-         */
-        ret += treedb_update_node(tranger, parent_node);
-    }
-
-    if(1) {
-        /*
-         *  Update record
-         */
-        ret += treedb_update_node(tranger, child_node);
-    }
-
-    return ret;
+    return  treedb_update_node(tranger, child_node);
 }
 
 /***************************************************************************
@@ -2625,8 +2585,6 @@ PUBLIC int treedb_unlink_nodes(
         "topics`%s`%s`%s",
             parent_topic_name, "cols", hook_name
     );
-
-    BOOL save_parent_node = FALSE; // Only fkeys are saved!
 
     const char *child_topic_name = json_string_value(
         kwid_get("", child_node, "__md_treedb__`topic_name")
@@ -2720,9 +2678,9 @@ PUBLIC int treedb_unlink_nodes(
         );
     }
 
-    BOOL save_child_node = TRUE;
+    BOOL is_child_hook = FALSE;
     if(kw_has_word(child_col_flag, "hook", "")) {
-        save_parent_node = TRUE;
+        is_child_hook = TRUE;
     }
 
     json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
@@ -2743,6 +2701,7 @@ PUBLIC int treedb_unlink_nodes(
      *--------------------------------------------------*/
     switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
     case JSON_ARRAY:
+        break;
     case JSON_OBJECT:
         break;
     default:
@@ -2760,10 +2719,14 @@ PUBLIC int treedb_unlink_nodes(
     }
 
     switch(json_typeof(child_data)) { // json_typeof PROTECTED
-    case JSON_STRING:
     case JSON_ARRAY:
+        break;
     case JSON_OBJECT:
         break;
+    case JSON_STRING:
+        if(!is_child_hook) {
+            break;
+        }
     default:
         log_error(0,
             "gobj",                 "%s", __FILE__,
@@ -2781,22 +2744,52 @@ PUBLIC int treedb_unlink_nodes(
     /*--------------------------------------------------*
      *  Save child content in parent hook data
      *--------------------------------------------------*/
+//     case JSON_ARRAY:
+//         {
+//             if(is_child_hook) {
+//                 json_array_append(parent_hook_data, child_data);
+//
+//             } else {
+//                 json_array_append(parent_hook_data, child_node);
+//             }
+//         }
+//         break;
+//     case JSON_OBJECT:
+//         {
+//             if(is_child_hook) {
+//                 json_object_set(parent_hook_data, child_id, child_data);
+//             } else {
+//                 json_object_set(parent_hook_data, child_id, child_node);
+//             }
+//         }
+//         break;
     switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
     case JSON_ARRAY:
         {
-            int idx; json_t *data;
-            json_array_foreach(parent_hook_data, idx, data) {
-                const char *id = kw_get_str(data, "id", 0, KW_REQUIRED);
-                if(strcmp(id, child_id)==0) {
-                    json_array_remove(parent_hook_data, idx);
-                    break;
+            if(is_child_hook) {
+                // Delete child_data TODO
+                x
+            } else {
+                // Delete child_node
+                int idx; json_t *data;
+                json_array_foreach(parent_hook_data, idx, data) {
+                    const char *id = kw_get_str(data, "id", 0, KW_REQUIRED);
+                    if(strcmp(id, child_id)==0) {
+                        json_array_remove(parent_hook_data, idx);
+                        break;
+                    }
                 }
             }
         }
         break;
     case JSON_OBJECT:
         {
-            json_object_del(parent_hook_data, child_id);
+            if(is_child_hook) {
+                // TODO
+                x
+            } else {
+                json_object_del(parent_hook_data, child_id);
+            }
         }
         break;
     default:
@@ -2814,26 +2807,33 @@ PUBLIC int treedb_unlink_nodes(
         break;
     case JSON_ARRAY:
         {
-            char n[PATH_MAX];
+            char n[NAME_MAX];
             snprintf(n, sizeof(n), "%s^%s", parent_topic_name, parent_id);
 
             int idx; json_t *data;
             json_array_foreach(child_data, idx, data) {
-                char m[PATH_MAX];
-                snprintf(m, sizeof(m), "%s^%s",
-                    parent_topic_name,
-                    kw_get_str(data, "id", 0, KW_REQUIRED)
-                );
-                if(strcmp(n, m)==0) {
-                    json_array_remove(child_data, idx);
-                    break;
+                if(json_typeof(data)==JSON_STRING) {
+                    if(strcmp(n, json_string_value(data))==0) {
+                        json_array_remove(child_data, idx);
+                        break;
+                    }
                 }
             }
         }
         break;
     case JSON_OBJECT:
+//     case JSON_OBJECT:
+//         {
+//             char n[PATH_MAX];
+//             snprintf(n, sizeof(n), "%s^%s", parent_topic_name, parent_id);
+//             json_object_set_new(
+//                 child_data,
+//                 n,
+//                 json_true()
+//             );
+//         }
         {
-            char n[PATH_MAX];
+            char n[NAME_MAX];
             snprintf(n, sizeof(n), "%s^%s", parent_topic_name, parent_id);
             json_object_del(child_data, n);
         }
@@ -2845,23 +2845,9 @@ PUBLIC int treedb_unlink_nodes(
 
     /*----------------------------*
      *      Save persistents
+     *  Only childs are saved
      *----------------------------*/
-    int ret = 0;
-    if(save_parent_node) {
-        /*
-         *  Update record
-         */
-        ret += treedb_update_node(tranger, parent_node);
-    }
-
-    if(save_child_node) {
-        /*
-         *  Update record
-         */
-        ret += treedb_update_node(tranger, child_node);
-    }
-
-    return ret;
+    return treedb_update_node(tranger, child_node);
 }
 
 
