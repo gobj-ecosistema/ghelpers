@@ -2902,6 +2902,7 @@ PUBLIC int treedb_unlink_nodes(
                 if(json_typeof(data)==JSON_STRING) {
                     if(strcmp(pref, json_string_value(data))==0) {
                         json_array_remove(child_data, idx);
+                        found = TRUE;
                         break;
                     }
                 }
