@@ -396,7 +396,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             tranger,
             jn_list // owned
         );
-
     }
 
     /*------------------------------*
