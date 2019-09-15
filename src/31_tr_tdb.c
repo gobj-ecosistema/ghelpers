@@ -1632,7 +1632,7 @@ PRIVATE int load_hook_links(
                             {
                                 char pref[NAME_MAX];
                                 if(is_child_hook) {
-                                    snprintf(pref, sizeof(pref), "%s^%s^%s",
+                                    snprintf(pref, sizeof(pref), "%s~%s~%s",
                                         topic_name,
                                         child_id,
                                         col_name
@@ -1711,7 +1711,9 @@ PRIVATE json_t *get_hook_refs(
             const char *id; json_t *jn_value;
             json_object_foreach(hook_data, id, jn_value) {
                 int ampersands = count_char(id, '^');
-                if(ampersands == 1) {
+                int tildes = count_char(id, '~');
+
+                if(tildes== 2) {
                     json_array_append_new(refs, json_string(id));
                     continue;
                 } else if(ampersands == 2) {
@@ -1786,10 +1788,13 @@ PRIVATE json_t *get_hook_refs(
                 case JSON_STRING:
                     {
                         int ampersands = count_char(json_string_value(jn_value), '^');
-                        if(ampersands==1) {
+                        int tildes = count_char(json_string_value(jn_value), '~');
+
+
+                        if(tildes== 2) {
                             json_array_append(refs, jn_value);
                             break;
-                        } else if(ampersands==2) {
+                        } else if(ampersands == 2) {
                             break;
                         }
                     }
@@ -2381,9 +2386,6 @@ PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
             json_array_extend(list, hook_refs);
             json_decref(hook_refs);
 
-            json_t *fkey_refs = get_fkey_refs(field_value);
-            json_array_extend(list, fkey_refs);
-            json_decref(fkey_refs);
         } else {
             json_object_set_new(node_view, field_name, json_deep_copy(field_value));
         }
@@ -2789,7 +2791,7 @@ PUBLIC int treedb_link_nodes(
         {
             char pref[NAME_MAX];
             if(is_child_hook) {
-                snprintf(pref, sizeof(pref), "%s^%s^%s",
+                snprintf(pref, sizeof(pref), "%s~%s~%s",
                     child_topic_name,
                     child_id,
                     child_field
@@ -3171,7 +3173,7 @@ PUBLIC int treedb_unlink_nodes(
         {
             if(is_child_hook) {
                 char pref[NAME_MAX];
-                snprintf(pref, sizeof(pref), "%s^%s^%s",
+                snprintf(pref, sizeof(pref), "%s~%s~%s",
                     child_topic_name,
                     child_id,
                     child_field
