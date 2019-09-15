@@ -49,6 +49,21 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 );
 
+/**rst**
+    Return a list of hook field names of the topic.
+**rst**/
+PRIVATE json_t *tranger_hook_names( // Return MUST be decref
+    json_t *topic_desc // owned
+);
+
+/**rst**
+    Return a view of node with hook fields being collapsed
+**rst**/
+PRIVATE json_t *tranger_collapsed_view( // Return MUST be decref
+    json_t *jn_hook_names, // not owned
+    json_t *node // not owned
+);
+
 /***************************************************************
  *              Data
  ***************************************************************/
@@ -940,21 +955,6 @@ PUBLIC int parse_hooks(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE json_t *collapse_id(json_t *value)
-{
-    char mix_id[NAME_MAX];
-
-    const char *id = kw_get_str(value, "id", 0, KW_REQUIRED);
-    const char *topic_name = json_string_value(kwid_get("", value, "__md_treedb__`topic_name"));
-
-    snprintf(mix_id, sizeof(mix_id), "%s^%s", topic_name, id);
-
-    return json_string(mix_id);
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PRIVATE json_t *filtra_mix_ids(json_t *value)
 {
     json_t *mix_ids = 0;
@@ -1471,10 +1471,23 @@ PRIVATE int load_hook_links(
             const char *col_name; json_t *col;
             json_object_foreach(cols, col_name, col) {
                 json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
-                //BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+                BOOL is_child_hook = kw_has_word(desc_flag, "hook", "")?TRUE:FALSE;
                 BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
                 if(!is_fkey) {
                     continue;
+                }
+
+                json_t *child_data = kw_get_dict_value(child_node, col_name, 0, 0);
+                if(!child_data) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "field not found in the node",
+                        "topic_name",   "%s", topic_name,
+                        "field",        "%s", col_name,
+                        NULL
+                    );
                 }
 
                 json_t *fkey = kwid_get("", col, "fkey");
@@ -1494,6 +1507,9 @@ PRIVATE int load_hook_links(
                     continue;
                 }
 
+                /*
+                 *  Check fkey, the field that contains hook parent info.
+                 */
                 const char *parent_topic_name; json_t *jn_parent_field_name;
                 json_object_foreach(fkey, parent_topic_name, jn_parent_field_name) {
                     const char *hook_name = json_string_value(jn_parent_field_name);
@@ -1573,10 +1589,15 @@ PRIVATE int load_hook_links(
                                 "hook_name2",   "%s", hook_name_,
                                 NULL
                             );
+                            ret += -1;
+                            split_free2(ss);
+                            continue;
                         }
 
                         /*--------------------------------------------------*
-                         *  Save child content in parent hook data
+                         *  In parent hook data: save child content
+                         *  WARNING repeated in
+                         *      treedb_link_nodes() and load_hook_links()
                          *--------------------------------------------------*/
                         json_t *parent_hook_data = kw_get_dict_value(parent_node, hook_name, 0, 0);
                         if(!parent_hook_data) {
@@ -1596,12 +1617,27 @@ PRIVATE int load_hook_links(
                         switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
                         case JSON_ARRAY:
                             {
-                                json_array_append(parent_hook_data, child_node);
+                                if(is_child_hook) {
+                                    json_array_append(parent_hook_data, child_data);
+
+                                } else {
+                                    json_array_append(parent_hook_data, child_node);
+                                }
                             }
                             break;
                         case JSON_OBJECT:
                             {
-                                json_object_set(parent_hook_data, child_id, child_node);
+                                char pref[NAME_MAX];
+                                if(is_child_hook) {
+                                    snprintf(pref, sizeof(pref), "%s^%s^%s",
+                                        topic_name,
+                                        child_id,
+                                        col_name
+                                    );
+                                    json_object_set(parent_hook_data, pref, child_data);
+                                } else {
+                                    json_object_set(parent_hook_data, child_id, child_node);
+                                }
                             }
                             break;
                         default:
@@ -1618,7 +1654,6 @@ PRIVATE int load_hook_links(
                             break;
                         }
                         split_free2(ss);
-
                     }
                     JSON_DECREF(ids);
                 }
@@ -1983,12 +2018,30 @@ PRIVATE json_t *get_hook_mix_ids(
         {
             const char *id; json_t *jn_value;
             json_object_foreach(hook_data, id, jn_value) {
+                if(strchr(id, '^')) {
+                    // It's a fkey ref
+                    json_array_append_new(mix_ids, json_string(id));
+                    break;
+                }
+
                 const char *topic_name = kw_get_str(
                     jn_value,
                     "__md_treedb__`topic_name",
-                    "",
-                    KW_REQUIRED
+                    0,
+                    0
                 );
+                if(!topic_name) {
+                    log_error(0,
+                        "gobj",                 "%s", __FILE__,
+                        "function",             "%s", __FUNCTION__,
+                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                        "msg",                  "%s", "__md_treedb__ not found",
+                        NULL
+                    );
+                    log_debug_json(0, hook_data, "hook_data: __md_treedb__ not found");
+                    log_debug_json(0, jn_value, "jn_value: __md_treedb__ not found");
+                    break;
+                }
                 snprintf(mix_id, sizeof(mix_id), "%s^%s", topic_name, id);
                 json_array_append_new(mix_ids, json_string(mix_id));
             }
@@ -2011,23 +2064,44 @@ PRIVATE json_t *get_hook_mix_ids(
                         ]
                     */
                     {
-                        const char *id = kw_get_str(jn_value, "id", "", KW_REQUIRED);
-                        const char *topic_name = kw_get_str(
-                            jn_value,
-                            "__md_treedb__`topic_name",
-                            "",
-                            KW_REQUIRED
-                        );
-                        snprintf(mix_id, sizeof(mix_id), "%s^%s", topic_name, id);
-                        json_array_append_new(mix_ids, json_string(mix_id));
+                        const char *id = kw_get_str(jn_value, "id", 0, 0);
+                        if(id) {
+                            const char *topic_name = kw_get_str(
+                                jn_value,
+                                "__md_treedb__`topic_name",
+                                0,
+                                0
+                            );
+                            if(!topic_name) {
+                                log_error(0,
+                                    "gobj",                 "%s", __FILE__,
+                                    "function",             "%s", __FUNCTION__,
+                                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                                    "msg",                  "%s", "__md_treedb__ not found",
+                                    NULL
+                                );
+                                log_debug_json(0, hook_data, "hook_data: __md_treedb__ not found");
+                                log_debug_json(0, jn_value, "jn_value: __md_treedb__ not found");
+                                break;
+                            }
+                            snprintf(mix_id, sizeof(mix_id), "%s^%s", topic_name, id);
+                            json_array_append_new(mix_ids, json_string(mix_id));
+                        }
                     }
                     break;
+                case JSON_STRING:
+                    if(strchr(json_string_value(jn_value), '^')) {
+                        // It's a fkey ref
+                        json_array_append(mix_ids, jn_value);
+                        break;
+                    }
                 default:
                     log_error(0,
                         "gobj",                 "%s", __FILE__,
                         "function",             "%s", __FUNCTION__,
                         "msgset",               "%s", MSGSET_TREEDB_ERROR,
                         "msg",                  "%s", "wrong array child hook type",
+                        "jn_value",             "%j", jn_value,
                         "hook_data",            "%j", hook_data,
                         NULL
                     );
@@ -2400,10 +2474,7 @@ PUBLIC int treedb_link_nodes(
         );
     }
 
-    BOOL is_child_hook = FALSE;
-    if(kw_has_word(child_col_flag, "hook", "")) {
-        is_child_hook = TRUE;
-    }
+    BOOL is_child_hook = kw_has_word(child_col_flag, "hook", "")?TRUE:FALSE;
 
     json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
     if(!child_data) {
@@ -2465,6 +2536,8 @@ PUBLIC int treedb_link_nodes(
 
     /*--------------------------------------------------*
      *  In parent hook data: save child content
+     *  WARNING repeated in
+     *      treedb_link_nodes() and load_hook_links()
      *--------------------------------------------------*/
     switch(json_typeof(parent_hook_data)) { // json_typeof PROTECTED
     case JSON_ARRAY:

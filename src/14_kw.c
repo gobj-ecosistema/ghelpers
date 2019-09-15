@@ -3049,6 +3049,7 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
         ["$id", ...]
 
         [
+            "$id",
             {
                 "id":$id,
                 ...

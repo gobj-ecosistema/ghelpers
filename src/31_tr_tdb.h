@@ -82,6 +82,11 @@ PUBLIC char *build_treedb_index_path(
 PUBLIC int parse_hooks(
     json_t *tranger
 );
+PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
+    json_t *tranger,
+    const char *topic_name
+);
+
 
 /*------------------------------------*
  *      Manage the tree's nodes
@@ -104,27 +109,9 @@ PUBLIC int treedb_delete_node(
     json_t *node    // owned
 );
 
-/***************************************************************************
- * Return a list of hook field names of the topic.
- * Return MUST be decref
- ***************************************************************************/
-PUBLIC json_t *tranger_hook_names(
-    json_t *topic_desc // owned
-);
-
-PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
-    json_t *tranger,
-    const char *topic_name
-);
-
 /**rst**
-    Return a view of node with hook fields being collapsed
+    If not expanded (default) the fkeys have 3 ^ fields, the childs have 2 ^ fields
 **rst**/
-PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
-    json_t *jn_hook_names, // not owned
-    json_t *node // not owned
-);
-
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
