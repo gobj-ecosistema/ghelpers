@@ -82,7 +82,11 @@ PUBLIC char *build_treedb_index_path(
 PUBLIC int parse_hooks(
     json_t *tranger
 );
-PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
+PUBLIC json_t *tranger_list_topic_desc( // Return a list!,  MUST be decref
+    json_t *tranger,
+    const char *topic_name
+);
+PUBLIC json_t *tranger_dict_topic_desc( // Return a dict!,  MUST be decref
     json_t *tranger,
     const char *topic_name
 );
@@ -110,7 +114,9 @@ PUBLIC int treedb_delete_node(
 );
 
 /**rst**
-    If not expanded (default) the fkeys have 3 ^ fields, the childs have 2 ^ fields
+    If not expanded (default):
+        - the ref (fkeys to up) have 3 ^ fields
+        - the ref (childs, to down) have 2 ^ fields
 **rst**/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,

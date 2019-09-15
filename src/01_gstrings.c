@@ -402,7 +402,7 @@ PUBLIC int remove_char(char *s, char c)
 /***************************************************************************
  *    Cuenta cuantos caracteres de 'c' hay en 's'
  ***************************************************************************/
-PUBLIC int count_char(char *s, char c)
+PUBLIC int count_char(const char *s, char c)
 {
     int count = 0;
 
