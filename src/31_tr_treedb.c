@@ -145,22 +145,32 @@ PUBLIC char *build_treedb_index_path(
 }
 
 /***************************************************************************
- *
+    Open tree db (Remember previously open tranger_startup())
+
+    Tree of nodes of data. Node's data contains attributes, in json.
+
+    The nodes are linked with relation parent->child
+    in pure-child or multi-parent mode.
+    The tree in json too.
+
+    HACK Conventions:
+        1) the pkey of all topics must be "id".
+        2) the "id" field (primary key) MUST be a string.
+
+    Option "persistent"
+        Try to load the schema from file
+        File has precedence.
+        Once saved,
+            if you want to change the schema
+            then you must remove the file
  ***************************************************************************/
 PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
-    const char *options
+    const char *options // "persistent"
 )
 {
-    /*--------------------------------------------------------------*
-     *  Try to load the schema from file
-     *  File has precedence.
-     *  Once saved,
-     *      if you want to change the schema
-     *      then you must remove the file
-     *--------------------------------------------------------------*/
     if(empty_string(treedb_name)) {
         log_error(0,
             "gobj",         "%s", __FILE__,

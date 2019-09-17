@@ -52,12 +52,18 @@ extern "C"{
         1) the pkey of all topics must be "id".
         2) the "id" field (primary key) MUST be a string.
 
+    Option "persistent"
+        Try to load the schema from file
+        File has precedence.
+        Once saved,
+            if you want to change the schema
+            then you must remove the file
 **rst**/
 PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
-    const char *options
+    const char *options // "persistent"
 );
 PUBLIC int treedb_close_db(
     json_t *tranger,
