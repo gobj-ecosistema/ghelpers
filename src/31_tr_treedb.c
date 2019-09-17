@@ -39,7 +39,8 @@ PRIVATE json_t *_md2json(
 
 PRIVATE int load_hook_links(
     json_t *tranger,
-    const char *treedb_name
+    const char *treedb_name,
+    json_t *jn_schema_topics // not owned
 );
 PRIVATE int load_record_callback(
     json_t *tranger,
@@ -436,7 +437,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     /*------------------------------*
      *  Load hook links
      *------------------------------*/
-    load_hook_links(tranger, treedb_name);
+    load_hook_links(tranger, treedb_name, jn_schema_topics);
 
     JSON_DECREF(jn_schema);
     return treedb;
@@ -1442,7 +1443,8 @@ PRIVATE int load_record_callback(
  ***************************************************************************/
 PRIVATE int load_hook_links(
     json_t *tranger,
-    const char *treedb_name
+    const char *treedb_name,
+    json_t *topics // not owned
 )
 {
     int ret = 0;
@@ -1450,7 +1452,6 @@ PRIVATE int load_hook_links(
     /*
      *  Loop topics, as child nodes
      */
-    json_t *topics = kw_get_dict(tranger, "topics", 0, KW_REQUIRED);
     const char *topic_name; json_t *topic;
     json_object_foreach(topics, topic_name, topic) {
         /*
