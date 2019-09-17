@@ -1,5 +1,5 @@
 /***********************************************************************
- *          TR_TDB.C
+ *          TR_TREEDB.C
  *
  *          Tree Database with TimeRanger
  *
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <uuid/uuid.h>
-#include "31_tr_tdb.h"
+#include "31_tr_treedb.h"
 
 /***************************************************************
  *              Constants

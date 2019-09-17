@@ -86,7 +86,7 @@ set (SRCS
     src/30_timeranger.c
     src/31_tr_msg.c
     src/31_tr_queue.c
-    src/31_tr_tdb.c
+    src/31_tr_treedb.c
     src/ghelpers.c
 )
 
@@ -139,7 +139,7 @@ set (HDRS
     src/30_timeranger.h
     src/31_tr_msg.h
     src/31_tr_queue.h
-    src/31_tr_tdb.h
+    src/31_tr_treedb.h
 
     src/ghelpers.h
 )
