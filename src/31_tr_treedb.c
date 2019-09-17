@@ -202,6 +202,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 
     if(options && strstr(options,"persistent")) {
         if(file_exists(schema_full_path, 0)) {
+            JSON_DECREF(jn_schema);
             jn_schema = load_json_from_file(
                 schema_full_path,
                 "",
