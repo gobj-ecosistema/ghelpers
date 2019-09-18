@@ -2609,6 +2609,21 @@ PUBLIC int treedb_link_nodes(
 )
 {
     /*---------------------------------------*
+     *  Check self link
+     *---------------------------------------*/
+    if(parent_node == child_node) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot link self node",
+            "parent_node",  "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+
+    /*---------------------------------------*
      *  Check parent has `hook_name` field
      *---------------------------------------*/
     json_t *parent_hook_data = kw_get_dict_value(parent_node, hook_name, 0, 0);
