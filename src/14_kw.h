@@ -386,8 +386,8 @@ PUBLIC json_t *kw_filter_private(
 );
 
 /**rst**
-    HACK Convention: no-persistent metadata begins with "__".
-    This function return a duplicate of kw removing all no-persistent metadata
+    HACK Convention: metadata begins with "__".
+    This function return a duplicate of kw removing all metadata
 **rst**/
 PUBLIC json_t *kw_filter_metadata(
     json_t *kw  // owned
@@ -402,7 +402,7 @@ PUBLIC int kw_delete_private_keys(
 );
 
 /**rst**
-    HACK Convention: no-persistent metadata begins with "__".
+    HACK Convention: metadata begins with "__".
     Delete metadata keys (only first level)
 **rst**/
 PUBLIC int kw_delete_metadata_keys(
