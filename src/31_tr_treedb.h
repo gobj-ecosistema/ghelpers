@@ -120,6 +120,7 @@ PUBLIC int treedb_delete_node(
 );
 
 /**rst**
+    Return a list of matched nodes
     If not expanded (default):
         - the ref (fkeys to up) have 3 ^ fields
         - the ref (childs, to down) have 2 ^ fields

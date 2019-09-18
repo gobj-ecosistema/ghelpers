@@ -2406,7 +2406,10 @@ PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
 }
 
 /***************************************************************************
- *
+    Return a list of matched nodes
+    If not expanded (default):
+        - the ref (fkeys to up) have 3 ^ fields
+        - the ref (childs, to down) have 2 ^ fields
  ***************************************************************************/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
