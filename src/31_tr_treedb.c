@@ -2410,7 +2410,7 @@ PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
 
 /***************************************************************************
     Return a list of matched nodes
-    If not expanded (default):
+    If collapsed:
         - the ref (fkeys to up) have 3 ^ fields
         - the ref (childs, to down) have 2 ^ fields
  ***************************************************************************/
@@ -2420,7 +2420,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *topic_name,
     json_t *jn_ids,     // owned
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "expand"
+    json_t *jn_options, // owned "collapsed"
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
@@ -2462,7 +2462,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         match_fn = kw_match_simple;
     }
 
-    BOOL expand = kw_get_bool(jn_options, "expand", 0, KW_WILD_NUMBER);
+    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
     json_t *hook_names = tranger_hook_names(
         tranger_list_topic_desc(tranger, topic_name)
     );
@@ -2478,7 +2478,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             }
             JSON_INCREF(jn_filter);
             if(match_fn(node, jn_filter)) {
-                if(expand) {
+                if(!collapsed) {
                     // Full tree
                     json_array_append(list, node);
                 } else {
@@ -2501,7 +2501,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             }
             JSON_INCREF(jn_filter);
             if(match_fn(node, jn_filter)) {
-                if(expand) {
+                if(!collapsed) {
                     json_array_append(list, node);
                 } else {
                     json_array_append_new(
@@ -2532,7 +2532,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     JSON_DECREF(jn_options);
 
     return list;
-
 }
 
 /***************************************************************************
@@ -2688,6 +2687,7 @@ PUBLIC int treedb_link_nodes(
             "msg",          "%s", "Topic child not defined in hook desc links",
             "topic_name",   "%s", parent_topic_name,
             "hook",         "%s", hook_name,
+            "hook_desc",    "%j", hook_desc,
             "child_topic",  "%s", child_topic_name,
             NULL
         );
@@ -3022,6 +3022,7 @@ PUBLIC int treedb_unlink_nodes(
             "msg",          "%s", "Topic child not defined in hook desc links",
             "topic_name",   "%s", parent_topic_name,
             "hook",         "%s", hook_name,
+            "hook_desc",    "%j", hook_desc,
             "child_topic",  "%s", child_topic_name,
             NULL
         );

@@ -121,7 +121,7 @@ PUBLIC int treedb_delete_node(
 
 /**rst**
     Return a list of matched nodes
-    If not expanded (default):
+    If collapsed:
         - the ref (fkeys to up) have 3 ^ fields
         - the ref (childs, to down) have 2 ^ fields
 **rst**/
@@ -131,7 +131,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *topic_name,
     json_t *jn_ids,     // owned
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "expand"
+    json_t *jn_options, // owned "collapsed"
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
