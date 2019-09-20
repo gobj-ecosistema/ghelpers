@@ -124,6 +124,8 @@ PUBLIC int treedb_delete_node(
     If collapsed:
         - the ref (fkeys to up) have 3 ^ fields
         - the ref (childs, to down) have 2 ^ fields
+    WARNING Returned list in "collapsed" mode have duplicated nodes,
+            otherwise it returns original nodes.
 **rst**/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,

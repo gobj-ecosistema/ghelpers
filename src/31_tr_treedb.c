@@ -2413,6 +2413,8 @@ PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
     If collapsed:
         - the ref (fkeys to up) have 3 ^ fields
         - the ref (childs, to down) have 2 ^ fields
+    WARNING Returned list in "collapsed" mode have duplicate nodes,
+            otherwise it returns original nodes.
  ***************************************************************************/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
