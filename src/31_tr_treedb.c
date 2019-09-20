@@ -1323,6 +1323,7 @@ PRIVATE json_t *_md2json(
     json_object_set_new(jn_md, "__rowid__", json_integer(md_record->__rowid__));
     json_object_set_new(jn_md, "__t__", json_integer(md_record->__t__));
     json_object_set_new(jn_md, "__tag__", json_integer(md_record->__user_flag__));
+    json_object_set_new(jn_md, "__original_node__", json_true());
 
     return jn_md;
 }
@@ -1401,9 +1402,9 @@ PRIVATE int load_record_callback(
                     /*-------------------------------*
                      *  Append new node
                      *-------------------------------*/
-                    /*-------------------------------*
-                     *  Build metadata
-                     *-------------------------------*/
+                    /*---------------------------------------------*
+                     *  Build metadata, loading node from tranger
+                     *---------------------------------------------*/
                     json_t *jn_record_md = _md2json(
                         treedb_name,
                         topic_name,
@@ -2139,9 +2140,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         return 0;
     }
 
-    /*-------------------------------*
-     *  Build metadata
-     *-------------------------------*/
+    /*--------------------------------------------*
+     *  Build metadata, creating node in memory
+     *--------------------------------------------*/
     json_t *jn_record_md = _md2json(
         treedb_name,
         topic_name,
@@ -2198,9 +2199,9 @@ PUBLIC int treedb_update_node(
         return -1;
     }
 
-    /*-------------------------------*
-     *  Re-write metadata
-     *-------------------------------*/
+    /*----------------------------------*
+     *  Build metadata, updating node
+     *----------------------------------*/
     json_t *jn_record_md = _md2json(
         treedb_name,
         topic_name,
@@ -2405,6 +2406,7 @@ PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
             json_object_set_new(node_view, field_name, json_deep_copy(field_value));
         }
     }
+    json_object_del(json_object_get(node_view, "__md_treedb__"), "__original_node__");
     return node_view;
 }
 
@@ -2609,6 +2611,32 @@ PUBLIC int treedb_link_nodes(
     json_t *child_node      // not owned
 )
 {
+    /*---------------------------------------*
+     *  Check if original nodes
+     *---------------------------------------*/
+    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot link not original parent node",
+            "parent_node",  "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot link not original child node",
+            "parent_node",  "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+
     /*---------------------------------------*
      *  Check self link
      *---------------------------------------*/
@@ -2959,6 +2987,47 @@ PUBLIC int treedb_unlink_nodes(
     json_t *child_node      // not owned
 )
 {
+    /*---------------------------------------*
+     *  Check if original nodes
+     *---------------------------------------*/
+    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot link not original parent node",
+            "parent_node",  "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot unlink not original child node",
+            "parent_node",  "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+
+    /*---------------------------------------*
+     *  Check self link
+     *---------------------------------------*/
+    if(parent_node == child_node) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot unlink self node",
+            "parent_node",  "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+
     /*---------------------------------------*
      *  Check parent has `hook_name` field
      *---------------------------------------*/
