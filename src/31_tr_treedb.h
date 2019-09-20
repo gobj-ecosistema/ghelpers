@@ -160,11 +160,26 @@ PUBLIC int treedb_link_nodes(
     json_t *parent_node,    // not owned
     json_t *child_node      // not owned
 );
+
+PUBLIC int treedb_link_nodes2(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *parent_ref,
+    const char *child_ref
+);
+
 PUBLIC int treedb_unlink_nodes(
     json_t *tranger,
     const char *hook,
     json_t *parent_node,    // not owned
     json_t *child_node      // not owned
+);
+
+PUBLIC int treedb_unlink_nodes2(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *parent_ref,
+    const char *child_ref
 );
 
 PUBLIC int treedb_link_multiple_nodes(
@@ -173,6 +188,7 @@ PUBLIC int treedb_link_multiple_nodes(
     json_t *parent_nodes,   // not owned
     json_t *child_nodes     // not owned
 );
+
 
 #ifdef __cplusplus
 }

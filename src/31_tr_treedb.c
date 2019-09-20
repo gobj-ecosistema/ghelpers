@@ -2933,6 +2933,260 @@ PUBLIC int treedb_link_nodes(
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC int treedb_link_nodes2(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *parent,
+    const char *child
+)
+{
+    if(empty_string(parent)) {
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Parent ref is empty",
+            NULL
+        );
+        return -1;
+    }
+    if(empty_string(child)) {
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Child ref is empty",
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------*
+     *      Get parent info
+     *--------------------------------*/
+    const char *parent_topic_name = 0;
+    const char *parent_id = 0;
+    const char *hook_name = 0;
+
+    int lsz_parent_ref;
+    const char **parent_ref = split2(parent, "^", &lsz_parent_ref);
+
+    if(!parent_ref || lsz_parent_ref!=2) {
+        split_free2(parent_ref);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id.hook_name\"",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+    parent_topic_name = parent_ref[0];
+
+    int lsz_id_hook;
+    const char **parent_idh = split2(parent_ref[1], ".", &lsz_id_hook);
+    if(!parent_idh || lsz_id_hook!=2) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id.hook_name\"",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+
+    parent_id = parent_idh[0];
+    hook_name = parent_idh[1];
+
+    json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+        tranger,
+        treedb_name,
+        parent_topic_name,
+        parent_id
+    );
+
+    if(!parent_node) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Parent node not found",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------*
+     *      Get child info
+     *--------------------------------*/
+    const char *child_topic_name = 0;
+    const char *child_id = 0;
+
+    int lsz_child_ref;
+    const char **child_ref = split2(child, "^", &lsz_child_ref);
+    if(!child_ref || lsz_child_ref!=2) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        split_free2(child_ref);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Wrong child reference: must be \"child_topic_name^child_id\"",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+    child_topic_name = child_ref[0];
+    child_id = child_ref[1];
+
+    json_t *child_node = 0;
+
+    if(child_id[0]=='$') {
+        int lsz_func;
+        const char **func_param = split2(child_id+1, "$", &lsz_func);
+        if(!func_param || lsz_func!=2) {
+            split_free2(parent_ref);
+            split_free2(parent_idh);
+            split_free2(child_ref);
+            split_free2(func_param);
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "Wrong child reference: must be \"child_topic_name^child_id\"",
+                "parent",               "%s", parent,
+                "child",                "%s", child,
+                NULL
+            );
+            return -1;
+        }
+
+        const char *f = func_param[0];
+        const char *param = func_param[1];
+        json_t *jn_param = legalstring2json(param, TRUE);
+        if(!jn_param) {
+            split_free2(parent_ref);
+            split_free2(parent_idh);
+            split_free2(child_ref);
+            split_free2(func_param);
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "Wrong function parameters",
+                "parent",               "%s", parent,
+                "child",                "%s", child,
+                NULL
+            );
+            return -1;
+        }
+        SWITCHS(f) {
+            CASES("find-node")
+                json_t *nodes = treedb_list_nodes( // Return MUST be decref
+                    tranger,
+                    treedb_name,
+                    child_topic_name,
+                    0,  // jn_ids, owned
+                    jn_param,  // owned
+                    0,  // jn_options, owned "collapsed"
+                    0   //match_fn
+                );
+                if(json_array_size(nodes)!=1) {
+                    split_free2(parent_ref);
+                    split_free2(parent_idh);
+                    split_free2(child_ref);
+                    split_free2(func_param);
+                    log_error(0,
+                        "gobj",                 "%s", __FILE__,
+                        "function",             "%s", __FUNCTION__,
+                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                        "msg",                  "%s", "Filter must match only one node",
+                        "parent",               "%s", parent,
+                        "child",                "%s", child,
+                        NULL
+                    );
+                    return -1;
+                }
+                child_node = kw_get_list_value(nodes, 0, 0);
+                JSON_DECREF(nodes);
+                split_free2(func_param);
+                break;
+
+            DEFAULTS
+                split_free2(parent_ref);
+                split_free2(parent_idh);
+                split_free2(child_ref);
+                split_free2(func_param);
+                log_error(0,
+                    "gobj",                 "%s", __FILE__,
+                    "function",             "%s", __FUNCTION__,
+                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                    "msg",                  "%s", "Function unknown",
+                    "parent",               "%s", parent,
+                    "child",                "%s", child,
+                    "f",                    "%s", f,
+                    NULL
+                );
+                return -1;
+                break;
+        } SWITCHS_END;
+    } else {
+        child_node = treedb_get_node( // Return is NOT YOURS
+            tranger,
+            treedb_name,
+            child_topic_name,
+            child_id
+        );
+    }
+
+    if(!child_node) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        split_free2(child_ref);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Child node not found",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+
+    int result = treedb_link_nodes(
+        tranger,
+        hook_name,
+        parent_node,    // not owned
+        child_node      // not owned
+    );
+
+    split_free2(parent_ref);
+    split_free2(parent_idh);
+    split_free2(child_ref);
+
+    return result;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC int treedb_link_multiple_nodes(
     json_t *tranger,
     const char *hook,
@@ -3375,6 +3629,260 @@ PUBLIC int treedb_unlink_nodes(
      *  Only childs are saved
      *----------------------------*/
     return treedb_update_node(tranger, child_node);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_unlink_nodes2(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *parent,
+    const char *child
+)
+{
+    if(empty_string(parent)) {
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Parent ref is empty",
+            NULL
+        );
+        return -1;
+    }
+    if(empty_string(child)) {
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Child ref is empty",
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------*
+     *      Get parent info
+     *--------------------------------*/
+    const char *parent_topic_name = 0;
+    const char *parent_id = 0;
+    const char *hook_name = 0;
+
+    int lsz_parent_ref;
+    const char **parent_ref = split2(parent, "^", &lsz_parent_ref);
+
+    if(!parent_ref || lsz_parent_ref!=2) {
+        split_free2(parent_ref);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id.hook_name\"",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+    parent_topic_name = parent_ref[0];
+
+    int lsz_id_hook;
+    const char **parent_idh = split2(parent_ref[1], ".", &lsz_id_hook);
+    if(!parent_idh || lsz_id_hook!=2) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id.hook_name\"",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+
+    parent_id = parent_idh[0];
+    hook_name = parent_idh[1];
+
+    json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+        tranger,
+        treedb_name,
+        parent_topic_name,
+        parent_id
+    );
+
+    if(!parent_node) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Parent node not found",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------*
+     *      Get child info
+     *--------------------------------*/
+    const char *child_topic_name = 0;
+    const char *child_id = 0;
+
+    int lsz_child_ref;
+    const char **child_ref = split2(child, "^", &lsz_child_ref);
+    if(!child_ref || lsz_child_ref!=2) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        split_free2(child_ref);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Wrong child reference: must be \"child_topic_name^child_id\"",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+    child_topic_name = child_ref[0];
+    child_id = child_ref[1];
+
+    json_t *child_node = 0;
+
+    if(child_id[0]=='$') {
+        int lsz_func;
+        const char **func_param = split2(child_id+1, "$", &lsz_func);
+        if(!func_param || lsz_func!=2) {
+            split_free2(parent_ref);
+            split_free2(parent_idh);
+            split_free2(child_ref);
+            split_free2(func_param);
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "Wrong child reference: must be \"child_topic_name^child_id\"",
+                "parent",               "%s", parent,
+                "child",                "%s", child,
+                NULL
+            );
+            return -1;
+        }
+
+        const char *f = func_param[0];
+        const char *param = func_param[1];
+        json_t *jn_param = legalstring2json(param, TRUE);
+        if(!jn_param) {
+            split_free2(parent_ref);
+            split_free2(parent_idh);
+            split_free2(child_ref);
+            split_free2(func_param);
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "Wrong function parameters",
+                "parent",               "%s", parent,
+                "child",                "%s", child,
+                NULL
+            );
+            return -1;
+        }
+        SWITCHS(f) {
+            CASES("find-node")
+                json_t *nodes = treedb_list_nodes( // Return MUST be decref
+                    tranger,
+                    treedb_name,
+                    child_topic_name,
+                    0,  // jn_ids, owned
+                    jn_param,  // owned
+                    0,  // jn_options, owned "collapsed"
+                    0   //match_fn
+                );
+                if(json_array_size(nodes)!=1) {
+                    split_free2(parent_ref);
+                    split_free2(parent_idh);
+                    split_free2(child_ref);
+                    split_free2(func_param);
+                    log_error(0,
+                        "gobj",                 "%s", __FILE__,
+                        "function",             "%s", __FUNCTION__,
+                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                        "msg",                  "%s", "Filter must match only one node",
+                        "parent",               "%s", parent,
+                        "child",                "%s", child,
+                        NULL
+                    );
+                    return -1;
+                }
+                child_node = kw_get_list_value(nodes, 0, 0);
+                JSON_DECREF(nodes);
+                split_free2(func_param);
+                break;
+
+            DEFAULTS
+                split_free2(parent_ref);
+                split_free2(parent_idh);
+                split_free2(child_ref);
+                split_free2(func_param);
+                log_error(0,
+                    "gobj",                 "%s", __FILE__,
+                    "function",             "%s", __FUNCTION__,
+                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                    "msg",                  "%s", "Function unknown",
+                    "parent",               "%s", parent,
+                    "child",                "%s", child,
+                    "f",                    "%s", f,
+                    NULL
+                );
+                return -1;
+                break;
+        } SWITCHS_END;
+    } else {
+        child_node = treedb_get_node( // Return is NOT YOURS
+            tranger,
+            treedb_name,
+            child_topic_name,
+            child_id
+        );
+    }
+
+    if(!child_node) {
+        split_free2(parent_ref);
+        split_free2(parent_idh);
+        split_free2(child_ref);
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "Child node not found",
+            "parent",               "%s", parent,
+            "child",                "%s", child,
+            NULL
+        );
+        return -1;
+    }
+
+    int result = treedb_unlink_nodes(
+        tranger,
+        hook_name,
+        parent_node,    // not owned
+        child_node      // not owned
+    );
+
+    split_free2(parent_ref);
+    split_free2(parent_idh);
+    split_free2(child_ref);
+
+    return result;
 }
 
 
