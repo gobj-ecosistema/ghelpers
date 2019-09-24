@@ -2335,7 +2335,7 @@ PUBLIC int treedb_delete_node(
  * Return a list of hook field names of the topic.
  * Return MUST be decref
  ***************************************************************************/
-PUBLIC json_t *tranger_hook_names(
+PRIVATE json_t *tranger_hook_names(
     json_t *topic_desc // owned
 )
 {
@@ -2382,7 +2382,7 @@ PUBLIC json_t *tranger_dict_topic_desc( // Return MUST be decref
 /***************************************************************************
     Return a view of node with hook fields being collapsed
  ***************************************************************************/
-PUBLIC json_t *tranger_collapsed_view( // Return MUST be decref
+PRIVATE json_t *tranger_collapsed_view( // Return MUST be decref
     json_t *jn_hook_names, // not owned
     json_t *node // not owned
 )
@@ -2598,7 +2598,41 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *      Get
      *-------------------------------*/
     json_t *record = kw_get_dict(indexx, id, 0, 0);
+    if(!record) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic's node not found",
+            "path",         "%s", path,
+            "topic_name",   "%s", topic_name,
+            "id",           "%s", id,
+            NULL
+        );
+    }
     return record;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
+    json_t *tranger,
+    json_t *node // not owned
+)
+{
+    const char *topic_name = json_string_value(
+        kwid_get("", node, "__md_treedb__`topic_name")
+    );
+    json_t *hook_names = tranger_hook_names(
+        tranger_list_topic_desc(tranger, topic_name)
+    );
+    json_t *collapsed = tranger_collapsed_view(
+        hook_names,
+        node
+    );
+    JSON_DECREF(hook_names);
+    return collapsed;
 }
 
 /***************************************************************************

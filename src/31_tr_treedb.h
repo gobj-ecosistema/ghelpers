@@ -154,6 +154,14 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     const char *id
 );
 
+/*
+ *  Devuelve una vista del node collapsed
+ */
+PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
+    json_t *tranger,
+    json_t *node // not owned
+);
+
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *hook,
