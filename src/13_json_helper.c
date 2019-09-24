@@ -1006,9 +1006,11 @@ PUBLIC json_t *create_json_record(
 
         SWITCHS(json_desc->type) {
             CASES("str")
+            CASES("string")
                 json_object_set_new(jn, name, json_string(defaults));
                 break;
             CASES("int")
+            CASES("integer")
                 unsigned long v=0;
                 if(*defaults == '0') {
                     v = strtoul(defaults, 0, 8);
