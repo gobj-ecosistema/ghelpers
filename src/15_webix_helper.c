@@ -116,6 +116,7 @@ PRIVATE int _new_list_tree(
         break;
     case JSON_ARRAY:
         {
+            // TODO caso no probado
             int idx; json_t *r;
             json_array_foreach(node, idx, r) {
                 ret += _new_list_tree(
