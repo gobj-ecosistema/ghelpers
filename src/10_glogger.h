@@ -204,6 +204,8 @@ PUBLIC void _log_bf(int priority, log_opt_t opt, const char *bf, int len);
 
 PUBLIC void log_clear_counters(void);
 
+PUBLIC const char *log_last_message(void);
+
 /*
  *  Main Log functions.
  */
@@ -213,7 +215,6 @@ PUBLIC void log_error(log_opt_t opt, ...);
 PUBLIC void log_warning(log_opt_t opt, ...);
 PUBLIC void log_info(log_opt_t opt, ...);
 PUBLIC void log_debug(log_opt_t opt, ...);
-
 
 /*
  *  LOG_INFO functions.

@@ -2440,7 +2440,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         tranger,
         path,
         0,
-        KW_REQUIRED
+        0
     );
     if(!indexx) {
         log_error(0,

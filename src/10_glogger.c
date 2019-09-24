@@ -58,7 +58,7 @@ PRIVATE char __app_version__[64] = {0};
 PRIVATE char __executable__[512] = {0};
 PRIVATE inform_cb_t __inform_cb__ = 0;
 PRIVATE void *__inform_cb_user_data__ = 0;
-
+PRIVATE char last_message[256];
 PRIVATE uint32_t __alert_count__ = 0;
 PRIVATE uint32_t __critical_count__ = 0;
 PRIVATE uint32_t __error_count__ = 0;
@@ -370,6 +370,14 @@ PUBLIC void log_clear_counters(void)
     __error_count__ = 0;
     __critical_count__ = 0;
     __alert_count__ = 0;
+}
+
+/*****************************************************************
+ *      Log alert
+ *****************************************************************/
+PUBLIC const char *log_last_message(void)
+{
+    return last_message;
 }
 
 /*****************************************************************
@@ -1196,6 +1204,9 @@ PRIVATE void json_vappend(hgen_t hgen, va_list ap)
 
                             p = va_arg (ap, wchar_t *);
                             if(p && (len = snprintf(value, sizeof(value), "%ls", p))>=0) {
+                                if(strcmp(key, "msg")==0) {
+                                    snprintf(last_message, sizeof(last_message), "%s", value);
+                                }
                                 json_add_string(hgen, key, value);
                             } else {
                                 json_add_null(hgen, key);
@@ -1207,6 +1218,9 @@ PRIVATE void json_vappend(hgen_t hgen, va_list ap)
 
                             p = va_arg (ap, char *);
                             if(p && (len = snprintf(value, sizeof(value), "%s", p))>=0) {
+                                if(strcmp(key, "msg")==0) {
+                                    snprintf(last_message, sizeof(last_message), "%s", value);
+                                }
                                 json_add_string(hgen, key, value);
                             } else {
                                 json_add_null(hgen, key);
