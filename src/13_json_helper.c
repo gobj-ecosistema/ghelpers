@@ -136,7 +136,7 @@ PUBLIC int print_json(json_t *jn)
         fprintf(stdout, "ERROR print_json(1): json NULL or refcount is 0\n");
         return -1;
     }
-    size_t flags = JSON_INDENT(4); //JSON_SORT_KEYS |
+    size_t flags = JSON_INDENT(4)|JSON_ENCODE_ANY;
     fprintf(stdout, "\n");
     json_dumpf(jn, stdout, flags);
     fprintf(stdout, "\n");

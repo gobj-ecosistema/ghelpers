@@ -77,6 +77,7 @@ set (SRCS
     src/12_walkdir.c
     src/13_json_helper.c
     src/14_kw.c
+    src/15_webix_helper.c
     src/20_gbuffer.c
     src/20_stats.c
     src/20_stats_rd.c
@@ -130,6 +131,7 @@ set (HDRS
     src/12_walkdir.h
     src/13_json_helper.h
     src/14_kw.h
+    src/15_webix_helper.h
     src/20_gbuffer.h
     src/20_stats.h
     src/20_stats_rd.h
