@@ -85,11 +85,21 @@ PRIVATE int _new_list_tree(
                     }
                     continue;
                 }
-                json_object_set(
-                    new_record,
-                    !empty_string(new_field_name)?new_field_name:field_name,
-                    field_value
-                );
+                if(json_typeof(field_value)==JSON_OBJECT ||
+                        json_typeof(field_value)==JSON_ARRAY) {
+                    json_t *only_id_record = kwid_get_id_records(field_value);
+                    json_object_set_new(
+                        new_record,
+                        !empty_string(new_field_name)?new_field_name:field_name,
+                        only_id_record
+                    );
+                } else {
+                    json_object_set(
+                        new_record,
+                        !empty_string(new_field_name)?new_field_name:field_name,
+                        field_value
+                    );
+                }
             }
 
 

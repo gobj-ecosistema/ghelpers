@@ -702,6 +702,20 @@ PUBLIC json_t *kwid_get_new_ids(
 );
 
 /**rst**
+    Utility for databases.
+    Return a list with id records:
+        ["$id_record", ...]
+        [{"id":$id_record, ...}, ...]
+        {
+            "$id": {$id_record}.
+            ...
+        }
+**rst**/
+PUBLIC json_t *kwid_get_id_records(
+    json_t *records // not owned
+);
+
+/**rst**
     Check all refcounts
 **rst**/
 PUBLIC BOOL kw_check_refcounts(

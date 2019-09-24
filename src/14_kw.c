@@ -3143,6 +3143,121 @@ PUBLIC json_t *kwid_get_new_ids(
 }
 
 /***************************************************************************
+    Utility for databases.
+    Return a list with id records:
+        ["$id_record", ...]
+        [{"id":$id_record, ...}, ...]
+        {
+            "$id": {$id_record}.
+            ...
+        }
+ ***************************************************************************/
+PUBLIC json_t *kwid_get_id_records(
+    json_t *records // not owned
+)
+{
+    if(!records) {
+        return 0;
+    }
+
+    json_t *new_id_record_list = json_array();
+
+    switch(json_typeof(records)) {
+    case JSON_OBJECT:
+        /*
+            {
+                "$id": {
+                    "id": "$id",
+                    ...
+                }
+                ...
+            }
+        */
+        {
+            const char *id; json_t *jn_value;
+            json_object_foreach(records, id, jn_value) {
+                switch(json_typeof(jn_value)) {
+                case JSON_OBJECT:
+                    {
+                        const char *id = json_string_value(json_object_get(jn_value, "id"));
+                        if(!empty_string(id)) {
+                            json_array_append(new_id_record_list, jn_value);
+                        }
+                    }
+                    break;
+                case JSON_ARRAY:
+                    {
+                        int idx; json_t *jn_r;
+                        json_array_foreach(jn_value, idx, jn_r) {
+                            switch(json_typeof(jn_r)) {
+                            case JSON_OBJECT:
+                                /*
+                                    [
+                                        {
+                                            "id":$id,
+                                            ...
+                                        },
+                                        ...
+                                    ]
+                                */
+                                {
+                                    const char *id =
+                                        json_string_value(json_object_get(jn_r, "id"));
+                                    if(!empty_string(id)) {
+                                        json_array_append(new_id_record_list, jn_r);
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        break;
+
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(records, idx, jn_value) {
+                switch(json_typeof(jn_value)) {
+                case JSON_OBJECT:
+                    /*
+                        [
+                            {
+                                "id":$id,
+                                ...
+                            },
+                            ...
+                        ]
+                    */
+                    {
+                        const char *id = json_string_value(json_object_get(jn_value, "id"));
+                        if(!empty_string(id)) {
+                            json_array_append(new_id_record_list, jn_value);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return new_id_record_list;
+}
+
+/***************************************************************************
  *  Check deeply the refcount of kw
  ***************************************************************************/
 PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
