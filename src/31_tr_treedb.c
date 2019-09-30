@@ -2599,16 +2599,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *-------------------------------*/
     json_t *record = kw_get_dict(indexx, id, 0, 0);
     if(!record) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Topic's node not found",
-            "path",         "%s", path,
-            "topic_name",   "%s", topic_name,
-            "id",           "%s", id,
-            NULL
-        );
+        // Silence
     }
     return record;
 }
