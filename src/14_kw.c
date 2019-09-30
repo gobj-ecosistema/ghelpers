@@ -214,7 +214,7 @@ PUBLIC json_t *kw_incref(json_t *kw)
             "msg",          "%s", "BAD kw_incref()",
             NULL
         );
-        return kw;
+        return 0;
     }
 
     serialize_fields_t * pf = serialize_fields;
@@ -258,7 +258,7 @@ PUBLIC json_t *kw_decref(json_t* kw)
             "msg",          "%s", "BAD kw_decref()",
             NULL
         );
-        return kw;
+        return 0;
     }
 
     serialize_fields_t * pf = serialize_fields;
