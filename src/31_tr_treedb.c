@@ -2572,6 +2572,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     }
 
     json_decref(hook_names);
+    json_decref(fkey_names);
     JSON_DECREF(jn_ids);
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
