@@ -61,6 +61,7 @@ PRIVATE json_t *tranger_hook_names( // Return MUST be decref
 **rst**/
 PRIVATE json_t *tranger_collapsed_view( // Return MUST be decref
     json_t *jn_hook_names, // not owned
+    json_t *jn_fkey_names, // not owned
     json_t *node // not owned
 );
 
@@ -1865,7 +1866,7 @@ PRIVATE json_t *get_fkey_refs(
             int idx; json_t *ref;
             json_array_foreach(field_data, idx, ref) {
                 if(json_typeof(ref)==JSON_STRING) {
-                    if(count_char(json_string_value(ref), '^')==2) {
+                    if(count_char(json_string_value(ref), '^')==2) { // ==2 is 3 items!
                         json_array_append(refs, ref);
                     }
                 }
@@ -2356,6 +2357,30 @@ PRIVATE json_t *tranger_hook_names(
 }
 
 /***************************************************************************
+ * Return a list of fkeys field names of the topic.
+ * Return MUST be decref
+ ***************************************************************************/
+PRIVATE json_t *tranger_fkey_names(
+    json_t *topic_desc // owned
+)
+{
+    json_t *jn_fkey_field_names = json_array();
+
+    int idx; json_t *col;
+    json_array_foreach(topic_desc, idx, col) {
+        json_t *flag = kw_get_dict_value(col, "flag", 0, 0);
+        /*-------------------------*
+         *      Is a fkey?
+         *-------------------------*/
+        if(kw_has_word(flag, "fkey", 0)) {
+            json_array_append(jn_fkey_field_names, json_object_get(col, "id"));
+        }
+    }
+    JSON_DECREF(topic_desc);
+    return jn_fkey_field_names;
+}
+
+/***************************************************************************
  *
  ***************************************************************************/
 PUBLIC json_t *tranger_list_topic_desc( // Return MUST be decref
@@ -2384,6 +2409,7 @@ PUBLIC json_t *tranger_dict_topic_desc( // Return MUST be decref
  ***************************************************************************/
 PRIVATE json_t *tranger_collapsed_view( // Return MUST be decref
     json_t *jn_hook_names, // not owned
+    json_t *jn_fkey_names, // not owned
     json_t *node // not owned
 )
 {
@@ -2402,6 +2428,16 @@ PRIVATE json_t *tranger_collapsed_view( // Return MUST be decref
             json_array_extend(list, hook_refs);
             json_decref(hook_refs);
 
+        } else if(json_str_in_list(jn_fkey_names, field_name, 0)) {
+            json_t *list = kw_get_dict_value(
+                node_view,
+                field_name,
+                json_array(),
+                KW_CREATE
+            );
+            json_t *fkey_refs = get_fkey_refs(field_value);
+            json_array_extend(list, fkey_refs);
+            json_decref(fkey_refs);
         } else {
             json_object_set_new(node_view, field_name, json_deep_copy(field_value));
         }
@@ -2470,6 +2506,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *hook_names = tranger_hook_names(
         tranger_list_topic_desc(tranger, topic_name)
     );
+    json_t *fkey_names = tranger_fkey_names(
+        tranger_list_topic_desc(tranger, topic_name)
+    );
 
     json_t *list = json_array();
 
@@ -2491,6 +2530,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                         list,
                         tranger_collapsed_view(
                             hook_names,
+                            fkey_names,
                             node
                         )
                     );
@@ -2512,6 +2552,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                         list,
                         tranger_collapsed_view(
                             hook_names,
+                            fkey_names,
                             node
                         )
                     );
@@ -2618,8 +2659,12 @@ PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
     json_t *hook_names = tranger_hook_names(
         tranger_list_topic_desc(tranger, topic_name)
     );
+    json_t *fkey_names = tranger_fkey_names(
+        tranger_list_topic_desc(tranger, topic_name)
+    );
     json_t *collapsed = tranger_collapsed_view(
         hook_names,
+        fkey_names,
         node
     );
     JSON_DECREF(hook_names);
