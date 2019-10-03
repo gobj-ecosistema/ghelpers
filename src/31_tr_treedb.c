@@ -68,6 +68,9 @@ PRIVATE json_t *tranger_collapsed_view( // Return MUST be decref
 PRIVATE json_t *get_hook_refs(
     json_t *hook_data // not owned
 );
+PRIVATE json_t *get_fkey_refs(
+    json_t *field_data // not owned
+);
 
 /***************************************************************
  *              Data
@@ -969,7 +972,7 @@ PUBLIC int parse_hooks(
 
 
 /***************************************************************************
- *
+ *  Usado en set_tranger_field_value(), to write the fkey in tranger file
  ***************************************************************************/
 PRIVATE json_t *filtra_fkeys(json_t *value)
 {
@@ -981,12 +984,21 @@ PRIVATE json_t *filtra_fkeys(json_t *value)
             int idx; json_t *v;
             json_array_foreach(value, idx, v) {
                 if(json_typeof(v)==JSON_STRING) {
+                    // String format
                     const char *id = json_string_value(v);
                     if(count_char(id, '^')==2) {
                         if(!mix_ids) {
                             mix_ids = json_array();
                         }
                         json_array_append_new(mix_ids, json_string(id));
+                    }
+                } else if(json_typeof(v)==JSON_OBJECT) {
+                    // Message format
+                    if(kw_has_key(v, "__md_fkey__")) {
+                        if(!mix_ids) {
+                            mix_ids = json_array();
+                        }
+                        json_array_append(mix_ids, v);
                     }
                 }
             }
@@ -1001,6 +1013,14 @@ PRIVATE json_t *filtra_fkeys(json_t *value)
                         mix_ids = json_object();
                     }
                     json_object_set_new(mix_ids, id, json_true());
+                } else if(json_typeof(v)==JSON_OBJECT) {
+                    // Message format
+                    if(kw_has_key(v, "__md_fkey__")) {
+                        if(!mix_ids) {
+                            mix_ids = json_array();
+                        }
+                        json_object_set(mix_ids, id, v);
+                    }
                 }
             }
         }
