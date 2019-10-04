@@ -2367,7 +2367,7 @@ PUBLIC int treedb_delete_node(
     }
 
     /*-------------------------------*
-     *  Check hooks
+     *  Check hooks and fkeys
      *-------------------------------*/
     BOOL to_delete = TRUE;
     json_t *up_refs = get_node_up_refs(tranger, node);
@@ -2494,27 +2494,29 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        // TODO y si es hook y fkey???
-        if(is_hook) {
-            json_t *list = kw_get_dict_value(
-                node_view,
-                col_name,
-                json_array(),
-                KW_CREATE
-            );
-            json_t *hook_refs = get_hook_refs(field_value);
-            json_array_extend(list, hook_refs);
-            json_decref(hook_refs);
-        } else if(is_fkey) {
-            json_t *list = kw_get_dict_value(
-                node_view,
-                col_name,
-                json_array(),
-                KW_CREATE
-            );
-            json_t *fkey_refs = get_fkey_refs(field_value);
-            json_array_extend(list, fkey_refs);
-            json_decref(fkey_refs);
+        if(is_hook || is_fkey) {
+            if(is_hook) {
+                json_t *list = kw_get_dict_value(
+                    node_view,
+                    col_name,
+                    json_array(),
+                    KW_CREATE
+                );
+                json_t *hook_refs = get_hook_refs(field_value);
+                json_array_extend(list, hook_refs);
+                json_decref(hook_refs);
+            }
+            if(is_fkey) {
+                json_t *list = kw_get_dict_value(
+                    node_view,
+                    col_name,
+                    json_array(),
+                    KW_CREATE
+                );
+                json_t *fkey_refs = get_fkey_refs(field_value);
+                json_array_extend(list, fkey_refs);
+                json_decref(fkey_refs);
+            }
         } else {
             json_object_set_new(node_view, col_name, json_deep_copy(field_value));
         }
