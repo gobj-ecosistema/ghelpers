@@ -88,14 +88,6 @@ PUBLIC char *build_treedb_index_path(
 PUBLIC int parse_hooks(
     json_t *tranger
 );
-PUBLIC json_t *tranger_list_topic_desc( // Return a list!,  MUST be decref
-    json_t *tranger,
-    const char *topic_name
-);
-PUBLIC json_t *tranger_dict_topic_desc( // Return a dict!,  MUST be decref
-    json_t *tranger,
-    const char *topic_name
-);
 
 
 /*------------------------------------*

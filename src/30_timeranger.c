@@ -1470,6 +1470,30 @@ PUBLIC int tranger_write_topic_cols(
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *tranger_list_topic_desc( // Return MUST be decref
+    json_t *tranger,
+    const char *topic_name
+)
+{
+    json_t *topic = tranger_topic(tranger, topic_name);
+    return kwid_new_list("verbose", topic, "cols");
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *tranger_dict_topic_desc( // Return MUST be decref
+    json_t *tranger,
+    const char *topic_name
+)
+{
+    json_t *topic = tranger_topic(tranger, topic_name);
+    return kwid_new_dict("verbose", topic, "cols");
+}
+
+/***************************************************************************
  *  Get fullpath of filename in content/data level
  *  The directory will be create if it's master
  ***************************************************************************/
