@@ -49,22 +49,6 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 );
 
-/**rst**
-    Return a list of hook field names of the topic.
-**rst**/
-PRIVATE json_t *topic_desc_hook_names( // Return MUST be decref
-    json_t *topic_desc // owned
-);
-
-/**rst**
-    Return a view of node with hook fields being collapsed
-**rst**/
-PRIVATE json_t *node_collapsed_view( // Return MUST be decref
-    json_t *jn_hook_names, // not owned
-    json_t *jn_fkey_names, // not owned
-    json_t *node // not owned
-);
-
 PRIVATE json_t *get_hook_refs(
     json_t *hook_data // not owned
 );
@@ -2449,7 +2433,7 @@ PUBLIC int treedb_delete_node(
  * Return a list of hook field names of the topic.
  * Return MUST be decref
  ***************************************************************************/
-PRIVATE json_t *topic_desc_hook_names(
+PUBLIC json_t *topic_desc_hook_names(
     json_t *topic_desc // owned
 )
 {
@@ -2473,7 +2457,7 @@ PRIVATE json_t *topic_desc_hook_names(
  * Return a list of fkeys field names of the topic.
  * Return MUST be decref
  ***************************************************************************/
-PRIVATE json_t *topic_desc_fkey_names(
+PUBLIC json_t *topic_desc_fkey_names(
     json_t *topic_desc // owned
 )
 {
@@ -2495,32 +2479,36 @@ PRIVATE json_t *topic_desc_fkey_names(
 
 /***************************************************************************
     Return a view of node with hook fields being collapsed
+    WARNING extra fields are ignored, only topic desc fields are used
  ***************************************************************************/
 PRIVATE json_t *node_collapsed_view( // Return MUST be decref
-    json_t *jn_hook_names, // not owned
-    json_t *jn_fkey_names, // not owned
+    json_t *topic_desc, // not owned
     json_t *node // not owned
 )
 {
     json_t *node_view = json_object();
 
-    const char *field_name; json_t *field_value;
-    json_object_foreach(node, field_name, field_value) {
-        if(json_str_in_list(jn_hook_names, field_name, 0)) {
+    const char *col_name; json_t *col;
+    json_object_foreach(topic_desc, col_name, col) {
+        json_t *field_value = kw_get_dict_value(node, col_name, 0, KW_REQUIRED);
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        // TODO y si es hook y fkey???
+        if(is_hook) {
             json_t *list = kw_get_dict_value(
                 node_view,
-                field_name,
+                col_name,
                 json_array(),
                 KW_CREATE
             );
             json_t *hook_refs = get_hook_refs(field_value);
             json_array_extend(list, hook_refs);
             json_decref(hook_refs);
-
-        } else if(json_str_in_list(jn_fkey_names, field_name, 0)) {
+        } else if(is_fkey) {
             json_t *list = kw_get_dict_value(
                 node_view,
-                field_name,
+                col_name,
                 json_array(),
                 KW_CREATE
             );
@@ -2528,9 +2516,10 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
             json_array_extend(list, fkey_refs);
             json_decref(fkey_refs);
         } else {
-            json_object_set_new(node_view, field_name, json_deep_copy(field_value));
+            json_object_set_new(node_view, col_name, json_deep_copy(field_value));
         }
     }
+
     json_object_del(json_object_get(node_view, "__md_treedb__"), "__original_node__");
     return node_view;
 }
@@ -2592,12 +2581,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     }
 
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
-    json_t *hook_names = topic_desc_hook_names(
-        tranger_list_topic_desc(tranger, topic_name)
-    );
-    json_t *fkey_names = topic_desc_fkey_names(
-        tranger_list_topic_desc(tranger, topic_name)
-    );
+    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
 
     json_t *list = json_array();
 
@@ -2618,8 +2602,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                     json_array_append_new(
                         list,
                         node_collapsed_view(
-                            hook_names,
-                            fkey_names,
+                            topic_desc,
                             node
                         )
                     );
@@ -2640,8 +2623,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                     json_array_append_new(
                         list,
                         node_collapsed_view(
-                            hook_names,
-                            fkey_names,
+                            topic_desc,
                             node
                         )
                     );
@@ -2660,8 +2642,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         JSON_DECREF(list);
     }
 
-    json_decref(hook_names);
-    json_decref(fkey_names);
+    json_decref(topic_desc);
     JSON_DECREF(jn_ids);
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
@@ -2746,18 +2727,12 @@ PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
     const char *topic_name = json_string_value(
         kwid_get("", node, "__md_treedb__`topic_name")
     );
-    json_t *hook_names = topic_desc_hook_names(
-        tranger_list_topic_desc(tranger, topic_name)
-    );
-    json_t *fkey_names = topic_desc_fkey_names(
-        tranger_list_topic_desc(tranger, topic_name)
-    );
+    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
     json_t *collapsed = node_collapsed_view(
-        hook_names,
-        fkey_names,
+        topic_desc,
         node
     );
-    JSON_DECREF(hook_names);
+    JSON_DECREF(topic_desc);
     return collapsed;
 }
 
