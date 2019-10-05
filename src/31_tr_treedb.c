@@ -3073,8 +3073,8 @@ PUBLIC int treedb_link_nodes(
 PUBLIC int treedb_link_nodes2(
     json_t *tranger,
     const char *treedb_name,
-    const char *parent,
-    const char *child
+    const char *parent,     // parent_topic_name^parent_id.hook_name
+    const char *child       // child_topic_name^child_id
 )
 {
     if(empty_string(parent)) {
@@ -3774,8 +3774,8 @@ PUBLIC int treedb_unlink_nodes(
 PUBLIC int treedb_unlink_nodes2(
     json_t *tranger,
     const char *treedb_name,
-    const char *parent,
-    const char *child
+    const char *parent,     // parent_topic_name^parent_id.hook_name
+    const char *child       // child_topic_name^child_id
 )
 {
     if(empty_string(parent)) {

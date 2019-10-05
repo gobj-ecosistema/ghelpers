@@ -164,8 +164,8 @@ PUBLIC int treedb_link_nodes(
 PUBLIC int treedb_link_nodes2(
     json_t *tranger,
     const char *treedb_name,
-    const char *parent_ref,
-    const char *child_ref
+    const char *parent_ref,     // parent_topic_name^parent_id.hook_name
+    const char *child_ref       // child_topic_name^child_id
 );
 
 PUBLIC int treedb_unlink_nodes(
@@ -178,8 +178,8 @@ PUBLIC int treedb_unlink_nodes(
 PUBLIC int treedb_unlink_nodes2(
     json_t *tranger,
     const char *treedb_name,
-    const char *parent_ref,
-    const char *child_ref
+    const char *parent_ref,     // parent_topic_name^parent_id.hook_name
+    const char *child_ref       // child_topic_name^child_id
 );
 
 PUBLIC int treedb_link_multiple_nodes(
