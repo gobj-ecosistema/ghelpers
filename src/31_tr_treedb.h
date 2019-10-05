@@ -89,6 +89,15 @@ PUBLIC int parse_hooks(
     json_t *tranger
 );
 
+/**rst**
+    Return refs of fkeys of col_name field
+**rst**/
+
+PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
+    json_t *tranger,
+    json_t *node,    // not owned
+    const char *col_name
+);
 
 /*------------------------------------*
  *      Manage the tree's nodes

@@ -2105,6 +2105,80 @@ PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
     return refs;
 }
 
+/***************************************************************************
+    Return refs of fkeys of col_name field
+ ***************************************************************************/
+PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
+    json_t *tranger,
+    json_t *node,    // not owned
+    const char *col_name
+)
+{
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+
+    json_t *col = kw_get_dict_value(cols, col_name, 0, 0);
+    if(!col) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "col_name not found in the desc",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            "field",        "%s", col_name,
+            NULL
+        );
+        JSON_DECREF(cols);
+        return 0;
+    }
+    json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+    BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+    if(!is_fkey) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "field is not a fkey in the node",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            "col_name",     "%s", col_name,
+            NULL
+        );
+        JSON_DECREF(cols);
+        return 0;
+    }
+
+    json_t *refs = json_array();
+
+    json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
+    if(!field_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "field not found in the node",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            "field",        "%s", col_name,
+            NULL
+        );
+    }
+
+    if(json_empty(field_data)) {
+        JSON_DECREF(cols);
+        return refs;
+    }
+
+    json_t *ref = get_fkey_refs(field_data);
+    json_array_extend(refs, ref);
+    JSON_DECREF(ref);
+
+    JSON_DECREF(cols);
+    return refs;
+}
+
 
 
 
