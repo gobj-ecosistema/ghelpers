@@ -92,7 +92,6 @@ PUBLIC int parse_hooks(
 /**rst**
     Return refs of fkeys of col_name field
 **rst**/
-
 PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     json_t *tranger,
     json_t *node,    // not owned
@@ -102,6 +101,10 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/
+
+/**rst**
+    This function does NOT auto build links
+**rst**/
 PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
@@ -110,14 +113,67 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *options // "permissive" "verbose"
 );
 
-PUBLIC int treedb_update_node(
+PUBLIC int treedb_save_node(
     json_t *tranger,
     json_t *node    // not owned
 );
 
+/**rst**
+    This function DOES auto build links
+
+    "create" ["permissive" "verbose"] create node if not exist
+    "clean" clean wrong fkeys
+**rst**/
+PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *kw,    // owned
+    const char *options // "create" ["permissive" "verbose"], "clean"
+);
+
+/**rst**
+    "force" delete links. If there are links are not force then delete_node will fail
+**rst**/
 PUBLIC int treedb_delete_node(
     json_t *tranger,
-    json_t *node    // owned
+    json_t *node,    // owned
+    const char *options // "force" TODO
+);
+
+PUBLIC int treedb_link_nodes(
+    json_t *tranger,
+    const char *hook,
+    json_t *parent_node,    // not owned
+    json_t *child_node      // not owned
+);
+
+PUBLIC int treedb_link_nodes2(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *parent_ref,     // parent_topic_name^parent_id^hook_name
+    const char *child_ref       // child_topic_name^child_id
+);
+
+PUBLIC int treedb_unlink_nodes(
+    json_t *tranger,
+    const char *hook,
+    json_t *parent_node,    // not owned
+    json_t *child_node      // not owned
+);
+
+PUBLIC int treedb_unlink_nodes2(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *parent_ref,     // parent_topic_name^parent_id^hook_name
+    const char *child_ref       // child_topic_name^child_id
+);
+
+PUBLIC int treedb_link_multiple_nodes(
+    json_t *tranger,
+    const char *hook,
+    json_t *parent_nodes,   // not owned
+    json_t *child_nodes     // not owned
 );
 
 /**rst**
@@ -161,41 +217,6 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
 PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
     json_t *tranger,
     json_t *node // not owned
-);
-
-PUBLIC int treedb_link_nodes(
-    json_t *tranger,
-    const char *hook,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
-);
-
-PUBLIC int treedb_link_nodes2(
-    json_t *tranger,
-    const char *treedb_name,
-    const char *parent_ref,     // parent_topic_name^parent_id.hook_name
-    const char *child_ref       // child_topic_name^child_id
-);
-
-PUBLIC int treedb_unlink_nodes(
-    json_t *tranger,
-    const char *hook,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
-);
-
-PUBLIC int treedb_unlink_nodes2(
-    json_t *tranger,
-    const char *treedb_name,
-    const char *parent_ref,     // parent_topic_name^parent_id.hook_name
-    const char *child_ref       // child_topic_name^child_id
-);
-
-PUBLIC int treedb_link_multiple_nodes(
-    json_t *tranger,
-    const char *hook,
-    json_t *parent_nodes,   // not owned
-    json_t *child_nodes     // not owned
 );
 
 
