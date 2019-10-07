@@ -744,6 +744,26 @@ PUBLIC size_t kwid_find_json_in_list(
     json_t *item
 );
 
+/**rst**
+    Compare deeply two json **records**. Can be disordered.
+**rst**/
+PUBLIC BOOL kwid_compare_records(
+    json_t *record, // NOT owned
+    json_t *expected, // NOT owned
+    BOOL without_metadata,
+    BOOL without_private
+);
+
+/**rst**
+    Compare deeply two json lists of **records**. Can be disordered.
+**rst**/
+PUBLIC BOOL kwid_compare_lists(
+    json_t *list, // NOT owned
+    json_t *expected, // NOT owned
+    BOOL without_metadata,
+    BOOL without_private
+);
+
 
 #ifdef __cplusplus
 }

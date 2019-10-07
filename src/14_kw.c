@@ -3443,3 +3443,224 @@ PUBLIC size_t kwid_find_json_in_list(
     return -1;
 }
 
+/***************************************************************************
+    Compare deeply two json **records**. Can be disordered.
+ ***************************************************************************/
+PUBLIC BOOL kw_compare_dict(
+    json_t *record_, // NOT owned
+    json_t *expected_, // NOT owned
+    BOOL without_metadata,
+    BOOL without_private
+)
+{
+    BOOL ret = TRUE;
+    json_t *record = json_deep_copy(record_);
+    json_t *expected = json_deep_copy(expected_);
+    if(!record) {
+        JSON_DECREF(record);
+        JSON_DECREF(expected);
+        return FALSE;
+    }
+    if(!expected) {
+        JSON_DECREF(record);
+        JSON_DECREF(expected);
+        return FALSE;
+    }
+
+    if(json_typeof(record) != json_typeof(expected)) { // json_typeof CONTROLADO
+        ret = FALSE;
+    } else {
+        switch(json_typeof(record)) {
+            case JSON_ARRAY:
+                {
+                    if(!kw_compare_list(record, expected, without_metadata, without_private)) {
+                        ret = FALSE;
+                    }
+                }
+                break;
+
+            case JSON_OBJECT:
+                {
+                    if(without_metadata) {
+                        kw_delete_metadata_keys(record);
+                        kw_delete_metadata_keys(expected);
+                    }
+                    if(without_private) {
+                        kw_delete_private_keys(record);
+                        kw_delete_private_keys(expected);
+                    }
+
+                    void *n; const char *key; json_t *value;
+                    json_object_foreach_safe(record, n, key, value) {
+                        if(!kw_has_key(expected, key)) {
+                            ret = FALSE;
+                            break;
+                        }
+                        json_t *value2 = json_object_get(expected, key);
+                        if(json_typeof(value)==JSON_OBJECT) {
+
+                            if(!kw_compare_dict(
+                                    value,
+                                    value2,
+                                    without_metadata,
+                                    without_private
+                                )) {
+                                ret = FALSE;
+                            }
+                            if(ret == FALSE) {
+                                break;
+                            }
+
+                            json_object_del(record, key);
+                            json_object_del(expected, key);
+
+                        } else if(json_typeof(value)==JSON_ARRAY) {
+
+                            if(!kw_compare_list(
+                                    value,
+                                    value2,
+                                    without_metadata,
+                                    without_private
+                                )) {
+                                ret = FALSE;
+                            }
+                            if(ret == FALSE) {
+                                break;
+                            }
+
+                            json_object_del(record, key);
+                            json_object_del(expected, key);
+
+                        } else {
+                            if(!kw_is_identical(value, value2)) {
+                                ret = FALSE;
+                                break;
+                            } else {
+                                json_object_del(record, key);
+                                json_object_del(expected, key);
+                            }
+                        }
+                    }
+
+                    if(ret == TRUE) {
+                        if(json_object_size(record)>0) {
+                            ret = FALSE;
+                        }
+                        if(json_object_size(expected)>0) {
+                            ret = FALSE;
+                        }
+                    }
+                }
+                break;
+            default:
+                ret = FALSE;
+                break;
+        }
+    }
+
+    JSON_DECREF(record);
+    JSON_DECREF(expected);
+    return ret;
+}
+
+/***************************************************************************
+    Compare deeply two json lists of **records**. Can be disordered.
+ ***************************************************************************/
+PUBLIC BOOL kw_compare_list(
+    json_t *list_, // NOT owned
+    json_t *expected_, // NOT owned
+    BOOL without_metadata,
+    BOOL without_private
+)
+{
+    BOOL ret = TRUE;
+    json_t *list = json_deep_copy(list_);
+    json_t *expected = json_deep_copy(expected_);
+    if(!list) {
+        JSON_DECREF(list);
+        JSON_DECREF(expected);
+        return FALSE;
+    }
+    if(!expected) {
+        JSON_DECREF(list);
+        JSON_DECREF(expected);
+        return FALSE;
+    }
+
+    if(json_typeof(list) != json_typeof(expected)) { // json_typeof CONTROLADO
+        ret = FALSE;
+    } else {
+        switch(json_typeof(list)) {
+        case JSON_ARRAY:
+            {
+                int idx1; json_t *r1;
+                json_array_foreach(list, idx1, r1) {
+                    const char *id1 = kw_get_str(r1, "id", 0, 0);
+                    /*--------------------------------*
+                     *  List with id records
+                     *--------------------------------*/
+                    if(id1) {
+                        size_t idx2 = kwid_find_record_in_list("", expected, id1);
+                        if(idx2 < 0) {
+                            ret = FALSE;
+                            continue;
+                        }
+                        json_t *r2 = json_array_get(expected, idx2);
+
+                        if(!kw_compare_dict(r1, r2, without_metadata, without_private)) {
+                            ret = FALSE;
+                        }
+                        if(ret == FALSE) {
+                            break;
+                        }
+
+                        if(json_array_remove(list, idx1)==0) {
+                            idx1--;
+                        }
+                        json_array_remove(expected, idx2);
+                    } else {
+                        /*--------------------------------*
+                         *  List with any json items
+                         *--------------------------------*/
+                        int idx2 = kwid_find_json_in_list("", expected, r1);
+                        if(idx2 < 0) {
+                            ret = FALSE;
+                            break;
+                        }
+                        if(json_array_remove(list, idx1)==0) {
+                            idx1--;
+                        }
+                        json_array_remove(expected, idx2);
+                    }
+                }
+
+                if(ret == TRUE) {
+                    if(json_array_size(list)>0) {
+                        ret = FALSE;
+                    }
+                    if(json_array_size(expected)>0) {
+                        ret = FALSE;
+                    }
+                }
+            }
+            break;
+
+        case JSON_OBJECT:
+            {
+                if(!kw_compare_dict(list, expected, without_metadata, without_private)) {
+                    ret = FALSE;
+                }
+            }
+            break;
+        default:
+            {
+                ret = FALSE;
+            }
+            break;
+        }
+    }
+
+    JSON_DECREF(list);
+    JSON_DECREF(expected);
+    return ret;
+}
