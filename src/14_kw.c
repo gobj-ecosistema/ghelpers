@@ -3446,7 +3446,7 @@ PUBLIC size_t kwid_find_json_in_list(
 /***************************************************************************
     Compare deeply two json **records**. Can be disordered.
  ***************************************************************************/
-PUBLIC BOOL kw_compare_dict(
+PUBLIC BOOL kwid_compare_records(
     json_t *record_, // NOT owned
     json_t *expected_, // NOT owned
     BOOL without_metadata,
@@ -3473,7 +3473,7 @@ PUBLIC BOOL kw_compare_dict(
         switch(json_typeof(record)) {
             case JSON_ARRAY:
                 {
-                    if(!kw_compare_list(record, expected, without_metadata, without_private)) {
+                    if(!kwid_compare_lists(record, expected, without_metadata, without_private)) {
                         ret = FALSE;
                     }
                 }
@@ -3498,8 +3498,7 @@ PUBLIC BOOL kw_compare_dict(
                         }
                         json_t *value2 = json_object_get(expected, key);
                         if(json_typeof(value)==JSON_OBJECT) {
-
-                            if(!kw_compare_dict(
+                            if(!kwid_compare_records(
                                     value,
                                     value2,
                                     without_metadata,
@@ -3515,8 +3514,7 @@ PUBLIC BOOL kw_compare_dict(
                             json_object_del(expected, key);
 
                         } else if(json_typeof(value)==JSON_ARRAY) {
-
-                            if(!kw_compare_list(
+                            if(!kwid_compare_lists(
                                     value,
                                     value2,
                                     without_metadata,
@@ -3566,7 +3564,7 @@ PUBLIC BOOL kw_compare_dict(
 /***************************************************************************
     Compare deeply two json lists of **records**. Can be disordered.
  ***************************************************************************/
-PUBLIC BOOL kw_compare_list(
+PUBLIC BOOL kwid_compare_lists(
     json_t *list_, // NOT owned
     json_t *expected_, // NOT owned
     BOOL without_metadata,
@@ -3607,7 +3605,7 @@ PUBLIC BOOL kw_compare_list(
                         }
                         json_t *r2 = json_array_get(expected, idx2);
 
-                        if(!kw_compare_dict(r1, r2, without_metadata, without_private)) {
+                        if(!kwid_compare_records(r1, r2, without_metadata, without_private)) {
                             ret = FALSE;
                         }
                         if(ret == FALSE) {
@@ -3647,7 +3645,7 @@ PUBLIC BOOL kw_compare_list(
 
         case JSON_OBJECT:
             {
-                if(!kw_compare_dict(list, expected, without_metadata, without_private)) {
+                if(!kwid_compare_records(list, expected, without_metadata, without_private)) {
                     ret = FALSE;
                 }
             }
