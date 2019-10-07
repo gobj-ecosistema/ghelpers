@@ -70,6 +70,12 @@ PUBLIC int treedb_close_db(
     const char *treedb_name
 );
 
+PUBLIC json_t *treedb_list_topics(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *options // "dict" return list of dicts, otherwise return list of strings
+);
+
 /*------------------------------------*
  *      Utils
  *------------------------------------*/
@@ -95,6 +101,7 @@ PUBLIC int parse_hooks(
 PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     json_t *tranger,
     json_t *node,    // not owned
+    const char *topic_name,
     const char *col_name
 );
 

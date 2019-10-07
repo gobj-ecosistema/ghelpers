@@ -494,6 +494,47 @@ PUBLIC int treedb_close_db(
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC json_t *treedb_list_topics(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *options
+)
+{
+    json_t *topic_list = json_array();
+
+    json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
+    if(!treedb) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDB not found.",
+            "treedb_name",  "%s", treedb_name,
+            NULL
+        );
+        return topic_list;
+    }
+
+    char list_id[NAME_MAX];
+    const char *topic_name; json_t *topic_records;
+    json_object_foreach(treedb, topic_name, topic_records) {
+        build_treedb_index_path(list_id, sizeof(list_id), treedb_name, topic_name, "id");
+        if(options && strstr(options, "dict")) {
+            json_t *dict = json_object();
+            json_object_set_new(dict, "id", json_string(list_id));
+            json_object_set_new(dict, "value", json_string(topic_name));
+            json_array_append_new(topic_list, dict);
+        } else {
+            json_array_append_new(topic_list, json_string(topic_name));
+        }
+    }
+
+    return topic_list;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC int treedb_tag( // tag the current tree db
     json_t *tranger,
     const char *treedb_name,
@@ -2243,11 +2284,10 @@ PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
 PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     json_t *tranger,
     json_t *node,    // not owned
+    const char *topic_name,
     const char *col_name
 )
 {
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
 
     json_t *col = kw_get_dict_value(cols, col_name, 0, 0);
@@ -2257,7 +2297,6 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "col_name not found in the desc",
-            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             "field",        "%s", col_name,
             NULL
@@ -2273,7 +2312,6 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "field is not a fkey in the node",
-            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             "col_name",     "%s", col_name,
             NULL
@@ -2291,7 +2329,6 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "field not found in the node",
-            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             "field",        "%s", col_name,
             NULL
@@ -2517,6 +2554,109 @@ PUBLIC int treedb_save_node(
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int _remove_wrong_ref(
+    json_t *tranger,
+    json_t *node,
+    const char *topic_name,
+    const char *col_name,
+    const char *ref
+)
+{
+    json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
+    if(!field_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "field not found in the node",
+            "topic_name",   "%s", topic_name,
+            "field",        "%s", col_name,
+            NULL
+        );
+    }
+
+    if(json_empty(field_data)) {
+        return -1;
+    }
+
+    int ret = -1;
+
+    switch(json_typeof(field_data)) { // json_typeof PROTECTED
+    case JSON_STRING:
+        {
+            const char *ref_ = json_string_value(field_data);
+            if(ref_ && ref && strcmp(ref_, ref)==0) {
+                kw_set_dict_value(node, col_name, json_string(""));
+                ret = 0;
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Removing wrong fkey ref",
+                    "topic_name",   "%s", topic_name,
+                    "field",        "%s", col_name,
+                    "ref",          "%s", ref,
+                    NULL
+                );
+            }
+        }
+        break;
+    case JSON_ARRAY:
+        {
+            int idx; json_t *r;
+            json_array_foreach(field_data, idx, r) {
+                if(json_typeof(r)==JSON_STRING) {
+                    const char *ref_ = json_string_value(r);
+                    if(ref_ && ref && strcmp(ref_, ref)==0) {
+                        json_array_remove(field_data, idx);
+                        idx --;
+                        ret = 0;
+                        log_error(0,
+                            "gobj",         "%s", __FILE__,
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                            "msg",          "%s", "Removing wrong fkey ref",
+                            "topic_name",   "%s", topic_name,
+                            "field",        "%s", col_name,
+                            "ref",          "%s", ref,
+                            NULL
+                        );
+                    }
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            const char *ref_; json_t *v; void *n;
+            json_object_foreach_safe(field_data, n, ref_, v) {
+                if(ref_ && ref && strcmp(ref_, ref)==0) {
+                    json_object_del(field_data, ref_);
+                    ret = 0;
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Removing wrong fkey ref",
+                        "topic_name",   "%s", topic_name,
+                        "field",        "%s", col_name,
+                        "ref",          "%s", ref,
+                        NULL
+                    );
+                }
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    return ret;
+}
+
+/***************************************************************************
     This function DOES auto build links
 
     "create" ["permissive" "verbose"] create node if not exist
@@ -2631,8 +2771,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
         /*
          *  link/unlink fkeys
          */
-        json_t *old_fkeys = treedb_node_up_refs(tranger, child_node, col_name);
-        json_t *new_fkeys = treedb_node_up_refs(tranger, kw, col_name);
+        json_t *old_fkeys = treedb_node_up_refs(tranger, child_node, topic_name, col_name);
+        json_t *new_fkeys = treedb_node_up_refs(tranger, kw, topic_name, col_name);
 
         int idx; json_t *new_fkey;
         json_array_foreach(new_fkeys, idx, new_fkey) {
@@ -2647,8 +2787,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             /*
              *  New link
              */
-            to_update = TRUE;
-
             /*
              *  Get parent info
              */
@@ -2687,6 +2825,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 );
                 continue;
             }
+
+            to_update = TRUE;
 
             _link_nodes(
                 tranger,
@@ -2698,12 +2838,10 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
 
         json_t *old_fkey;
         json_array_foreach(old_fkeys, idx, old_fkey) {
-            const char *ref = json_string_value(old_fkey);
-
             /*
              *  Delete link
              */
-            to_update = TRUE;
+            const char *ref = json_string_value(old_fkey);
 
             /*
              *  Get parent info
@@ -2741,8 +2879,22 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     "ref",                  "%s", ref,
                     NULL
                 );
+
+                /*
+                 *  Remove reference, it's invalid
+                 */
+                _remove_wrong_ref(
+                    tranger,
+                    child_node,
+                    topic_name,
+                    col_name,
+                    ref
+                );
+                to_update = TRUE;
                 continue;
             }
+
+            to_update = TRUE;
 
             _unlink_nodes(
                 tranger,
