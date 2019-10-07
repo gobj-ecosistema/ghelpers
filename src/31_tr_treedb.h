@@ -145,7 +145,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
 PUBLIC int treedb_delete_node(
     json_t *tranger,
     json_t *node,    // owned
-    const char *options // "force" TODO
+    const char *options // "force"
 );
 
 PUBLIC int treedb_link_nodes(

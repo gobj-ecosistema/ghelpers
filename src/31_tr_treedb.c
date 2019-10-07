@@ -2554,7 +2554,7 @@ PUBLIC int treedb_save_node(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int _remove_wrong_ref(
+PRIVATE int remove_wrong_up_ref(
     json_t *tranger,
     json_t *node,
     const char *topic_name,
@@ -2588,7 +2588,7 @@ PRIVATE int _remove_wrong_ref(
             if(ref_ && ref && strcmp(ref_, ref)==0) {
                 kw_set_dict_value(node, col_name, json_string(""));
                 ret = 0;
-                log_error(0,
+                log_warning(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2611,7 +2611,7 @@ PRIVATE int _remove_wrong_ref(
                         json_array_remove(field_data, idx);
                         idx --;
                         ret = 0;
-                        log_error(0,
+                        log_warning(0,
                             "gobj",         "%s", __FILE__,
                             "function",     "%s", __FUNCTION__,
                             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2633,7 +2633,7 @@ PRIVATE int _remove_wrong_ref(
                 if(ref_ && ref && strcmp(ref_, ref)==0) {
                     json_object_del(field_data, ref_);
                     ret = 0;
-                    log_error(0,
+                    log_warning(0,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2652,6 +2652,36 @@ PRIVATE int _remove_wrong_ref(
     }
 
     return ret;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int search_and_remove_wrong_up_ref(
+    json_t *tranger,
+    json_t *node,
+    const char *topic_name,
+    const char *ref
+)
+{
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    const char *col_name; json_t *col;
+    json_object_foreach(cols, col_name, col) {
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        if(!is_fkey) {
+            continue;
+        }
+        remove_wrong_up_ref(
+            tranger,
+            node,
+            topic_name,
+            col_name,
+            ref
+        );
+    }
+
+    return 0;
 }
 
 /***************************************************************************
@@ -2890,7 +2920,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     /*
                      *  Remove reference, it's invalid
                      */
-                    _remove_wrong_ref(
+                    remove_wrong_up_ref(
                         tranger,
                         child_node,
                         topic_name,
@@ -2997,26 +3027,6 @@ PUBLIC int treedb_delete_node(
      *  Check hooks and fkeys
      *-------------------------------*/
     BOOL to_delete = TRUE;
-    json_t *up_refs = get_node_up_refs(tranger, node);
-    if(json_array_size(up_refs)>0) {
-        if(0) { //options && strstr(options, "force")) {
-            // TODO borra links
-        } else {
-            to_delete = FALSE;
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Cannot delete node: has up links",
-                "path",         "%s", path,
-                "topic_name",   "%s", topic_name,
-                "id",           "%s", id,
-                NULL
-            );
-        }
-
-    }
-    JSON_DECREF(up_refs);
 
     json_t *down_refs = get_node_down_refs(tranger, node);
     if(json_array_size(down_refs)>0) {
@@ -3037,6 +3047,98 @@ PUBLIC int treedb_delete_node(
         }
     }
     JSON_DECREF(down_refs);
+
+    json_t *up_refs = get_node_up_refs(tranger, node);
+    if(json_array_size(up_refs)>0) {
+        if(options && strstr(options, "force")) {
+            int idx; json_t *old_fkey;
+            json_array_foreach(up_refs, idx, old_fkey) {
+                /*
+                 *  Delete link
+                 */
+                const char *ref = json_string_value(old_fkey);
+
+                /*
+                 *  Get parent info
+                 */
+                char parent_topic_name[NAME_MAX];
+                char parent_id[NAME_MAX];
+                char hook_name[NAME_MAX];
+                if(!decode_string_fkey(
+                    ref,
+                    parent_topic_name, sizeof(parent_topic_name),
+                    parent_id, sizeof(parent_id),
+                    hook_name, sizeof(hook_name)
+                )) {
+                    // It's not a fkey
+                    log_error(0,
+                        "gobj",                 "%s", __FILE__,
+                        "function",             "%s", __FUNCTION__,
+                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                        "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
+                        "ref",                  "%s", ref,
+                        NULL
+                    );
+                    continue;
+                }
+
+                json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+                    tranger,
+                    treedb_name,
+                    parent_topic_name,
+                    parent_id
+                );
+                if(parent_node) {
+                    _unlink_nodes(
+                        tranger,
+                        hook_name,
+                        parent_node,    // not owned
+                        node      // not owned
+                    );
+                } else {
+                    search_and_remove_wrong_up_ref(
+                        tranger,
+                        node,
+                        topic_name,
+                        ref
+                    );
+                }
+            }
+
+            /*
+             *  Re-checks up links
+             */
+            json_t *up_refs_ = get_node_up_refs(tranger, node);
+            if(json_array_size(up_refs_)>0) {
+                to_delete = FALSE;
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Cannot delete node: still has up links",
+                    "path",         "%s", path,
+                    "topic_name",   "%s", topic_name,
+                    "id",           "%s", id,
+                    NULL
+                );
+            }
+            JSON_DECREF(up_refs_);
+
+        } else {
+            to_delete = FALSE;
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Cannot delete node: has up links",
+                "path",         "%s", path,
+                "topic_name",   "%s", topic_name,
+                "id",           "%s", id,
+                NULL
+            );
+        }
+    }
+    JSON_DECREF(up_refs);
 
     if(!to_delete) {
         // Error already logged
