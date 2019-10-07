@@ -2435,18 +2435,16 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         /*
          *  Yes
          */
-        if(strstr(options, "verbose")) {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Node already exists",
-                "path",         "%s", path,
-                "topic_name",   "%s", topic_name,
-                "id",           "%s", id,
-                NULL
-            );
-        }
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Node already exists",
+            "path",         "%s", path,
+            "topic_name",   "%s", topic_name,
+            "id",           "%s", id,
+            NULL
+        );
         JSON_DECREF(kw);
         return 0;
     }
@@ -2659,7 +2657,7 @@ PRIVATE int _remove_wrong_ref(
 /***************************************************************************
     This function DOES auto build links
 
-    "create" ["permissive" "verbose"] create node if not exist
+    "create" ["permissive"] create node if not exist
     "clean" clean wrong fkeys
  ***************************************************************************/
 PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
@@ -2667,7 +2665,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned
-    const char *options // "create" ["permissive" "verbose"], "clean"
+    const char *options // "create" ["permissive"], "clean"
 )
 {
     /*-------------------------------*
@@ -2888,18 +2886,19 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     "ref",                  "%s", ref,
                     NULL
                 );
-
-                /*
-                 *  Remove reference, it's invalid
-                 */
-                _remove_wrong_ref(
-                    tranger,
-                    child_node,
-                    topic_name,
-                    col_name,
-                    ref
-                );
-                to_update = TRUE;
+                if(options && strstr(options, "clean")) {
+                    /*
+                     *  Remove reference, it's invalid
+                     */
+                    _remove_wrong_ref(
+                        tranger,
+                        child_node,
+                        topic_name,
+                        col_name,
+                        ref
+                    );
+                    to_update = TRUE;
+                }
                 continue;
             }
 

@@ -117,7 +117,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive" "verbose"
+    const char *options // "permissive"
 );
 
 PUBLIC int treedb_save_node(
@@ -128,7 +128,7 @@ PUBLIC int treedb_save_node(
 /**rst**
     This function DOES auto build links
 
-    "create" ["permissive" "verbose"] create node if not exist
+    "create" ["permissive"] create node if not exist
     "clean" clean wrong fkeys
 **rst**/
 PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
@@ -136,7 +136,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned
-    const char *options // "create" ["permissive" "verbose"], "clean"
+    const char *options // "create" ["permissive"], "clean"
 );
 
 /**rst**

@@ -1919,6 +1919,9 @@ PUBLIC BOOL kw_is_identical(
     json_t *kw2     // not owned
 )
 {
+    if(!kw1 || !kw2) {
+        return FALSE;
+    }
     char *kw1_ = json2uglystr(kw1);
     char *kw2_ = json2uglystr(kw2);
     int ret = strcmp(kw1_, kw2_);
