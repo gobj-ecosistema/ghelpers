@@ -2680,7 +2680,7 @@ PRIVATE int search_and_remove_wrong_up_ref(
             ref
         );
     }
-
+    json_decref(cols);
     return 0;
 }
 
