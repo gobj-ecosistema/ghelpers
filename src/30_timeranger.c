@@ -1494,6 +1494,41 @@ PUBLIC json_t *tranger_dict_topic_desc( // Return MUST be decref
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *tranger_filter_topic_fields(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *kw  // owned
+)
+{
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    if(!cols) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic without cols",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+    json_t *new_record = json_object();
+
+    const char *field; json_t *col;
+    json_object_foreach(cols, field, col) {
+        json_t *value = kw_get_dict_value(kw, field, 0, 0);
+        json_object_set(new_record, field, value);
+    }
+
+    JSON_DECREF(cols);
+    JSON_DECREF(kw);
+    return new_record;
+}
+
+/***************************************************************************
  *  Get fullpath of filename in content/data level
  *  The directory will be create if it's master
  ***************************************************************************/

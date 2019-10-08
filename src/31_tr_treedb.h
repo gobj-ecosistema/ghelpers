@@ -94,6 +94,13 @@ PUBLIC char *build_treedb_index_path(
 PUBLIC int parse_hooks(
     json_t *tranger
 );
+PUBLIC json_t *treedb_get_index( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *index_name
+);
+
 
 /**rst**
     Return refs of fkeys of col_name field
@@ -202,13 +209,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
     )
-);
-
-PUBLIC json_t *treedb_get_index( // Return is NOT YOURS
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    const char *index_name
 );
 
 PUBLIC json_t *treedb_get_node( // Return is NOT YOURS

@@ -283,6 +283,11 @@ PUBLIC json_t *tranger_dict_topic_desc( // Return a dict!,  MUST be decref
     json_t *tranger,
     const char *topic_name
 );
+PUBLIC json_t *tranger_filter_topic_fields(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *kw  // owned
+);
 
 /**rst**
     Return json object with record metadata

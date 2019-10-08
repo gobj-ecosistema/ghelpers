@@ -1357,6 +1357,142 @@ PRIVATE int set_tranger_field_value(
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int set_volatil_field_value(
+    const char *type,
+    const char *field,
+    json_t *record, // not owned
+    json_t *value   // not owned
+)
+{
+    SWITCHS(type) {
+        CASES("array")
+            if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                json_object_set(record, field, value);
+            } else {
+                json_object_set_new(record, field, json_array());
+            }
+            break;
+
+        CASES("object")
+            if(JSON_TYPEOF(value, JSON_OBJECT)) {
+                json_object_set(record, field, value);
+            } else {
+                json_object_set_new(record, field, json_object());
+            }
+            break;
+
+        CASES("string")
+            if(!value) {
+                json_object_set_new(record, field, json_string(""));
+            } else if(json_is_string(value)) {
+                json_object_set(record, field, value);
+            } else {
+                char *v = jn2string(value);
+                json_object_set_new(record, field, json_string(v));
+                gbmem_free(v);
+            }
+            break;
+
+        CASES("integer")
+            if(!value) {
+                json_object_set_new(record, field, json_integer(0));
+            } else if(json_is_integer(value)) {
+                json_object_set(record, field, value);
+            } else {
+                json_int_t v = jn2integer(value);
+                json_object_set_new(record, field, json_integer(v));
+            }
+            break;
+        CASES("real")
+            if(!value) {
+                json_object_set_new(record, field, json_real(0.0));
+            } else if(json_is_real(value)) {
+                json_object_set(record, field, value);
+            } else {
+                double v = jn2real(value);
+                json_object_set_new(record, field, json_real(v));
+            }
+            break;
+
+        CASES("boolean")
+            BOOL v = jn2bool(value);
+            json_object_set_new(record, field, v?json_true():json_false());
+            break;
+
+        DEFAULTS
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Col type unknown",
+                "field",        "%s", field,
+                "type",         "%s", type,
+                NULL
+            );
+            return -1;
+    } SWITCHS_END;
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int set_volatil_values(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *record,  // not owned
+    json_t *kw // not owned
+)
+{
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    if(!cols) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic without cols",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        return 0;
+    }
+
+    const char *field; json_t *col;
+    json_object_foreach(cols, field, col) {
+        json_t *value = kw_get_dict_value(kw, field, 0, 0);
+
+        const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
+        if(!field) {
+            continue;
+        }
+        const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
+        if(!type) {
+            continue;
+        }
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        if((is_persistent || is_hook || is_fkey)) {
+            continue;
+        }
+
+        set_volatil_field_value(
+            type,
+            field,
+            record, // not owned
+            value   // not owned
+        );
+    }
+
+    JSON_DECREF(cols);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
@@ -2480,6 +2616,16 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     }
 
     /*--------------------------------------------*
+     *  Set volatil data
+     *--------------------------------------------*/
+    set_volatil_values(
+        tranger,
+        topic_name,
+        record,  // not owned
+        kw // not owned
+    );
+
+    /*--------------------------------------------*
      *  Build metadata, creating node in memory
      *--------------------------------------------*/
     json_t *jn_record_md = _md2json(
@@ -2797,7 +2943,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                  */
                 json_t *old_value = kw_get_dict_value(child_node, col_name, 0, 0);
                 json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
-                if(!kw_is_identical(old_value, new_value)) {
+                if(new_value && !kw_is_identical(old_value, new_value)) {
                     to_update = TRUE;
                     json_object_set(child_node, col_name, new_value);
                 }
@@ -3003,6 +3149,7 @@ PUBLIC int treedb_delete_node(
             "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(node);
         return -1;
     }
 
@@ -3020,6 +3167,7 @@ PUBLIC int treedb_delete_node(
             "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(node);
         return -1;
     }
 
@@ -3142,6 +3290,7 @@ PUBLIC int treedb_delete_node(
 
     if(!to_delete) {
         // Error already logged
+        JSON_DECREF(node);
         return -1;
     }
 
@@ -3161,6 +3310,7 @@ PUBLIC int treedb_delete_node(
             "id",           "%s", id,
             NULL
         );
+        JSON_DECREF(node);
         return -1;
     }
 
@@ -4254,10 +4404,11 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
 
     const char *col_name; json_t *col;
     json_object_foreach(topic_desc, col_name, col) {
-        json_t *field_value = kw_get_dict_value(node, col_name, 0, KW_REQUIRED);
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_persistent?KW_REQUIRED:0);
         if(is_hook || is_fkey) {
             if(is_hook) {
                 json_t *list = kw_get_dict_value(
