@@ -1654,6 +1654,16 @@ PRIVATE int load_record_callback(
                     json_object_set_new(jn_record_md, "__pending_links__", json_true());
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
 
+                    /*--------------------------------------------*
+                     *  Set volatil data
+                     *--------------------------------------------*/
+                    set_volatil_values(
+                        tranger,
+                        topic_name,
+                        jn_record,  // not owned
+                        jn_record // not owned
+                    );
+
                     /*-------------------------------*
                      *  Write node
                      *-------------------------------*/
