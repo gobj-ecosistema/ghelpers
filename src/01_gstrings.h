@@ -192,6 +192,26 @@ PUBLIC void delete_right_blanks(char *s);
 
 /**rst**
 
+.. function:: char *delete_right_char(char *s, char x)
+
+*    Elimina el caracter(s) 'x' a la derecha.
+
+**rst**/
+PUBLIC char *delete_right_char(char *s, char x);
+
+
+/**rst**
+
+.. function:: char *delete_left_char(char *s, char x)
+
+    Elimina el caracter 'x' a la izquierda.
+
+**rst**/
+PUBLIC char *delete_left_char(char *s, char x);
+
+
+/**rst**
+
 .. function:: void delete_left_blanks(char *s)
 
    Elimina blancos a la izquierda. (Espacios, tabuladores, CR's  o LF's)

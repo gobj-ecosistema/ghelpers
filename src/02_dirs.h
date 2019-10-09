@@ -53,6 +53,20 @@ PUBLIC int copyfile(
 
 PUBLIC char *pop_last_segment(char *path); // WARNING path modified
 
+PUBLIC char *build_path2(
+    char *path,
+    int pathsize,
+    const char *dir1,
+    const char *dir2
+);
+PUBLIC char *build_path3(
+    char *path,
+    int pathsize,
+    const char *dir1,
+    const char *dir2,
+    const char *dir3
+);
+
 #ifdef __cplusplus
 }
 #endif

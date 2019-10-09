@@ -270,6 +270,57 @@ PUBLIC void delete_right_blanks(char *s)
 }
 
 /***************************************************************************
+ *    Elimina el caracter 'x' a la derecha.
+ ***************************************************************************/
+PUBLIC char *delete_right_char(char *s, char x)
+{
+    int l;
+
+    l = strlen(s);
+    if(l==0) {
+        return s;
+    }
+    while(--l>=0) {
+        if(*(s+l)==x) {
+            *(s+l)='\0';
+        } else {
+            break;
+        }
+    }
+    return s;
+}
+
+/***************************************************************************
+ *    Elimina el caracter 'x' a la izquierda.
+ ***************************************************************************/
+PUBLIC char *delete_left_char(char *s, char x)
+{
+    int l;
+    char c;
+
+    if(strlen(s)==0) {
+        return s;
+    }
+
+    l=0;
+    while(1) {
+        c= *(s+l);
+        if(c=='\0'){
+            break;
+        }
+        if(c==x) {
+            l++;
+        } else {
+            break;
+        }
+    }
+    if(l>0) {
+        memmove(s,s+l,strlen(s)-l+1);
+    }
+    return s;
+}
+
+/***************************************************************************
  *    Elimina blancos a la izquierda. (Espacios, tabuladores, CR's  o LF's)
  ***************************************************************************/
 PUBLIC void delete_left_blanks(char *s)

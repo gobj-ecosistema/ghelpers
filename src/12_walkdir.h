@@ -43,7 +43,7 @@ typedef enum {
 typedef BOOL (*walkdir_cb)(
     void *user_data,
     wd_found_type type,     // type found
-    const char *fullpath,   // directory+filename found
+    char *fullpath,         // directory+filename found
     const char *directory,  // directory of found filename
     char *name,             // dname[256]  filename
     int level,              // level of tree where file found

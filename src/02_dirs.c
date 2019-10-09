@@ -185,9 +185,13 @@ PUBLIC BOOL file_exists(const char *directory, const char *filename)
             directory
         );
     } else {
+        char *sep = "";
+        if(strlen(directory)) {
+            sep = (directory[strlen(directory)-1]=='/')?"":"/";
+        }
         snprintf(full_path, sizeof(full_path), "%s%s%s",
             directory,
-            (directory[strlen(directory)-1]=='/')?"":"/",
+            sep,
             filename
         );
     }
@@ -423,5 +427,62 @@ PUBLIC char *pop_last_segment(char *path) // WARNING path modified
     }
     *p = 0;
     return p+1;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC char *build_path2(
+    char *path,
+    int pathsize,
+    const char *dir1,
+    const char *dir2
+)
+{
+    snprintf(path, pathsize, "%s", dir1);
+    delete_right_char(path, '/');
+
+    if(strlen(dir2)) {
+        int l = strlen(path);
+        snprintf(path+l, pathsize-l, "/");
+        l = strlen(path);
+        snprintf(path+l, pathsize-l, "%s", dir2);
+        delete_left_char(path+l, '/');
+        delete_right_char(path, '/');
+    }
+    return path;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC char *build_path3(
+    char *path,
+    int pathsize,
+    const char *dir1,
+    const char *dir2,
+    const char *dir3
+)
+{
+    snprintf(path, pathsize, "%s", dir1);
+    delete_right_char(path, '/');
+
+    if(strlen(dir2)) {
+        int l = strlen(path);
+        snprintf(path+l, pathsize-l, "/");
+        l = strlen(path);
+        snprintf(path+l, pathsize-l, "%s", dir2);
+        delete_left_char(path+l, '/');
+        delete_right_char(path, '/');
+    }
+    if(strlen(dir3)) {
+        int l = strlen(path);
+        snprintf(path+l, pathsize-l, "/");
+        l = strlen(path);
+        snprintf(path+l, pathsize-l, "%s", dir3);
+        delete_left_char(path+l, '/');
+        delete_right_char(path, '/');
+    }
+    return path;
 }
 

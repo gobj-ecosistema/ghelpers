@@ -221,7 +221,7 @@ PUBLIC int walk_dir_tree(
 PRIVATE BOOL _nfiles_cb(
     void *user_data,
     wd_found_type type,
-    const char *fullpath,
+    char *fullpath,
     const char *directory,
     char *filename, // dname[256]
     int level,
@@ -297,7 +297,7 @@ struct myfiles_s {
 PRIVATE BOOL _fill_array_cb(
     void *user_data,
     wd_found_type type,
-    const char *fullpath,
+    char *fullpath,
     const char *directory,
     char *filename, // dname[256]
     int level,
