@@ -329,7 +329,7 @@ PUBLIC json_t *tranger_startup(
 
     char path[PATH_MAX];
     const char *path_ = kw_get_str(tranger, "path", "", 0);
-    snprintf(path, sizeof(path), "%s", path_);  // I want modify path
+    build_path2(path, sizeof(path), path_, ""); // I want modify path
     if(empty_string(path)) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
@@ -340,10 +340,7 @@ PUBLIC json_t *tranger_startup(
         );
         return 0;
     }
-    if(path[strlen(path)-1]=='/') {
-        path[strlen(path)-1] = 0;   // Delete tail '/'
-        kw_set_dict_value(tranger, "path", json_string(path));
-    }
+    kw_set_dict_value(tranger, "path", json_string(path));
 
     const char *database = kw_get_str(tranger, "database", "", 0);
     if(empty_string(database)) {
@@ -379,7 +376,7 @@ PUBLIC json_t *tranger_startup(
         KW_REQUIRED|KW_WILD_NUMBER
     );
     char directory[PATH_MAX];
-    snprintf(directory, sizeof(directory), "%s/%s", path, database);
+    build_path2(directory, sizeof(directory), path, database);
     kw_set_dict_value(tranger, "directory", json_string(directory));
 
     int fd = -1;

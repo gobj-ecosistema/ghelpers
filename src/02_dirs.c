@@ -442,7 +442,7 @@ PUBLIC char *build_path2(
     snprintf(path, pathsize, "%s", dir1);
     delete_right_char(path, '/');
 
-    if(strlen(dir2)) {
+    if(dir2 && strlen(dir2)) {
         int l = strlen(path);
         snprintf(path+l, pathsize-l, "/");
         l = strlen(path);
@@ -467,7 +467,7 @@ PUBLIC char *build_path3(
     snprintf(path, pathsize, "%s", dir1);
     delete_right_char(path, '/');
 
-    if(strlen(dir2)) {
+    if(dir2 && strlen(dir2)) {
         int l = strlen(path);
         snprintf(path+l, pathsize-l, "/");
         l = strlen(path);
@@ -475,7 +475,7 @@ PUBLIC char *build_path3(
         delete_left_char(path+l, '/');
         delete_right_char(path, '/');
     }
-    if(strlen(dir3)) {
+    if(dir3 && strlen(dir3)) {
         int l = strlen(path);
         snprintf(path+l, pathsize-l, "/");
         l = strlen(path);
