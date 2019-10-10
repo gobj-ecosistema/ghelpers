@@ -2734,7 +2734,7 @@ PUBLIC json_t *tranger_open_list(
                     jn_record = json_object();
                 }
                 json_object_set_new(jn_record, "__md_tranger__", tranger_md2json(&md_record));
-                json_array_append(
+                json_array_append_new(
                     data,
                     jn_record // owned
                 );
