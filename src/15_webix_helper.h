@@ -9,7 +9,12 @@
 
 #pragma once
 
-#include <ghelpers.h>
+#include <jansson.h>
+
+/*
+ *  Dependencies
+ */
+#include "14_kw.h"
 
 #ifdef __cplusplus
 extern "C"{
