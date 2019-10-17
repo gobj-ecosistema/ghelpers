@@ -2871,6 +2871,12 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     }
 
     /*-------------------------------*
+     *  Set node name
+     *-------------------------------*/
+    char child_name[NAME_MAX];
+    snprintf(child_name, sizeof(child_name), "%s^%s", topic_name, id);
+
+    /*-------------------------------*
      *  Recover node
      *-------------------------------*/
     json_t *child_node = treedb_get_node( // Return is NOT YOURS
@@ -2980,6 +2986,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             /*
              *  New link
              */
+
             /*
              *  Get parent info
              */
@@ -2995,7 +3002,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
                     "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
-                    "ref",                  "%s", ref,
+                    "parent",               "%s", ref,
+                    "child",                "%s", child_name,
                     NULL
                 );
                 continue;
@@ -3012,8 +3020,9 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     "gobj",                 "%s", __FILE__,
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                    "msg",                  "%s", "Parent node not found",
-                    "ref",                  "%s", ref,
+                    "msg",                  "%s", "update_node, new link: parent node not found",
+                    "parent",               "%s", ref,
+                    "child",                "%s", child_name,
                     NULL
                 );
                 continue;
@@ -3051,7 +3060,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
                     "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
-                    "ref",                  "%s", ref,
+                    "parent",               "%s", ref,
                     NULL
                 );
                 continue;
@@ -3068,8 +3077,9 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     "gobj",                 "%s", __FILE__,
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                    "msg",                  "%s", "Parent node not found",
-                    "ref",                  "%s", ref,
+                    "msg",                  "%s", "update_node, delete link: parent node not found",
+                    "parent",               "%s", ref,
+                    "child",                "%s", child_name,
                     NULL
                 );
                 if(options && strstr(options, "clean")) {
