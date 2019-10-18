@@ -209,6 +209,15 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
             );
         } else if(jn_schema) {
+            log_info(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INFO,
+                "msg",          "%s", "Creating TreeDB schema file.",
+                "treedb_name",  "%s", treedb_name,
+                "schema_file",  "%s", schema_full_path,
+                NULL
+            );
             JSON_INCREF(jn_schema);
             save_json_to_file(
                 kw_get_str(tranger, "directory", 0, KW_REQUIRED),
