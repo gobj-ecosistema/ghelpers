@@ -4682,6 +4682,16 @@ PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
     return collapsed;
 }
 
+PUBLIC json_t *treedb_get_parent_nodes( // Return MUST be decref
+    json_t *tranger,
+    json_t *node, // not owned
+    const char *link_name
+)
+{
+
+    return 0;
+}
+
 
 
 

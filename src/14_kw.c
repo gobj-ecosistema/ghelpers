@@ -3035,6 +3035,27 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
     return kw_new;
 }
 
+/**rst**
+    Utility for databases.
+    Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
+    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    If match_fn is 0 then kw_match_simple is used.
+    NOTE Using JSON_INCREF/JSON_DECREF
+**rst**/
+PUBLIC json_t *kwid_tree_collect( // WARNING be care, you can modify the original records
+    json_t *kw,         // not owned
+    json_t *ids,        // owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+)
+{
+
+    return 0;
+}
+
 /***************************************************************************
     Utility for databases.
     Being `ids` a:
@@ -3167,23 +3188,23 @@ PUBLIC json_t *kwid_get_id_records(
 
     switch(json_typeof(records)) {
     case JSON_OBJECT:
-        /*
-            {
-                "$id": {
-                    "id": "$id",
-                    ...
-                }
-                ...
-            }
-        */
         {
             const char *id; json_t *jn_value;
             json_object_foreach(records, id, jn_value) {
                 switch(json_typeof(jn_value)) {
                 case JSON_OBJECT:
                     {
-                        const char *id = json_string_value(json_object_get(jn_value, "id"));
-                        if(!empty_string(id)) {
+                        /*
+                            {
+                                "$id": {
+                                    "id": "$id",
+                                    ...
+                                }
+                                ...
+                            }
+                        */
+                        const char *id_ = json_string_value(json_object_get(jn_value, "id"));
+                        if(id_ && strcmp(id_, id)==0) {
                             json_array_append(new_id_record_list, jn_value);
                         }
                     }
@@ -3195,7 +3216,7 @@ PUBLIC json_t *kwid_get_id_records(
                             switch(json_typeof(jn_r)) {
                             case JSON_OBJECT:
                                 /*
-                                    [
+                                    "xxx" = [
                                         {
                                             "id":$id,
                                             ...
