@@ -2969,9 +2969,10 @@ PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
 /***************************************************************************
     Utility for databases.
     Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
-    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    return a **NEW** list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    and matching the ids.
     If match_fn is 0 then kw_match_simple is used.
-    NOTE Using JSON_INCREF/JSON_DECREF
+    NOTE Using JSON_INCREF/JSON_DECREF HACK
  ***************************************************************************/
 PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original records
     json_t *kw,         // not owned
@@ -3035,15 +3036,179 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
     return kw_new;
 }
 
-/**rst**
+ /***************************************************************************
+  *
+  ***************************************************************************/
+PRIVATE int _tree_collect(
+    json_t *new_id_record_list,
+    json_t *kw,    // not owned
+    const char *hook,
+    json_t *ids,        // not owned
+    json_t *jn_filter,  // not owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+)
+{
+    if(!kw) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw NULL",
+            NULL
+        );
+        return -1;
+    }
+    switch(json_typeof(kw)) {
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(kw, idx, jn_value) {
+                switch(json_typeof(jn_value)) {
+                case JSON_OBJECT:
+                    /*
+                        [
+                            {
+                                "id": "$id",
+                                ...
+                            },
+                            ...
+                        ]
+                    */
+                    {
+                        const char *id = json_string_value(json_object_get(jn_value, "id"));
+                        if(!empty_string(id)) {
+                            if(kwid_match_id(ids, id)) {
+                                JSON_INCREF(jn_filter);
+                                if(match_fn(jn_value, jn_filter)) {
+                                    json_array_append(new_id_record_list, jn_value);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        break;
+
+    case JSON_OBJECT:
+        {
+            const char *id; json_t *jn_value;
+            json_object_foreach(kw, id, jn_value) {
+                switch(json_typeof(jn_value)) {
+                case JSON_OBJECT:
+                    {
+                        /*
+                            {
+                                "$id": {
+                                    "id": "$id",
+                                    ...
+                                }
+                                ...
+                            }
+                        */
+                        const char *id_ = json_string_value(json_object_get(jn_value, "id"));
+                        if(id_ && strcmp(id_, id)==0) {
+                            if(kwid_match_id(ids, id)) {
+                                JSON_INCREF(jn_filter);
+                                if(match_fn(jn_value, jn_filter)) {
+                                    json_array_append(new_id_record_list, jn_value);
+                                }
+                            }
+                        }
+                    }
+                    break;
+                case JSON_ARRAY:
+                    if(strcmp(id, hook)==0) {
+                        _tree_collect(
+                            new_id_record_list,
+                            jn_value,    // not owned
+                            hook,
+                            ids,        // owned
+                            jn_filter,  // owned
+                            match_fn
+                        );
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+/***************************************************************************
     Utility for databases.
-    Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
-    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+
+    Being `kw` a:
+
+        [{"id": "$id", ...}, ...]
+
+        {
+            "$id": {"id": "$id",...},
+            ...
+        }
+
+        {
+            "hook": [{"id": "$id", ...}, ...]
+            ...
+        }
+
+
+    array-object:
+
+        [
+            {
+                "id": "$id",
+                ...
+            },
+            ...
+        ]
+
+    object-object:
+
+        {
+            "$id": {
+                "id": "$id",
+                ...
+            }
+            ...
+        }
+
+    object-array-object:
+
+        {
+            "hook" = [
+                {
+                    "id": "$id",
+                    ...
+                },
+                ...
+            ]
+        }
+
+
+    return a **NEW** list of incref (clone) kw filtering the rows by `jn_filter` (where),
+        and matching the ids.
+    Walk the tree through hook field.
     If match_fn is 0 then kw_match_simple is used.
-    NOTE Using JSON_INCREF/JSON_DECREF
-**rst**/
-PUBLIC json_t *kwid_tree_collect( // WARNING be care, you can modify the original records
-    json_t *kw,         // not owned
+    NOTE Using JSON_INCREF/JSON_DECREF HACK
+ ***************************************************************************/
+PUBLIC json_t *kwid_tree_collect( // WARNING be care, you can modify the original kw
+    json_t *kw,    // not owned
+    const char *hook,
     json_t *ids,        // owned
     json_t *jn_filter,  // owned
     BOOL (*match_fn) (
@@ -3052,8 +3217,28 @@ PUBLIC json_t *kwid_tree_collect( // WARNING be care, you can modify the origina
     )
 )
 {
+    if(!kw) {
+        JSON_DECREF(ids);
+        JSON_DECREF(jn_filter);
+        // silence
+        return 0;
+    }
+    if(!match_fn) {
+        match_fn = kw_match_simple;
+    }
 
-    return 0;
+    json_t *new_id_record_list = json_array();
+    _tree_collect(
+        new_id_record_list,
+        kw,
+        hook,
+        ids,
+        jn_filter,
+        match_fn
+    );
+    JSON_DECREF(ids);
+    JSON_DECREF(jn_filter);
+    return new_id_record_list;
 }
 
 /***************************************************************************
@@ -3168,13 +3353,53 @@ PUBLIC json_t *kwid_get_new_ids(
 
 /***************************************************************************
     Utility for databases.
-    Return a list with id records:
-        ["$id_record", ...]
-        [{"id":$id_record, ...}, ...]
+    Return a list with id-records:
+
+        [{"id": "$id", ...}, ...]
+
         {
-            "$id": {$id_record}.
+            "$id": {"id": "$id",...},
             ...
         }
+
+        {
+            "hook": [{"id": "$id", ...}, ...]
+            ...
+        }
+
+
+    array-object:
+
+        [
+            {
+                "id": "$id",
+                ...
+            },
+            ...
+        ]
+
+    object-object:
+
+        {
+            "$id": {
+                "id": "$id",
+                ...
+            }
+            ...
+        }
+
+    object-array-object:
+
+        {
+            "hook" = [
+                {
+                    "id": "$id",
+                    ...
+                },
+                ...
+            ]
+        }
+
  ***************************************************************************/
 PUBLIC json_t *kwid_get_id_records(
     json_t *records // not owned
@@ -3187,6 +3412,35 @@ PUBLIC json_t *kwid_get_id_records(
     json_t *new_id_record_list = json_array();
 
     switch(json_typeof(records)) {
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(records, idx, jn_value) {
+                switch(json_typeof(jn_value)) {
+                case JSON_OBJECT:
+                    /*
+                        [
+                            {
+                                "id": "$id",
+                                ...
+                            },
+                            ...
+                        ]
+                    */
+                    {
+                        const char *id = json_string_value(json_object_get(jn_value, "id"));
+                        if(!empty_string(id)) {
+                            json_array_append(new_id_record_list, jn_value);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        break;
+
     case JSON_OBJECT:
         {
             const char *id; json_t *jn_value;
@@ -3216,9 +3470,9 @@ PUBLIC json_t *kwid_get_id_records(
                             switch(json_typeof(jn_r)) {
                             case JSON_OBJECT:
                                 /*
-                                    "xxx" = [
+                                    "hook" = [
                                         {
-                                            "id":$id,
+                                            "id": "$id",
                                             ...
                                         },
                                         ...
@@ -3235,35 +3489,6 @@ PUBLIC json_t *kwid_get_id_records(
                             default:
                                 break;
                             }
-                        }
-                    }
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-        break;
-
-    case JSON_ARRAY:
-        {
-            int idx; json_t *jn_value;
-            json_array_foreach(records, idx, jn_value) {
-                switch(json_typeof(jn_value)) {
-                case JSON_OBJECT:
-                    /*
-                        [
-                            {
-                                "id":$id,
-                                ...
-                            },
-                            ...
-                        ]
-                    */
-                    {
-                        const char *id = json_string_value(json_object_get(jn_value, "id"));
-                        if(!empty_string(id)) {
-                            json_array_append(new_id_record_list, jn_value);
                         }
                     }
                     break;

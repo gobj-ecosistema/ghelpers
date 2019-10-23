@@ -2284,7 +2284,9 @@ PRIVATE json_t *get_fkey_refs(
     switch(json_typeof(field_data)) { // json_typeof PROTECTED
     case JSON_STRING:
         {
-            json_array_append(refs, field_data);
+            if(count_char(json_string_value(field_data), '^')==2) {
+                json_array_append(refs, field_data);
+            }
         }
         break;
     case JSON_ARRAY:
@@ -4682,14 +4684,126 @@ PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
     return collapsed;
 }
 
+/***************************************************************************
+ *  Return a list of parent nodes pointed by the link
+ ***************************************************************************/
 PUBLIC json_t *treedb_get_parent_nodes( // Return MUST be decref
     json_t *tranger,
     json_t *node, // not owned
-    const char *link_name
+    const char *link // must be a fkey field
 )
 {
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
+    const char *child_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    json_t *cols = tranger_dict_topic_desc(tranger, child_name);
 
-    return 0;
+    json_t *col = kw_get_dict_value(cols, link, 0, 0);
+    if(!col) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "link not found in the desc",
+            "child_name",   "%s", child_name,
+            "link",         "%s", link,
+            NULL
+        );
+        JSON_DECREF(cols);
+        return 0;
+    }
+    json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+    BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+    if(!is_fkey) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "link is not a fkey in the node",
+            "child_name",   "%s", child_name,
+            "link",         "%s", link,
+            NULL
+        );
+        JSON_DECREF(cols);
+        return 0;
+    }
+
+    json_t *parents = json_array();
+
+    json_t *field_data = kw_get_dict_value(node, link, 0, 0);
+    if(!field_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "link not found in the node",
+            "child_name",   "%s", child_name,
+            "link",         "%s", link,
+            NULL
+        );
+    }
+
+    if(json_empty(field_data)) {
+        JSON_DECREF(cols);
+        return parents;
+    }
+
+    json_t *refs = get_fkey_refs(field_data);
+    int idx; json_t *jn_fkey;
+    json_array_foreach(refs, idx, jn_fkey) {
+        char parent_topic_name[NAME_MAX];
+        char parent_id[NAME_MAX];
+        char hook_name[NAME_MAX];
+        /*
+         *  Get parent info
+         */
+        const char *ref = json_string_value(jn_fkey);
+        if(!decode_string_fkey(
+            ref,
+            parent_topic_name, sizeof(parent_topic_name),
+            parent_id, sizeof(parent_id),
+            hook_name, sizeof(hook_name)
+        )) {
+            // It's not a fkey
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
+                "parent",               "%s", ref,
+                "child",                "%s", child_name,
+                NULL
+            );
+            continue;
+        }
+
+        json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+            tranger,
+            treedb_name,
+            parent_topic_name,
+            parent_id
+        );
+        if(!parent_node) {
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "get_parent_nodes: parent node not found",
+                "parent",               "%s", ref,
+                "child",                "%s", child_name,
+                NULL
+            );
+            continue;
+        }
+
+        /*
+         *  Add parent
+         */
+        json_array_append(parents, parent_node);
+    }
+
+    JSON_DECREF(refs);
+    JSON_DECREF(cols);
+    return parents;
 }
 
 

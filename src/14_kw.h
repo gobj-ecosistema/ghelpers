@@ -671,9 +671,10 @@ PUBLIC BOOL kwid_match_id(
 /**rst**
     Utility for databases.
     Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
-    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    return a **NEW** list of incref (clone) kw filtering the rows by `jn_filter` (where),
+    and matching the ids.
     If match_fn is 0 then kw_match_simple is used.
-    NOTE Using JSON_INCREF/JSON_DECREF
+    NOTE Using JSON_INCREF/JSON_DECREF HACK
 **rst**/
 PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original records
     json_t *kw,         // not owned
@@ -687,13 +688,64 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
 
 /**rst**
     Utility for databases.
-    Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
-    return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
+
+    Being `records` a:
+
+        [{"id": "$id", ...}, ...]
+
+        {
+            "$id": {"id": "$id",...},
+            ...
+        }
+
+        {
+            "hook": [{"id": "$id", ...}, ...]
+            ...
+        }
+
+
+    array-object:
+
+        [
+            {
+                "id": "$id",
+                ...
+            },
+            ...
+        ]
+
+    object-object:
+
+        {
+            "$id": {
+                "id": "$id",
+                ...
+            }
+            ...
+        }
+
+    object-array-object:
+
+        {
+            "hook" = [
+                {
+                    "id": "$id",
+                    ...
+                },
+                ...
+            ]
+        }
+
+
+    return a **NEW** list of incref (clone) kw filtering the rows by `jn_filter` (where),
+        and matching the ids.
+    Walk the tree through hook field.
     If match_fn is 0 then kw_match_simple is used.
-    NOTE Using JSON_INCREF/JSON_DECREF
+    NOTE Using JSON_INCREF/JSON_DECREF HACK
 **rst**/
 PUBLIC json_t *kwid_tree_collect( // WARNING be care, you can modify the original records
-    json_t *kw,         // not owned
+    json_t *records,    // not owned
+    const char *hook,
     json_t *ids,        // owned
     json_t *jn_filter,  // owned
     BOOL (*match_fn) (
@@ -720,11 +772,15 @@ PUBLIC json_t *kwid_get_new_ids(
 
 /**rst**
     Utility for databases.
-    Return a list with id records:
-        ["$id_record", ...]
-        [{"id":$id_record, ...}, ...]
+        [{"id": "$id", ...}, ...]
+
         {
-            "$id": {$id_record}.
+            "$id": {"id": "$id",...},
+            ...
+        }
+
+        {
+            "hook": [{"id": "$id", ...}, ...]
             ...
         }
 **rst**/
