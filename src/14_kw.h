@@ -688,74 +688,6 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
 
 /**rst**
     Utility for databases.
-
-    Being `records` a:
-
-        [{"id": "$id", ...}, ...]
-
-        {
-            "$id": {"id": "$id",...},
-            ...
-        }
-
-        {
-            "hook": [{"id": "$id", ...}, ...]
-            ...
-        }
-
-
-    array-object:
-
-        [
-            {
-                "id": "$id",
-                ...
-            },
-            ...
-        ]
-
-    object-object:
-
-        {
-            "$id": {
-                "id": "$id",
-                ...
-            }
-            ...
-        }
-
-    object-array-object:
-
-        {
-            "hook" = [
-                {
-                    "id": "$id",
-                    ...
-                },
-                ...
-            ]
-        }
-
-
-    return a **NEW** list of incref (clone) kw filtering the rows by `jn_filter` (where),
-        and matching the ids.
-    Walk the tree through hook field.
-    If match_fn is 0 then kw_match_simple is used.
-    NOTE Using JSON_INCREF/JSON_DECREF HACK
-**rst**/
-PUBLIC json_t *kwid_tree_collect( // WARNING be care, you can modify the original records
-    json_t *records,    // not owned
-    const char *hook,
-    json_t *ids,        // owned
-    json_t *jn_filter,  // owned
-    BOOL (*match_fn) (
-        json_t *kw,         // not owned
-        json_t *jn_filter   // owned
-    )
-);
-
-/**rst**
-    Utility for databases.
     Being `ids` a:
         "$id"
         ["$id", ...]
@@ -836,6 +768,77 @@ PUBLIC BOOL kwid_compare_lists(
     BOOL without_metadata,
     BOOL without_private
 );
+
+/**rst**
+    Utility for databases.
+
+    Being `kw` a {"id": "$id", ...}
+
+    return a **NEW** dict only with `fields` keys
+    if `kw` is matching with `jn_filter`.
+
+    jn_fields can be
+        "$field"
+        ["$field1", "$field2",...]
+        {"$field1":{}, "$field2":{},...}
+
+    Return 0 if not matching
+
+    If match_fn is 0 then kw_match_simple is used.
+
+    NOTE Using JSON_INCREF/JSON_DECREF HACK
+**rst**/
+json_t *kwid_select( // WARNING be care, you can modify the origina kw
+    json_t *kw,             // not owned
+    json_t *jn_fields,      // owned
+    json_t *jn_filter,      // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+);
+
+/**rst**
+    Utility for databases.
+
+    Being `kw` a:
+
+    array-object:
+
+        [{"id": "$id", ...}, ...]
+
+    object-object:
+
+        {
+            "$id": {"id": "$id",...},
+            ...
+        }
+
+    object-array-object:
+
+        {
+            "hook": [{"id": "$id", ...}, ...]
+            ...
+        }
+
+    return a **NEW** list of dicts with only `fields` keys,
+    filtering the rows by `jn_filter` (where),
+    and walking the tree through `tree_hook` key.
+
+    If match_fn is 0 then kw_match_simple is used.
+    NOTE Using JSON_INCREF/JSON_DECREF HACK
+**rst**/
+PUBLIC json_t *kwid_tree_select( // WARNING be care, you can modify the original kw
+    json_t *kw,             // not owned
+    json_t *jn_fields,      // owned
+    const char *tree_hook,
+    json_t *jn_filter,      // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+);
+
 
 
 #ifdef __cplusplus
