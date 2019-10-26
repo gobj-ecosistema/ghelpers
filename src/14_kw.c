@@ -3706,98 +3706,9 @@ PUBLIC BOOL kwid_compare_lists(
     return ret;
 }
 
- /***************************************************************************
-    Utility for databases.
-
-    Being `kw` a {"id": "$id", ...}
-
-    return a **NEW** dict only with `jn_fields` keys
-    if `kw` is matching with `jn_filter`.
-
-    jn_fields can be
-        "$field"
-        ["$field1", "$field2",...]
-        {"$field1":{}, "$field2":{},...}
-
-    Return 0 if not matching
-
-    If match_fn is 0 then kw_match_simple is used.
-
-    NOTE Using JSON_INCREF/JSON_DECREF HACK
-  ***************************************************************************/
-json_t *kwid_filter( // WARNING be care, you can modify the origina kw
-    json_t *kw,             // not owned
-    json_t *jn_fields,      // owned
-    json_t *jn_filter,      // owned
-    BOOL (*match_fn) (
-        json_t *kw,         // not owned
-        json_t *jn_filter   // owned
-    )
-)
-{
-    if(!kw || !jn_fields) {
-        JSON_DECREF(jn_fields);
-        JSON_DECREF(jn_filter);
-        // silence
-        return 0;
-    }
-    if(!match_fn) {
-        match_fn = kw_match_simple;
-    }
-
-    if(!match_fn(kw, jn_filter)) {
-        JSON_DECREF(jn_fields);
-        JSON_DECREF(jn_filter);
-        // silence
-        return 0;
-    }
-
-    json_t *selected = json_object();
-
-    switch(json_typeof(jn_fields)) {
-    case JSON_STRING:
-        {
-            const char *field = json_string_value(jn_fields);
-            json_object_set(selected, field, kw_get_dict_value(kw, field, 0, 0));
-        }
-        break;
-
-    case JSON_ARRAY:
-        {
-            int idx; json_t *jn_field;
-            json_array_foreach(jn_fields, idx, jn_field) {
-                const char *field = json_string_value(jn_field);
-                json_object_set(selected, field, kw_get_dict_value(kw, field, 0, 0));
-            }
-        }
-        break;
-    case JSON_OBJECT:
-        {
-            const char *field; json_t *jn_value;
-            json_object_foreach(jn_fields, field, jn_value) {
-                json_object_set(selected, field, kw_get_dict_value(kw, field, 0, 0));
-            }
-        }
-        break;
-
-    default:
-        break;
-
-    }
-
-    if(json_array_size(selected)==0) {
-        // If no fields then return null
-        JSON_DECREF(selected);
-    }
-
-    JSON_DECREF(jn_fields);
-    JSON_DECREF(jn_filter);
-    return selected;
-}
-
 /***************************************************************************
-  *
-  ***************************************************************************/
+ *
+ ***************************************************************************/
 PRIVATE int _tree_select(
     json_t *new_id_record_list,
     json_t *kw,         // not owned
@@ -3807,7 +3718,8 @@ PRIVATE int _tree_select(
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
-    )
+    ),
+    BOOL verbose
 )
 {
     if(!kw) {
@@ -3820,6 +3732,7 @@ PRIVATE int _tree_select(
         );
         return -1;
     }
+
     switch(json_typeof(kw)) {
     case JSON_ARRAY:
         {
@@ -3828,23 +3741,19 @@ PRIVATE int _tree_select(
                 switch(json_typeof(jn_value)) {
                 case JSON_OBJECT:
                     /*
-                        [
-                            {
-                                "id": "$id",
-                                ...
-                            },
-                            ...
-                        ]
+                        array-object:
+
+                            [{"id": "$id", ...}, ...]
                     */
-                    {
-                        if(kw_has_key(jn_value, "id")) {
-                            JSON_INCREF(jn_filter);
-                            json_t *jn_select = kwid_select(jn_value, jn_fields, jn_filter);
-                            if(jn_select) {
-                                json_array_append_new(new_id_record_list, jn_select);
-                            }
-                        }
-                    }
+                    _tree_select(
+                        new_id_record_list,
+                        jn_value,    // not owned
+                        jn_fields,   // not owned
+                        tree_hook,
+                        jn_filter,  // not owned
+                        match_fn,
+                        verbose
+                    );
                     break;
                 default:
                     break;
@@ -3855,45 +3764,63 @@ PRIVATE int _tree_select(
 
     case JSON_OBJECT:
         {
-            const char *id; json_t *jn_value;
-            json_object_foreach(kw, id, jn_value) {
-                switch(json_typeof(jn_value)) {
-                case JSON_OBJECT:
-                    {
-                        /*
-                            {
-                                "$id": {
-                                    "id": "$id",
-                                    ...
-                                }
-                                ...
-                            }
-                        */
-                        const char *id_ = json_string_value(json_object_get(jn_value, "id"));
-                        if(id_ && strcmp(id_, id)==0) {
-//                             if(kwid_match_id(ids, id)) {
-                                JSON_INCREF(jn_filter);
-                                if(match_fn(jn_value, jn_filter)) {
-                                    json_array_append(new_id_record_list, jn_value);
-                                }
-//                             }
+            const char *key; json_t *jn_value;
+            const char *id = kw_get_str(kw, "id", 0, 0); // Is it a id-record?
+            if(!id) {
+                /*
+                    No a id-record, must be a dict of records
+
+                    object-object:
+
+                        {
+                            "$id": {"id": "$id",...},
+                            ...
                         }
-                    }
-                    break;
-                case JSON_ARRAY:
-                    if(strcmp(id, tree_hook)==0) {
+                */
+                json_object_foreach(kw, key, jn_value) {
+                    const char *key_ = kw_get_str(jn_value, "id", 0, 0);
+                    if(key_ && strcmp(key_, key)==0) {
                         _tree_select(
                             new_id_record_list,
                             jn_value,    // not owned
-                            jn_fields,  // not owned
+                            jn_fields,   // not owned
                             tree_hook,
                             jn_filter,  // not owned
-                            match_fn
+                            match_fn,
+                            verbose
                         );
                     }
-                    break;
-                default:
-                    break;
+                }
+
+            } else {
+                /*
+                 *  It's a id-record, select fields and walk over hook
+                 */
+                JSON_INCREF(jn_filter);
+                if(match_fn(kw, jn_filter)) {
+                    JSON_INCREF(kw);
+                    JSON_INCREF(jn_fields);
+                    json_t *jn_select = kw_clone_by_keys(kw, jn_fields, verbose);
+                    if(jn_select && json_object_size(jn_select)>0) {
+                        json_array_append_new(new_id_record_list, jn_select);
+                    } else {
+                        JSON_DECREF(jn_select);
+                    }
+                }
+
+                json_object_foreach(kw, key, jn_value) {
+                    if(strcmp(key, tree_hook)==0) {
+                        // Walk the tree, hook field
+                        _tree_select(
+                            new_id_record_list,
+                            jn_value,    // not owned
+                            jn_fields,   // not owned
+                            tree_hook,
+                            jn_filter,  // not owned
+                            match_fn,
+                            verbose
+                        );
+                    }
                 }
             }
         }
@@ -3933,6 +3860,11 @@ PRIVATE int _tree_select(
     filtering the rows by `jn_filter` (where),
     and walking the tree through `tree_hook` key.
 
+    jn_fields can be
+        "$field"
+        ["$field1", "$field2",...]
+        {"$field1":{}, "$field2":{},...}
+
     If match_fn is 0 then kw_match_simple is used.
     NOTE Using JSON_INCREF/JSON_DECREF HACK
  ***************************************************************************/
@@ -3944,7 +3876,8 @@ PUBLIC json_t *kwid_tree_select( // WARNING be care, you can modify the origina 
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
-    )
+    ),
+    BOOL verbose
 )
 {
     if(!kw) {
@@ -3964,10 +3897,171 @@ PUBLIC json_t *kwid_tree_select( // WARNING be care, you can modify the origina 
         jn_fields,
         tree_hook,
         jn_filter,
-        match_fn
+        match_fn,
+        verbose
     );
     JSON_DECREF(jn_fields);
     JSON_DECREF(jn_filter);
     return new_id_record_list;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int _tree_collect(
+    json_t *new_dict_or_list,
+    json_t *kw,         // not owned
+    json_t *jn_filter,  // not owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+)
+{
+    if(!kw) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw NULL",
+            NULL
+        );
+        return -1;
+    }
+
+    switch(json_typeof(kw)) {
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(kw, idx, jn_value) {
+                switch(json_typeof(jn_value)) {
+                case JSON_OBJECT:
+                    {
+                        _tree_collect(
+                            new_dict_or_list,
+                            jn_value,   // not owned
+                            jn_filter,  // not owned
+                            match_fn
+                        );
+                    }
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        break;
+
+    case JSON_OBJECT:
+        {
+            const char *id = kw_get_str(kw, "id", 0, 0); // Is it a id-record?
+            if(id) {
+                /*
+                 *  It's a id-record
+                 */
+                JSON_INCREF(jn_filter);
+                if(match_fn(kw, jn_filter)) {
+                    if(json_is_object(new_dict_or_list)) {
+                        json_object_set(new_dict_or_list, id, kw);
+                    } else {
+                        json_array_append(new_dict_or_list, kw);
+                    }
+                }
+            }
+
+            /*
+             *  Search in more levels
+             */
+            const char *key; json_t *jn_value;
+            json_object_foreach(kw, key, jn_value) {
+                if(json_is_array(jn_value) || json_is_object(jn_value)) {
+                    _tree_collect(
+                        new_dict_or_list,
+                        jn_value,   // not owned
+                        jn_filter,  // not owned
+                        match_fn
+                    );
+                }
+            }
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+    Utility for databases.
+
+    Return a new dict with all id-records found in `kw`
+ ***************************************************************************/
+PUBLIC json_t *kwid_new_dict_tree_collect( // WARNING be care, you can modify the original kw
+    json_t *kw,         // not owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+)
+{
+    json_t *new_dict = json_object();
+
+    if(!kw) {
+        JSON_DECREF(jn_filter);
+        // silence
+        return 0;
+    }
+    if(!match_fn) {
+        match_fn = kw_match_simple;
+    }
+
+    _tree_collect(
+        new_dict,
+        kw,
+        jn_filter,
+        match_fn
+    );
+
+    JSON_DECREF(jn_filter);
+    return new_dict;
+}
+
+/***************************************************************************
+    Utility for databases.
+
+    Return a new list with all id-records found in `kw`
+ ***************************************************************************/
+PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify the original kw
+    json_t *kw,         // not owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+)
+{
+    json_t *new_list = json_array();
+
+    if(!kw) {
+        JSON_DECREF(jn_filter);
+        // silence
+        return 0;
+    }
+    if(!match_fn) {
+        match_fn = kw_match_simple;
+    }
+
+    _tree_collect(
+        new_list,
+        kw,
+        jn_filter,
+        match_fn
+    );
+
+    JSON_DECREF(jn_filter);
+    return new_list;
 }
 

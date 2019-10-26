@@ -632,7 +632,7 @@ PUBLIC json_t *kwid_get( // Return is NOT YOURS
 /**rst**
     Utility for databases.
     Return a new list from a "dict of records" or "list of records"
-    WARNING the "id" of a dict's record is hardcorded to his key.
+    WARNING the "id" of a dict's record is hardcorded to their key.
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
@@ -647,7 +647,7 @@ PUBLIC json_t *kwid_new_list(
 /**rst**
     Utility for databases.
     Return a new dict from a "dict of records" or "list of records"
-    WARNING the "id" of a dict's record is hardcorded to his key.
+    WARNING the "id" of a dict's record is hardcorded to their key.
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
@@ -775,7 +775,7 @@ PUBLIC BOOL kwid_compare_lists(
     Being `kw` a {"id": "$id", ...}
 
     return a **NEW** dict only with `fields` keys
-    if `kw` is matching with `jn_filter`.
+    if `kw` is matching `jn_filter`.
 
     jn_fields can be
         "$field"
@@ -825,6 +825,11 @@ json_t *kwid_select( // WARNING be care, you can modify the origina kw
     filtering the rows by `jn_filter` (where),
     and walking the tree through `tree_hook` key.
 
+    jn_fields can be
+        "$field"
+        ["$field1", "$field2",...]
+        {"$field1":{}, "$field2":{},...}
+
     If match_fn is 0 then kw_match_simple is used.
     NOTE Using JSON_INCREF/JSON_DECREF HACK
 **rst**/
@@ -836,9 +841,37 @@ PUBLIC json_t *kwid_tree_select( // WARNING be care, you can modify the original
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
+    ),
+    BOOL verbose
+);
+
+/**rst**
+    Utility for databases.
+
+    Return a new dict with all id-records found in `kw`
+**rst**/
+PUBLIC json_t *kwid_new_dict_tree_collect( // WARNING be care, you can modify the original kw
+    json_t *kw,         // not owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
     )
 );
 
+/**rst**
+    Utility for databases.
+
+    Return a new list with all id-records found in `kw`
+**rst**/
+PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify the original kw
+    json_t *kw,         // not owned
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+);
 
 
 #ifdef __cplusplus
