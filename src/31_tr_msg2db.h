@@ -1,20 +1,14 @@
 /****************************************************************************
  *          TR_MSG2.C
  *
- *          Messages (ordered by pkey,pkey2: active and their instances) with TimeRanger
+ *          Messages (ordered by pkey,pkey2) with TimeRanger
  *
- *          Double dict of messages (message: active and instances)
+ *          Double dict of messages
+ *          Load in memory a iter of topic's messages ordered by a sub-key
  *
  *          Copyright (c) 2019 Niyamaka.
  *          All Rights Reserved.
  *
-    Load in memory a iter of topic's **active** messages ordered by a sub-key,
-    with n 'instances' of each key.
-    If topic tag is 0:
-        the active message of each key series is the **last** key instance.
-    else:
-        the active message is the **last** key instance with tag equal to topic tag.
-
  ****************************************************************************/
 #pragma once
 
@@ -80,38 +74,13 @@ PUBLIC int msg2db_close_db(
     const char *msg2db_name
 );
 
-PUBLIC int msg2db_save_message(
-    json_t *tranger,
-    json_t *message    // not owned
-);
-
-/**rst**
-    "create" ["permissive"] create message if not exist
-    "clean" clean wrong fkeys
-**rst**/
 PUBLIC json_t *msg2db_update_message( // Return is NOT YOURS
     json_t *tranger,
     const char *msg2db_name,
     const char *topic_name,
     json_t *kw,    // owned
-    const char *options // "create" ["permissive"], "clean"
+    const char *options // "permissive"
 );
-
-
-/*
-    jn_filter (match_cond) of second level:
-
-        max_key_instances   (int) Maximum number of instances per key.
-
-        order_by_tm         (bool) Not use with max_key_instances=1
-
-        msg2db_instance_callback (int) callback function,
-                                     inform of loaded instance, chance to change content
-
-        select_fields       (dict or list of strings) Display ony selected fields
-        match_fields        (dict or list of dicts) Load instances that matches fields
-
- */
 
 PUBLIC json_t *msg2db_list_messages( // Return MUST be decref
     json_t *tranger,
@@ -119,7 +88,6 @@ PUBLIC json_t *msg2db_list_messages( // Return MUST be decref
     const char *topic_name,
     json_t *jn_ids,     // owned
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
@@ -133,19 +101,13 @@ PUBLIC json_t *msg2db_get_message( // Return is NOT YOURS
     const char *id,
     const char *id2
 );
-PUBLIC json_t *msg2db_get_message_active( // Return is NOT YOURS
-    json_t *tranger,
+
+PUBLIC char *build_msg2db_index_path(
+    char *bf,
+    int bfsize,
     const char *msg2db_name,
     const char *topic_name,
-    const char *id,
-    const char *id2
-);
-PUBLIC json_t *msg2db_get_message_instances( // Return is NOT YOURS
-    json_t *tranger,
-    const char *msg2db_name,
-    const char *topic_name,
-    const char *id,
-    const char *id2
+    const char *key
 );
 
 #ifdef __cplusplus

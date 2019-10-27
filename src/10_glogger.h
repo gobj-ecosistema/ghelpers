@@ -64,6 +64,7 @@ extern "C"{
 #define MSGSET_LIBUV_ERROR                  "Libuv Error"
 #define MSGSET_OAUTH_ERROR                  "OAuth Error"
 #define MSGSET_TREEDB_ERROR                 "TreeDb Error"
+#define MSGSET_MSG2DB_ERROR                 "Msg2Db Error"
 
 // Info/Debug MSGSETs
 #define MSGSET_STATISTICS                   "Statistics"

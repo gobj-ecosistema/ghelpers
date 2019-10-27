@@ -515,6 +515,9 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
     if(!jn_cols) {
         jn_cols = json_object();
     }
+    if(!jn_var) {
+        jn_var = json_object();
+    }
     if(!pkey) {
         pkey = "";
     }
@@ -646,9 +649,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
         /*----------------------------------------*
          *      Create topic_var.json
          *----------------------------------------*/
-        if(!jn_var) {
-            jn_var = json_object();
-        }
+        JSON_INCREF(jn_var);
         tranger_write_topic_var(
             tranger,
             topic_name,
