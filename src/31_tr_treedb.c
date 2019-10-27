@@ -324,7 +324,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 "type", "string",
                 "flag",
                     "persistent", "required"
-        )
+        ),
+        0
     );
 
     parse_schema_cols(
@@ -370,7 +371,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             pkey,
             kw_get_str(schema_topic, "tkey", "", 0),
             tranger_str2system_flag(kw_get_str(schema_topic, "system_flag", "", 0)),
-            kwid_new_dict("verbose", schema_topic, "cols")
+            kwid_new_dict("verbose", schema_topic, "cols"),
+            0
         );
 
         parse_schema_cols(

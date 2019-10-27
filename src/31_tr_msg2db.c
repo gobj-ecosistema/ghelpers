@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "31_tr_msg2.h"
+#include "31_tr_msg2db.h"
 
 /***************************************************************
  *              Constants
@@ -78,7 +78,7 @@ PRIVATE json_t *topic_cols_desc = 0;
             if you want to change the schema
             then you must remove the file
  ***************************************************************************/
-PUBLIC int trmsg2_open_db(
+PUBLIC json_t *msg2db_open_db(
     json_t *tranger,
     const char *msg2db_name,
     json_t *jn_schema,  // owned
@@ -172,7 +172,7 @@ PUBLIC int trmsg2_open_db(
      *      Create desc of cols
      *--------------------------------*/
     if(!topic_cols_desc) {
-        topic_cols_desc = _msg2db_create_topic_cols_desc();
+        topic_cols_desc = _treedb_create_topic_cols_desc();
     } else {
         JSON_INCREF(topic_cols_desc);
     }
@@ -211,39 +211,6 @@ PUBLIC int trmsg2_open_db(
         return 0;
     }
 
-    /*-------------------------------*
-     *  Open/Create "system" topics
-     *-------------------------------*/
-    char *tags_topic_name = "__tags__";
-
-    json_t *tags_topic = tranger_create_topic(
-        tranger,    // If topic exists then only needs (tranger,name) parameters
-        tags_topic_name,
-        "id",
-        "",
-        sf_rowid_key,
-        json_pack("{s:{s:s, s:s, s:s, s:[s,s]}, s:{s:s, s:s, s:s, s:[s,s]}}",
-            "id",
-                "id", "id",
-                "header", "Id",
-                "type", "integer",
-                "flag",
-                    "persistent","required",
-
-            "name",
-                "id", "name",
-                "header", "Name",
-                "type", "string",
-                "flag",
-                    "persistent", "required"
-        )
-    );
-
-    parse_schema_cols(
-        topic_cols_desc,
-        kwid_new_list("verbose", tags_topic, "cols")
-    );
-
     /*------------------------------*
      *  Open/Create "user" topics
      *------------------------------*/
@@ -276,13 +243,29 @@ PUBLIC int trmsg2_open_db(
             );
             continue;
         }
+        const char *pkey2 = kw_get_str(schema_topic, "pkey2", "", 0);
+        if(empty_string(pkey2)) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Schema topic without pkey2=id",
+                "msg2db_name",  "%s", msg2db_name,
+                "schema_topic", "%j", schema_topic,
+                NULL
+            );
+            continue;
+        }
+        json_t *jn_topic_var = json_object();
+        json_object_set_new(jn_topic_var, "pkey2", json_string(pkey2));
         json_t *topic = tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_name,
             pkey,
             kw_get_str(schema_topic, "tkey", "", 0),
             tranger_str2system_flag(kw_get_str(schema_topic, "system_flag", "", 0)),
-            kwid_new_dict("verbose", schema_topic, "cols")
+            kwid_new_dict("verbose", schema_topic, "cols"),
+            jn_topic_var
         );
 
         parse_schema_cols(
@@ -301,26 +284,6 @@ PUBLIC int trmsg2_open_db(
      *  Open "system" lists
      *------------------------------*/
     char path[NAME_MAX];
-    build_msg2db_index_path(path, sizeof(path), msg2db_name, tags_topic_name, "id");
-
-    kw_get_subdict_value(msg2db, tags_topic_name, "id", json_object(), KW_CREATE);
-
-    json_t *jn_filter = json_pack("{s:b}",
-        "backward", 1
-    );
-    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
-        "id", path,
-        "topic_name", tags_topic_name,
-        "match_cond", jn_filter,
-        "load_record_callback", (json_int_t)(size_t)load_record_callback,
-        "msg2db_name", msg2db_name,
-        "deleted_records"
-    );
-    tranger_open_list(
-        tranger,
-        jn_list // owned
-    );
-
 
     /*------------------------------*
      *  Open "user" lists
@@ -330,7 +293,7 @@ PUBLIC int trmsg2_open_db(
         if(empty_string(topic_name)) {
             continue;
         }
-        build_msg2db_index_path(path, sizeof(path), msg2db_name, topic_name, "id");
+        build_treedb_index_path(path, sizeof(path), msg2db_name, topic_name, "id");
 
         kw_get_subdict_value(msg2db, topic_name, "id", json_object(), KW_CREATE);
 
@@ -351,16 +314,6 @@ PUBLIC int trmsg2_open_db(
         );
     }
 
-    /*------------------------------*
-     *  Parse hooks
-     *------------------------------*/
-    parse_hooks(tranger);
-
-    /*------------------------------*
-     *  Load hook links
-     *------------------------------*/
-    load_all_hook_links(tranger, msg2db_name);
-
     JSON_DECREF(jn_schema);
     return msg2db;
 }
@@ -368,7 +321,7 @@ PUBLIC int trmsg2_open_db(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int trmsg2_close_db(
+PUBLIC int msg2db_close_db(
     json_t *tranger,
     const char *msg2db_name
 )
@@ -392,7 +345,7 @@ PUBLIC int trmsg2_close_db(
     char list_id[NAME_MAX];
     const char *topic_name; json_t *topic_records;
     json_object_foreach(msg2db, topic_name, topic_records) {
-        build_msg2db_index_path(list_id, sizeof(list_id), msg2db_name, topic_name, "id");
+        build_treedb_index_path(list_id, sizeof(list_id), msg2db_name, topic_name, "id");
         json_t *list = tranger_get_list(tranger, list_id);
         if(!list) {
             log_error(0,
@@ -411,6 +364,364 @@ PUBLIC int trmsg2_close_db(
 
     JSON_DECREF(msg2db);
     JSON_DECREF(topic_cols_desc);
+    return 0;
+}
+
+
+
+
+
+                    /*------------------------------------*
+                     *      Write/Read to/from tranger
+                     *------------------------------------*/
+
+
+
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int set_tranger_field_value(
+    const char *topic_name,
+    json_t *col,    // not owned
+    json_t *record, // not owned
+    json_t *value,  // not owned
+    BOOL create
+)
+{
+    const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
+    if(!field) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Col desc without 'id'",
+            "topic_name",   "%s", topic_name,
+            "col",          "%j", col,
+            NULL
+        );
+        return -1;
+    }
+    const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
+    if(!type) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Col desc without 'type'",
+            "topic_name",   "%s", topic_name,
+            "col",          "%j", col,
+            "field",        "%s", field,
+            NULL
+        );
+        return -1;
+    }
+    json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+
+    /*
+     *  Required
+     */
+    if(kw_has_word(desc_flag, "required", 0)) {
+        if(!value || json_is_null(value)) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Field required",
+                "topic_name",   "%s", topic_name,
+                "field",        "%s", field,
+                "value",        "%j", value,
+                NULL
+            );
+            return -1;
+        }
+    }
+
+    /*
+     *  Null
+     */
+    if(json_is_null(value)) {
+        if(kw_has_word(desc_flag, "notnull", 0)) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Field cannot be null",
+                "topic_name",   "%s", topic_name,
+                "field",        "%s", field,
+                "value",        "%j", value,
+                NULL
+            );
+            return -1;
+        } else {
+            json_object_set(record, field, value);
+            return 0;
+        }
+    }
+
+    BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+    BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
+    BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+    BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+    if(!(is_persistent || is_hook || is_fkey)) {
+        // Not save to tranger
+        return 0;
+    }
+
+    SWITCHS(type) {
+        CASES("array")
+            if(create) {
+                json_object_set_new(record, field, json_array());
+            } else {
+                if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                    json_object_set(record, field, value);
+                } else {
+                    json_object_set_new(record, field, json_array());
+                }
+            }
+            break;
+
+        CASES("object")
+            if(create) {
+                // No dejes poner datos en la creación.
+                json_object_set_new(record, field, json_object());
+            } else {
+                if(JSON_TYPEOF(value, JSON_OBJECT)) {
+                    json_object_set(record, field, value);
+                } else {
+                    json_object_set_new(record, field, json_object());
+                }
+            }
+            break;
+
+        CASES("string")
+            if(!value) {
+                json_object_set_new(record, field, json_string(""));
+            } else if(json_is_string(value)) {
+                json_object_set(record, field, value);
+            } else if(wild_conversion) {
+                char *v = jn2string(value);
+                json_object_set_new(record, field, json_string(v));
+                gbmem_free(v);
+            } else {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Value must be string",
+                    "topic_name",   "%s", topic_name,
+                    "col",          "%j", col,
+                    "field",        "%s", field,
+                    "value",        "%j", value,
+                    NULL
+                );
+                return -1;
+            }
+            break;
+
+        CASES("integer")
+            if(!value) {
+                json_object_set_new(record, field, json_integer(0));
+            } else if(json_is_integer(value)) {
+                json_object_set(record, field, value);
+            } else if(wild_conversion) {
+                json_int_t v = jn2integer(value);
+                json_object_set_new(record, field, json_integer(v));
+            } else {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Value must be integer",
+                    "topic_name",   "%s", topic_name,
+                    "col",          "%j", col,
+                    "field",        "%s", field,
+                    "value",        "%j", value,
+                    NULL
+                );
+                return -1;
+            }
+            break;
+        CASES("real")
+            if(!value) {
+                json_object_set_new(record, field, json_real(0.0));
+            } else if(json_is_real(value)) {
+                json_object_set(record, field, value);
+            } else if(wild_conversion) {
+                double v = jn2real(value);
+                json_object_set_new(record, field, json_real(v));
+            } else {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Value must be real",
+                    "topic_name",   "%s", topic_name,
+                    "col",          "%j", col,
+                    "field",        "%s", field,
+                    "value",        "%j", value,
+                    NULL
+                );
+                return -1;
+            }
+            break;
+
+        CASES("boolean")
+            BOOL v = jn2bool(value);
+            json_object_set_new(record, field, v?json_true():json_false());
+            break;
+
+        DEFAULTS
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Col type unknown",
+                "topic_name",   "%s", topic_name,
+                "col",          "%j", col,
+                "field",        "%s", field,
+                "type",         "%s", type,
+                NULL
+            );
+            return -1;
+    } SWITCHS_END;
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int set_volatil_field_value(
+    const char *type,
+    const char *field,
+    json_t *record, // not owned
+    json_t *value   // not owned
+)
+{
+    SWITCHS(type) {
+        CASES("array")
+            if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                json_object_set(record, field, value);
+            } else {
+                json_object_set_new(record, field, json_array());
+            }
+            break;
+
+        CASES("object")
+            if(JSON_TYPEOF(value, JSON_OBJECT)) {
+                json_object_set(record, field, value);
+            } else {
+                json_object_set_new(record, field, json_object());
+            }
+            break;
+
+        CASES("string")
+            if(!value) {
+                json_object_set_new(record, field, json_string(""));
+            } else if(json_is_string(value)) {
+                json_object_set(record, field, value);
+            } else {
+                char *v = jn2string(value);
+                json_object_set_new(record, field, json_string(v));
+                gbmem_free(v);
+            }
+            break;
+
+        CASES("integer")
+            if(!value) {
+                json_object_set_new(record, field, json_integer(0));
+            } else if(json_is_integer(value)) {
+                json_object_set(record, field, value);
+            } else {
+                json_int_t v = jn2integer(value);
+                json_object_set_new(record, field, json_integer(v));
+            }
+            break;
+        CASES("real")
+            if(!value) {
+                json_object_set_new(record, field, json_real(0.0));
+            } else if(json_is_real(value)) {
+                json_object_set(record, field, value);
+            } else {
+                double v = jn2real(value);
+                json_object_set_new(record, field, json_real(v));
+            }
+            break;
+
+        CASES("boolean")
+            BOOL v = jn2bool(value);
+            json_object_set_new(record, field, v?json_true():json_false());
+            break;
+
+        DEFAULTS
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Col type unknown",
+                "field",        "%s", field,
+                "type",         "%s", type,
+                NULL
+            );
+            return -1;
+    } SWITCHS_END;
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int set_volatil_values(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *record,  // not owned
+    json_t *kw // not owned
+)
+{
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    if(!cols) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic without cols",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        return 0;
+    }
+
+    const char *field; json_t *col;
+    json_object_foreach(cols, field, col) {
+        json_t *value = kw_get_dict_value(kw, field, 0, 0);
+
+        const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
+        if(!field) {
+            continue;
+        }
+        const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
+        if(!type) {
+            continue;
+        }
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        if((is_persistent || is_hook || is_fkey)) {
+            continue;
+        }
+
+        set_volatil_field_value(
+            type,
+            field,
+            record, // not owned
+            value   // not owned
+        );
+    }
+
+    JSON_DECREF(cols);
     return 0;
 }
 
@@ -575,7 +886,6 @@ PRIVATE int load_record_callback(
                         topic_name,
                         md_record
                     );
-                    json_object_set_new(jn_record_md, "__pending_links__", json_true());
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
 
                     /*--------------------------------------------*
@@ -614,23 +924,34 @@ PRIVATE int load_record_callback(
 }
 
 
-
-
-PUBLIC json_t *trmsg2_add_instance( // Return is NOT YOURS
+PUBLIC int msg2db_save_message(
     json_t *tranger,
-    const char *msg2db_name,
-    const char *topic_name,
-    json_t *kw, // owned
-    const char *options // "permissive"
+    json_t *message    // not owned
 )
 {
 }
 
-PUBLIC json_t *trmsg2_list_messages( // Return MUST be decref
+/**rst**
+    "create" ["permissive"] create message if not exist
+    "clean" clean wrong fkeys
+**rst**/
+PUBLIC json_t *msg2db_update_message( // Return is NOT YOURS
     json_t *tranger,
     const char *msg2db_name,
     const char *topic_name,
+    json_t *kw,    // owned
+    const char *options // "create" ["permissive"], "clean"
+)
+{
+}
+
+PUBLIC json_t *msg2db_list_messages( // Return MUST be decref
+    json_t *tranger,
+    const char *msg2db_name,
+    const char *topic_name,
+    json_t *jn_ids,     // owned
     json_t *jn_filter,  // owned
+    json_t *jn_options, // owned
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
@@ -671,7 +992,7 @@ PUBLIC json_t *msg2db_get_message_instances( // Return is NOT YOURS
  *
  ***************************************************************************/
 #ifdef PEPE
-PUBLIC int trmsg2_add_instance(
+PUBLIC int msg2db_add_instance(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_msg_,  // owned
@@ -793,15 +1114,15 @@ PRIVATE int load_record_callback(
     /*
      *  Filter by callback
      */
-    trmsg2_instance_callback_t trmsg2_instance_callback =
-        (trmsg2_instance_callback_t)(size_t)kw_get_int(
+    msg2db_instance_callback_t msg2db_instance_callback =
+        (msg2db_instance_callback_t)(size_t)kw_get_int(
         list,
-        "trmsg2_instance_callback",
+        "msg2db_instance_callback",
         0,
         0
     );
-    if(trmsg2_instance_callback) {
-        int ret = trmsg2_instance_callback(
+    if(msg2db_instance_callback) {
+        int ret = msg2db_instance_callback(
             tranger,
             list,
             is_active,
@@ -882,7 +1203,7 @@ PRIVATE int load_record_callback(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trmsg2_open_list(
+PUBLIC json_t *msg2db_open_list(
     json_t *tranger,
     const char *topic_name,
     json_t *jn_filter  // owned

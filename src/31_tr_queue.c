@@ -81,6 +81,7 @@ PUBLIC tr_queue trq_open(
         pkey,
         tkey,
         system_flag,
+        0,
         0
     );
     if(!trq->topic) {

@@ -174,7 +174,8 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
     const char *pkey,
     const char *tkey,
     system_flag_t system_flag,
-    json_t *jn_cols  // owned
+    json_t *jn_cols,    // owned
+    json_t *jn_var      // owned
 );
 
 /**rst**

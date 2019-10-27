@@ -53,7 +53,8 @@ PUBLIC int trmsg_open_topics(
             topic_desc->pkey,
             topic_desc->tkey,
             topic_desc->system_flag,
-            topic_desc->json_desc?create_json_record(topic_desc->json_desc):0 // owned
+            topic_desc->json_desc?create_json_record(topic_desc->json_desc):0, // owned
+            0
         );
     }
 

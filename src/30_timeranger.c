@@ -503,7 +503,8 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
     const char *pkey,
     const char *tkey,
     system_flag_t system_flag,
-    json_t *jn_cols  // owned
+    json_t *jn_cols,    // owned
+    json_t *jn_var      // owned
 )
 {
     BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
@@ -530,6 +531,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
             NULL
         );
         JSON_DECREF(jn_cols);
+        JSON_DECREF(jn_var);
         return 0;
     }
 
@@ -559,6 +561,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
                 NULL
             );
             JSON_DECREF(jn_cols);
+            JSON_DECREF(jn_var);
             return 0;
         }
         if(mkrdir(directory, 0, kw_get_int(tranger, "xpermission", 0, KW_REQUIRED))<0) {
@@ -593,6 +596,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
                 NULL
             );
             JSON_DECREF(jn_cols);
+            JSON_DECREF(jn_var);
             return 0;
         }
         close(fp);
@@ -642,7 +646,9 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
         /*----------------------------------------*
          *      Create topic_var.json
          *----------------------------------------*/
-        json_t *jn_var = json_object();
+        if(!jn_var) {
+            jn_var = json_object();
+        }
         tranger_write_topic_var(
             tranger,
             topic_name,
@@ -669,6 +675,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
     }
 
     JSON_DECREF(jn_cols);
+    JSON_DECREF(jn_var);
 
     return tranger_open_topic(tranger, topic_name, TRUE);
 }
@@ -1288,22 +1295,17 @@ PUBLIC json_t *tranger_backup_topic(
         return 0;
     }
 
+    if(!jn_topic_var) {
+        jn_topic_var = json_object();
+    }
     json_t *topic = tranger_create_topic(
         tranger,
         topic_name,
         kw_get_str(topic_desc, "pkey", "", KW_REQUIRED),
         kw_get_str(topic_desc, "tkey", "", KW_REQUIRED),
         (system_flag_t)kw_get_int(topic_desc, "system_flag", 0, KW_REQUIRED),
-        topic_cols  // owned
-    );
-
-    if(!jn_topic_var) {
-        jn_topic_var = json_object();
-    }
-    tranger_write_topic_var(
-        tranger,
-        topic_name,
-        jn_topic_var  // owned
+        topic_cols,     // owned
+        jn_topic_var    // owned
     );
 
     JSON_DECREF(topic_desc);
