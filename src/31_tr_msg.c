@@ -81,9 +81,8 @@ PUBLIC int trmsg_add_instance(
         // Esto por cada inserción? you are fool!
         json_t *topic = tranger_topic(tranger, topic_name);
         json_t *cols = kw_get_dict(topic, "cols", 0, 0);
-        const char **keys = extract_keys(cols, 0);
-        jn_msg = kw_clone_by_path(jn_msg_, keys);
-        free_str_list(keys);
+        JSON_INCREF(cols);
+        jn_msg = kw_clone_by_keys(jn_msg_, cols, FALSE); // TODO los test fallan si pongo true
     } else {
         jn_msg = jn_msg_;
     }

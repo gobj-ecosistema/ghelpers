@@ -432,9 +432,13 @@ PUBLIC json_t *kw_clone_by_path(
 
 /**rst**
     Return a new kw only with the keys got by dict's keys or list's keys (strings).
+    Keys:
+        "$key"
+        ["$key1", "$key2", ...]
+        {"$key1":*, "$key2":*, ...}
+
     It's not a deep copy, new keys are the paths.
-    Not valid with lists.
-    If keys are empty return kw
+    If paths are empty return kw
 **rst**/
 PUBLIC json_t *kw_clone_by_keys(
     json_t *kw,     // owned
