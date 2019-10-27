@@ -1,7 +1,7 @@
 /****************************************************************************
- *          TR_TABLE.C
+ *          TR_MSG.C
  *
- *          Table (topic) with TimeRanger
+ *          Messages (ordered by pkey: active and their instances) with TimeRanger
  *
 
  Example of `list`:
@@ -73,11 +73,6 @@ extern "C"{
 /***************************************************************
  *              Constants
  ***************************************************************/
-#define TRMSG_CLOSE_LIST(tranger, tr_list) \
-    if(tr_list) {\
-        trmsg_close_list(tranger, tr_list);\
-        tr_list=0;\
-    }
 
 /***************************************************************
  *              Structures

@@ -2,6 +2,8 @@
  *          TR_TREEDB.C
  *
  *          Tree Database over TimeRanger
+ *          Hierarchical tree of objects (nodes, records, messages)
+ *          linked by child-parent relation.
  *
  *          Copyright (c) 2019 Niyamaka.
  *          All Rights Reserved.
@@ -35,7 +37,7 @@ extern "C"{
     Rules:
         - In links only fkeys are saved in tranger (child node info).
         - Keys (id's) can't contain ` nor ^ characters.
-        - A fkey field only can be fkey once, i.e, only can have one parent
+        - A fkey field only can be fkey once, i.e, only can have one parent (???)
 
 **rst**/
 

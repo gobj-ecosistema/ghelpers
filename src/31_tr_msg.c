@@ -1,7 +1,7 @@
 /***********************************************************************
  *          TR_MSG.C
  *
- *          Messages with TimeRanger
+ *          Messages (ordered by pkey: active and their instances) with TimeRanger
  *
  *          Copyright (c) 2019 Niyamaka.
  *          All Rights Reserved.

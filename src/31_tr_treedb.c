@@ -2,6 +2,8 @@
  *          TR_TREEDB.C
  *
  *          Tree Database with TimeRanger
+ *          Hierarchical tree of objects (nodes, records, messages)
+ *          linked by child-parent relation.
  *
  *          Copyright (c) 2019 Niyamaka.
  *          All Rights Reserved.
