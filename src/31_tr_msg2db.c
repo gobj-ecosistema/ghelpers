@@ -1100,8 +1100,6 @@ PUBLIC json_t *msg2db_list_messages( // Return MUST be decref
         match_fn = kw_match_simple;
     }
 
-    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
-
     json_t *list = json_array();
 
     if(json_is_object(indexx)) {
@@ -1130,7 +1128,6 @@ PUBLIC json_t *msg2db_list_messages( // Return MUST be decref
         JSON_DECREF(list);
     }
 
-    json_decref(topic_desc);
     JSON_DECREF(jn_ids);
     JSON_DECREF(jn_filter);
 
@@ -1148,5 +1145,46 @@ PUBLIC json_t *msg2db_get_message( // Return is NOT YOURS
     const char *id2
 )
 {
+    /*-------------------------------*
+     *      Get indexx
+     *-------------------------------*/
+    char path[NAME_MAX];
+    build_msg2db_index_path(path, sizeof(path), msg2db_name, topic_name, "id");
+    json_t *indexx = kw_get_dict(
+        tranger,
+        path,
+        0,
+        0
+    );
+
+    if(!indexx) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_MSG2DB_ERROR,
+            "msg",          "%s", "Msg2Db Topic indexx NOT FOUND",
+            "path",         "%s", path,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        return 0;
+    }
+
+    /*-------------------------------*
+     *      Read
+     *-------------------------------*/
+    if(json_is_object(indexx)) {
+        json_t *record = kw_get_subdict_value(indexx, id, id2, 0, 0);
+        return record;
+    } else  {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "kw MUST BE a json object",
+            NULL
+        );
+    }
+
     return 0;
 }

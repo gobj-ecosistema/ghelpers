@@ -102,6 +102,9 @@ PUBLIC json_t *msg2db_get_message( // Return is NOT YOURS
     const char *id2
 );
 
+/*
+ *  Utilities
+ */
 PUBLIC char *build_msg2db_index_path(
     char *bf,
     int bfsize,
