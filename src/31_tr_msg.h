@@ -24,6 +24,10 @@
     "352093088196125": {
         "instances": [
             {
+                "imei": "352093088196125",
+                "msg": "event",
+                "t_rx": 1555318428,
+                ...
                 "__md_tranger__": {
                     "__rowid__": 13607,
                     "__t__": 1555318428,
@@ -32,25 +36,19 @@
                     "__size__": 402,
                     "__user_flag__": 0,
                     "__system_flag__": 16777729
-                },
-                "content": {
-                    "imei": "352093088196125",
-                    "msg": "event",
-                    "t_rx": 1555318428,
-                    ...
                 }
+            },
+            {
             }
         ],
         "active": {
+            "imei": "352093088196125",
+            "msg": "event",
+            "t_rx": 1555318428,
+            ...
             "__md_tranger__": {
                 "__rowid__": 13607,
                 "__t__": 1555318428,
-                ...
-            },
-            "content": {
-                "imei": "352093088196125",
-                "msg": "event",
-                "t_rx": 1555318428,
                 ...
             }
         }
@@ -172,10 +170,6 @@ PUBLIC int trmsg_add_instance(
 
         max_key_instances   (int) Maximum number of instances per key.
 
-        clone_user_keys     (bool) Clone or share the user keys (math_cond after extracting system keys)
-                            Remains of jn_filter are set in json instance
-                            (act as shared data or per instance data)
-
         order_by_tm         (bool) Not use with max_key_instances=1
 
         trmsg_instance_callback (int) callback function,
@@ -230,11 +224,11 @@ PUBLIC json_t *trmsg_get_message( // Return (NOT yours) dict: "active" (dict) an
     json_t *list,
     const char *key
 );
-PUBLIC json_t *trmsg_get_active_content( // Return (NOT yours) dict: messages`message(key)`active`content
+PUBLIC json_t *trmsg_get_active_message( // Return (NOT yours) dict: messages`message(key)`active
     json_t *list,
     const char *key
 );
-PUBLIC json_t *trmsg_get_active_md( // Return (NOT yours) dict: messages`message(key)`active`md
+PUBLIC json_t *trmsg_get_active_md( // Return (NOT yours) dict: messages`message(key)`active`__md_tranger__
     json_t *list,
     const char *key
 );

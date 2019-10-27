@@ -113,6 +113,9 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
+    if(!jn_record) {
+        jn_record = tranger_read_record_content(tranger, topic, md_record);
+    }
     json_t *jn_messages = kw_get_dict(list, "messages", 0, KW_REQUIRED);
     json_t *jn_filter2 = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
 
@@ -133,10 +136,10 @@ PRIVATE int load_record_callback(
     /*---------------------------------*
      *  Apply filter of second level
      *---------------------------------*/
-    /*
-     *  Match fields
-     */
     if(jn_record) {
+        /*
+         *  Match fields
+         */
         json_t *match_fields = kw_get_dict_value(
             jn_filter2,
             "match_fields",
@@ -150,12 +153,10 @@ PRIVATE int load_record_callback(
                 return 0;  // Timeranger does not load the record, it's me.
             }
         }
-    }
 
-    /*
-     *  Select fields
-     */
-    if(jn_record) {
+        /*
+         *  Select fields
+         */
         json_t *select_fields = kw_get_dict_value(
             jn_filter2,
             "select_fields",
@@ -171,22 +172,9 @@ PRIVATE int load_record_callback(
     /*
      *  Create instance
      */
-    json_t *instance = json_object();
+    json_t *instance = jn_record?jn_record:json_object();
     json_t *jn_record_md = tranger_md2json(md_record);
     json_object_set_new(instance, "__md_tranger__", jn_record_md);
-
-    json_t *user_keys = kw_get_dict_value(list, "match_cond", 0, 0); // user keys shared in all instances
-    if(kw_get_bool(jn_filter2, "clone_user_keys", 0, 0)) { // Now are not shared.
-        json_t *user_keys_ = user_keys;
-        user_keys = json_deep_copy(user_keys);
-        json_decref(user_keys_);
-    }
-
-    if(jn_record) {
-        json_object_set_new(instance, "content", jn_record);
-    } else {
-        json_object_set_new(instance, "content", json_null());
-    }
 
     /*
      *  Check active
@@ -345,7 +333,7 @@ PUBLIC json_t *trmsg_get_message(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *trmsg_get_active_content(
+PUBLIC json_t *trmsg_get_active_message(
     json_t *list,
     const char *key
 )
@@ -356,8 +344,7 @@ PUBLIC json_t *trmsg_get_active_content(
         return 0;
     }
     json_t *active = kw_get_dict_value(message, "active", 0, KW_REQUIRED);
-    json_t *content = kw_get_dict(active, "content", 0, KW_REQUIRED);
-    return content;
+    return active;
 }
 
 /***************************************************************************
@@ -412,12 +399,7 @@ PUBLIC json_t *trmsg_active_records(
     void *n;
     json_object_foreach_safe(messages, n, key, message) {
         json_t *active = json_object_get(message, "active");
-        json_t *jn_active = json_deep_copy(
-            json_object_get(
-                active,
-                "content"
-            )
-        );
+        json_t *jn_active = json_deep_copy(active);
         if(with_metadata) {
             json_object_set_new(
                 jn_active,
@@ -453,9 +435,7 @@ PUBLIC json_t *trmsg_record_instances(
     int idx;
     json_t *jn_value;
     json_array_foreach(instances, idx, jn_value) {
-        json_t *jn_record = json_deep_copy( // Your copy
-            json_object_get(jn_value, "content")
-        );
+        json_t *jn_record = json_deep_copy(jn_value); // Your copy
         if(with_metadata) {
             json_object_set(
                 jn_record,
@@ -493,12 +473,7 @@ PUBLIC int trmsg_foreach_active_records(
     void *n;
     json_object_foreach_safe(messages, n, key, message) {
         json_t *active = json_object_get(message, "active");
-        json_t *jn_active = json_deep_copy( // Your copy
-            json_object_get(
-                active,
-                "content"
-            )
-        );
+        json_t *jn_active = json_deep_copy(active); // Your copy
         if(with_metadata) {
             json_object_set_new(
                 jn_active,
@@ -548,12 +523,7 @@ PUBLIC int trmsg_foreach_instances_records(
         int idx;
         json_t *instance;
         json_array_foreach(instances, idx, instance) {
-            json_t *jn_instance = json_deep_copy(
-                json_object_get(
-                    instance,
-                    "content"
-                )
-            );
+            json_t *jn_instance = json_deep_copy(instance);
             if(with_metadata) {
                 json_object_set_new(
                     jn_instance,
