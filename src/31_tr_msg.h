@@ -239,30 +239,27 @@ PUBLIC json_t *trmsg_get_instances( // Return (NOT yours) list: messages`message
 
 
 /*
- *  Return a list of records (list of dicts).
+ *  Return a list of **duplicated** records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
 PUBLIC json_t *trmsg_active_records(
-    json_t *list,
-    BOOL with_metadata
+    json_t *list
 );
 
 /*
- *  Return a list of record's instances (list of dicts).
+ *  Return a list of **duplicated** record's instances (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
 PUBLIC json_t *trmsg_record_instances(
     json_t *list,
-    const char *key,
-    BOOL with_metadata
+    const char *key
 );
 
 /*
- *  Foreach active records
+ *  Foreach ACTIVE **duplicated** messages
  */
-PUBLIC int trmsg_foreach_active_records(
+PUBLIC int trmsg_foreach_active_messages(
     json_t *list,
-    BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
         json_t *list,  // Not yours!
         const char *key,
@@ -275,11 +272,27 @@ PUBLIC int trmsg_foreach_active_records(
 );
 
 /*
- *  Foreach instances records
+ *  Foreach INSTANCES **duplicated** messages
  */
-PUBLIC int trmsg_foreach_instances_records(
+PUBLIC int trmsg_foreach_instances_messages(
     json_t *list,
-    BOOL with_metadata,
+    int (*callback)( // Return < 0 break the foreach
+        json_t *list,  // Not yours!
+        const char *key,
+        json_t *instances, // It's yours, Must be owned
+        void *user_data1,
+        void *user_data2
+    ),
+    void *user_data1,
+    void *user_data2
+);
+
+/*
+ *  Foreach **duplicated** or **cloned** MESSAGES
+ */
+PUBLIC int trmsg_foreach_messages(
+    json_t *list,
+    BOOL duplicated, // False then cloned messages
     int (*callback)( // Return < 0 break the foreach
         json_t *list,  // Not yours!
         const char *key,

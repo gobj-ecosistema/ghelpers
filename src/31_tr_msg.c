@@ -387,8 +387,7 @@ PUBLIC json_t *trmsg_get_instances(
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
 PUBLIC json_t *trmsg_active_records(
-    json_t *list,
-    BOOL with_metadata
+    json_t *list
 )
 {
     json_t *jn_records = json_array();
@@ -400,18 +399,6 @@ PUBLIC json_t *trmsg_active_records(
     json_object_foreach_safe(messages, n, key, message) {
         json_t *active = json_object_get(message, "active");
         json_t *jn_active = json_deep_copy(active);
-        if(with_metadata) {
-            json_object_set_new(
-                jn_active,
-                "__md_tranger__",
-                json_deep_copy(
-                    json_object_get(
-                        active,
-                        "__md_tranger__"
-                    )
-                )
-            );
-        }
         json_array_append_new(jn_records, jn_active);
     }
 
@@ -424,8 +411,7 @@ PUBLIC json_t *trmsg_active_records(
  ***************************************************************************/
 PUBLIC json_t *trmsg_record_instances(
     json_t *list,
-    const char *key,
-    BOOL with_metadata
+    const char *key
 )
 {
     json_t *jn_records = json_array();
@@ -436,13 +422,6 @@ PUBLIC json_t *trmsg_record_instances(
     json_t *jn_value;
     json_array_foreach(instances, idx, jn_value) {
         json_t *jn_record = json_deep_copy(jn_value); // Your copy
-        if(with_metadata) {
-            json_object_set(
-                jn_record,
-                "__md_tranger__",
-                json_object_get(jn_value, "__md_tranger__")
-            );
-        }
         json_array_append_new(jn_records, jn_record);
     }
 
@@ -450,11 +429,10 @@ PUBLIC json_t *trmsg_record_instances(
 }
 
 /***************************************************************************
- *  Foreach active records
+ *  Foreach ACTIVE **duplicated** messages
  ***************************************************************************/
-PUBLIC int trmsg_foreach_active_records(
+PUBLIC int trmsg_foreach_active_messages(
     json_t *list,
-    BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
         json_t *list,  // Not yours!
         const char *key,
@@ -474,18 +452,6 @@ PUBLIC int trmsg_foreach_active_records(
     json_object_foreach_safe(messages, n, key, message) {
         json_t *active = json_object_get(message, "active");
         json_t *jn_active = json_deep_copy(active); // Your copy
-        if(with_metadata) {
-            json_object_set_new(
-                jn_active,
-                "__md_tranger__",
-                json_deep_copy(
-                    json_object_get(
-                        active,
-                        "__md_tranger__"
-                    )
-                )
-            );
-        }
 
         if(callback(list, key, jn_active, user_data1, user_data2)<0) {
             return -1;
@@ -496,11 +462,10 @@ PUBLIC int trmsg_foreach_active_records(
 }
 
 /***************************************************************************
- *  Foreach instances records
+ *  Foreach INSTANCES **duplicated** messages
  ***************************************************************************/
-PUBLIC int trmsg_foreach_instances_records(
+PUBLIC int trmsg_foreach_instances_messages(
     json_t *list,
-    BOOL with_metadata,
     int (*callback)( // Return < 0 break the foreach
         json_t *list,  // Not yours!
         const char *key,
@@ -524,21 +489,47 @@ PUBLIC int trmsg_foreach_instances_records(
         json_t *instance;
         json_array_foreach(instances, idx, instance) {
             json_t *jn_instance = json_deep_copy(instance);
-            if(with_metadata) {
-                json_object_set_new(
-                    jn_instance,
-                    "__md_tranger__",
-                    json_deep_copy(
-                        json_object_get(
-                            instance,
-                            "__md_tranger__"
-                        )
-                    )
-                );
-            }
             json_array_append_new(jn_instances, jn_instance);
         }
         if(callback(list, key, jn_instances, user_data1, user_data2)<0) {
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+ *  Foreach **duplicated** or **cloned** MESSAGES
+ ***************************************************************************/
+PUBLIC int trmsg_foreach_messages(
+    json_t *list,
+    BOOL duplicated, // False then cloned messages
+    int (*callback)( // Return < 0 break the foreach
+        json_t *list,  // Not yours!
+        const char *key,
+        json_t *instances, // It's yours, Must be owned
+        void *user_data1,
+        void *user_data2
+    ),
+    void *user_data1,
+    void *user_data2
+)
+{
+    json_t *messages = trmsg_get_messages(list);
+
+    const char *key;
+    json_t *message;
+    void *n;
+    json_object_foreach_safe(messages, n, key, message) {
+        json_t *jn_message;
+        if(duplicated) {
+            jn_message = json_deep_copy(message);
+        } else {
+            jn_message = kw_incref(message);
+        }
+
+        if(callback(list, key, jn_message, user_data1, user_data2)<0) {
             return -1;
         }
     }
