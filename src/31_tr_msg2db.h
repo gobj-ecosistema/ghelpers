@@ -74,7 +74,7 @@ PUBLIC int msg2db_close_db(
     const char *msg2db_name
 );
 
-PUBLIC json_t *msg2db_update_message( // Return is NOT YOURS
+PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
     json_t *tranger,
     const char *msg2db_name,
     const char *topic_name,

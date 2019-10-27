@@ -2509,6 +2509,74 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     return refs;
 }
 
+/***************************************************************************
+    Return array of `parent_id` of `value`  (refs: parent_topic_name^parent_id^hook_name)
+ ***************************************************************************/
+PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
+    json_t *value // not owned
+)
+{
+    if(!value) {
+        return 0;
+    }
+    char parent_topic_name[NAME_MAX];
+    char parent_id[NAME_MAX];
+    char hook_name[NAME_MAX];
+
+    json_t *jn_beautiful_names = json_array();
+
+    switch(json_typeof(value)) { // json_typeof PROTECTED
+    case JSON_STRING:
+        {
+            if(decode_string_fkey(
+                json_string_value(value),
+                parent_topic_name, sizeof(parent_topic_name),
+                parent_id, sizeof(parent_id),
+                hook_name, sizeof(hook_name)
+            )) {
+                json_array_append_new(jn_beautiful_names, json_string(parent_id));
+            }
+        }
+        break;
+    case JSON_ARRAY:
+        {
+            int idx; json_t *r;
+            json_array_foreach(value, idx, r) {
+                if(json_typeof(r)==JSON_STRING) {
+                    if(decode_string_fkey(
+                        json_string_value(r),
+                        parent_topic_name, sizeof(parent_topic_name),
+                        parent_id, sizeof(parent_id),
+                        hook_name, sizeof(hook_name)
+                    )) {
+                        json_array_append_new(jn_beautiful_names, json_string(parent_id));
+                    }
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            const char *key; json_t *v;
+            json_object_foreach(value, key, v) {
+                if(decode_string_fkey(
+                    key,
+                    parent_topic_name, sizeof(parent_topic_name),
+                    parent_id, sizeof(parent_id),
+                    hook_name, sizeof(hook_name)
+                )) {
+                    json_array_append_new(jn_beautiful_names, json_string(parent_id));
+                }
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    return jn_beautiful_names;
+}
+
 
 
 

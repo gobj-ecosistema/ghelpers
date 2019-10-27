@@ -114,6 +114,14 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     const char *col_name
 );
 
+/**rst**
+    Return array of `parent_id` of `value`  (refs: parent_topic_name^parent_id^hook_name)
+**rst**/
+PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
+    json_t *value
+);
+
+
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/
