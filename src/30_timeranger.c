@@ -673,6 +673,38 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
                 NULL
             );
         }
+    } else {
+        /*---------------------------------------------*
+         *  Exists the directory but check cols.json
+         *---------------------------------------------*/
+        char directory[PATH_MAX];
+        snprintf(
+            directory,
+            sizeof(directory),
+            "%s/%s",
+            kw_get_str(tranger, "directory", "", KW_REQUIRED),
+            topic_name
+        );
+        if(!file_exists(directory, "topic_cols.json")) {
+            /*----------------------------------------*
+             *      Create topic_cols.json
+             *----------------------------------------*/
+            JSON_INCREF(jn_cols);
+            tranger_write_topic_cols(
+                tranger,
+                topic_name,
+                jn_cols
+            );
+            log_info(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INFO,
+                "msg",          "%s", "Re-create topic_cols.json",
+                "database",     "%s", kw_get_str(tranger, "database", "", KW_REQUIRED),
+                "topic",        "%s", topic_name,
+                NULL
+            );
+        }
     }
 
     JSON_DECREF(jn_cols);
