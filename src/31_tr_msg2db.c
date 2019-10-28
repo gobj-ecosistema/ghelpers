@@ -136,7 +136,7 @@ PUBLIC json_t *msg2db_open_db(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INFO,
-                "msg",          "%s", "Creating TreeDB schema file.",
+                "msg",          "%s", "Creating Msg2DB schema file.",
                 "msg2db_name",  "%s", msg2db_name,
                 "schema_file",  "%s", schema_full_path,
                 NULL
