@@ -3110,7 +3110,10 @@ PUBLIC BOOL tranger_match_record(
                 return FALSE;
             }
         } else if(md_record->__system_flag__ & sf_string_key) {
-            const char *key = kw_get_str(match_cond, "key", "", KW_REQUIRED);
+            const char *key = kw_get_str(match_cond, "key", 0, KW_REQUIRED);
+            if(!key) {
+                return FALSE;
+            }
             if(strncmp(md_record->key.s, key, sizeof(md_record->key.s))!=0) {
                 return FALSE;
             }
@@ -3342,7 +3345,10 @@ PUBLIC BOOL tranger_match_record(
                 return FALSE;
             }
         } else if(md_record->__system_flag__ & sf_string_key) {
-            const char *notkey = kw_get_str(match_cond, "key", "", KW_REQUIRED);
+            const char *notkey = kw_get_str(match_cond, "key", 0, KW_REQUIRED);
+            if(!notkey) {
+                return FALSE;
+            }
             if(strncmp(md_record->key.s, notkey, sizeof(md_record->key.s))==0) {
                 return FALSE;
             }
