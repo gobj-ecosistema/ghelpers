@@ -3110,7 +3110,7 @@ PUBLIC BOOL tranger_match_record(
                 return FALSE;
             }
         } else if(md_record->__system_flag__ & sf_string_key) {
-            const char *key = kw_get_str(match_cond, "key", 0, KW_REQUIRED);
+            const char *key = kw_get_str(match_cond, "key", 0, KW_REQUIRED|KW_DONT_LOG);
             if(!key) {
                 return FALSE;
             }
@@ -3345,7 +3345,7 @@ PUBLIC BOOL tranger_match_record(
                 return FALSE;
             }
         } else if(md_record->__system_flag__ & sf_string_key) {
-            const char *notkey = kw_get_str(match_cond, "key", 0, KW_REQUIRED);
+            const char *notkey = kw_get_str(match_cond, "key", 0, KW_REQUIRED|KW_DONT_LOG);
             if(!notkey) {
                 return FALSE;
             }
