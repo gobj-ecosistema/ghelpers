@@ -180,26 +180,27 @@ PUBLIC BOOL is_directory(const char *path)
 PUBLIC BOOL file_exists(const char *directory, const char *filename)
 {
     char full_path[PATH_MAX];
-    if(empty_string(filename)) {
-        snprintf(full_path, sizeof(full_path), "%s",
-            directory
-        );
-    } else {
-        char *sep = "";
-        if(strlen(directory)) {
-            sep = (directory[strlen(directory)-1]=='/')?"":"/";
-        }
-        snprintf(full_path, sizeof(full_path), "%s%s%s",
-            directory,
-            sep,
-            filename
-        );
-    }
+    build_path2(full_path, sizeof(full_path), directory, filename);
+
     if(is_regular_file(full_path)) {
         return TRUE;
     } else {
         return FALSE;
     }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int file_remove(const char *directory, const char *filename)
+{
+    char full_path[PATH_MAX];
+    build_path2(full_path, sizeof(full_path), directory, filename);
+
+    if(!is_regular_file(full_path)) {
+        return -1;
+    }
+    return unlink(full_path);
 }
 
 /***************************************************************************

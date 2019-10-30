@@ -185,6 +185,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         return 0;
     }
 
+    // TODO gestiona schema_version
     char schema_filename[NAME_MAX];
     if(strstr(treedb_name, ".treedb_schema.json")) {
         snprintf(schema_filename, sizeof(schema_filename), "%s",
@@ -365,6 +366,9 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             );
             continue;
         }
+        const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
+        json_t *jn_topic_var = json_object();
+        json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
         json_t *topic = tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_name,
@@ -372,7 +376,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             kw_get_str(schema_topic, "tkey", "", 0),
             tranger_str2system_flag(kw_get_str(schema_topic, "system_flag", "", 0)),
             kwid_new_dict("verbose", schema_topic, "cols"),
-            0
+            jn_topic_var
         );
 
         parse_schema_cols(

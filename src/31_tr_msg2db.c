@@ -106,6 +106,7 @@ PUBLIC json_t *msg2db_open_db(
         return 0;
     }
 
+    // TODO gestiona schema_version
     char schema_filename[NAME_MAX];
     if(strstr(msg2db_name, ".msg2db_schema.json")) {
         snprintf(schema_filename, sizeof(schema_filename), "%s",
@@ -265,8 +266,10 @@ PUBLIC json_t *msg2db_open_db(
             );
             continue;
         }
+        const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
         json_t *jn_topic_var = json_object();
         json_object_set_new(jn_topic_var, "pkey2", json_string(pkey2));
+        json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
         json_t *topic = tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_name,

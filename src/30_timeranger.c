@@ -537,6 +537,8 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
         JSON_DECREF(jn_var);
         return 0;
     }
+    json_int_t topic_new_version = kw_get_int(jn_var, "topic_version", 0, KW_WILD_NUMBER);
+    json_int_t topic_old_version = 0;
 
     /*-------------------------------*
      *      Check directory
@@ -675,7 +677,10 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
         }
     } else {
         /*---------------------------------------------*
-         *  Exists the directory but check cols.json
+         *  Exists the directory but check
+         *      topic_var.json
+         *      topic_version
+         *      topic_cols.json
          *---------------------------------------------*/
         char directory[PATH_MAX];
         snprintf(
@@ -685,6 +690,44 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
             kw_get_str(tranger, "directory", "", KW_REQUIRED),
             topic_name
         );
+
+        if(topic_new_version) {
+            /*----------------------------------------*
+             *      Check topic_version
+             *----------------------------------------*/
+            json_t *topic_var = load_variable_json(
+                directory,
+                "topic_var.json"
+            );
+            topic_old_version = kw_get_int(topic_var, "topic_version", 0, KW_WILD_NUMBER);
+            JSON_DECREF(topic_var);
+            if(topic_new_version > topic_old_version) {
+                file_remove(directory, "topic_cols.json");
+                file_remove(directory, "topic_var.json");
+            }
+        }
+
+        if(!file_exists(directory, "topic_var.json")) {
+            /*----------------------------------------*
+             *      Create topic_var.json
+             *----------------------------------------*/
+            JSON_INCREF(jn_var);
+            tranger_write_topic_var(
+                tranger,
+                topic_name,
+                jn_var
+            );
+            log_info(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INFO,
+                "msg",          "%s", "Re-create topic_var.json",
+                "database",     "%s", kw_get_str(tranger, "database", "", KW_REQUIRED),
+                "topic",        "%s", topic_name,
+                NULL
+            );
+        }
+
         if(!file_exists(directory, "topic_cols.json")) {
             /*----------------------------------------*
              *      Create topic_cols.json
