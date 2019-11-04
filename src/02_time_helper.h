@@ -29,6 +29,14 @@ extern "C"{
 
 
 /*****************************************************************
+ *     Structures
+ *****************************************************************/
+typedef struct {
+    time_t start;
+    time_t end;
+} time_range_t;
+
+/*****************************************************************
  *     Prototypes
  *****************************************************************/
 
@@ -58,6 +66,31 @@ PUBLIC BOOL   test_msectimer(int64_t value);           /* Return TRUE if timer h
 
 PUBLIC int64_t time_in_miliseconds(void);   // Return current time in miliseconds
 PUBLIC int64_t time_in_seconds(void);       // Return current time in seconds (standart time(&t))
+
+/**rst**
+    Return in gmt time range in hours of time t, TZ optional
+**rst**/
+PUBLIC time_range_t get_hours_range(time_t t, int range, const char *TZ);
+
+/**rst**
+    Return in gmt time range in days of time t, TZ optional
+**rst**/
+PUBLIC time_range_t get_days_range(time_t t, int range, const char *TZ);
+
+/**rst**
+    Return in gmt time range in weeks of time t, TZ optional
+**rst**/
+PUBLIC time_range_t get_weeks_range(time_t t, int range, const char *TZ);
+
+/**rst**
+    Return in gmt time range in month of time t, TZ optional
+**rst**/
+PUBLIC time_range_t get_months_range(time_t t, int range, const char *TZ);
+
+/**rst**
+    Return in gmt time range in year of time t, TZ optional
+**rst**/
+PUBLIC time_range_t get_years_range(time_t t, int range, const char *TZ);
 
 #ifdef __cplusplus
 }
