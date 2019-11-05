@@ -1,7 +1,7 @@
 /***********************************************************************
  *          TR_MSG2.C
  *
- *          Messages (ordered by pkey,pkey2: active and their instances) with TimeRanger
+ *          Messages (ordered by key (id),pkey2) with TimeRanger
  *
  *          Double dict of messages
  *          Load in memory a iter of topic's messages ordered by a sub-key
@@ -78,7 +78,7 @@ PUBLIC char *build_msg2db_index_path(
     HACK Conventions:
         1) the pkey of all topics must be "id".
         2) the "id" field (primary key) MUST be a string.
-        3) define a second index `pkey2`,
+        3) define a second index `pkey2`, MUST be a string
 
     Option "persistent"
         Try to load the schema from file
@@ -253,13 +253,13 @@ PUBLIC json_t *msg2db_open_db(
             );
             continue;
         }
-        const char *pkey2 = kw_get_str(schema_topic, "pkey2", "", 0);
-        if(empty_string(pkey2)) {
+        const char *pkey2_col = kw_get_str(schema_topic, "pkey2", "", 0);
+        if(empty_string(pkey2_col)) {
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_MSG2DB_ERROR,
-                "msg",          "%s", "Schema topic without pkey2=id",
+                "msg",          "%s", "Schema topic without pkey2",
                 "msg2db_name",  "%s", msg2db_name,
                 "schema_topic", "%j", schema_topic,
                 NULL
@@ -268,7 +268,7 @@ PUBLIC json_t *msg2db_open_db(
         }
         const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
         json_t *jn_topic_var = json_object();
-        json_object_set_new(jn_topic_var, "pkey2", json_string(pkey2));
+        json_object_set_new(jn_topic_var, "pkey2", json_string(pkey2_col));
         json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
         json_t *topic = tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
@@ -853,11 +853,11 @@ PRIVATE int load_record_callback(
             md_record
         );
         json_object_set_new(jn_record, "__md_msg2db__", jn_record_md);
-        const char *pkey2_field = kw_get_str(topic, "pkey2", 0, 0);
-        json_object_set_new(jn_record_md, "pkey2", json_string(pkey2_field));
+        const char *pkey2_col = kw_get_str(topic, "pkey2", 0, 0);
+        json_object_set_new(jn_record_md, "pkey2", json_string(pkey2_col));
 
-        const char *pkey2 = kw_get_str(jn_record, pkey2_field, 0, 0);
-        if(empty_string(pkey2)) {
+        const char *pkey2_value = kw_get_str(jn_record, pkey2_col, 0, 0);
+        if(empty_string(pkey2_value)) {
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
@@ -865,7 +865,7 @@ PRIVATE int load_record_callback(
                 "msg",          "%s", "Field 'pkey2' required",
                 "path",         "%s", path,
                 "topic_name",   "%s", topic_name,
-                "pkey2_field",  "%s", pkey2_field,
+                "pkey2",        "%s", pkey2_col,
                 "jn_record",    "%j", jn_record,
                 NULL
             );
@@ -890,7 +890,7 @@ PRIVATE int load_record_callback(
         kw_set_subdict_value(
             indexx,
             md_record->key.s,
-            pkey2,
+            pkey2_value,
             jn_record
         );
     }
@@ -972,8 +972,8 @@ PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
      *  Get the pkey2, it's mandatory
      *-----------------------------------*/
     json_t *topic = tranger_topic(tranger, topic_name);
-    const char *pkey2 = kw_get_str(topic, "pkey2", 0, 0);
-    if(!kw_has_key(kw, pkey2)) {
+    const char *pkey2_col = kw_get_str(topic, "pkey2", 0, 0);
+    if(!kw_has_key(kw, pkey2_col)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -981,13 +981,14 @@ PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
             "msg",          "%s", "Field 'pkey2' required",
             "path",         "%s", path,
             "topic_name",   "%s", topic_name,
-            "pkey2",        "%s", pkey2,
+            "pkey2",        "%s", pkey2_col,
             "kw",           "%j", kw,
             NULL
         );
         JSON_DECREF(kw);
         return 0;
     }
+    const char *pkey2_value = kw_get_str(kw, pkey2_col, 0, 0);
 
     /*----------------------------------------*
      *  Create the tranger record to create
@@ -1037,7 +1038,7 @@ PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
         topic_name,
         &md_record
     );
-    json_object_set_new(jn_record_md, "pkey2", json_string(pkey2));
+    json_object_set_new(jn_record_md, "pkey2", json_string(pkey2_col));
     json_object_set_new(record, "__md_msg2db__", jn_record_md);
 
     /*-------------------------------*
@@ -1046,7 +1047,7 @@ PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
     kw_set_subdict_value(
         indexx,
         id,
-        pkey2,
+        pkey2_value,
         record
     );
 
@@ -1111,7 +1112,6 @@ PUBLIC json_t *msg2db_list_messages( // Return MUST be decref
             if(!kwid_match_id(jn_ids, id)) {
                 continue;
             }
-            //kw_set_dict_value()
             const char *pkey2; json_t *node;
             json_object_foreach(pkey2_dict, pkey2, node) {
                 JSON_INCREF(jn_filter);

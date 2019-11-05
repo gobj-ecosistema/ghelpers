@@ -1,7 +1,7 @@
 /****************************************************************************
  *          TR_MSG2.C
  *
- *          Messages (ordered by pkey,pkey2) with TimeRanger
+ *          Messages (ordered by key (id),pkey2) with TimeRanger
  *
  *          Double dict of messages
  *          Load in memory a iter of topic's messages ordered by a sub-key
@@ -52,7 +52,7 @@ extern "C"{
     HACK Conventions:
         1) the pkey of all topics must be "id".
         2) the "id" field (primary key) MUST be a string.
-        3) define a second index `pkey2`,
+        3) define a second index `pkey2`, MUST be a string
 
     Option "persistent"
         Try to load the schema from file
