@@ -794,6 +794,7 @@ PRIVATE json_t *_md2json(
     );
     json_object_set_new(jn_md, "__rowid__", json_integer(md_record->__rowid__));
     json_object_set_new(jn_md, "__t__", json_integer(md_record->__t__));
+    json_object_set_new(jn_md, "__tm__", json_integer(md_record->__tm__));
     json_object_set_new(jn_md, "__tag__", json_integer(md_record->__user_flag__));
     json_object_set_new(jn_md, "__original_node__", json_true());
 
@@ -1177,7 +1178,12 @@ PUBLIC json_t *msg2db_get_message( // Return is NOT YOURS
      *      Read
      *-------------------------------*/
     if(json_is_object(indexx)) {
-        json_t *record = kw_get_subdict_value(indexx, id, id2, 0, 0);
+        json_t *record;
+        if(!empty_string(id2)) {
+            record = kw_get_subdict_value(indexx, id, id2, 0, 0);
+        } else {
+            record = kw_get_dict_value(indexx, id, 0, 0);
+        }
         return record;
     } else  {
         log_error(0,
