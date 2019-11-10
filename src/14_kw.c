@@ -4011,8 +4011,6 @@ PUBLIC json_t *kwid_new_dict_tree_collect( // WARNING be care, you can modify th
     )
 )
 {
-    json_t *new_dict = json_object();
-
     if(!kw) {
         JSON_DECREF(jn_filter);
         // silence
@@ -4021,6 +4019,7 @@ PUBLIC json_t *kwid_new_dict_tree_collect( // WARNING be care, you can modify th
     if(!match_fn) {
         match_fn = kw_match_simple;
     }
+    json_t *new_dict = json_object();
 
     _tree_collect(
         new_dict,
@@ -4047,8 +4046,6 @@ PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify th
     )
 )
 {
-    json_t *new_list = json_array();
-
     if(!kw) {
         JSON_DECREF(jn_filter);
         // silence
@@ -4057,6 +4054,8 @@ PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify th
     if(!match_fn) {
         match_fn = kw_match_simple;
     }
+
+    json_t *new_list = json_array();
 
     _tree_collect(
         new_list,
