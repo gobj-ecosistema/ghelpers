@@ -173,6 +173,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     const char *options // "persistent"
 )
 {
+    BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
+
     if(empty_string(treedb_name)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -185,7 +187,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         return 0;
     }
 
-    // TODO gestiona schema_version
     char schema_filename[NAME_MAX];
     if(strstr(treedb_name, ".treedb_schema.json")) {
         snprintf(schema_filename, sizeof(schema_filename), "%s",
@@ -204,14 +205,31 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     );
 
     if(options && strstr(options,"persistent")) {
-        if(file_exists(schema_full_path, 0)) {
-            JSON_DECREF(jn_schema);
-            jn_schema = load_json_from_file(
-                schema_full_path,
-                "",
-                kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
-            );
-        } else if(jn_schema) {
+        json_int_t schema_new_version = kw_get_int(jn_schema, "schema_version", 0, KW_WILD_NUMBER);
+        do {
+            if(file_exists(schema_full_path, 0)) {
+                json_t *old_jn_schema = load_json_from_file(
+                    schema_full_path,
+                    "",
+                    kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
+                );
+                if(!master) {
+                    JSON_DECREF(jn_schema);
+                    jn_schema = old_jn_schema;
+                    break;
+                }
+                json_int_t schema_old_version = kw_get_int(
+                    old_jn_schema,
+                    "schema_version",
+                    -1,
+                    KW_WILD_NUMBER
+                );
+                if(schema_new_version <= schema_old_version) {
+                    JSON_DECREF(jn_schema);
+                    jn_schema = old_jn_schema;
+                    break;
+                }
+            }
             log_info(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
@@ -232,7 +250,9 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 FALSE, // only_read
                 jn_schema     // owned
             );
-        }
+
+        } while(0);
+
         if(!jn_schema) {
             log_error(0,
                 "gobj",         "%s", __FILE__,
