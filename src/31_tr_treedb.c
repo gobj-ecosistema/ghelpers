@@ -683,7 +683,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
      */
     if(kw_has_word(desc_flag, "required", 0)) {
         if(!value) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1207,7 +1207,7 @@ PRIVATE int set_tranger_field_value(
      */
     if(kw_has_word(desc_flag, "required", 0)) {
         if(!value || json_is_null(value)) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
