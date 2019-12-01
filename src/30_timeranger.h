@@ -331,7 +331,7 @@ PUBLIC int tranger_append_record(
         notkey
         from_tm
         to_tm
-
+        rkey    regular expression of key
 **rst**/
 
 /**rst**

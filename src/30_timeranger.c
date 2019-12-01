@@ -3165,6 +3165,27 @@ PUBLIC BOOL tranger_match_record(
         }
     }
 
+    if(kw_has_key(match_cond, "rkey")) {
+        if(md_record->__system_flag__ & sf_string_key) {
+            const char *rkey = kw_get_str(match_cond, "rkey", 0, KW_REQUIRED|KW_DONT_LOG);
+            if(!rkey) {
+                return FALSE;
+            }
+
+            regex_t _re_name;
+            if(regcomp(&_re_name, rkey, REG_EXTENDED | REG_NOSUB)!=0) {
+                return FALSE;
+            }
+            int ret = regexec(&_re_name, md_record->key.s, 0, 0, 0);
+            regfree(&_re_name);
+            if(ret!=0) {
+                return FALSE;
+            }
+        } else {
+            return FALSE;
+        }
+    }
+
     if(kw_has_key(match_cond, "from_rowid")) {
         json_int_t from_rowid = kw_get_int(match_cond, "from_rowid", 0, KW_WILD_NUMBER);
         if(from_rowid >= 0) {
