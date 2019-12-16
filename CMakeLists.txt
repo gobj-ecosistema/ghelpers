@@ -149,17 +149,11 @@ set (HDRS
 )
 
 ##############################################
-#   Prod Core lib
+#   Core lib
 ##############################################
 add_library(ghelpers ${SRCS} ${HDRS})
 
 ##############################################
-#   Debug Core lib
-##############################################
-add_library(ghelpersd ${SRCS} ${HDRS})
-set_target_properties(ghelpersd
-    PROPERTIES COMPILE_DEFINITIONS "__FULL_TRACE__=1"
-)
 
 ##############################################
 #   System install
@@ -167,7 +161,7 @@ set_target_properties(ghelpersd
 install(FILES ${HDRS} DESTINATION ${INC_DEST_DIR})
 
 install(
-    TARGETS ghelpers ghelpersd
+    TARGETS ghelpers
     PERMISSIONS
     OWNER_READ OWNER_WRITE
     GROUP_READ GROUP_WRITE
