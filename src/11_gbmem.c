@@ -37,12 +37,6 @@ typedef uint32_t memtrace_t;    // WARNING: hardcoded in some places.
 #define MINIMUM_MIN_BLOCK (sizeof(bdl_t) + sizeof(memtrace_t))
 
 
-/*
- *  Uncomment this line for trace alloc/free memory
- *  (set in ghelpersd)
- */
-//#define __FULL_TRACE__ 1
-
 /***************************************************************
  *          Structures
  ***************************************************************/
@@ -59,9 +53,7 @@ typedef struct sb_s {
 /***************************************************************
  *          Data
  ***************************************************************/
-#ifdef __FULL_TRACE__
 PRIVATE memtrace_t __mem_trace_counter__ = 0;
-#endif
 
 PRIVATE char __maximum_superblocks_reached_informed = 0;
 
@@ -591,9 +583,7 @@ PRIVATE BOOL alloc_superblock(bdl_t req)
             "req_blocks",   "%d", (int)req,
             "sb",           "%d", (int)count_sb,
             "maxsb",        "%d", (int)maxsb,
-            #ifdef __FULL_TRACE__
             "memtrace",     "%d", (int)__mem_trace_counter__,
-            #endif
             "sb bytes",     "%ld", (long)((size_t)chunk * (size_t)block_size),
             "total bytes",  "%ld", (long)((size_t)count_sb * (size_t)chunk * (size_t)block_size),
             NULL
@@ -611,9 +601,7 @@ PUBLIC PTR gbmem_malloc(size_t size)
     register ZBLOCK *p ;
     bdl_t blocks;
     size_t bytes;
-    #ifdef __FULL_TRACE__
     size_t original_size = size;
-    #endif
 
     if(!__gbmem_initialized__) { // XXX
 //         return calloc(1, size);
@@ -692,9 +680,7 @@ PUBLIC PTR gbmem_malloc(size_t size)
      *--------------------------------------------------*/
     size += sizeof(bdl_t); /* reserva para guardar el tamaño del bloque */
 
-    #ifdef __FULL_TRACE__
     size += sizeof(memtrace_t);
-    #endif
 
     if(size > __max_block__) {
         log_error(LOG_OPT_TRACE_STACK,
@@ -749,7 +735,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
      *--------------------------------------------------*/
     uv_mutex_lock(&mutex_gbmem);
 
-    #ifdef __FULL_TRACE__
     __mem_trace_counter__++;
 
     if(__trace_allocs_frees__) {
@@ -766,7 +751,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
                 break;  // bit a bit please
         }
     }
-    #endif
 
     /*--------------------------*
      *  Alloca el bloque
@@ -778,13 +762,11 @@ PUBLIC PTR gbmem_malloc(size_t size)
 
         memset(p, 0, bytes);
 
-        #ifdef __FULL_TRACE__
         /*
          *  Save trace
          */
         *((memtrace_t *)p) = __mem_trace_counter__;
         p = (ZBLOCK *)(((memtrace_t *)p) + 1);
-        #endif
 
         /*
          *  Save size (in blocks)
@@ -792,7 +774,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
         *((bdl_t *)p) = blocks;
         p = (ZBLOCK *)(((bdl_t *)p) + 1);
 
-        #ifdef __FULL_TRACE__
         if(__trace_allocs_frees__) {
             log_debug(0,
                 "gobj",         "%s", __FILE__,
@@ -806,7 +787,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
                 "original_size","%ld", (long)original_size,
                 NULL);
         }
-        #endif
 
         /*--------------------------------------------------*
          *  Unlock
@@ -833,9 +813,7 @@ PUBLIC PTR gbmem_malloc(size_t size)
              *  (Se derrocha memoria y si ocurre con frecuencia
              *  malo).
              *---------------------------------------------------*/
-            #ifdef __FULL_TRACE__
             bdl_t original_blocks = blocks;
-            #endif
             while(blocks <= pool_size) {
                 p = pool[blocks-1];
                 if(p) {
@@ -844,13 +822,11 @@ PUBLIC PTR gbmem_malloc(size_t size)
 
                     memset(p, 0, bytes);
 
-                    #ifdef __FULL_TRACE__
                     /*
                      *  Save trace
                      */
                     *((memtrace_t *)p) = __mem_trace_counter__;
                     p = (ZBLOCK *)(((memtrace_t *)p) + 1);
-                    #endif
 
                     /*
                      *  Save size (in blocks)
@@ -858,7 +834,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
                     *((bdl_t *)p) = blocks;
                     p = (ZBLOCK *)(((bdl_t *)p) + 1);
 
-                    #ifdef __FULL_TRACE__
                     if(__trace_allocs_frees__) {
                         log_debug(0,
                             "gobj",         "%s", __FILE__,
@@ -873,7 +848,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
                             "orig-blocks",  "%d", (int)original_blocks,
                             NULL);
                     }
-                    #endif
 
                     /*--------------------------------------------------*
                      *  Unlock
@@ -920,13 +894,11 @@ PUBLIC PTR gbmem_malloc(size_t size)
     avail = (ZBLOCK *) ((char *)avail + blocks * block_size);
     amt_avail -= blocks;
 
-    #ifdef __FULL_TRACE__
     /*
      *  Save trace
      */
     *((memtrace_t *)p) = __mem_trace_counter__;
     p = (ZBLOCK *)(((memtrace_t *)p) + 1);
-    #endif
 
     /*
      *  Save size (in blocks)
@@ -934,7 +906,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
     *((bdl_t *)p) = blocks;
     p = (ZBLOCK *)(((bdl_t *)p) + 1);
 
-    #ifdef __FULL_TRACE__
     if(__trace_allocs_frees__) {
         log_debug(0,
             "gobj",         "%s", __FILE__,
@@ -948,7 +919,6 @@ PUBLIC PTR gbmem_malloc(size_t size)
             "original_size","%ld", (long)original_size,
             NULL);
     }
-    #endif
 
     /*--------------------------------------------------*
      *  Unlock
@@ -964,9 +934,7 @@ PUBLIC PTR gbmem_malloc(size_t size)
 PUBLIC void gbmem_free(PTR p)
 {
     bdl_t blocks;
-#ifdef __FULL_TRACE__
     PTR pp = p;
-#endif
 
     if(!p) {
         return; // El comportamiento como free() es que no salga error; lo quito por libuv (uv_try_write)
@@ -1013,10 +981,8 @@ PUBLIC void gbmem_free(PTR p)
     /*---------------------------------*
      *  Recover trace
      *---------------------------------*/
-    #ifdef __FULL_TRACE__
     p = (memtrace_t *)p - 1;
     memtrace_t x = *((memtrace_t *)p);
-    #endif
 
     if(blocks > pool_size) {
         log_error(LOG_OPT_TRACE_STACK,
@@ -1052,7 +1018,6 @@ PUBLIC void gbmem_free(PTR p)
         pool_sizes[blocks]++;
     }
 
-    #ifdef __FULL_TRACE__
     if(__trace_allocs_frees__) {
         log_debug(0,
             "gobj",         "%s", __FILE__,
@@ -1063,7 +1028,6 @@ PUBLIC void gbmem_free(PTR p)
             "pointer",      "%p", pp,
             NULL);
     }
-    #endif
 
     /*--------------------------------------------------*
      *  Unlock
@@ -1240,9 +1204,7 @@ PUBLIC size_t gbmem_get_maximum_block(void)
     size_t size = __max_block__;
     size -= sizeof(bdl_t);
     size -= 1;
-    #ifdef __FULL_TRACE__
     size -= sizeof(memtrace_t);
-    #endif
     size -= __min_block__;  // added 7/Sep/2016
     return size;
 }
