@@ -1211,7 +1211,6 @@ PUBLIC size_t gbmem_get_maximum_block(void)
 
 /*************************************************************************
  *  Set trace of alloc/free
- *  You need to compile with ghelpersd (trace version)
  *************************************************************************/
 PUBLIC void gbmem_trace_alloc_free(
     BOOL enable,

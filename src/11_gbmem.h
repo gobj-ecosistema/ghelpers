@@ -150,7 +150,7 @@ PUBLIC void gbmem_stats(
 );
 PUBLIC size_t gbmem_mem_in_use(void);
 
-PUBLIC void gbmem_trace_alloc_free( // You need to compile with ghelpersd (trace version)
+PUBLIC void gbmem_trace_alloc_free(
     BOOL enable,
     uint32_t *memory_check_list
 );
