@@ -117,8 +117,8 @@ static const char Pad64 = '=';
 
 size_t b64_encode(const char* src, size_t srclength, char* target, size_t targsize) {
     size_t datalength = 0;
-    u_char input[3];
-    u_char output[4];
+    uint8_t input[3];
+    uint8_t output[4];
     size_t i;
 
     while (2 < srclength) {
@@ -180,7 +180,7 @@ size_t b64_encode(const char* src, size_t srclength, char* target, size_t targsi
    it returns the number of data bytes stored at the target, or -1 on error.
  */
 
-size_t b64_decode(const char *src, u_char *target, size_t targsize)
+size_t b64_decode(const char *src, uint8_t *target, size_t targsize)
 {
     size_t tarindex, state, ch;
     char *pos;

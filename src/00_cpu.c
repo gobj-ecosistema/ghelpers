@@ -34,7 +34,7 @@
 #include <pwd.h>
 #include <sys/utsname.h>
 #include <regex.h>
-#include <linux/sched.h>
+#include <sched.h>
 #include "00_cpu.h"
 
 /***************************************************************************

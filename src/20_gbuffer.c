@@ -1836,7 +1836,7 @@ PUBLIC GBUFFER *gbuf_decodebase64stringn(const char* base64, int base64_len)
         );
         return 0;
     }
-    u_char *p = _gbuf_cur_wr_pointer(gbuf_output);
+    uint8_t *p = _gbuf_cur_wr_pointer(gbuf_output);
     size_t decoded = b64_decode(base64, p, output_len);
     if(decoded == -1) {
         gbuf_decref(gbuf_output);

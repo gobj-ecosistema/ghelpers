@@ -528,7 +528,7 @@ PRIVATE int _udpc_socket(uclient_t *uc)
                 errno,
                 strerror(errno)
             );
-        } else if (bind(uc->_s, &si_bind, sizeof(si_bind))) {
+        } else if (bind(uc->_s, (const struct sockaddr *)&si_bind, sizeof(si_bind))) {
             print_error(
                 PEF_CONTINUE,
                 "ERROR YUNETA",

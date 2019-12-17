@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
-#include <linux/limits.h>
 
 #ifdef __cplusplus
 extern "C"{

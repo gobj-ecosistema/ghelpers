@@ -16,7 +16,6 @@
 #include <limits.h>
 #include <unistd.h>
 #include <time.h>
-#include <execinfo.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <wchar.h>
