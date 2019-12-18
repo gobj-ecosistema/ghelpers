@@ -318,7 +318,7 @@ PUBLIC json_t *wstats_open(
         }
     }
 
-    log_debug_json(0, stats, "XXX");
+    log_debug_json(0, stats, "__simple_stats__.json");
     return stats;
 }
 
