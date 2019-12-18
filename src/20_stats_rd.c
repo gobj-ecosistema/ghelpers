@@ -138,7 +138,7 @@ PUBLIC json_t *rstats_open(
 
     JSON_DECREF(jn_config);
 
-    log_debug_json(0, stats, "__simple_stats__.json");
+    //log_debug_json(0, stats, "__simple_stats__.json");
     return stats;
 }
 
