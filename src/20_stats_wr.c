@@ -663,6 +663,7 @@ PUBLIC void wstats_add_value(
             "metric",       "%s", metric_name,
             NULL
         );
+        log_debug_json(0, stats, "Metric not configured");
         JSON_DECREF(jn_value);
         return;
     }

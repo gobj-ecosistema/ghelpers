@@ -865,7 +865,16 @@ PUBLIC void log_debug_json(
         direction = "TO";
     }
 
-    char *s = json_dumps(jn, JSON_ENCODE_ANY|JSON_INDENT(4)|JSON_REAL_PRECISION(get_real_precision()));
+    char *s = json_dumps(
+        jn,
+        JSON_ENCODE_ANY|JSON_INDENT(4)|JSON_REAL_PRECISION(get_real_precision())
+    );
+    BOOL bad_json = FALSE;
+    if(!s) {
+        s = "BAD JSON or NULL";
+        bad_json = TRUE;
+
+    }
     size_t len = s?strlen(s):0;
 
     if(fmt) {
@@ -913,6 +922,9 @@ PUBLIC void log_debug_json(
             }
             if(lh->hr->fwrite_fn) {
                 lh->hr->write_fn(lh->h, priority, s, len);
+            }
+            if(bad_json) {
+                show_backtrace(lh->hr->fwrite_fn, lh->h);
             }
 
             /*
