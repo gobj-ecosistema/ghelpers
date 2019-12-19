@@ -873,7 +873,6 @@ PUBLIC void log_debug_json(
     if(!s) {
         s = "BAD JSON or NULL";
         bad_json = TRUE;
-
     }
     size_t len = s?strlen(s):0;
 
@@ -932,7 +931,9 @@ PUBLIC void log_debug_json(
              */
             lh = dl_next(lh);
         }
-        jsonp_free(s);
+        if(!bad_json) {
+            jsonp_free(s);
+        }
     }
 #ifdef USE_MUTEX
     uv_mutex_unlock(&mutex_log);
