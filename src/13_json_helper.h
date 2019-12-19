@@ -245,6 +245,17 @@ PUBLIC json_t *create_json_record(
     const json_desc_t *json_desc
 );
 
+/*
+ *  If exclusive then let file opened and return the fd, else close the file
+ */
+PUBLIC json_t *load_persistent_json(
+    const char *directory,
+    const char *filename,
+    log_opt_t on_critical_error,
+    int *pfd,
+    BOOL exclusive
+);
+
 PUBLIC json_t *load_json_from_file(
     const char *directory,
     const char *filename,

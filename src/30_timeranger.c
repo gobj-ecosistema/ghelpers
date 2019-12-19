@@ -107,80 +107,6 @@ PRIVATE int get_topic_idx_fd(json_t *tranger, json_t *topic, BOOL verbose);
  ***************************************************************/
 
 /***************************************************************************
- *  If exclusive then let file opened and return the fd, else close the file
- ***************************************************************************/
-PRIVATE json_t *load_persistent_json(
-    const char *directory,
-    const char *filename,
-    log_opt_t on_critical_error,
-    int *pfd,
-    BOOL exclusive
-)
-{
-    if(pfd) {
-        *pfd = -1;
-    }
-
-    /*
-     *  Full path
-     */
-    char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
-
-    if(access(full_path, 0)!=0) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "Cannot load json, file not exist.",
-            "path",         "%s", full_path,
-            NULL
-        );
-        return 0;
-    }
-
-    int fd;
-    if(exclusive) {
-        fd = open_exclusive(full_path, O_RDONLY|O_NOFOLLOW, 0);
-    } else {
-        fd = open(full_path, O_RDONLY|O_NOFOLLOW);
-    }
-    if(fd<0) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot open json file",
-            "path",         "%s", full_path,
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
-        return 0;
-    }
-
-    json_t *jn = json_loadfd(fd, 0, 0);
-    if(!jn) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_JSON_ERROR,
-            "msg",          "%s", "Cannot load json file, bad json",
-            NULL
-        );
-        close(fd);
-        return 0;
-    }
-    if(!exclusive) {
-        close(fd);
-    } else {
-        if(pfd) {
-            *pfd = fd;
-        }
-    }
-    return jn;
-}
-
-/***************************************************************************
  *
  ***************************************************************************/
 PRIVATE json_t *load_variable_json(
@@ -192,7 +118,7 @@ PRIVATE json_t *load_variable_json(
      *  Full path
      */
     char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
+    build_path2(full_path, sizeof(full_path), directory, filename);
 
     if(access(full_path, 0)!=0) {
         return 0;
@@ -226,89 +152,6 @@ PRIVATE json_t *load_variable_json(
     }
     close(fd);
     return jn;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int save_json(
-    const char *directory,
-    const char *filename,
-    int xpermission,
-    int rpermission,
-    log_opt_t on_critical_error,
-    BOOL create,        // Create file if not exists or overwrite.
-    BOOL only_read,
-    json_t *jn_data     // owned
-)
-{
-    /*-----------------------------------*
-     *  Create directory if not exists
-     *-----------------------------------*/
-    if(!is_directory(directory)) {
-        if(!create) {
-            JSON_DECREF(jn_data);
-            return -1;
-        }
-        if(mkrdir(directory, 0, xpermission)<0) {
-            log_critical(on_critical_error,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "Cannot create directory",
-                "directory",    "%s", directory,
-                "errno",        "%s", strerror(errno),
-                NULL
-            );
-            JSON_DECREF(jn_data);
-            return -1;
-        }
-    }
-
-    /*
-     *  Full path
-     */
-    char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
-
-    /*
-     *  Create file
-     */
-    int fp = newfile(full_path, rpermission, create);
-    if(fp < 0) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot create json file",
-            "filename",     "%s", full_path,
-            "errno",        "%d", errno,
-            "serrno",       "%s", strerror(errno),
-            NULL
-        );
-        JSON_DECREF(jn_data);
-        return -1;
-    }
-
-    if(json_dumpfd(jn_data, fp, JSON_INDENT(4))<0) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_JSON_ERROR,
-            "msg",          "%s", "Cannot write in json file",
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
-        JSON_DECREF(jn_data);
-        return -1;
-    }
-    close(fp);
-    if(only_read) {
-        chmod(full_path, 0440);
-    }
-    JSON_DECREF(jn_data);
-
-    return 0;
 }
 
 /***************************************************************************
@@ -405,14 +248,14 @@ PUBLIC json_t *tranger_startup(
          *  I'm MASTER
          */
         const char *filename_mask = kw_get_str(tranger, "filename_mask", "%Y-%m-%d", KW_REQUIRED);
-        int rpermission = kw_get_int(tranger, "rpermission", 02770, KW_REQUIRED);
-        int xpermission = kw_get_int(tranger, "xpermission", 0660, KW_REQUIRED);
+        int xpermission = kw_get_int(tranger, "xpermission", 02770, KW_REQUIRED);
+        int rpermission = kw_get_int(tranger, "rpermission", 0660, KW_REQUIRED);
         json_t *jn_tranger = json_object();
         kw_get_str(jn_tranger, "database", database, KW_CREATE);
         kw_get_str(jn_tranger, "filename_mask", filename_mask, KW_CREATE);
         kw_get_int(jn_tranger, "rpermission", rpermission, KW_CREATE);
         kw_get_int(jn_tranger, "xpermission", xpermission, KW_CREATE);
-        save_json(
+        save_json_to_file(
             directory,
             "__timeranger__.json",
             xpermission,
@@ -440,9 +283,7 @@ PUBLIC json_t *tranger_startup(
     kw_get_dict(tranger, "fd_opened_files", json_object(), KW_CREATE);
     kw_get_dict(tranger, "topics", json_object(), KW_CREATE);
 
-    if(fd != -1) {
-        kw_set_subdict_value(tranger, "fd_opened_files", "__timeranger__.json", json_integer(fd));
-    }
+    kw_set_subdict_value(tranger, "fd_opened_files", "__timeranger__.json", json_integer(fd));
 
     return tranger;
 }
@@ -627,7 +468,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
             jn_topic_desc, // owned
             topic_fieds
         );
-        save_json(
+        save_json_to_file(
             directory,
             "topic_desc.json",
             kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
@@ -1455,7 +1296,7 @@ PUBLIC int tranger_write_topic_var(
         kw_update_except(topic, topic_var, topic_fieds); // data from topic disk are inmutable!
     }
 
-    save_json(
+    save_json_to_file(
         directory,
         "topic_var.json",
         kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
@@ -1530,7 +1371,7 @@ PUBLIC int tranger_write_topic_cols(
         );
     }
 
-    save_json(
+    save_json_to_file(
         directory,
         "topic_cols.json",
         kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),

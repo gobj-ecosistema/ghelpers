@@ -1074,6 +1074,80 @@ PUBLIC json_t *create_json_record(
 }
 
 /***************************************************************************
+ *  If exclusive then let file opened and return the fd, else close the file
+ ***************************************************************************/
+PUBLIC json_t *load_persistent_json(
+    const char *directory,
+    const char *filename,
+    log_opt_t on_critical_error,
+    int *pfd,
+    BOOL exclusive
+)
+{
+    if(pfd) {
+        *pfd = -1;
+    }
+
+    /*
+     *  Full path
+     */
+    char full_path[PATH_MAX];
+    build_path2(full_path, sizeof(full_path), directory, filename);
+
+    if(access(full_path, 0)!=0) {
+        log_critical(on_critical_error,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "Cannot load json, file not exist.",
+            "path",         "%s", full_path,
+            NULL
+        );
+        return 0;
+    }
+
+    int fd;
+    if(exclusive) {
+        fd = open_exclusive(full_path, O_RDONLY|O_NOFOLLOW, 0);
+    } else {
+        fd = open(full_path, O_RDONLY|O_NOFOLLOW);
+    }
+    if(fd<0) {
+        log_critical(on_critical_error,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "Cannot open json file",
+            "path",         "%s", full_path,
+            "errno",        "%s", strerror(errno),
+            NULL
+        );
+        return 0;
+    }
+
+    json_t *jn = json_loadfd(fd, 0, 0);
+    if(!jn) {
+        log_critical(on_critical_error,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_JSON_ERROR,
+            "msg",          "%s", "Cannot load json file, bad json",
+            NULL
+        );
+        close(fd);
+        return 0;
+    }
+    if(!exclusive) {
+        close(fd);
+    } else {
+        if(pfd) {
+            *pfd = fd;
+        }
+    }
+    return jn;
+}
+
+/***************************************************************************
  *
  ***************************************************************************/
 PUBLIC json_t *load_json_from_file(
@@ -1086,11 +1160,7 @@ PUBLIC json_t *load_json_from_file(
      *  Full path
      */
     char full_path[PATH_MAX];
-    if(empty_string(filename)) {
-        snprintf(full_path, sizeof(full_path), "%s", directory);
-    } else {
-        snprintf(full_path, sizeof(full_path), "%s/%s", directory, filename);
-    }
+    build_path2(full_path, sizeof(full_path), directory, filename);
 
     if(access(full_path, 0)!=0) {
         return 0;

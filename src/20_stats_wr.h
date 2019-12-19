@@ -25,21 +25,16 @@ extern "C"{
 
    Config:
         path:                   string, directory of stats data.
-        group:                  string, optional, to group metrics in group directory.
-
         xpermission:            int,  Used in directory creation, default 02770
         rpermission:            int,  Used in file creation, default 0660
         on_critical_error:      int,  default "0" LOG_NONE
 
-        metrics:                dict
-            key:                metric_name, list of dicts
-                id:             string, metric type id
-                metric_type:    string, ["average", "min", "max", "sum"], default: ""
-                value_type:     json_real or json_integer
-                filename_mask   string, mask of file
-                time_mask       string, mask of time
+**rst**/
+PUBLIC json_t *wstats_open(
+    json_t *jn_stats  // owned
+);
 
-
+/**rst**
     Masks:
         "SEC"   "%S"    Seconds         [00-60] (1 leap second)
         "MIN"   "%M"    Minutes         [00-59]
@@ -51,9 +46,26 @@ extern "C"{
         "YDAY"  "%j"    Days in year    [001-366]
         "CENT"  "%C"    The century     (year/100) as a 2-digit integer);
 
+   Add new metric
+
+   jn_metric:           dict
+        metric_name:        string, metric name
+        version:            string/numeric, metric version
+        group:              string, optional, to group metrics in group directory.
+        types:              key: list of dicts
+            [
+                {
+                    id:             string, metric type id
+                    metric_type:    string, ["average", "min", "max", "sum"], default: ""
+                    value_type:     json_real or json_integer
+                    filename_mask   string, mask of file
+                    time_mask       string, mask of time
+                }
+            ]
 **rst**/
-PUBLIC json_t *wstats_open(
-    json_t *jn_config  // owned
+PUBLIC json_t *wstats_add_metric( // Return is NOT YOURS
+    json_t *stats,
+    json_t *jn_metric  // owned
 );
 
 /**rst**

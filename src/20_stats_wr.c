@@ -28,6 +28,14 @@
 /***************************************************************
  *              Data
  ***************************************************************/
+static const json_desc_t stats_json_desc[] = {
+// Name                 Type    Default
+{"path",                "str",  ""}, // If database exists then only needs (path,[database]) params
+{"xpermission" ,        "int",  "02770"}, // Use in creation, default 02770;
+{"rpermission",         "int",  "0660"}, // Use in creation, default 0660;
+{"on_critical_error",   "int",  "0"},  // Volatil, default LOG_NONE (Zero to avoid restart)
+{0}
+};
 /***************************************************************************
  *  Get filename by time mask, using UTC or local time
  ***************************************************************************/
@@ -68,10 +76,10 @@ PRIVATE const char *filtra_file_mask(const char *prefix, const char *mask)
    Open simple stats
  ***************************************************************************/
 PUBLIC json_t *wstats_open(
-    json_t *jn_config  // owned
+    json_t *jn_stats  // owned
 )
 {
-    const char *path = kw_get_str(jn_config, "path", "", 0);
+    const char *path = kw_get_str(jn_stats, "path", "", 0);
     if(empty_string(path)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -83,16 +91,95 @@ PUBLIC json_t *wstats_open(
             "msg",          "%s", "stats path EMPTY",
             NULL
         );
-        JSON_DECREF(jn_config);
+        JSON_DECREF(jn_stats);
         return 0;
     }
 
-    const char *group = kw_get_str(jn_config, "group", "", KW_CREATE);
-    json_int_t xpermission = kw_get_int(jn_config, "xpermission", 02770, KW_CREATE);
-    json_int_t rpermission = kw_get_int(jn_config, "rpermission", 0660, KW_CREATE);
-    json_int_t on_critical_error = kw_get_int(jn_config, "on_critical_error", 0, KW_CREATE);
-    json_t *jn_metrics = kw_get_dict(jn_config, "metrics", 0, 0);
-    if(json_object_size(jn_metrics)==0) {
+    json_t *stats = create_json_record(stats_json_desc);
+    json_object_update_existing(stats, jn_stats);
+    JSON_DECREF(jn_stats);
+
+    /*-------------------------------------*
+     *  Build stats directory and
+     *  __simple_stats__.json metadata file
+     *-------------------------------------*/
+    json_int_t on_critical_error = kw_get_int(stats, "on_critical_error", 0, 0);
+
+    char directory[PATH_MAX];
+    build_path2(
+        directory,
+        sizeof(directory),
+        path,
+        ""
+    );
+    kw_set_dict_value(stats, "directory", json_string(directory));
+
+    int fd = -1;
+    if(file_exists(directory, "__simple_stats__.json")) {
+        json_t *jn_disk = load_persistent_json(
+            directory,
+            "__simple_stats__.json",
+            on_critical_error,
+            &fd,
+            TRUE //exclusive
+        );
+        json_object_update_existing(stats, jn_disk);
+        JSON_DECREF(jn_disk);
+    } else {
+        /*
+         *  I'm MASTER
+         */
+        int xpermission = kw_get_int(stats, "xpermission", 02770, KW_REQUIRED);
+        int rpermission = kw_get_int(stats, "rpermission", 0660, KW_REQUIRED);
+        json_t *jn_stats = json_object();
+        kw_get_int(jn_stats, "rpermission", rpermission, KW_CREATE);
+        kw_get_int(jn_stats, "xpermission", xpermission, KW_CREATE);
+        save_json_to_file(
+            directory,
+            "__simple_stats__.json",
+            xpermission,
+            rpermission,
+            on_critical_error,
+            TRUE,   //create
+            TRUE,  //only_read
+            jn_stats  // owned
+        );
+        // Re-open
+        json_t *jn_disk = load_persistent_json(
+            directory,
+            "__simple_stats__.json",
+            on_critical_error,
+            &fd,
+            TRUE //exclusive
+        );
+        json_object_update_existing(stats, jn_disk);
+        JSON_DECREF(jn_disk);
+    }
+
+    /*
+     *  Load Only read, volatil, defining in run-time
+     */
+    kw_get_dict(stats, "file_opened_files", json_object(), KW_CREATE);
+    kw_get_dict(stats, "fd_opened_files", json_object(), KW_CREATE);
+    kw_get_dict(stats, "metrics", json_object(), KW_CREATE);
+
+    kw_set_subdict_value(stats, "fd_opened_files", "__simple_stats__.json", json_integer(fd));
+
+    return stats;
+}
+
+/***************************************************************************
+   Add new metric
+ ***************************************************************************/
+PUBLIC json_t *wstats_add_metric(
+    json_t *stats,
+    json_t *jn_metric  // owned
+)
+{
+    const char *metric_name = kw_get_str(jn_metric, "metric_name", "", KW_REQUIRED);
+    const char *group = kw_get_str(jn_metric, "group", "", 0);
+    json_int_t version = kw_get_int(jn_metric, "version", -1, KW_WILD_NUMBER);
+    if(empty_string(metric_name)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -100,226 +187,177 @@ PUBLIC json_t *wstats_open(
             "hostname",     "%s", get_host_name(),
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "No metrics",
+            "msg",          "%s", "metric name EMPTY",
             NULL
         );
-        JSON_DECREF(jn_config);
+        JSON_DECREF(jn_metric);
         return 0;
     }
 
-    /*-------------------------------*
-     *      Check directory
-     *-------------------------------*/
-    char directory[PATH_MAX];
-    if(!empty_string(group)) {
-        snprintf(
-            directory,
-            sizeof(directory),
-            "%s%s%s",
-            path,
-            (path[strlen(path)-1]=='/')?"":"/",
-            group
-        );
-    } else {
-        snprintf(
-            directory,
-            sizeof(directory),
-            "%s",
-            path
-        );
-    }
-    if(directory[strlen(directory)-1]=='/') {
-        directory[strlen(directory)-1] = 0;
-    }
+    /*
+     *  Recover stats parameters
+     */
+    const char *directory = kw_get_str(stats, "directory", "", KW_REQUIRED);
+    int xpermission = kw_get_int(stats, "xpermission", 0660, KW_REQUIRED);
+    int rpermission = kw_get_int(stats, "rpermission", 0660, KW_REQUIRED);
+    json_int_t on_critical_error = kw_get_int(stats, "on_critical_error", 0, 0);
+    json_t *metrics = kw_get_dict(stats, "metrics", 0, KW_REQUIRED);
+    json_t *metric = 0;
 
-    if(!is_directory(directory)) {
-        /*-------------------------------*
-         *  Create directory
-         *-------------------------------*/
-        if(mkrdir(directory, 0, xpermission)<0) {
-            log_critical(on_critical_error,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
-                "path",         "%s", directory,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "Cannot create directory",
-                "errno",        "%s", strerror(errno),
-                NULL
+    if(empty_string(group)) {
+        if(kw_has_key(metrics, metric_name)) {
+            metric = kw_get_dict(metrics, metric_name, 0, 0);
+            json_int_t old_version = kw_get_int(
+                metric,
+                "version",
+                -1,
+                KW_WILD_NUMBER
             );
-            JSON_DECREF(jn_config);
-            return 0;
-        }
-    }
 
-    /*-------------------------------*
-     *  Open lock file
-     *-------------------------------*/
-    char lockfilename[PATH_MAX];
-    snprintf(
-        lockfilename,
-        sizeof(lockfilename),
-        "%s/%s",
-        directory,
-        "__simple_stats__.json"
-    );
-    int fpx = open_exclusive(lockfilename, O_CREAT|O_WRONLY, rpermission);
-    if(fpx < 0) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "path",         "%s", directory,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot create lockfilename",
-            "lockfilename", "%s", lockfilename,
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
-        JSON_DECREF(jn_config);
-        return 0;
-    }
-
-    /*-------------------------------*
-     *  Create stats
-     *-------------------------------*/
-    const char *keys[] = {
-        "path",
-        "group",
-        "xpermission",
-        "rpermission",
-        "on_critical_error",
-        "metrics",
-        0
-    };
-    json_t *jn_dup_config = kw_clone_by_path(
-        jn_config, // owned
-        keys
-    );
-    if(json_dumpfd(jn_dup_config, fpx, JSON_INDENT(4))<0) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "path",         "%s", directory,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "json_dumpfd() FAILED",
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
-    }
-
-    json_t *stats = json_object();
-    json_object_set_new(stats, "directory", json_string(directory));
-    json_object_set_new(
-        stats,
-        "config",
-        jn_dup_config  // owned
-    );
-
-    kw_get_dict(stats, "file_opened_files", json_object(), KW_CREATE);
-    kw_get_dict(stats, "fd_opened_files", json_object(), KW_CREATE);
-
-    json_object_set_new(
-        kw_get_dict(stats, "fd_opened_files", 0, KW_REQUIRED),
-        lockfilename,
-        json_integer((json_int_t)fpx)
-    );
-
-    /*-------------------------------*
-     *  Crea las métricas
-     *-------------------------------*/
-    json_t *metrics = kw_get_dict(stats, "metrics", json_object(), KW_CREATE);
-
-    const char *name;
-    json_t *jn_metric;
-    json_object_foreach(jn_metrics, name, jn_metric) {
-        if(empty_string(name)) {
-            continue;
-        }
-        /*
-         *  Deja aquí la creación de subdirs para permitir nuevas métricas
-         */
-        char subdir[PATH_MAX];
-        snprintf(
-            subdir,
-            sizeof(subdir),
-            "%s/%s",
-            directory,
-            name
-        );
-        if(!is_directory(subdir)) {
-            if(mkrdir(subdir, 0, xpermission)<0) {
-                log_critical(on_critical_error,
+            if(version <= old_version) {
+                log_error(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "process",      "%s", get_process_name(),
                     "hostname",     "%s", get_host_name(),
                     "pid",          "%d", get_pid(),
-                    "path",         "%s", subdir,
-                    "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                    "msg",          "%s", "Cannot create directory",
-                    "errno",        "%s", strerror(errno),
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "metric ALREADY exits",
+                    "metric_name",  "%s", metric_name,
                     NULL
                 );
-                json_decref(stats);
+                JSON_DECREF(jn_metric);
                 return 0;
             }
+            kw_delete(metrics, metric_name);
         }
+        metric = kw_get_dict(metrics, metric_name, json_object(), KW_CREATE);
 
-        json_t *metric = kw_get_dict(metrics, name, json_object(), KW_CREATE);
-        kw_get_str(metric, "directory", subdir, KW_CREATE);
-        kw_get_int(metric, "last_t", 0, KW_CREATE);
-
-        json_t *masks = kw_get_list(metric, "masks", json_array(), KW_CREATE);
-        int idx;
-        json_t *jn_mask;
-        json_array_foreach(jn_metric, idx, jn_mask) {
-            json_t *mask = json_object();
-            const char *id = kw_get_str(mask, "id",
-                kw_get_str(jn_mask, "id", 0, KW_REQUIRED),
-                KW_CREATE
-            );
-            kw_get_str(mask, "metric_type",
-                kw_get_str(jn_mask, "metric_type", "average", KW_REQUIRED),
-                KW_CREATE
-            );
-            kw_get_dict_value(mask, "value_type",
-                kw_get_dict_value(jn_mask, "value_type", json_integer(0), KW_REQUIRED),
-                KW_CREATE
-            );
-            kw_get_str(mask, "filename_mask",
-                filtra_file_mask(id,
-                    filtra_time_mask(kw_get_str(jn_mask, "filename_mask", "MON", KW_REQUIRED))
-                ),
-                KW_CREATE
-            );
-            kw_get_str(mask, "time_mask",
-                filtra_time_mask(kw_get_str(jn_mask, "time_mask", "MIN", KW_REQUIRED)),
-                KW_CREATE
+    } else {
+        if(kw_has_key(metrics, group) && kw_has_subkey(metrics, group, metric_name)) {
+            metric = kw_get_subdict_value(metrics, group, metric_name, 0, 0);
+            json_int_t old_version = kw_get_int(
+                metric,
+                "version",
+                -1,
+                KW_WILD_NUMBER
             );
 
-            kw_get_str(mask, "filename", "", KW_CREATE);
-            kw_get_str(mask, "stime", "", KW_CREATE);
-
-            json_t *value_type = kw_get_dict_value(mask, "value_type", 0, KW_REQUIRED);
-            if(json_is_real(value_type)) {
-                kw_get_real(mask, "value", 0, KW_CREATE);
-            } else {
-                kw_get_int(mask, "value", 0, KW_CREATE);
+            if(version <= old_version) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "process",      "%s", get_process_name(),
+                    "hostname",     "%s", get_host_name(),
+                    "pid",          "%d", get_pid(),
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "metric of group ALREADY exits",
+                    "metric_name",  "%s", metric_name,
+                    "group",        "%s", group,
+                    NULL
+                );
+                JSON_DECREF(jn_metric);
+                return 0;
             }
-            json_array_append_new(masks, mask);
+            kw_delete_subkey(metrics, group, metric_name);
         }
+        metric = kw_get_subdict_value(metrics, group, metric_name, json_object(), KW_CREATE);
     }
 
-    //log_debug_json(0, stats, "__simple_stats__.json");
-    return stats;
+    /*
+     *  Check if already exists
+     */
+    char subdir[PATH_MAX];
+    build_path3(subdir, sizeof(subdir), directory, group, metric_name);
+
+    do {
+        if(file_exists(subdir, "__metric__.json")) {
+            json_t *old_jn_metric = load_json_from_file(
+                subdir,
+                "__metric__.json",
+                on_critical_error
+            );
+            json_int_t old_version = kw_get_int(
+                old_jn_metric,
+                "version",
+                -1,
+                KW_WILD_NUMBER
+            );
+            if(version <= old_version) {
+                JSON_DECREF(jn_metric);
+                jn_metric = old_jn_metric;
+                break;
+            }
+            JSON_DECREF(old_jn_metric);
+        }
+        log_info(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INFO,
+            "msg",          "%s", "Creating Metric file.",
+            "metric_name",  "%s", metric_name,
+            "metric_subdir",  "%s", subdir,
+            NULL
+        );
+        JSON_INCREF(jn_metric);
+        save_json_to_file(
+            subdir,
+            "__metric__.json",
+            xpermission,
+            rpermission,
+            on_critical_error,
+            TRUE,       // Create file if not exists or overwrite.
+            FALSE,      // only_read
+            jn_metric   // owned
+        );
+    } while(0);
+
+    kw_get_str(metric, "directory", subdir, KW_CREATE);
+    kw_get_int(metric, "last_t", 0, KW_CREATE);
+
+    json_t *types = kw_get_dict_value(jn_metric, "types", 0, KW_REQUIRED);
+    json_t *masks = kw_get_list(metric, "masks", json_array(), KW_CREATE);
+    int idx;
+    json_t *jn_mask;
+    json_array_foreach(types, idx, jn_mask) {
+        json_t *mask = json_object();
+        const char *id = kw_get_str(mask, "id",
+            kw_get_str(jn_mask, "id", 0, KW_REQUIRED),
+            KW_CREATE
+        );
+        kw_get_str(mask, "metric_type",
+            kw_get_str(jn_mask, "metric_type", "average", KW_REQUIRED),
+            KW_CREATE
+        );
+        kw_get_dict_value(mask, "value_type",
+            kw_get_dict_value(jn_mask, "value_type", json_integer(0), KW_REQUIRED),
+            KW_CREATE
+        );
+        kw_get_str(mask, "filename_mask",
+            filtra_file_mask(id,
+                filtra_time_mask(kw_get_str(jn_mask, "filename_mask", "MON", KW_REQUIRED))
+            ),
+            KW_CREATE
+        );
+        kw_get_str(mask, "time_mask",
+            filtra_time_mask(kw_get_str(jn_mask, "time_mask", "MIN", KW_REQUIRED)),
+            KW_CREATE
+        );
+
+        kw_get_str(mask, "filename", "", KW_CREATE);
+        kw_get_str(mask, "stime", "", KW_CREATE);
+
+        json_t *value_type = kw_get_dict_value(mask, "value_type", 0, KW_REQUIRED);
+        if(json_is_real(value_type)) {
+            kw_get_real(mask, "value", 0, KW_CREATE);
+        } else {
+            kw_get_int(mask, "value", 0, KW_CREATE);
+        }
+        json_array_append_new(masks, mask);
+    }
+
+    JSON_DECREF(jn_metric);
+    return metric;
 }
 
 /***************************************************************************
