@@ -2390,9 +2390,7 @@ PUBLIC int kw_put_propagated_key_values(
     json_t *jn_value;
     json_object_foreach(propagated_keys, key, jn_value) {
         json_incref(jn_value);
-print_json(kw);
         kw_set_key_value(kw, pkey, key, jn_value);
-print_json(kw);
     }
 
     json_decref(propagated_keys);
@@ -2417,6 +2415,7 @@ PUBLIC int kw_set_key_value(
             "path",         "%s", path,
             NULL
         );
+        JSON_DECREF(value);
         return -1;
     }
 
@@ -2442,6 +2441,7 @@ PUBLIC int kw_set_key_value(
                     "pkey",         "%s", segment,
                     NULL
                 );
+                JSON_DECREF(value);
                 return -1;
             }
         } else {
@@ -2467,6 +2467,7 @@ PUBLIC int kw_set_key_value(
             "path",         "%s", path,
             NULL
         );
+        JSON_DECREF(value);
         return -1;
     }
 }

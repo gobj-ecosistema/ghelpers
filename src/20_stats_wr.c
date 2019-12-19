@@ -234,7 +234,8 @@ PUBLIC json_t *wstats_add_metric(
         metric = kw_get_dict(metrics, metric_name, json_object(), KW_CREATE);
 
     } else {
-        if(kw_has_key(metrics, group) && kw_has_subkey(metrics, group, metric_name)) {
+        kw_get_dict(metrics, group, json_object(), KW_CREATE);
+        if(kw_has_subkey(metrics, group, metric_name)) {
             metric = kw_get_subdict_value(metrics, group, metric_name, 0, 0);
             json_int_t old_version = kw_get_int(
                 metric,
@@ -329,8 +330,11 @@ PUBLIC json_t *wstats_add_metric(
             kw_get_str(jn_mask, "metric_type", "average", KW_REQUIRED),
             KW_CREATE
         );
+
+        json_t *value_type = kw_get_dict_value(jn_mask, "value_type", json_integer(0), KW_REQUIRED);
+        JSON_INCREF(value_type);
         kw_get_dict_value(mask, "value_type",
-            kw_get_dict_value(jn_mask, "value_type", json_integer(0), KW_REQUIRED),
+            value_type,
             KW_CREATE
         );
         kw_get_str(mask, "filename_mask",
@@ -347,7 +351,6 @@ PUBLIC json_t *wstats_add_metric(
         kw_get_str(mask, "filename", "", KW_CREATE);
         kw_get_str(mask, "stime", "", KW_CREATE);
 
-        json_t *value_type = kw_get_dict_value(mask, "value_type", 0, KW_REQUIRED);
         if(json_is_real(value_type)) {
             kw_get_real(mask, "value", 0, KW_CREATE);
         } else {
@@ -822,7 +825,8 @@ PUBLIC int wstats_restore(
     if(!jn_data) {
         return -1;
     }
-    return kw_put_propagated_key_values(stats, "id", jn_data);
+    int ret = kw_put_propagated_key_values(stats, "id", jn_data);
+    return ret;
 }
 
 
