@@ -81,6 +81,7 @@ PUBLIC void wstats_close(
 PUBLIC void wstats_add_value(
     json_t *stats,
     const char *metric_name,
+    const char *group,
     time_t t,   // UTC time
     json_t *jn_value
 );

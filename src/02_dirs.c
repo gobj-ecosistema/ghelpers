@@ -192,6 +192,21 @@ PUBLIC BOOL file_exists(const char *directory, const char *filename)
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC BOOL subdir_exists(const char *directory, const char *subdir)
+{
+    char full_path[PATH_MAX];
+    build_path2(full_path, sizeof(full_path), directory, subdir);
+
+    if(is_directory(full_path)) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC int file_remove(const char *directory, const char *filename)
 {
     char full_path[PATH_MAX];

@@ -626,6 +626,7 @@ PRIVATE json_t *calculate_value(
 PUBLIC void wstats_add_value(
     json_t *stats,
     const char *metric_name,
+    const char *group,
     time_t t,   // UTC time
     json_t *jn_value  // owned
 )
@@ -646,13 +647,28 @@ PUBLIC void wstats_add_value(
         return;
     }
 
-    json_t *metric = json_object_get(
-        json_object_get(
-            stats,
-            "metrics"
-        ),
-        metric_name
-    );
+    json_t *metric = 0;
+    if(empty_string(group)) {
+        metric = json_object_get(
+            json_object_get(
+                stats,
+                "metrics"
+            ),
+            metric_name
+        );
+    } else {
+        metric = json_object_get(
+            json_object_get(
+                json_object_get(
+                    stats,
+                    "metrics"
+                ),
+                group
+            ),
+            metric_name
+        );
+    }
+
     if(!metric) {
         log_error(0,
             "gobj",         "%s", __FILE__,

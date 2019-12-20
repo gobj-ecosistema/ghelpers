@@ -40,6 +40,7 @@ PUBLIC int unlock_file(int fd);
 PUBLIC BOOL is_regular_file(const char *path);
 PUBLIC BOOL is_directory(const char *path);
 PUBLIC BOOL file_exists(const char *directory, const char *filename);
+PUBLIC BOOL subdir_exists(const char *directory, const char *subdir);
 PUBLIC int file_remove(const char *directory, const char *filename);
 
 PUBLIC int mkrdir(const char *path, int index, int permission);

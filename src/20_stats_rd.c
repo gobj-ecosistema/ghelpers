@@ -54,40 +54,10 @@ PUBLIC json_t *rstats_open(
     /*-------------------------------*
      *      Check directory
      *-------------------------------*/
-    char directory[PATH_MAX];
-    if(!empty_string(group)) {
-        snprintf(
-            directory,
-            sizeof(directory),
-            "%s%s%s",
-            path,
-            (path[strlen(path)-1]=='/')?"":"/",
-            group
-        );
-    } else {
-        snprintf(
-            directory,
-            sizeof(directory),
-            "%s",
-            path
-        );
-    }
-    if(directory[strlen(directory)-1]=='/') {
-        directory[strlen(directory)-1] = 0;
-    }
-
-    if(!is_directory(directory)) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Directory not found",
-            "path",         "%s", directory,
-            NULL
-        );
+    char lockfilename[PATH_MAX];
+    build_path2(lockfilename, sizeof(lockfilename), path, "__simple_stats__.json");
+    if(!is_regular_file(lockfilename)) {
+        printf("Stats not found: '%s'\n", lockfilename);
         JSON_DECREF(jn_config);
         return 0;
     }
@@ -95,30 +65,11 @@ PUBLIC json_t *rstats_open(
     /*-------------------------------*
      *  Open stats
      *-------------------------------*/
-    char lockfilename[PATH_MAX];
-    snprintf(
-        lockfilename,
-        sizeof(lockfilename),
-        "%s/%s",
-        directory,
-        "__simple_stats__.json"
-    );
-
     size_t flags = 0;
     json_error_t error;
     json_t *jn_stats = json_load_file(lockfilename, flags, &error);
     if(!jn_stats) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot load __simple_stats__.json",
-            "path",         "%s", lockfilename,
-            NULL
-        );
+        printf("Bad json in stats filename: '%s'\n", lockfilename);
         JSON_DECREF(jn_config);
         return 0;
     }
@@ -132,13 +83,12 @@ PUBLIC json_t *rstats_open(
         keys
     );
 
-    kw_get_str(stats, "directory", directory, KW_CREATE);
+    kw_get_str(stats, "directory", path, KW_CREATE);
     kw_get_dict(stats, "file_opened_files", json_object(), KW_CREATE);
     kw_get_dict(stats, "fd_opened_files", json_object(), KW_CREATE);
 
     JSON_DECREF(jn_config);
 
-    //log_debug_json(0, stats, "__simple_stats__.json");
     return stats;
 }
 
