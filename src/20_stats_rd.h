@@ -27,11 +27,11 @@ extern "C"{
 
    Config:
         path:                   string, directory of stats data.
-        group:                  string, optional, to group metrics in group directory.
+        groups:                 string, [string,], optional, read metric belong to groups.
 
 **rst**/
 PUBLIC json_t *rstats_open(
-    json_t *jn_config  // owned
+    json_t *jn_stats  // owned
 );
 
 /**rst**
@@ -190,7 +190,7 @@ PUBLIC void rstats_close(
     }
 
 **rst**/
-PUBLIC json_t *rstats_metrics(
+PUBLIC json_t *rstats_metrics( // Return must be used in below functions
     json_t *stats
 );
 

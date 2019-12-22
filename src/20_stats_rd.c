@@ -26,14 +26,110 @@
 /***************************************************************
  *              Data
  ***************************************************************/
+
+/***************************************************************************
+    Example of __metric__.json
+    {
+        "metric_name": "dbwrite-queue-0",
+        "version": "1",
+        "group": "queues",
+        "types": [
+            {
+                "id": "last_week_in_seconds",
+                "metric_type": "",
+                "value_type": 0.0,
+                "filename_mask": "WDAY",
+                "time_mask": "SEC"
+            }
+        ],
+        "database": "dbwriter^10220"
+    }
+***************************************************************************/
+PRIVATE BOOL read_metric_cb(
+    void *user_data,
+    wd_found_type type,     // type found
+    char *fullpath,         // directory+filename found
+    const char *directory,  // directory of found filename
+    char *name,             // dname[256]
+    int level,              // level of tree where file found
+    int index               // index of file inside of directory, relative to 0
+)
+{
+    json_t *stats = user_data;
+
+    json_t *jn_metric = load_json_from_file(
+        directory,
+        "__metric__.json",
+        0
+    );
+    if(!jn_metric) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Cannot load metric json file",
+            "path",         "%s", fullpath,
+            NULL
+        );
+        return TRUE; // to continue
+    }
+
+    json_t *metrics = kw_get_dict(stats, "metrics", 0, KW_REQUIRED);
+    json_t *groups = kw_get_list(stats, "groups", 0, KW_REQUIRED);
+
+    const char *database = kw_get_str(jn_metric, "database", "", KW_REQUIRED);
+    const char *metric_name = kw_get_str(jn_metric, "metric_name", "", KW_REQUIRED);
+    const char *group = kw_get_str(jn_metric, "group", 0, 0);
+    json_t *types = kw_get_list(jn_metric, "types", 0, KW_REQUIRED);
+
+    char id[NAME_MAX];
+    if(json_array_size(groups)>0) {
+        // Add only if his group is in the list
+        if(!empty_string(group) && json_str_in_list(groups, group, TRUE)) {
+            snprintf(id, sizeof(id), "%s.%s.%s",
+                group,
+                database,
+                metric_name
+            );
+            json_object_set(metrics, id, types);
+        }
+    } else {
+        snprintf(id, sizeof(id), "%s.%s.%s",
+            group,
+            database,
+            metric_name
+        );
+        json_object_set(metrics, id, types);
+    }
+
+    JSON_DECREF(jn_metric);
+    return TRUE; // to continue
+}
+
+PRIVATE int load_metrics(json_t *stats)
+{
+    return walk_dir_tree(
+        kw_get_str(stats, "directory", "", KW_REQUIRED),
+        "__metric__\\.json",
+        WD_RECURSIVE|WD_MATCH_REGULAR_FILE,
+        read_metric_cb,
+        stats
+    );
+
+}
+
 /***************************************************************************
    Open simple stats, as client. Only read.
  ***************************************************************************/
 PUBLIC json_t *rstats_open(
-    json_t *jn_config  // owned
+    json_t *jn_stats  // owned
 )
 {
-    const char *path = kw_get_str(jn_config, "path", "", 0);
+    const char *path = kw_get_str(jn_stats, "path", "", 0);
+    json_t *groups = kw_get_dict_value(jn_stats, "groups", 0, 0); // Can be string or [string]
     if(empty_string(path)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -45,49 +141,37 @@ PUBLIC json_t *rstats_open(
             "msg",          "%s", "stats path EMPTY",
             NULL
         );
-        JSON_DECREF(jn_config);
+        JSON_DECREF(jn_stats);
         return 0;
     }
 
-    const char *group = kw_get_str(jn_config, "group", "", KW_CREATE);
-
-    /*-------------------------------*
-     *      Check directory
-     *-------------------------------*/
-    char lockfilename[PATH_MAX];
-    build_path2(lockfilename, sizeof(lockfilename), path, "__simple_stats__.json");
-    if(!is_regular_file(lockfilename)) {
-        printf("Stats not found: '%s'\n", lockfilename);
-        JSON_DECREF(jn_config);
-        return 0;
-    }
-
-    /*-------------------------------*
-     *  Open stats
-     *-------------------------------*/
-    size_t flags = 0;
-    json_error_t error;
-    json_t *jn_stats = json_load_file(lockfilename, flags, &error);
-    if(!jn_stats) {
-        printf("Bad json in stats filename: '%s'\n", lockfilename);
-        JSON_DECREF(jn_config);
-        return 0;
-    }
-
-    const char *keys[] = {
-        "metrics",
-        0
-    };
-    json_t *stats = kw_clone_by_path(
-        jn_stats, // owned
-        keys
-    );
-
+    json_t *stats = json_object();
     kw_get_str(stats, "directory", path, KW_CREATE);
+    kw_get_dict(stats, "metrics", json_object(), KW_CREATE);
     kw_get_dict(stats, "file_opened_files", json_object(), KW_CREATE);
     kw_get_dict(stats, "fd_opened_files", json_object(), KW_CREATE);
 
-    JSON_DECREF(jn_config);
+    // Add group decoupled
+    if(!groups) {
+        json_object_set_new(stats, "groups", json_array());
+    } else {
+        if(json_is_string(groups)) {
+            json_t *g = json_array();
+            const char *s = json_string_value(groups);
+            if(!empty_string(s)) {
+                json_array_append_new(g, json_string(s));
+            }
+            json_object_set_new(stats, "groups", g);
+        } else if(json_is_array(groups)) {
+            json_object_set_new(stats, "groups", json_deep_copy(groups));
+        } else {
+            json_object_set_new(stats, "groups", json_array());
+        }
+    }
+
+    load_metrics(stats);
+
+    JSON_DECREF(jn_stats);
 
     return stats;
 }
@@ -477,6 +561,7 @@ PUBLIC json_t *find_metric_by_units(
  ***************************************************************************/
 PUBLIC json_t *rstats_metric(
     json_t *metrics,
+    //const char *group, // TODO add group option
     const char *variable,
     const char *metric_name,
     const char *units,

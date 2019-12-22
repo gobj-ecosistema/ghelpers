@@ -53,6 +53,7 @@ PUBLIC int copyfile(
     BOOL overwrite
 );
 
+PUBLIC char *get_last_segment(char *path);
 PUBLIC char *pop_last_segment(char *path); // WARNING path modified
 
 PUBLIC char *build_path2(

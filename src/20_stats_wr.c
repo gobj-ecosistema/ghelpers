@@ -30,7 +30,7 @@
  ***************************************************************/
 static const json_desc_t stats_json_desc[] = {
 // Name                 Type    Default
-{"path",                "str",  ""}, // If database exists then only needs (path,[database]) params
+{"path",                "str",  ""},
 {"xpermission" ,        "int",  "02770"}, // Use in creation, default 02770;
 {"rpermission",         "int",  "0660"}, // Use in creation, default 0660;
 {"on_critical_error",   "int",  "0"},  // Volatil, default LOG_NONE (Zero to avoid restart)
@@ -134,6 +134,7 @@ PUBLIC json_t *wstats_open(
         json_t *jn_stats = json_object();
         kw_get_int(jn_stats, "rpermission", rpermission, KW_CREATE);
         kw_get_int(jn_stats, "xpermission", xpermission, KW_CREATE);
+
         save_json_to_file(
             directory,
             "__simple_stats__.json",
@@ -159,6 +160,8 @@ PUBLIC json_t *wstats_open(
     /*
      *  Load Only read, volatil, defining in run-time
      */
+    const char *database = get_last_segment(directory);
+    kw_get_str(stats, "database", database, KW_CREATE);
     kw_get_dict(stats, "file_opened_files", json_object(), KW_CREATE);
     kw_get_dict(stats, "fd_opened_files", json_object(), KW_CREATE);
     kw_get_dict(stats, "metrics", json_object(), KW_CREATE);
@@ -266,7 +269,7 @@ PUBLIC json_t *wstats_add_metric(
     }
 
     /*
-     *  Check if already exists
+     *  Check if __metric__.json already exists or create it
      */
     char subdir[PATH_MAX];
     build_path3(subdir, sizeof(subdir), directory, group, metric_name);
@@ -291,13 +294,18 @@ PUBLIC json_t *wstats_add_metric(
             }
             JSON_DECREF(old_jn_metric);
         }
+
+        const char *database = kw_get_str(stats, "database", "", KW_REQUIRED);
+        kw_get_str(jn_metric, "database", database, KW_CREATE);
         log_info(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_INFO,
             "msg",          "%s", "Creating Metric file.",
+            "database",      "%s", database,
             "metric_name",  "%s", metric_name,
-            "metric_subdir",  "%s", subdir,
+            "group",        "%s", group?group:"",
+            "metric_subdir", "%s", subdir,
             NULL
         );
         JSON_INCREF(jn_metric);

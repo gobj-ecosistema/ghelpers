@@ -3,6 +3,40 @@
  *
  *          Simple statistics handler, writer
  *
+ Example of json stats with group "queues"
+{
+    "path": "/yuneta/store/stats/gpss/dbwriter^10120",
+    "xpermission": 1528,
+    "rpermission": 432,
+    "on_critical_error": 0,
+    "directory": "/yuneta/store/stats/gpss/dbwriter^10120",
+    "file_opened_files": {},
+    "fd_opened_files": {
+        "__simple_stats__.json": 32
+    },
+    "metrics": {
+        "queues": {
+            "dbwrite-queue-0": {
+                "directory": "/yuneta/store/stats/gpss/dbwriter^10120/queues/dbwrite-queue-0",
+                "last_t": 1576914259,
+                "masks": [
+                    {
+                        "id": "last_week_in_seconds",
+                        "metric_type": "",
+                        "value_type": 0.0,
+                        "filename_mask": "last_week_in_seconds-%u.dat",
+                        "time_mask": "%S",
+                        "filename": "last_week_in_seconds-6.dat",
+                        "stime": "19",
+                        "value": 0.0
+                    }
+                ]
+            },
+            ...
+        }
+    }
+}
+
  *          Copyright (c) 2018 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
