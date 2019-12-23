@@ -38,7 +38,7 @@
     }
 }
 
- *          Copyright (c) 2018 Niyamaka.
+ *          Copyright (c) 2018,2019 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
 #pragma once
