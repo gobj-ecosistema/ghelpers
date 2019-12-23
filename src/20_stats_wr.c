@@ -37,12 +37,12 @@ static const json_desc_t stats_json_desc[] = {
 {0}
 };
 /***************************************************************************
- *  Get filename by time mask, using UTC or local time
+ *  Get filename by time metric, using UTC or local time
  ***************************************************************************/
 PRIVATE char *render_mask(
     char *bf,
     int bfsize,
-    const char *mask,
+    const char *metric,
     BOOL utc,
     uint64_t __t__
 )
@@ -54,20 +54,20 @@ PRIVATE char *render_mask(
         tm = localtime((time_t *)&__t__);
     }
 
-    strftime(bf, bfsize, mask, tm);
+    strftime(bf, bfsize, metric, tm);
     return bf;
 }
 
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE const char *filtra_file_mask(const char *prefix, const char *mask)
+PRIVATE const char *filtra_file_mask(const char *prefix, const char *metric)
 {
     static char file_mask[NAME_MAX];
 
     snprintf(file_mask, sizeof(file_mask),
         "%s-%s.dat",
-        prefix, mask
+        prefix, metric
     );
     return file_mask;
 }
@@ -164,7 +164,7 @@ PUBLIC json_t *wstats_open(
     kw_get_str(stats, "database", database, KW_CREATE);
     kw_get_dict(stats, "file_opened_files", json_object(), KW_CREATE);
     kw_get_dict(stats, "fd_opened_files", json_object(), KW_CREATE);
-    kw_get_dict(stats, "metrics", json_object(), KW_CREATE);
+    kw_get_dict(stats, "variables", json_object(), KW_CREATE);
 
     kw_set_subdict_value(stats, "fd_opened_files", "__simple_stats__.json", json_integer(fd));
 
@@ -172,17 +172,17 @@ PUBLIC json_t *wstats_open(
 }
 
 /***************************************************************************
-   Add new metric
+   Add new variable
  ***************************************************************************/
-PUBLIC json_t *wstats_add_metric(
+PUBLIC json_t *wstats_add_variable(
     json_t *stats,
-    json_t *jn_metric  // owned
+    json_t *jn_variable  // owned
 )
 {
-    const char *metric_name = kw_get_str(jn_metric, "metric_name", "", KW_REQUIRED);
-    const char *group = kw_get_str(jn_metric, "group", "", 0);
-    json_int_t version = kw_get_int(jn_metric, "version", -1, KW_WILD_NUMBER);
-    if(empty_string(metric_name)) {
+    const char *variable_name = kw_get_str(jn_variable, "variable_name", "", KW_REQUIRED);
+    const char *group = kw_get_str(jn_variable, "group", "", 0);
+    json_int_t version = kw_get_int(jn_variable, "version", -1, KW_WILD_NUMBER);
+    if(empty_string(variable_name)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -190,10 +190,10 @@ PUBLIC json_t *wstats_add_metric(
             "hostname",     "%s", get_host_name(),
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "metric name EMPTY",
+            "msg",          "%s", "variable name EMPTY",
             NULL
         );
-        JSON_DECREF(jn_metric);
+        JSON_DECREF(jn_variable);
         return 0;
     }
 
@@ -204,14 +204,14 @@ PUBLIC json_t *wstats_add_metric(
     int xpermission = kw_get_int(stats, "xpermission", 0660, KW_REQUIRED);
     int rpermission = kw_get_int(stats, "rpermission", 0660, KW_REQUIRED);
     json_int_t on_critical_error = kw_get_int(stats, "on_critical_error", 0, 0);
-    json_t *metrics = kw_get_dict(stats, "metrics", 0, KW_REQUIRED);
-    json_t *metric = 0;
+    json_t *variables = kw_get_dict(stats, "variables", 0, KW_REQUIRED);
+    json_t *variable = 0;
 
     if(empty_string(group)) {
-        if(kw_has_key(metrics, metric_name)) {
-            metric = kw_get_dict(metrics, metric_name, 0, 0);
+        if(kw_has_key(variables, variable_name)) {
+            variable = kw_get_dict(variables, variable_name, 0, 0);
             json_int_t old_version = kw_get_int(
-                metric,
+                variable,
                 "version",
                 -1,
                 KW_WILD_NUMBER
@@ -225,23 +225,23 @@ PUBLIC json_t *wstats_add_metric(
                     "hostname",     "%s", get_host_name(),
                     "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "metric ALREADY exits",
-                    "metric_name",  "%s", metric_name,
+                    "msg",          "%s", "variable ALREADY exits",
+                    "variable_name","%s", variable_name,
                     NULL
                 );
-                JSON_DECREF(jn_metric);
+                JSON_DECREF(jn_variable);
                 return 0;
             }
-            kw_delete(metrics, metric_name);
+            kw_delete(variables, variable_name);
         }
-        metric = kw_get_dict(metrics, metric_name, json_object(), KW_CREATE);
+        variable = kw_get_dict(variables, variable_name, json_object(), KW_CREATE);
 
     } else {
-        kw_get_dict(metrics, group, json_object(), KW_CREATE);
-        if(kw_has_subkey(metrics, group, metric_name)) {
-            metric = kw_get_subdict_value(metrics, group, metric_name, 0, 0);
+        kw_get_dict(variables, group, json_object(), KW_CREATE);
+        if(kw_has_subkey(variables, group, variable_name)) {
+            variable = kw_get_subdict_value(variables, group, variable_name, 0, 0);
             json_int_t old_version = kw_get_int(
-                metric,
+                variable,
                 "version",
                 -1,
                 KW_WILD_NUMBER
@@ -255,120 +255,120 @@ PUBLIC json_t *wstats_add_metric(
                     "hostname",     "%s", get_host_name(),
                     "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "metric of group ALREADY exits",
-                    "metric_name",  "%s", metric_name,
+                    "msg",          "%s", "variable of group ALREADY exits",
+                    "variable_name","%s", variable_name,
                     "group",        "%s", group,
                     NULL
                 );
-                JSON_DECREF(jn_metric);
+                JSON_DECREF(jn_variable);
                 return 0;
             }
-            kw_delete_subkey(metrics, group, metric_name);
+            kw_delete_subkey(variables, group, variable_name);
         }
-        metric = kw_get_subdict_value(metrics, group, metric_name, json_object(), KW_CREATE);
+        variable = kw_get_subdict_value(variables, group, variable_name, json_object(), KW_CREATE);
     }
 
     /*
-     *  Check if __metric__.json already exists or create it
+     *  Check if __variable__.json already exists or create it
      */
     char subdir[PATH_MAX];
-    build_path3(subdir, sizeof(subdir), directory, group, metric_name);
+    build_path3(subdir, sizeof(subdir), directory, group, variable_name);
 
     do {
-        if(file_exists(subdir, "__metric__.json")) {
-            json_t *old_jn_metric = load_json_from_file(
+        if(file_exists(subdir, "__variable__.json")) {
+            json_t *old_jn_variable = load_json_from_file(
                 subdir,
-                "__metric__.json",
+                "__variable__.json",
                 on_critical_error
             );
             json_int_t old_version = kw_get_int(
-                old_jn_metric,
+                old_jn_variable,
                 "version",
                 -1,
                 KW_WILD_NUMBER
             );
             if(version <= old_version) {
-                JSON_DECREF(jn_metric);
-                jn_metric = old_jn_metric;
+                JSON_DECREF(jn_variable);
+                jn_variable = old_jn_variable;
                 break;
             }
-            JSON_DECREF(old_jn_metric);
+            JSON_DECREF(old_jn_variable);
         }
 
         const char *database = kw_get_str(stats, "database", "", KW_REQUIRED);
-        kw_get_str(jn_metric, "database", database, KW_CREATE);
+        kw_get_str(jn_variable, "database", database, KW_CREATE);
         log_info(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INFO,
-            "msg",          "%s", "Creating Metric file.",
-            "database",      "%s", database,
-            "metric_name",  "%s", metric_name,
-            "group",        "%s", group?group:"",
-            "metric_subdir", "%s", subdir,
+            "gobj",             "%s", __FILE__,
+            "function",         "%s", __FUNCTION__,
+            "msgset",           "%s", MSGSET_INFO,
+            "msg",              "%s", "Creating Metric file.",
+            "database",         "%s", database,
+            "variable_name",    "%s", variable_name,
+            "group",            "%s", group?group:"",
+            "variable_subdir",  "%s", subdir,
             NULL
         );
-        JSON_INCREF(jn_metric);
+        JSON_INCREF(jn_variable);
         save_json_to_file(
             subdir,
-            "__metric__.json",
+            "__variable__.json",
             xpermission,
             rpermission,
             on_critical_error,
             TRUE,       // Create file if not exists or overwrite.
             FALSE,      // only_read
-            jn_metric   // owned
+            jn_variable   // owned
         );
     } while(0);
 
-    kw_get_str(metric, "directory", subdir, KW_CREATE);
-    kw_get_int(metric, "last_t", 0, KW_CREATE);
+    kw_get_str(variable, "directory", subdir, KW_CREATE);
+    kw_get_int(variable, "last_t", 0, KW_CREATE);
 
-    json_t *types = kw_get_dict_value(jn_metric, "types", 0, KW_REQUIRED);
-    json_t *masks = kw_get_list(metric, "masks", json_array(), KW_CREATE);
+    json_t *metrics_ = kw_get_dict_value(jn_variable, "metrics", 0, KW_REQUIRED);
+    json_t *metrics = kw_get_list(variable, "metrics", json_array(), KW_CREATE);
     int idx;
-    json_t *jn_mask;
-    json_array_foreach(types, idx, jn_mask) {
-        json_t *mask = json_object();
-        const char *id = kw_get_str(mask, "id",
-            kw_get_str(jn_mask, "id", 0, KW_REQUIRED),
+    json_t *jn_metric;
+    json_array_foreach(metrics_, idx, jn_metric) {
+        json_t *metric = json_object();
+        const char *id = kw_get_str(metric, "id",
+            kw_get_str(jn_metric, "id", 0, KW_REQUIRED),
             KW_CREATE
         );
-        kw_get_str(mask, "metric_type",
-            kw_get_str(jn_mask, "metric_type", "average", KW_REQUIRED),
+        kw_get_str(metric, "metric_type",
+            kw_get_str(jn_metric, "metric_type", "average", KW_REQUIRED),
             KW_CREATE
         );
 
-        json_t *value_type = kw_get_dict_value(jn_mask, "value_type", json_integer(0), KW_REQUIRED);
+        json_t *value_type = kw_get_dict_value(jn_metric, "value_type", json_integer(0), KW_REQUIRED);
         JSON_INCREF(value_type);
-        kw_get_dict_value(mask, "value_type",
+        kw_get_dict_value(metric, "value_type",
             value_type,
             KW_CREATE
         );
-        kw_get_str(mask, "filename_mask",
+        kw_get_str(metric, "filename_mask",
             filtra_file_mask(id,
-                filtra_time_mask(kw_get_str(jn_mask, "filename_mask", "MON", KW_REQUIRED))
+                filtra_time_mask(kw_get_str(jn_metric, "filename_mask", "MON", KW_REQUIRED))
             ),
             KW_CREATE
         );
-        kw_get_str(mask, "time_mask",
-            filtra_time_mask(kw_get_str(jn_mask, "time_mask", "MIN", KW_REQUIRED)),
+        kw_get_str(metric, "time_mask",
+            filtra_time_mask(kw_get_str(jn_metric, "time_mask", "MIN", KW_REQUIRED)),
             KW_CREATE
         );
 
-        kw_get_str(mask, "filename", "", KW_CREATE);
-        kw_get_str(mask, "stime", "", KW_CREATE);
+        kw_get_str(metric, "filename", "", KW_CREATE);
+        kw_get_str(metric, "stime", "", KW_CREATE);
 
         if(json_is_real(value_type)) {
-            kw_get_real(mask, "value", 0, KW_CREATE);
+            kw_get_real(metric, "value", 0, KW_CREATE);
         } else {
-            kw_get_int(mask, "value", 0, KW_CREATE);
+            kw_get_int(metric, "value", 0, KW_CREATE);
         }
-        json_array_append_new(masks, mask);
+        json_array_append_new(metrics, metric);
     }
 
-    JSON_DECREF(jn_metric);
-    return metric;
+    JSON_DECREF(jn_variable);
+    return variable;
 }
 
 /***************************************************************************
@@ -414,9 +414,9 @@ PUBLIC void wstats_close(
 /***************************************************************************
    Close file
  ***************************************************************************/
-PRIVATE void close_file(json_t *stats, json_t *metric, const char *filename)
+PRIVATE void close_file(json_t *stats, json_t *variable, const char *filename)
 {
-    const char *directory = json_string_value(json_object_get(metric, "directory"));
+    const char *directory = json_string_value(json_object_get(variable, "directory"));
 
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/%s", directory, filename);
@@ -438,11 +438,11 @@ PRIVATE void close_file(json_t *stats, json_t *metric, const char *filename)
 /***************************************************************************
    Delete file
  ***************************************************************************/
-PRIVATE void delete_file(json_t *stats, json_t *metric, const char *filename)
+PRIVATE void delete_file(json_t *stats, json_t *variable, const char *filename)
 {
-    const char *directory = json_string_value(json_object_get(metric, "directory"));
+    const char *directory = json_string_value(json_object_get(variable, "directory"));
 
-    close_file(stats, metric, filename);
+    close_file(stats, variable, filename);
 
     char path[PATH_MAX];
     snprintf(path, sizeof(path), "%s/%s", directory, filename);
@@ -465,11 +465,11 @@ PRIVATE void delete_file(json_t *stats, json_t *metric, const char *filename)
 }
 
 /***************************************************************************
-   Save metric value to file
+   Save variable value to file
  ***************************************************************************/
-PRIVATE void save_metric_value_to_file(
+PRIVATE void save_variable_value_to_file(
     json_t *stats,
-    json_t *metric,
+    json_t *variable,
     const char *filename,
     uint64_t t,
     json_t *value
@@ -477,7 +477,7 @@ PRIVATE void save_metric_value_to_file(
 {
     char path[PATH_MAX];
 
-    const char *directory = json_string_value(json_object_get(metric, "directory"));
+    const char *directory = json_string_value(json_object_get(variable, "directory"));
     snprintf(path, sizeof(path), "%s/%s", directory, filename);
 
     FILE *file = (FILE *)(size_t)kw_get_int(
@@ -533,7 +533,7 @@ PRIVATE void save_metric_value_to_file(
 }
 
 /***************************************************************************
-   Calculate new value based in metric type
+   Calculate new value based in variable type
  ***************************************************************************/
 PRIVATE json_t *calculate_value(
     const char *metric_type,
@@ -633,7 +633,7 @@ PRIVATE json_t *calculate_value(
  ***************************************************************************/
 PUBLIC void wstats_add_value(
     json_t *stats,
-    const char *metric_name,
+    const char *variable_name,
     const char *group,
     time_t t,   // UTC time
     json_t *jn_value  // owned
@@ -655,29 +655,29 @@ PUBLIC void wstats_add_value(
         return;
     }
 
-    json_t *metric = 0;
+    json_t *variable = 0;
     if(empty_string(group)) {
-        metric = json_object_get(
+        variable = json_object_get(
             json_object_get(
                 stats,
-                "metrics"
+                "variables"
             ),
-            metric_name
+            variable_name
         );
     } else {
-        metric = json_object_get(
+        variable = json_object_get(
             json_object_get(
                 json_object_get(
                     stats,
-                    "metrics"
+                    "variables"
                 ),
                 group
             ),
-            metric_name
+            variable_name
         );
     }
 
-    if(!metric) {
+    if(!variable) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -687,7 +687,7 @@ PUBLIC void wstats_add_value(
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Metric not configured",
             "directory",    "%s", kw_get_str(stats, "directory", "", KW_REQUIRED),
-            "metric",       "%s", metric_name,
+            "variable",       "%s", variable_name,
             NULL
         );
         log_debug_json(0, stats, "Metric not configured");
@@ -695,7 +695,7 @@ PUBLIC void wstats_add_value(
         return;
     }
 
-    uint64_t last_t = json_integer_value(json_object_get(metric, "last_t"));
+    uint64_t last_t = json_integer_value(json_object_get(variable, "last_t"));
     if(t < last_t) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -714,20 +714,20 @@ PUBLIC void wstats_add_value(
         return;
     }
 
-    json_object_set_new(metric, "last_t", json_integer(t));
+    json_object_set_new(variable, "last_t", json_integer(t));
 
-    json_t *masks = json_object_get(metric, "masks");
+    json_t *metrics = json_object_get(variable, "metrics");
     char filename_[NAME_MAX];
     char stime_[NAME_MAX];
     int idx;
-    json_t *mask;
-    json_array_foreach(masks, idx, mask) {
-        const char *metric_type = json_string_value(json_object_get(mask, "metric_type"));
-        const char *filename_mask = json_string_value(json_object_get(mask, "filename_mask"));
-        const char *time_mask = json_string_value(json_object_get(mask, "time_mask"));
+    json_t *metric;
+    json_array_foreach(metrics, idx, metric) {
+        const char *metric_type = json_string_value(json_object_get(metric, "metric_type"));
+        const char *filename_mask = json_string_value(json_object_get(metric, "filename_mask"));
+        const char *time_mask = json_string_value(json_object_get(metric, "time_mask"));
 
-        const char *filename = json_string_value(json_object_get(mask, "filename"));
-        const char *stime = json_string_value(json_object_get(mask, "stime"));
+        const char *filename = json_string_value(json_object_get(metric, "filename"));
+        const char *stime = json_string_value(json_object_get(metric, "stime"));
 
         render_mask(filename_, sizeof(filename_), filename_mask, TRUE, t);
         render_mask(stime_, sizeof(stime_), time_mask, TRUE, t);
@@ -735,8 +735,8 @@ PUBLIC void wstats_add_value(
         if(last_t == 0) {
             filename = filename_;
             stime = stime_;
-            json_object_set_new(mask, "filename", json_string(filename_));
-            json_object_set_new(mask, "stime", json_string(stime_));
+            json_object_set_new(metric, "filename", json_string(filename_));
+            json_object_set_new(metric, "stime", json_string(stime_));
         }
 
         /*
@@ -746,17 +746,17 @@ PUBLIC void wstats_add_value(
             // Close old file
             close_file(
                 stats,
-                metric,
+                variable,
                 filename
             );
 
             // New file, delete if exists
             delete_file(
                 stats,
-                metric,
+                variable,
                 filename_
             );
-            json_object_set_new(mask, "filename", json_string(filename_));
+            json_object_set_new(metric, "filename", json_string(filename_));
         }
 
         /*
@@ -767,14 +767,14 @@ PUBLIC void wstats_add_value(
             // New range
             if(last_t > 0) {
                 // Save current acumulated time
-                save_metric_value_to_file(
+                save_variable_value_to_file(
                     stats,
-                    metric,
+                    variable,
                     filename,
                     last_t,
-                    json_object_get(mask, "value")
+                    json_object_get(metric, "value")
                 );
-                json_object_set_new(mask, "stime", json_string(stime_));
+                json_object_set_new(metric, "stime", json_string(stime_));
             }
             new_range = TRUE;
         }
@@ -787,10 +787,10 @@ PUBLIC void wstats_add_value(
             new_range,
             last_t,
             t,
-            json_object_get(mask, "value"),
+            json_object_get(metric, "value"),
             jn_value
         );
-        json_object_set_new(mask, "value", new_value);
+        json_object_set_new(metric, "value", new_value);
     }
 
     JSON_DECREF(jn_value);

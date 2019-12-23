@@ -28,12 +28,12 @@
  ***************************************************************/
 
 /***************************************************************************
-    Example of __metric__.json
+    Example of __variable__.json
     {
-        "metric_name": "dbwrite-queue-0",
+        "variable_name": "dbwrite-queue-0",
         "version": "1",
         "group": "queues",
-        "types": [
+        "metrics": [
             {
                 "id": "last_week_in_seconds",
                 "metric_type": "",
@@ -42,10 +42,10 @@
                 "time_mask": "SEC"
             }
         ],
-        "database": "dbwriter^10220"
+        "database": "dbwriter^10110"
     }
 ***************************************************************************/
-PRIVATE BOOL read_metric_cb(
+PRIVATE BOOL read_variable_cb(
     void *user_data,
     wd_found_type type,     // type found
     char *fullpath,         // directory+filename found
@@ -57,12 +57,12 @@ PRIVATE BOOL read_metric_cb(
 {
     json_t *stats = user_data;
 
-    json_t *jn_metric = load_json_from_file(
+    json_t *jn_variable = load_json_from_file(
         directory,
-        "__metric__.json",
+        "__variable__.json",
         0
     );
-    if(!jn_metric) {
+    if(!jn_variable) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -77,13 +77,13 @@ PRIVATE BOOL read_metric_cb(
         return TRUE; // to continue
     }
 
-    json_t *metrics = kw_get_dict(stats, "metrics", 0, KW_REQUIRED);
+    json_t *variables = kw_get_dict(stats, "variables", 0, KW_REQUIRED);
     json_t *groups = kw_get_list(stats, "groups", 0, KW_REQUIRED);
 
-    const char *database = kw_get_str(jn_metric, "database", "", KW_REQUIRED);
-    const char *metric_name = kw_get_str(jn_metric, "metric_name", "", KW_REQUIRED);
-    const char *group = kw_get_str(jn_metric, "group", 0, 0);
-    json_t *types = kw_get_list(jn_metric, "types", 0, KW_REQUIRED);
+    const char *database = kw_get_str(jn_variable, "database", "", KW_REQUIRED);
+    const char *variable_name = kw_get_str(jn_variable, "variable_name", "", KW_REQUIRED);
+    const char *group = kw_get_str(jn_variable, "group", 0, 0);
+    json_t *metrics = kw_get_list(jn_variable, "metrics", 0, KW_REQUIRED);
 
     char id[NAME_MAX];
     if(json_array_size(groups)>0) {
@@ -92,30 +92,36 @@ PRIVATE BOOL read_metric_cb(
             snprintf(id, sizeof(id), "%s.%s.%s",
                 group,
                 database,
-                metric_name
+                variable_name
             );
-            json_object_set(metrics, id, types);
+            json_t *variable = json_object();
+            json_object_set_new(variable, "directory", json_string(directory));
+            json_object_set(variable, "metrics", metrics);
+            json_object_set_new(variables, id, variable);
         }
     } else {
         snprintf(id, sizeof(id), "%s.%s.%s",
             group,
             database,
-            metric_name
+            variable_name
         );
-        json_object_set(metrics, id, types);
+        json_t *variable = json_object();
+        json_object_set_new(variable, "directory", json_string(directory));
+        json_object_set(variable, "metrics", metrics);
+        json_object_set_new(variables, id, variable);
     }
 
-    JSON_DECREF(jn_metric);
+    JSON_DECREF(jn_variable);
     return TRUE; // to continue
 }
 
-PRIVATE int load_metrics(json_t *stats)
+PRIVATE int load_variables(json_t *stats)
 {
     return walk_dir_tree(
         kw_get_str(stats, "directory", "", KW_REQUIRED),
-        "__metric__\\.json",
+        "__variable__\\.json",
         WD_RECURSIVE|WD_MATCH_REGULAR_FILE,
-        read_metric_cb,
+        read_variable_cb,
         stats
     );
 
@@ -147,7 +153,7 @@ PUBLIC json_t *rstats_open(
 
     json_t *stats = json_object();
     kw_get_str(stats, "directory", path, KW_CREATE);
-    kw_get_dict(stats, "metrics", json_object(), KW_CREATE);
+    kw_get_dict(stats, "variables", json_object(), KW_CREATE);
     kw_get_dict(stats, "file_opened_files", json_object(), KW_CREATE);
     kw_get_dict(stats, "fd_opened_files", json_object(), KW_CREATE);
 
@@ -169,7 +175,7 @@ PUBLIC json_t *rstats_open(
         }
     }
 
-    load_metrics(stats);
+    load_variables(stats);
 
     JSON_DECREF(jn_stats);
 
@@ -369,40 +375,56 @@ PRIVATE int check_files(const char *path, const char *pattern, json_t *jn_list)
 }
 
 /***************************************************************************
-    Get metrics
+    Get variables
+
+    Example of stats:
+    {
+        "directory": "/yuneta/store/stats/gpss/dbwriter^10120",
+        "variables": {
+            "queues.dbwriter^10120.dbwrite-queue-9": {
+                "directory": "/yuneta/store/stats/gpss/dbwriter^10120/queues/dbwrite-queue-9",
+                "metrics": [
+                    {
+                        "id": "last_week_in_seconds",
+                        "metric_type": "",
+                        "value_type": 0.0,
+                        "filename_mask": "WDAY",
+                        "time_mask": "SEC"
+                    }
+                ]
+            },
+            ....
+        },
+        "file_opened_files": {},
+        "fd_opened_files": {},
+        "groups": [
+            "queues"
+        ]
+    }
  ***************************************************************************/
-PUBLIC json_t *rstats_metrics(
+PUBLIC json_t *rstats_variables(
     json_t *stats
 )
 {
-    json_t *jn_limits = json_object();
+    json_t *jn_variables = json_object();
 
-    const char *directory = kw_get_str(stats, "directory", "", KW_REQUIRED);
-
-    json_t *metrics = kw_get_dict(stats, "metrics", json_object(), KW_REQUIRED);
+    json_t *variables = kw_get_dict(stats, "variables", json_object(), KW_REQUIRED);
     const char *name;
-    json_t *jn_list;
-    json_object_foreach(metrics, name, jn_list) {
-        json_t *metric = kw_get_dict(jn_limits, name, json_object(), KW_CREATE);
-        int idx;
-        json_t *jn_metric;
-        json_array_foreach(jn_list, idx, jn_metric) {
+    json_t *jn_variable;
+    json_object_foreach(variables, name, jn_variable) {
+        json_t *metric = kw_get_dict(jn_variables, name, json_object(), KW_CREATE);
+        const char *directory = kw_get_str(jn_variable, "directory", 0, KW_REQUIRED);
+        if(!is_directory(directory)) {
+            continue;
+        }
+        json_t *metrics = kw_get_list(jn_variable, "metrics", 0, KW_REQUIRED);
+        int idx; json_t *jn_metric;
+        json_array_foreach(metrics, idx, jn_metric) {
             const char *id = kw_get_str(jn_metric, "id", "", KW_REQUIRED);
             const char *metric_type = kw_get_str(jn_metric, "metric_type", "", KW_REQUIRED);
             BOOL real = json_is_real(kw_get_dict_value(jn_metric, "value_type", 0, KW_REQUIRED))?1:0;
             const char *time_mask_orig = kw_get_str(jn_metric, "time_mask", "MIN", KW_REQUIRED);
 
-            char subdir[PATH_MAX];
-            snprintf(
-                subdir,
-                sizeof(subdir),
-                "%s/%s",
-                directory,
-                name
-            );
-            if(!is_directory(subdir)) {
-                continue;
-            }
             if(empty_string(id)) {
                 continue;
             }
@@ -419,15 +441,15 @@ PUBLIC json_t *rstats_metrics(
             kw_get_str(jn_id, "compute", metric_type, KW_CREATE);
             kw_get_bool(jn_id, "real", real, KW_CREATE);
             json_t *list = kw_get_list(jn_id, "data", json_array(), KW_CREATE);
-            check_files(subdir, id, list);
+            check_files(directory, id, list);
         }
     }
 
-    return jn_limits;
+    return jn_variables;
 }
 
 /***************************************************************************
-    List variables of `metrics`
+    List variables of `variables`
  ***************************************************************************/
 PUBLIC json_t *rstats_list_variables(
     json_t *metrics

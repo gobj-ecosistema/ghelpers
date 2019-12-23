@@ -42,160 +42,39 @@ PUBLIC void rstats_close(
 );
 
 /**rst**
-    Get `metrics`
+    Get `variables`
 
     Return example:
     {
-        "flow_rate": {
+        "queues.dbwriter^10120.dbwrite-queue-9": {
             "last_week_in_seconds": {
+                "metric_id": "last_week_in_seconds",
+                "variable": "queues.dbwriter^10120.dbwrite-queue-9",
                 "period": "WDAY",
                 "units": "SEC",
                 "compute": "",
                 "real": true,
                 "data": [
                     {
-                        "fr_t": 62553600,
-                        "to_t": 62639999,
-                        "fr_d": "1971-12-26T00:00:00.0+0000",
-                        "to_d": "1971-12-26T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/last_week_in_seconds-7.dat"
-                    },
-                    {
-                        "fr_t": 62640000,
-                        "to_t": 62726399,
-                        "fr_d": "1971-12-27T00:00:00.0+0000",
-                        "to_d": "1971-12-27T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/last_week_in_seconds-1.dat"
-                    },
-                    {
-                        "fr_t": 62726400,
-                        "to_t": 62812799,
-                        "fr_d": "1971-12-28T00:00:00.0+0000",
-                        "to_d": "1971-12-28T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/last_week_in_seconds-2.dat"
-                    },
-                    {
-                        "fr_t": 62812800,
-                        "to_t": 62899199,
-                        "fr_d": "1971-12-29T00:00:00.0+0000",
-                        "to_d": "1971-12-29T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/last_week_in_seconds-3.dat"
-                    },
-                    {
-                        "fr_t": 62899200,
-                        "to_t": 62985599,
-                        "fr_d": "1971-12-30T00:00:00.0+0000",
-                        "to_d": "1971-12-30T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/last_week_in_seconds-4.dat"
-                    },
-                    {
-                        "fr_t": 62985600,
-                        "to_t": 63071999,
-                        "fr_d": "1971-12-31T00:00:00.0+0000",
-                        "to_d": "1971-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/last_week_in_seconds-5.dat"
-                    },
-                    {
-                        "fr_t": 63072000,
-                        "to_t": 63072000,
-                        "fr_d": "1972-01-01T00:00:00.0+0000",
-                        "to_d": "1972-01-01T00:00:00.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/last_week_in_seconds-6.dat"
-                    }
-                ]
-            },
-            "years_in_hours": {
-                "period": "YEAR",
-                "units": "HOUR",
-                "compute": "",
-                "real": true,
-                "data": [
-                    {
-                        "fr_t": 3599,
-                        "to_t": 31535999,
-                        "fr_d": "1970-01-01T00:59:59.0+0000",
-                        "to_d": "1970-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/years_in_hours-1970.dat"
-                    },
-                    {
-                        "fr_t": 31539599,
-                        "to_t": 63071999,
-                        "fr_d": "1971-01-01T00:59:59.0+0000",
-                        "to_d": "1971-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/years_in_hours-1971.dat"
-                    }
-                ]
-            },
-            "years_in_days": {
-                "period": "YEAR",
-                "units": "YDAY",
-                "compute": "",
-                "real": true,
-                "data": [
-                    {
-                        "fr_t": 86399,
-                        "to_t": 31535999,
-                        "fr_d": "1970-01-01T23:59:59.0+0000",
-                        "to_d": "1970-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/years_in_days-1970.dat"
-                    },
-                    {
-                        "fr_t": 31622399,
-                        "to_t": 63071999,
-                        "fr_d": "1971-01-01T23:59:59.0+0000",
-                        "to_d": "1971-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/years_in_days-1971.dat"
-                    }
-                ]
-            },
-            "years_in_months": {
-                "period": "YEAR",
-                "units": "MON",
-                "compute": "",
-                "real": true,
-                "data": [
-                    {
-                        "fr_t": 2678399,
-                        "to_t": 31535999,
-                        "fr_d": "1970-01-31T23:59:59.0+0000",
-                        "to_d": "1970-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/years_in_months-1970.dat"
-                    },
-                    {
-                        "fr_t": 34214399,
-                        "to_t": 63071999,
-                        "fr_d": "1971-01-31T23:59:59.0+0000",
-                        "to_d": "1971-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/years_in_months-1971.dat"
-                    }
-                ]
-            },
-            "years_in_years": {
-                "period": "years",
-                "units": "YEAR",
-                "compute": "",
-                "real": true,
-                "data": [
-                    {
-                        "fr_t": 31535999,
-                        "to_t": 63071999,
-                        "fr_d": "1970-12-31T23:59:59.0+0000",
-                        "to_d": "1971-12-31T23:59:59.0+0000",
-                        "file": "/yuneta/store/stats/test_stats/flow_rate/years_in_years-years.dat"
+                        "fr_t": 1577093728,
+                        "to_t": 1577098191,
+                        "fr_d": "2019-12-23T09:35:28.0+0000",
+                        "to_d": "2019-12-23T10:49:51.0+0000",
+                        "file": "/yuneta/store/stats/gpss/dbwriter^10120/queues/dbwrite-queue-9/last_week_in_seconds-1.dat"
                     }
                 ]
             }
         },
-        "velocity": {}
+        ...
     }
 
 **rst**/
-PUBLIC json_t *rstats_metrics( // Return must be used in below functions
+PUBLIC json_t *rstats_variables( // Return must be used in below functions
     json_t *stats
 );
 
 /**rst**
-    List variables of `metrics`
+    List variables of `variables`
 
     Return example:
 
@@ -206,7 +85,7 @@ PUBLIC json_t *rstats_metrics( // Return must be used in below functions
 
 **rst**/
 PUBLIC json_t *rstats_list_variables(
-    json_t *metrics
+    json_t *variables
 );
 
 /**rst**
@@ -272,7 +151,7 @@ PUBLIC json_t *rstats_list_variables(
 
 **rst**/
 PUBLIC json_t *rstats_list_limits(
-    json_t *metrics,
+    json_t *variables,
     const char *variable
 );
 
@@ -280,7 +159,7 @@ PUBLIC json_t *rstats_list_limits(
     Find `metric` by units
 **rst**/
 PUBLIC json_t *find_metric_by_units(
-    json_t *metrics,
+    json_t *variables,
     const char *variable,
     const char *units,
     BOOL verbose
@@ -290,7 +169,7 @@ PUBLIC json_t *find_metric_by_units(
     Get `metric`, find by units else find by metric_name
 **rst**/
 PUBLIC json_t *rstats_metric(
-    json_t *metrics,
+    json_t *variables,
     const char *variable,
     const char *metric_name,
     const char *units,

@@ -10,24 +10,25 @@
     "rpermission": 432,
     "on_critical_error": 0,
     "directory": "/yuneta/store/stats/gpss/dbwriter^10120",
+    "database": "dbwriter^10120",
     "file_opened_files": {},
     "fd_opened_files": {
         "__simple_stats__.json": 32
     },
-    "metrics": {
+    "variables": {
         "queues": {
             "dbwrite-queue-0": {
                 "directory": "/yuneta/store/stats/gpss/dbwriter^10120/queues/dbwrite-queue-0",
-                "last_t": 1576914259,
-                "masks": [
+                "last_t": 1577093776,
+                "metrics": [
                     {
                         "id": "last_week_in_seconds",
                         "metric_type": "",
                         "value_type": 0.0,
                         "filename_mask": "last_week_in_seconds-%u.dat",
                         "time_mask": "%S",
-                        "filename": "last_week_in_seconds-6.dat",
-                        "stime": "19",
+                        "filename": "last_week_in_seconds-1.dat",
+                        "stime": "16",
                         "value": 0.0
                     }
                 ]
@@ -80,13 +81,13 @@ PUBLIC json_t *wstats_open(
         "YDAY"  "%j"    Days in year    [001-366]
         "CENT"  "%C"    The century     (year/100) as a 2-digit integer);
 
-   Add new metric
+   Add new variable
 
    jn_metric:           dict
-        metric_name:        string, metric name
+        variable_name:        string, metric name
         version:            string/numeric, metric version
         group:              string, optional, to group metrics in group directory.
-        types:              key: list of dicts
+        metrics:            key: list of dicts
             [
                 {
                     id:             string, metric type id
@@ -97,9 +98,9 @@ PUBLIC json_t *wstats_open(
                 }
             ]
 **rst**/
-PUBLIC json_t *wstats_add_metric( // Return is NOT YOURS
+PUBLIC json_t *wstats_add_variable( // Return is NOT YOURS
     json_t *stats,
-    json_t *jn_metric  // owned
+    json_t *jn_variable  // owned
 );
 
 /**rst**
