@@ -84,7 +84,7 @@ PUBLIC json_t *rstats_variables( // Return must be used in below functions
     ]
 
 **rst**/
-PUBLIC json_t *rstats_list_variables(
+PUBLIC json_t *rstats_list_variables( // WARNING Decoupled return.
     json_t *variables
 );
 
@@ -150,7 +150,7 @@ PUBLIC json_t *rstats_list_variables(
 
 
 **rst**/
-PUBLIC json_t *rstats_list_limits(
+PUBLIC json_t *rstats_list_limits( // WARNING Decoupled return.
     json_t *variables,
     const char *variable
 );
@@ -158,7 +158,7 @@ PUBLIC json_t *rstats_list_limits(
 /**rst**
     Find `metric` by units
 **rst**/
-PUBLIC json_t *find_metric_by_units(
+PUBLIC json_t *find_metric_by_units( // WARNING Decoupled return.
     json_t *variables,
     const char *variable,
     const char *units,
@@ -168,7 +168,7 @@ PUBLIC json_t *find_metric_by_units(
 /**rst**
     Get `metric`, find by units else find by metric_name
 **rst**/
-PUBLIC json_t *rstats_metric(
+PUBLIC json_t *rstats_metric( // WARNING Decoupled return.
     json_t *variables,
     const char *variable,
     const char *metric_name,
@@ -178,8 +178,17 @@ PUBLIC json_t *rstats_metric(
 
 /**rst**
     Get stats of metric of time range.
+    Example of return:
+        [
+            {
+                "t": 1577356095,
+                "t2": "2019-12-26T10:28:15.0+0000",
+                "y": 0.0
+            },
+            ...
+        ]
 **rst**/
-PUBLIC json_t *rstats_get_data(
+PUBLIC json_t *rstats_get_data( // WARNING Decoupled return.
     json_t *metric,
     uint64_t from_t,
     uint64_t to_t
