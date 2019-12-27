@@ -552,7 +552,7 @@ PUBLIC json_t *kw_get_dict(
                 "path",         "%s", path,
                 NULL
             );
-            log_debug_json(0, kw, "path '%s' NOT FOUND, default value returned", path);
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -604,7 +604,7 @@ PUBLIC json_t *kw_get_list(
                 "path",         "%s", path,
                 NULL
             );
-            log_debug_json(0, kw, "path '%s' NOT FOUND, default value returned", path);
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -656,7 +656,7 @@ PUBLIC json_int_t kw_get_int(
                 "path",         "%s", path,
                 NULL
             );
-            log_debug_json(0, kw, "path '%s' NOT FOUND, default value returned", path);
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -740,7 +740,7 @@ PUBLIC double kw_get_real(
                 "path",         "%s", path,
                 NULL
             );
-            log_debug_json(0, kw, "path '%s' NOT FOUND, default value returned", path);
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -817,7 +817,7 @@ PUBLIC BOOL kw_get_bool(
                 "path",         "%s", path,
                 NULL
             );
-            log_debug_json(0, kw, "path '%s' NOT FOUND, default value returned", path);
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -906,7 +906,7 @@ PUBLIC const char *kw_get_str(
                 "path",         "%s", path,
                 NULL
             );
-            log_debug_json(0, kw, "path '%s' NOT FOUND, default value returned", path);
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -965,7 +965,7 @@ PUBLIC json_t *kw_get_dict_value(
                 "path",         "%s", path,
                 NULL
             );
-            log_debug_json(0, kw, "path '%s' NOT FOUND, default value returned", path);
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -1039,7 +1039,6 @@ PUBLIC json_t *kw_get_subdict_value(
                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
                 "msg",          "%s", "key NULL",
                 "path",         "%s", path,
-                "key",          "%s", key,
                 NULL
             );
         }
@@ -1106,6 +1105,7 @@ PUBLIC json_t *kw_get_list_value(
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "list idx NOT FOUND",
                 "idx",          "%d", (int)idx,
+                "array_size",   "%d", (int)json_array_size(kw),
                 NULL
             );
         }
