@@ -1568,7 +1568,7 @@ PUBLIC json_t * gbuf2json(
     int verbose     // 1 log, 2 log+dump
 )
 {
-    size_t flags=0;
+    size_t flags=0; // TODO quiza mejor: JSON_DECODE_ANY|JSON_ALLOW_NUL;
     json_error_t jn_error;
     json_t *jn_msg = json_load_callback(on_load_callback, gbuf, flags, &jn_error);
     if(!jn_msg) {
