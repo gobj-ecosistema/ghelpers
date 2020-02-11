@@ -611,7 +611,7 @@ PRIVATE int get_topic_idx_fd(json_t *tranger, json_t *topic, BOOL verbose)
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
                 "msg",          "%s", "NO topic_idx_fd",
                 NULL
             );
@@ -856,7 +856,7 @@ PUBLIC json_t *tranger_topic(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
                 "msg",          "%s", "Cannot open topic",
                 "topic",        "%s", topic_name,
                 NULL
@@ -2237,7 +2237,7 @@ PUBLIC int tranger_delete_record(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             NULL
@@ -2343,7 +2343,7 @@ PUBLIC int tranger_write_mark1(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
@@ -2396,7 +2396,7 @@ PUBLIC int tranger_write_user_flag(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
@@ -2440,7 +2440,7 @@ PUBLIC int tranger_set_user_flag(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
@@ -2493,7 +2493,7 @@ PUBLIC uint32_t tranger_read_user_flag(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
@@ -2510,6 +2510,15 @@ PUBLIC uint32_t tranger_read_user_flag(
         &md_record,
         TRUE
     )!=0) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "Tranger record NOT FOUND",
+            "topic",        "%s", topic_name,
+            "rowid",        "%lu", (unsigned long)rowid,
+            NULL
+        );
         return 0;
     }
     return md_record.__user_flag__;
@@ -2532,7 +2541,7 @@ PUBLIC json_t *tranger_open_list(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
             "msg",          "%s", "tranger_open_list: what topic?",
             NULL
         );
