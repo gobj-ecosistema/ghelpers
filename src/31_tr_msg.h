@@ -238,7 +238,8 @@ PUBLIC json_t *trmsg_get_instances( // Return (NOT yours) list: messages`message
  *  WARNING Returned value is yours, must be decref.
  */
 PUBLIC json_t *trmsg_active_records(
-    json_t *list
+    json_t *list,
+    json_t *jn_filter  // owned
 );
 
 /*
@@ -247,11 +248,14 @@ PUBLIC json_t *trmsg_active_records(
  */
 PUBLIC json_t *trmsg_record_instances(
     json_t *list,
-    const char *key
+    const char *key,
+    json_t *jn_filter  // owned
 );
 
 /*
  *  Foreach ACTIVE **duplicated** messages
+ *  The parameter 'record' in the callback is a duplicated record
+ *  (a copy of the original record)
  */
 PUBLIC int trmsg_foreach_active_messages(
     json_t *list,
@@ -263,11 +267,14 @@ PUBLIC int trmsg_foreach_active_messages(
         void *user_data2
     ),
     void *user_data1,
-    void *user_data2
+    void *user_data2,
+    json_t *jn_filter  // owned
 );
 
 /*
  *  Foreach INSTANCES **duplicated** messages
+ *  The parameter 'record' in the callback is a duplicated record
+ *  (a copy of the original record)
  */
 PUBLIC int trmsg_foreach_instances_messages(
     json_t *list,
@@ -279,11 +286,14 @@ PUBLIC int trmsg_foreach_instances_messages(
         void *user_data2
     ),
     void *user_data1,
-    void *user_data2
+    void *user_data2,
+    json_t *jn_filter  // owned
 );
 
 /*
  *  Foreach **duplicated** or **cloned** MESSAGES
+ *  You select if the parameter 'record' in the callback is
+ *  a duplicated or cloned (incref original) record.
  */
 PUBLIC int trmsg_foreach_messages(
     json_t *list,
@@ -296,7 +306,8 @@ PUBLIC int trmsg_foreach_messages(
         void *user_data2
     ),
     void *user_data1,
-    void *user_data2
+    void *user_data2,
+    json_t *jn_filter  // owned
 );
 
 #ifdef __cplusplus

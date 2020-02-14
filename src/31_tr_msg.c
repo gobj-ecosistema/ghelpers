@@ -308,7 +308,7 @@ PUBLIC int trmsg_close_list(
 }
 
 /***************************************************************************
- *
+ *  Return (NOT yours) dict: messages`
  ***************************************************************************/
 PUBLIC json_t *trmsg_get_messages(
     json_t *list
@@ -318,7 +318,7 @@ PUBLIC json_t *trmsg_get_messages(
 }
 
 /***************************************************************************
- *
+ *  Return (NOT yours) dict: "active" (dict) and "instances" (list)
  ***************************************************************************/
 PUBLIC json_t *trmsg_get_message(
     json_t *list,
@@ -332,7 +332,7 @@ PUBLIC json_t *trmsg_get_message(
 }
 
 /***************************************************************************
- *
+ *  Return (NOT yours) dict: messages`message(key)`active
  ***************************************************************************/
 PUBLIC json_t *trmsg_get_active_message(
     json_t *list,
@@ -349,7 +349,7 @@ PUBLIC json_t *trmsg_get_active_message(
 }
 
 /***************************************************************************
- *
+ *  Return (NOT yours) dict: messages`message(key)`active`__md_tranger__
  ***************************************************************************/
 PUBLIC json_t *trmsg_get_active_md(
     json_t *list,
@@ -367,7 +367,7 @@ PUBLIC json_t *trmsg_get_active_md(
 }
 
 /***************************************************************************
- *
+ *  Return (NOT yours) list: messages`message(key)`instances
  ***************************************************************************/
 PUBLIC json_t *trmsg_get_instances(
     json_t *list,
@@ -388,7 +388,8 @@ PUBLIC json_t *trmsg_get_instances(
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
 PUBLIC json_t *trmsg_active_records(
-    json_t *list
+    json_t *list,
+    json_t *jn_filter  // owned
 )
 {
     json_t *jn_records = json_array();
@@ -399,10 +400,14 @@ PUBLIC json_t *trmsg_active_records(
     void *n;
     json_object_foreach_safe(messages, n, key, message) {
         json_t *active = json_object_get(message, "active");
-        json_t *jn_active = json_deep_copy(active);
-        json_array_append_new(jn_records, jn_active);
+        JSON_INCREF(jn_filter);
+        if(kw_match_simple(active, jn_filter)) {
+            json_t *jn_active = json_deep_copy(active);
+            json_array_append_new(jn_records, jn_active);
+        }
     }
 
+    JSON_DECREF(jn_filter);
     return jn_records;
 }
 
@@ -412,7 +417,8 @@ PUBLIC json_t *trmsg_active_records(
  ***************************************************************************/
 PUBLIC json_t *trmsg_record_instances(
     json_t *list,
-    const char *key
+    const char *key,
+    json_t *jn_filter  // owned
 )
 {
     json_t *jn_records = json_array();
@@ -422,15 +428,21 @@ PUBLIC json_t *trmsg_record_instances(
     int idx;
     json_t *jn_value;
     json_array_foreach(instances, idx, jn_value) {
-        json_t *jn_record = json_deep_copy(jn_value); // Your copy
-        json_array_append_new(jn_records, jn_record);
+        JSON_INCREF(jn_filter);
+        if(kw_match_simple(jn_value, jn_filter)) {
+            json_t *jn_record = json_deep_copy(jn_value); // Your copy
+            json_array_append_new(jn_records, jn_record);
+        }
     }
 
+    JSON_DECREF(jn_filter);
     return jn_records;
 }
 
 /***************************************************************************
  *  Foreach ACTIVE **duplicated** messages
+ *  The parameter 'record' in the callback is a duplicated record
+ *  (a copy of the original record)
  ***************************************************************************/
 PUBLIC int trmsg_foreach_active_messages(
     json_t *list,
@@ -442,7 +454,8 @@ PUBLIC int trmsg_foreach_active_messages(
         void *user_data2
     ),
     void *user_data1,
-    void *user_data2
+    void *user_data2,
+    json_t *jn_filter  // owned
 )
 {
     json_t *messages = trmsg_get_messages(list);
@@ -452,18 +465,25 @@ PUBLIC int trmsg_foreach_active_messages(
     void *n;
     json_object_foreach_safe(messages, n, key, message) {
         json_t *active = json_object_get(message, "active");
-        json_t *jn_active = json_deep_copy(active); // Your copy
+        JSON_INCREF(jn_filter);
+        if(kw_match_simple(active, jn_filter)) {
+            json_t *jn_active = json_deep_copy(active); // Your copy
 
-        if(callback(list, key, jn_active, user_data1, user_data2)<0) {
-            return -1;
+            if(callback(list, key, jn_active, user_data1, user_data2)<0) {
+                JSON_DECREF(jn_filter);
+                return -1;
+            }
         }
     }
 
+    JSON_DECREF(jn_filter);
     return 0;
 }
 
 /***************************************************************************
  *  Foreach INSTANCES **duplicated** messages
+ *  The parameter 'record' in the callback is a duplicated record
+ *  (a copy of the original record)
  ***************************************************************************/
 PUBLIC int trmsg_foreach_instances_messages(
     json_t *list,
@@ -475,7 +495,8 @@ PUBLIC int trmsg_foreach_instances_messages(
         void *user_data2
     ),
     void *user_data1,
-    void *user_data2
+    void *user_data2,
+    json_t *jn_filter  // owned
 )
 {
     json_t *messages = trmsg_get_messages(list);
@@ -489,19 +510,26 @@ PUBLIC int trmsg_foreach_instances_messages(
         int idx;
         json_t *instance;
         json_array_foreach(instances, idx, instance) {
-            json_t *jn_instance = json_deep_copy(instance);
-            json_array_append_new(jn_instances, jn_instance);
+            JSON_INCREF(jn_filter);
+            if(kw_match_simple(instance, jn_filter)) {
+                json_t *jn_instance = json_deep_copy(instance);
+                json_array_append_new(jn_instances, jn_instance);
+            }
         }
         if(callback(list, key, jn_instances, user_data1, user_data2)<0) {
+            JSON_DECREF(jn_filter);
             return -1;
         }
     }
 
+    JSON_DECREF(jn_filter);
     return 0;
 }
 
 /***************************************************************************
  *  Foreach **duplicated** or **cloned** MESSAGES
+ *  You select if the parameter 'record' in the callback is
+ *  a duplicated or cloned (incref original) record.
  ***************************************************************************/
 PUBLIC int trmsg_foreach_messages(
     json_t *list,
@@ -514,7 +542,8 @@ PUBLIC int trmsg_foreach_messages(
         void *user_data2
     ),
     void *user_data1,
-    void *user_data2
+    void *user_data2,
+    json_t *jn_filter  // owned
 )
 {
     json_t *messages = trmsg_get_messages(list);
@@ -524,16 +553,21 @@ PUBLIC int trmsg_foreach_messages(
     void *n;
     json_object_foreach_safe(messages, n, key, message) {
         json_t *jn_message;
-        if(duplicated) {
-            jn_message = json_deep_copy(message);
-        } else {
-            jn_message = kw_incref(message);
-        }
+        JSON_INCREF(jn_filter);
+        if(kw_match_simple(message, jn_filter)) {
+            if(duplicated) {
+                jn_message = json_deep_copy(message);
+            } else {
+                jn_message = kw_incref(message);
+            }
 
-        if(callback(list, key, jn_message, user_data1, user_data2)<0) {
-            return -1;
+            if(callback(list, key, jn_message, user_data1, user_data2)<0) {
+                JSON_DECREF(jn_filter);
+                return -1;
+            }
         }
     }
 
+    JSON_DECREF(jn_filter);
     return 0;
 }
