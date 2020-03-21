@@ -72,22 +72,25 @@ PUBLIC int stdout_write(void* v, int priority, const char* bf, size_t len)
 PUBLIC int stdout_fwrite(void *v, int priority, const char *fmt, ...)
 {
     va_list ap;
+    va_list aq;
     int length;
     char *buf;
 
     va_start(ap, fmt);
+    va_copy(aq, ap);
 
     length = vsnprintf(NULL, 0, fmt, ap);
     if(length>0) {
         buf = malloc(length + 1);
         if(buf) {
-            vsnprintf(buf, length + 1, fmt, ap);
+            vsnprintf(buf, length + 1, fmt, aq);
             stdout_write(v, priority, buf, strlen(buf));
             free(buf);
         }
     }
 
     va_end(ap);
+    va_end(aq);
 
     return 0;
 }
