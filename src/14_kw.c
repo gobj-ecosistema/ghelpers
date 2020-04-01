@@ -2974,7 +2974,10 @@ PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
 
 /***************************************************************************
     Utility for databases.
-    Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
+    Being `kw` a:
+        - list of strings [s,...]
+        - list of dicts [{},...]
+        - dict of dicts {id:{},...}
     return a **NEW** list of incref (clone) kw filtering the rows by `jn_filter` (where),
     and matching the ids.
     If match_fn is 0 then kw_match_simple is used.
@@ -3006,7 +3009,16 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
         size_t idx;
         json_t *jn_value;
         json_array_foreach(kw, idx, jn_value) {
-            if(!kwid_match_id(ids, kw_get_str(jn_value, "id", 0, 0))) {
+            const char *id;
+            if(json_is_object(jn_value)) {
+                id = kw_get_str(jn_value, "id", 0, 0);
+            } else if(json_is_string(jn_value)) {
+                id = json_string_value(jn_value);
+            } else {
+                continue;
+            }
+
+            if(!kwid_match_id(ids, id)) {
                 continue;
             }
             JSON_INCREF(jn_filter);

@@ -674,7 +674,10 @@ PUBLIC BOOL kwid_match_id(
 
 /**rst**
     Utility for databases.
-    Being `kw` a list of dicts [{},...] or a dict of dicts {id:{},...}
+    Being `kw` a:
+        - list of strings [s,...]
+        - list of dicts [{},...]
+        - dict of dicts {id:{},...}
     return a **NEW** list of incref (clone) kw filtering the rows by `jn_filter` (where),
     and matching the ids.
     If match_fn is 0 then kw_match_simple is used.
