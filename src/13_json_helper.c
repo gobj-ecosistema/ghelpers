@@ -159,6 +159,36 @@ PUBLIC int print_json2(const char *label, json_t *jn)
     return 0;
 }
 
+/***************************************************************************
+    Return json type name
+ ***************************************************************************/
+PUBLIC const char *json_type_name(json_t *jn)
+{
+    if(!jn) {
+        return "???";
+    }
+    switch(json_typeof(jn)) {
+    case JSON_OBJECT:
+        return "object";
+    case JSON_ARRAY:
+        return "array";
+    case JSON_STRING:
+        return "string";
+    case JSON_INTEGER:
+        return "integer";
+    case JSON_REAL:
+        return "real";
+    case JSON_TRUE:
+        return "true";
+    case JSON_FALSE:
+        return "false";
+    case JSON_NULL:
+        return "null";
+    default:
+        return "???";
+    }
+}
+
 /****************************************************************************
  *  Indent, return spaces multiple of depth level gobj.
  *  With this, we can see the trace messages indenting according

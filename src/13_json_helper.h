@@ -97,6 +97,11 @@ PUBLIC int print_json(json_t *jn);
 PUBLIC int print_json2(const char *label, json_t *jn);
 
 /**rst**
+    Return json type name
+**rst**/
+PUBLIC const char *json_type_name(json_t *jn);
+
+/**rst**
     Print json with refcounts to stdout
 **rst**/
 PUBLIC int debug_json(json_t *jn);
