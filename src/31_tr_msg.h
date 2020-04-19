@@ -232,6 +232,15 @@ PUBLIC json_t *trmsg_get_instances( // Return (NOT yours) list: messages`message
     const char *key
 );
 
+/*
+ *  Return a list of **duplicated** records with instances in 'data' hook.
+ *  Ready for webix use.
+ *  WARNING Returned value is yours, must be decref.
+ */
+PUBLIC json_t *trmsg_data_tree(
+    json_t *list,
+    json_t *jn_filter  // owned
+);
 
 /*
  *  Return a list of **duplicated** records (list of dicts).

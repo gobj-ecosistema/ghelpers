@@ -384,6 +384,59 @@ PUBLIC json_t *trmsg_get_instances(
 }
 
 /***************************************************************************
+ *  Return a list of **duplicated** records with instances in 'data' hook.
+ *  Ready for webix use.
+ *  WARNING Returned value is yours, must be decref.
+ ***************************************************************************/
+PUBLIC json_t *trmsg_data_tree(
+    json_t *list,
+    json_t *jn_filter  // owned
+)
+{
+    json_t *jn_records = json_array();
+    json_t *messages = trmsg_get_messages(list);
+
+    const char *key;
+    json_t *message;
+    json_object_foreach(messages, key, message) {
+        json_t *active = kw_get_dict_value(message, "active", 0, KW_REQUIRED);
+        JSON_INCREF(jn_filter);
+        if(kw_match_simple(active, jn_filter)) {
+            json_t *jn_active = json_deep_copy(active);
+            json_array_append_new(jn_records, jn_active);
+            json_t *jn_data = kw_get_list(jn_active, "data", json_array(), KW_CREATE);
+            json_t *instances = kw_get_dict_value(message, "instances", 0, KW_REQUIRED);
+            json_int_t active_rowid = kw_get_int(
+                jn_active, "__md_tranger__`__rowid__", 0, KW_REQUIRED
+            );
+            BOOL active_found = FALSE;
+            int idx; json_t *instance;
+            json_array_foreach(instances, idx, instance) {
+                if(!active_found) {
+                    json_int_t instance_rowid = kw_get_int(
+                        instance, "__md_tranger__`__rowid__", 0, KW_REQUIRED
+                    );
+                    if(instance_rowid == active_rowid) {
+                        // Active record is already added and it's the root (with 'data' hook)
+                        active_found = TRUE;
+                        continue;
+                    }
+                }
+
+                JSON_INCREF(jn_filter);
+                if(kw_match_simple(instance, jn_filter)) {
+                    json_t *jn_instance = json_deep_copy(instance);
+                    json_array_append_new(jn_data, jn_instance);
+                }
+            }
+        }
+    }
+
+    JSON_DECREF(jn_filter);
+    return jn_records;
+}
+
+/***************************************************************************
  *  Return a list of records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
@@ -507,8 +560,8 @@ PUBLIC int trmsg_foreach_instances_messages(
     json_object_foreach_safe(messages, n, key, message) {
         json_t *instances = json_object_get(message, "instances");
         json_t *jn_instances = json_array(); // Your copy
-        int idx;
-        json_t *instance;
+
+        int idx; json_t *instance;
         json_array_foreach(instances, idx, instance) {
             JSON_INCREF(jn_filter);
             if(kw_match_simple(instance, jn_filter)) {
