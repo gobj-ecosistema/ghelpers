@@ -3002,29 +3002,38 @@ PUBLIC BOOL tranger_match_record(
             switch(json_type) {
             case JSON_OBJECT:
                 {
+                    BOOL some = FALSE;
                     const char *key_; json_t *jn_value;
                     json_object_foreach(json_object_get(match_cond, "key"), key_, jn_value) {
-                        if(md_record->key.i != atoi(key_)) {
-                            return FALSE;
+                        if(md_record->key.i == atoi(key_)) {
+                            some = TRUE;
+                            break; // Con un match de key ya es true
                         }
+                    }
+                    if(!some) {
+                        return FALSE;
                     }
                 }
                 break;
             case JSON_ARRAY:
                 {
+                    BOOL some = FALSE;
                     int idx; json_t *jn_value;
                     json_array_foreach(json_object_get(match_cond, "key"), idx, jn_value) {
                         if(json_is_integer(jn_value)) {
-                            if(md_record->key.i != json_integer_value(jn_value)) {
-                                return FALSE;
+                            if(md_record->key.i == json_integer_value(jn_value)) {
+                                some = TRUE;
+                                break; // Con un match de key ya es true
                             }
                         } else if(json_is_string(jn_value)) {
-                            if(md_record->key.i != atoi(json_string_value(jn_value))) {
-                                return FALSE;
+                            if(md_record->key.i == atoi(json_string_value(jn_value))) {
+                                some = TRUE;
+                                break; // Con un match de key ya es true
                             }
-                        } else {
-                            return FALSE;
                         }
+                    }
+                    if(!some) {
+                        return FALSE;
                     }
                 }
                 break;
@@ -3042,28 +3051,38 @@ PUBLIC BOOL tranger_match_record(
             switch(json_type) {
             case JSON_OBJECT:
                 {
+                    BOOL some = FALSE;
                     const char *key_; json_t *jn_value;
                     json_object_foreach(json_object_get(match_cond, "key"), key_, jn_value) {
-                        if(strncmp(md_record->key.s, key_, sizeof(md_record->key.s))!=0) {
-                            return FALSE;
+                        if(strncmp(md_record->key.s, key_, sizeof(md_record->key.s))==0) {
+                            some = TRUE;
+                            break; // Con un match de key ya es true
                         }
+                    }
+                    if(!some) {
+                        return FALSE;
                     }
                 }
                 break;
             case JSON_ARRAY:
                 {
+                    BOOL some = FALSE;
                     int idx; json_t *jn_value;
                     json_array_foreach(json_object_get(match_cond, "key"), idx, jn_value) {
                         if(json_is_string(jn_value)) {
                             if(strncmp(
                                     md_record->key.s,
                                     json_string_value(jn_value),
-                                    sizeof(md_record->key.s))!=0) {
-                                return FALSE;
+                                    sizeof(md_record->key.s))==0) {
+                                some = TRUE;
+                                break; // Con un match de key ya es true
                             }
                         } else {
                             return FALSE;
                         }
+                    }
+                    if(!some) {
+                        return FALSE;
                     }
                 }
                 break;

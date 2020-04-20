@@ -3079,9 +3079,9 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
             ...
         ]
 
-    return a new list of all ids (all duplicated items)
+    return a list of all ids (all duplicated items)
  ***************************************************************************/
-PUBLIC json_t *kwid_get_new_ids(
+PUBLIC json_t *kwid_get_ids(
     json_t *ids // not owned
 )
 {

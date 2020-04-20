@@ -705,12 +705,13 @@ PUBLIC json_t *kwid_collect( // WARNING be care, you can modify the original rec
         }
     return a new list of all ids (all duplicated items)
 **rst**/
-PUBLIC json_t *kwid_get_new_ids(
+PUBLIC json_t *kwid_get_ids(
     json_t *ids // not owned
 );
 
 /**rst**
     Utility for databases.
+    Return a list with id-records:
         [{"id": "$id", ...}, ...]
 
         {
