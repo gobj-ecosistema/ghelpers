@@ -2997,18 +2997,87 @@ PUBLIC BOOL tranger_match_record(
     BOOL backward = kw_get_bool(match_cond, "backward", 0, 0);
 
     if(kw_has_key(match_cond, "key")) {
+        int json_type = json_typeof(json_object_get(match_cond, "key"));
         if(md_record->__system_flag__ & (sf_int_key|sf_rowid_key)) {
-            json_int_t key = kw_get_int(match_cond, "key", 0, KW_REQUIRED|KW_WILD_NUMBER);
-            if(md_record->key.i != key) {
-                return FALSE;
+            switch(json_type) {
+            case JSON_OBJECT:
+                {
+                    const char *key_; json_t *jn_value;
+                    json_object_foreach(json_object_get(match_cond, "key"), key_, jn_value) {
+                        if(md_record->key.i != atoi(key_)) {
+                            return FALSE;
+                        }
+                    }
+                }
+                break;
+            case JSON_ARRAY:
+                {
+                    int idx; json_t *jn_value;
+                    json_array_foreach(json_object_get(match_cond, "key"), idx, jn_value) {
+                        if(json_is_integer(jn_value)) {
+                            if(md_record->key.i != json_integer_value(jn_value)) {
+                                return FALSE;
+                            }
+                        } else if(json_is_string(jn_value)) {
+                            if(md_record->key.i != atoi(json_string_value(jn_value))) {
+                                return FALSE;
+                            }
+                        } else {
+                            return FALSE;
+                        }
+                    }
+                }
+                break;
+            default:
+                {
+                    json_int_t key = kw_get_int(match_cond, "key", 0, KW_REQUIRED|KW_WILD_NUMBER);
+                    if(md_record->key.i != key) {
+                        return FALSE;
+                    }
+                }
+                break;
             }
+
         } else if(md_record->__system_flag__ & sf_string_key) {
-            const char *key = kw_get_str(match_cond, "key", 0, KW_REQUIRED|KW_DONT_LOG);
-            if(!key) {
-                return FALSE;
-            }
-            if(strncmp(md_record->key.s, key, sizeof(md_record->key.s))!=0) {
-                return FALSE;
+            switch(json_type) {
+            case JSON_OBJECT:
+                {
+                    const char *key_; json_t *jn_value;
+                    json_object_foreach(json_object_get(match_cond, "key"), key_, jn_value) {
+                        if(strncmp(md_record->key.s, key_, sizeof(md_record->key.s))!=0) {
+                            return FALSE;
+                        }
+                    }
+                }
+                break;
+            case JSON_ARRAY:
+                {
+                    int idx; json_t *jn_value;
+                    json_array_foreach(json_object_get(match_cond, "key"), idx, jn_value) {
+                        if(json_is_string(jn_value)) {
+                            if(strncmp(
+                                    md_record->key.s,
+                                    json_string_value(jn_value),
+                                    sizeof(md_record->key.s))!=0) {
+                                return FALSE;
+                            }
+                        } else {
+                            return FALSE;
+                        }
+                    }
+                }
+                break;
+            default:
+                {
+                    const char *key = kw_get_str(match_cond, "key", 0, KW_REQUIRED|KW_DONT_LOG);
+                    if(!key) {
+                        return FALSE;
+                    }
+                    if(strncmp(md_record->key.s, key, sizeof(md_record->key.s))!=0) {
+                        return FALSE;
+                    }
+                }
+                break;
             }
         } else {
             return FALSE;
