@@ -85,7 +85,7 @@ PUBLIC char *build_msg2db_index_path(
         File has precedence.
         Once saved,
             if you want to change the schema
-            then you must remove the file
+            then you must change the schema version and topic_version
  ***************************************************************************/
 PUBLIC json_t *msg2db_open_db(
     json_t *tranger,

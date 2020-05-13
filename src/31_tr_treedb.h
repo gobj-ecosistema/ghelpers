@@ -59,7 +59,7 @@ extern "C"{
         File has precedence.
         Once saved,
             if you want to change the schema
-            then you must remove the file
+            then you must change the schema version and topic_version
 **rst**/
 PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
