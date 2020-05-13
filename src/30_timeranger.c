@@ -1663,14 +1663,14 @@ PRIVATE FILE * get_content_file(json_t *tranger, json_t *topic, uint64_t __t__)
         json_object_set_new(
             kw_get_dict(topic, "file_opened_files", 0, KW_REQUIRED),
             full_path,
-            json_integer((json_int_t)file)
+            json_integer((json_int_t)(size_t)file)
         );
     }
 
     json_object_set_new(
         kw_get_dict(topic, "file_opened_files", 0, KW_REQUIRED),
         full_path,
-        json_integer((json_int_t)file)
+        json_integer((json_int_t)(size_t)file)
     );
     return file;
 }

@@ -264,7 +264,7 @@ PUBLIC int trq_load(tr_queue trq_)
         "topic_name", trq->topic_name,
         "match_cond", match_cond,
         "load_record_callback", (json_int_t)(size_t)load_record_callback,
-        "trq", (json_int_t)trq
+        "trq", (json_int_t)(size_t)trq
     );
     json_t *tr_list = tranger_open_list(
         trq->tranger,
@@ -309,7 +309,7 @@ PUBLIC int trq_load_all(tr_queue trq_, const char *key, int64_t from_rowid, int6
         "topic_name", tranger_topic_name(trq->topic),
         "match_cond", match_cond,
         "load_record_callback", (json_int_t)(size_t)load_record_callback,
-        "trq", (json_int_t)trq
+        "trq", (json_int_t)(size_t)trq
     );
     json_t *tr_list = tranger_open_list(
         trq->tranger,
