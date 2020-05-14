@@ -147,7 +147,7 @@ PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
  *------------------------------------*/
 
 /**rst**
-    This function does NOT auto build links
+    WARNING This function does NOT auto build links
 **rst**/
 PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *tranger,
