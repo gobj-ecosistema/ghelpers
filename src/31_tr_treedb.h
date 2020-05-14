@@ -72,6 +72,17 @@ PUBLIC int treedb_close_db(
     const char *treedb_name
 );
 
+// Return is NOT YOURS, pkey MUST be "id"
+// WARNING This function don't load hook links.
+// Intended to use for resources like rc_sqlite3
+PUBLIC json_t *treedb_create_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *topic_version,
+    json_t *jn_cols // owned
+);
+
 PUBLIC json_t *treedb_list_treedb( // Return a list with treedb names
     json_t *tranger
 );

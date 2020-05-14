@@ -105,12 +105,12 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s], s:[s,s]}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s], s:[s,s]}",
             "id", "type",
             "header", "Type",
             "type", "enum",
             "enum",
-                "string","integer","object","array","real","boolean",  "enum",
+                "string","integer","object","array","real","boolean","enum","blob",
             "flag",
                 "required", "notnull"
         )
@@ -528,6 +528,116 @@ PUBLIC int treedb_close_db(
     JSON_DECREF(treedb);
     JSON_DECREF(topic_cols_desc);
     return 0;
+}
+
+/***************************************************************************
+ // Return is NOT YOURS, pkey MUST be "id"
+ // WARNING This function don't load hook links.
+ // Intended to use for resources like rc_sqlite3
+ ***************************************************************************/
+PUBLIC json_t *treedb_create_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *topic_version,
+    json_t *cols // owned
+)
+{
+    /*------------------------------*
+     *  Get treedb list
+     *------------------------------*/
+    json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
+    if(!treedb) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDB not found.",
+            "treedb_name",  "%s", treedb_name,
+            NULL
+        );
+        return 0;
+    }
+
+    /*------------------------------*
+     *  Open/Create "user" topic
+     *------------------------------*/
+    if(!topic_version) {
+        topic_version = "";
+    }
+    json_t *jn_topic_var = json_object();
+    json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
+
+    JSON_INCREF(cols);
+    json_t *topic = tranger_create_topic(
+        tranger,    // If topic exists then only needs (tranger,name) parameters
+        topic_name,
+        "id",
+        "", // tkey
+        tranger_str2system_flag("sf_string_key"),
+        cols,           // owned below
+        jn_topic_var    // owned
+    );
+
+    parse_schema_cols(
+        topic_cols_desc,
+        kwid_new_list("verbose", topic, "cols")
+    );
+
+    json_t *jn_schema = json_object();
+    kw_get_str(jn_schema, "topic_name", topic_name, KW_CREATE);
+    kw_get_str(jn_schema, "pkey", "id", KW_CREATE);
+    kw_get_str(jn_schema, "system_flag", "sf_string_key", KW_CREATE);
+    kw_get_str(jn_schema, "topic_version", topic_version, KW_CREATE);
+    kw_get_dict(jn_schema, "cols", cols, KW_CREATE); // cols owned
+
+    char schema_filename[NAME_MAX];
+    snprintf(schema_filename, sizeof(schema_filename), "%s-%s.treedb_schema.json",
+        treedb_name,
+        topic_name
+    );
+
+    save_json_to_file(
+        kw_get_str(tranger, "directory", 0, KW_REQUIRED),
+        schema_filename,
+        kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+        kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+        kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+        TRUE, // Create file if not exists or overwrite.
+        FALSE, // only_read
+        jn_schema     // owned
+    );
+
+    /*------------------------------*
+     *  Open "user" list
+     *------------------------------*/
+    char path[NAME_MAX];
+    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+
+    kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
+
+    json_t *jn_filter = json_pack("{s:b}", // TODO pon el current tag
+        "backward", 1
+    );
+    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
+        "id", path,
+        "topic_name", topic_name,
+        "match_cond", jn_filter,
+        "load_record_callback", (json_int_t)(size_t)load_record_callback,
+        "treedb_name", treedb_name,
+        "deleted_records"
+    );
+    tranger_open_list(
+        tranger,
+        jn_list // owned
+    );
+
+    /*------------------------------*
+     *  Parse hooks
+     *------------------------------*/
+    parse_hooks(tranger);
+
+    return topic;
 }
 
 /***************************************************************************
@@ -1403,6 +1513,10 @@ PRIVATE int set_tranger_field_value(
             json_object_set_new(record, field, v?json_true():json_false());
             break;
 
+        CASES("blob")
+            json_object_set(record, field, value);
+            break;
+
         DEFAULTS
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -1484,6 +1598,10 @@ PRIVATE int set_volatil_field_value(
         CASES("boolean")
             BOOL v = jn2bool(value);
             json_object_set_new(record, field, v?json_true():json_false());
+            break;
+
+        CASES("blob")
+            json_object_set(record, field, value);
             break;
 
         DEFAULTS
