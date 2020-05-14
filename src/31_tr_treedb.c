@@ -643,6 +643,50 @@ PUBLIC json_t *treedb_create_topic(
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC int treedb_delete_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, KW_EXTRACT);
+    if(!treedb) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDB not found.",
+            "treedb_name",  "%s", treedb_name,
+            NULL
+        );
+        return -1;
+    }
+
+    char list_id[NAME_MAX];
+    build_treedb_index_path(list_id, sizeof(list_id), treedb_name, topic_name, "id");
+    json_t *list = tranger_get_list(tranger, list_id);
+    if(list) {
+        tranger_close_list(tranger, list);
+    } else {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "List not found.",
+            "treedb_name",  "%s", treedb_name,
+            "list",         "%s", list_id,
+            NULL
+        );
+    }
+
+    tranger_delete_topic(tranger, topic_name);
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC json_t *treedb_list_treedb(
     json_t *tranger
 )

@@ -82,6 +82,11 @@ PUBLIC json_t *treedb_create_topic(
     const char *topic_version,
     json_t *jn_cols // owned
 );
+PUBLIC int treedb_delete_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+);
 
 PUBLIC json_t *treedb_list_treedb( // Return a list with treedb names
     json_t *tranger
