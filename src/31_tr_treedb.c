@@ -228,6 +228,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
                     break;
+                } else {
+                    JSON_DECREF(old_jn_schema);
                 }
             }
             log_info(0,
@@ -526,6 +528,34 @@ PUBLIC int treedb_close_db(
     JSON_DECREF(treedb);
     JSON_DECREF(topic_cols_desc);
     return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *treedb_list_treedb(
+    json_t *tranger
+)
+{
+    json_t *treedb_list = json_array();
+
+    json_t *treedbs = kw_get_dict(tranger, "treedbs", 0, 0);
+    if(!treedbs) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "NO TreeDB found.",
+            NULL
+        );
+        return treedb_list;
+    }
+    const char *treedb_name; json_t *treedb;
+    json_object_foreach(treedbs, treedb_name, treedb) {
+        json_array_append_new(treedb_list, json_string(treedb_name));
+    }
+
+    return treedb_list;
 }
 
 /***************************************************************************

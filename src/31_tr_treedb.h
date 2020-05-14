@@ -72,6 +72,10 @@ PUBLIC int treedb_close_db(
     const char *treedb_name
 );
 
+PUBLIC json_t *treedb_list_treedb( // Return a list with treedb names
+    json_t *tranger
+);
+
 PUBLIC json_t *treedb_list_topics(
     json_t *tranger,
     const char *treedb_name,
