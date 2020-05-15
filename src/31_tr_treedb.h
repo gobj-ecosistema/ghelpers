@@ -75,6 +75,7 @@ PUBLIC int treedb_close_db(
 // Return is NOT YOURS, pkey MUST be "id"
 // WARNING This function don't load hook links.
 // Intended to use for resources like rc_sqlite3
+//   HACK IDEMPOTENT function
 PUBLIC json_t *treedb_create_topic(
     json_t *tranger,
     const char *treedb_name,

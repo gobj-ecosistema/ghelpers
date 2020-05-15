@@ -117,13 +117,13 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s], s:s}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
             "enum",
                 "","persistent","required","fkey",
-                "hook","uuid","notnull","wild",
+                "hook","uuid","notnull","wild","rowid",
             "flag",
                 ""
         )
@@ -534,6 +534,7 @@ PUBLIC int treedb_close_db(
  // Return is NOT YOURS, pkey MUST be "id"
  // WARNING This function don't load hook links.
  // Intended to use for resources like rc_sqlite3
+   HACK IDEMPOTENT function
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(
     json_t *tranger,
@@ -556,7 +557,17 @@ PUBLIC json_t *treedb_create_topic(
             "treedb_name",  "%s", treedb_name,
             NULL
         );
+        JSON_DECREF(cols);
         return 0;
+    }
+
+    /*------------------------------*
+     *  Check if already exists
+     *------------------------------*/
+    json_t *topic = kw_get_dict(treedb, topic_name, 0, 0);
+    if(topic) {
+        JSON_DECREF(cols);
+        return topic;
     }
 
     /*------------------------------*
@@ -569,7 +580,7 @@ PUBLIC json_t *treedb_create_topic(
     json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
 
     JSON_INCREF(cols);
-    json_t *topic = tranger_create_topic(
+    tranger_create_topic(
         tranger,    // If topic exists then only needs (tranger,name) parameters
         topic_name,
         "id",
@@ -2843,7 +2854,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Get the id, it's mandatory
      *-------------------------------*/
-    char uuid[RECORD_KEY_VALUE_MAX+1];
     const char *id = kw_get_str(kw, "id", 0, 0);
     if(empty_string(id)) {
         json_t *id_col_flag = kwid_get("verbose",
@@ -2852,11 +2862,15 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                 topic_name
         );
         if(kw_has_word(id_col_flag, "uuid", 0)) {
+            char uuid[RECORD_KEY_VALUE_MAX+1];
             uuid_t binuuid;
             uuid_generate_random(binuuid);
             uuid_unparse_lower(binuuid, uuid);
             id = uuid;
             json_object_set_new(kw, "id", json_string(id));
+        } else if(kw_has_word(id_col_flag, "rowid", 0)) {
+            json_int_t rowid = tranger_topic_size(tranger_topic(tranger, topic_name)) + 1;
+            json_object_set_new(kw, "id", json_sprintf("%"JSON_INTEGER_FORMAT, rowid));
         } else {
             log_error(0,
                 "gobj",         "%s", __FILE__,
