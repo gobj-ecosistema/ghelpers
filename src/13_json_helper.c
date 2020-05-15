@@ -1139,6 +1139,7 @@ PUBLIC json_t *load_persistent_json(
     int fd;
     if(exclusive) {
         fd = open_exclusive(full_path, O_RDONLY|O_NOFOLLOW, 0);
+        fcntl(fd, F_SETFD, FD_CLOEXEC); // Que no vaya a los child
     } else {
         fd = open(full_path, O_RDONLY|O_NOFOLLOW);
     }
