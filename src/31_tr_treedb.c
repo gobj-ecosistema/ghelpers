@@ -580,7 +580,7 @@ PUBLIC json_t *treedb_create_topic(
     json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
 
     JSON_INCREF(cols);
-    tranger_create_topic(
+    topic = tranger_create_topic(
         tranger,    // If topic exists then only needs (tranger,name) parameters
         topic_name,
         "id",
@@ -2871,6 +2871,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         } else if(kw_has_word(id_col_flag, "rowid", 0)) {
             json_int_t rowid = tranger_topic_size(tranger_topic(tranger, topic_name)) + 1;
             json_object_set_new(kw, "id", json_sprintf("%"JSON_INTEGER_FORMAT, rowid));
+            id = kw_get_str(kw, "id", 0, 0);
         } else {
             log_error(0,
                 "gobj",         "%s", __FILE__,
