@@ -450,7 +450,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 
         kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
 
-        json_t *jn_filter = json_pack("{s:b}", // TODO pon el current tag
+        json_t *jn_filter = json_pack("{s:b}", // TODO tag pon el current tag
             "backward", 1
         );
         json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
@@ -627,7 +627,7 @@ PUBLIC json_t *treedb_create_topic(
 
     kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
 
-    json_t *jn_filter = json_pack("{s:b}", // TODO pon el current tag
+    json_t *jn_filter = json_pack("{s:b}", // TODO tag pon el current tag
         "backward", 1
     );
     json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
@@ -773,7 +773,7 @@ PUBLIC int treedb_tag( // tag the current tree db
     const char *tag
 )
 {
-    // TODO
+    // TODO tag
     return 0;
 }
 
@@ -786,7 +786,7 @@ PUBLIC int treedb_reopen_db(
     const char *tag  // If empty tag then free the tree, active record will be the last record.
 )
 {
-    // TODO
+    // TODO tag
     return 0;
 }
 
@@ -3470,9 +3470,11 @@ PUBLIC int treedb_delete_node(
             "msg",          "%s", "kw without id",
             NULL
         );
+        log_debug_json(0, kw, "kw without id");
         JSON_DECREF(kw);
         return 0;
     }
+    JSON_DECREF(kw);
 
     /*-------------------------------*
      *  Set node name
@@ -3500,7 +3502,6 @@ PUBLIC int treedb_delete_node(
             "id",           "%s", id,
             NULL
         );
-        JSON_DECREF(kw);
         return 0;
     }
 
