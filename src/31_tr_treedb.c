@@ -3449,6 +3449,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
 /***************************************************************************
     "force" delete links.
     If there are links are not force then delete_node will fail
+    WARNING that kw can be child_node, the node to delete!!
  ***************************************************************************/
 PUBLIC int treedb_delete_node(
     json_t *tranger,
@@ -3474,7 +3475,6 @@ PUBLIC int treedb_delete_node(
         JSON_DECREF(kw);
         return 0;
     }
-    JSON_DECREF(kw);
 
     /*-------------------------------*
      *  Set node name
@@ -3502,7 +3502,11 @@ PUBLIC int treedb_delete_node(
             "id",           "%s", id,
             NULL
         );
+        JSON_DECREF(kw);
         return 0;
+    }
+    if(kw != child_node) {
+        JSON_DECREF(kw);
     }
 
     /*-------------------------------*
