@@ -326,6 +326,9 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *  Open/Create "system" topics
      *-------------------------------*/
     char *tags_topic_name = "__tags__";
+    const char *tags_topic_version = "1";
+    json_t *jn_tags_topic_var = json_object();
+    json_object_set_new(jn_tags_topic_var, "topic_version", json_string(tags_topic_version));
 
     json_t *tags_topic = tranger_create_topic(
         tranger,    // If topic exists then only needs (tranger,name) parameters
@@ -333,7 +336,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         "id",
         "",
         sf_rowid_key,
-        json_pack("{s:{s:s, s:s, s:s, s:[s,s]}, s:{s:s, s:s, s:s, s:[s,s]}}",
+        json_pack(
+            "{s:{s:s, s:s, s:s, s:[s,s]}, s:{s:s, s:s, s:s, s:[s,s]}, s:{s:s, s:s, s:s, s:[s,s]}}",
             "id",
                 "id", "id",
                 "header", "Id",
@@ -346,9 +350,15 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 "header", "Name",
                 "type", "string",
                 "flag",
+                    "persistent", "required",
+            "active",
+                "id", "active",
+                "header", "Active",
+                "type", "boolean",
+                "flag",
                     "persistent", "required"
         ),
-        0
+        jn_tags_topic_var
     );
 
     parse_schema_cols(
@@ -3169,37 +3179,44 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *options // "create" ["permissive"], "clean"
 )
 {
+    BOOL create = (options && strstr(options, "create"))?TRUE:FALSE;
+
     /*-------------------------------*
      *  Get id
      *-------------------------------*/
-    const char *id = kw_get_str(kw, "id", 0, 0);
+    const char *id = kw_get_str(kw, "id", "", 0);
     if(empty_string(id)) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "kw without id",
-            NULL
-        );
-        JSON_DECREF(kw);
-        return 0;
+        if(!create) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "kw without id",
+                NULL
+            );
+            JSON_DECREF(kw);
+            return 0;
+        }
     }
 
     /*-------------------------------*
      *  Set node name
      *-------------------------------*/
-    char child_name[NAME_MAX];
-    snprintf(child_name, sizeof(child_name), "%s^%s", topic_name, id);
+    char child_name[NAME_MAX]; // ONLY to log
+    snprintf(child_name, sizeof(child_name), "%s^%s", topic_name, id?id:"");
 
     /*-------------------------------*
      *  Recover node
      *-------------------------------*/
-    json_t *child_node = treedb_get_node( // Return is NOT YOURS
-        tranger,
-        treedb_name,
-        topic_name,
-        id
-    );
+    json_t *child_node = 0;
+    if(!empty_string(id)) {
+        child_node = treedb_get_node( // Return is NOT YOURS
+            tranger,
+            treedb_name,
+            topic_name,
+            id
+        );
+    }
     if(!child_node) {
         if(options && strstr(options, "create")) {
             JSON_INCREF(kw);

@@ -164,7 +164,7 @@ PUBLIC int treedb_save_node(
 );
 
 /**rst**
-    This function DOES auto build links
+    WARNING This function DOES auto build links
 
     "create" ["permissive"] create node if not exist
     "clean" clean wrong fkeys
