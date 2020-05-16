@@ -182,6 +182,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
 **rst**/
 PUBLIC int treedb_delete_node(
     json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
     json_t *node,    // owned
     const char *options // "force"
 );

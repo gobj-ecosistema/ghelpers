@@ -3452,16 +3452,62 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
  ***************************************************************************/
 PUBLIC int treedb_delete_node(
     json_t *tranger,
-    json_t *node,    // owned
+    const char *treedb_name,
+    const char *topic_name,
+    json_t *kw,    // owned
     const char *options // "force"
 )
 {
     /*-------------------------------*
+     *  Get id
+     *-------------------------------*/
+    const char *id = kw_get_str(kw, "id", 0, 0);
+    if(empty_string(id)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "kw without id",
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+
+    /*-------------------------------*
+     *  Set node name
+     *-------------------------------*/
+    char child_name[NAME_MAX];
+    snprintf(child_name, sizeof(child_name), "%s^%s", topic_name, id);
+
+    /*-------------------------------*
+     *  Recover node
+     *-------------------------------*/
+    json_t *child_node = treedb_get_node( // Return is NOT YOURS
+        tranger,
+        treedb_name,
+        topic_name,
+        id
+    );
+    if(!child_node) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "node not found",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            "id",           "%s", id,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+
+    /*-------------------------------*
      *      Get record info
      *-------------------------------*/
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
-    json_int_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
+    json_int_t __rowid__ = kw_get_int(child_node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
 
     /*-------------------------------*
      *      Get indexx
@@ -3484,25 +3530,7 @@ PUBLIC int treedb_delete_node(
             "topic_name",   "%s", topic_name,
             NULL
         );
-        JSON_DECREF(node);
-        return -1;
-    }
-
-    /*-------------------------------*
-     *  Get the id, it's mandatory
-     *-------------------------------*/
-    const char *id = kw_get_str(node, "id", 0, 0);
-    if(!id) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Field 'id' required",
-            "path",         "%s", path,
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        JSON_DECREF(node);
+        JSON_DECREF(child_node);
         return -1;
     }
 
@@ -3511,7 +3539,7 @@ PUBLIC int treedb_delete_node(
      *-------------------------------*/
     BOOL to_delete = TRUE;
 
-    json_t *down_refs = get_node_down_refs(tranger, node);
+    json_t *down_refs = get_node_down_refs(tranger, child_node);
     if(json_array_size(down_refs)>0) {
         if(0) { //options && strstr(options, "force")) {
             // TODO borra links
@@ -3531,7 +3559,7 @@ PUBLIC int treedb_delete_node(
     }
     JSON_DECREF(down_refs);
 
-    json_t *up_refs = get_node_up_refs(tranger, node);
+    json_t *up_refs = get_node_up_refs(tranger, child_node);
     if(json_array_size(up_refs)>0) {
         if(options && strstr(options, "force")) {
             int idx; json_t *old_fkey;
@@ -3576,12 +3604,12 @@ PUBLIC int treedb_delete_node(
                         tranger,
                         hook_name,
                         parent_node,    // not owned
-                        node      // not owned
+                        child_node      // not owned
                     );
                 } else {
                     search_and_remove_wrong_up_ref(
                         tranger,
-                        node,
+                        child_node,
                         topic_name,
                         ref
                     );
@@ -3591,7 +3619,7 @@ PUBLIC int treedb_delete_node(
             /*
              *  Re-checks up links
              */
-            json_t *up_refs_ = get_node_up_refs(tranger, node);
+            json_t *up_refs_ = get_node_up_refs(tranger, child_node);
             if(json_array_size(up_refs_)>0) {
                 to_delete = FALSE;
                 log_error(0,
@@ -3625,7 +3653,7 @@ PUBLIC int treedb_delete_node(
 
     if(!to_delete) {
         // Error already logged
-        JSON_DECREF(node);
+        JSON_DECREF(child_node);
         return -1;
     }
 
@@ -3645,7 +3673,7 @@ PUBLIC int treedb_delete_node(
             "id",           "%s", id,
             NULL
         );
-        JSON_DECREF(node);
+        JSON_DECREF(child_node);
         return -1;
     }
 
