@@ -399,8 +399,10 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             continue;
         }
         const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
+        const char *topic_options = kw_get_str(schema_topic, "topic_options", "", 0);
         json_t *jn_topic_var = json_object();
         json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
+        json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options));
         json_t *topic = tranger_create_topic(
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_name,
@@ -541,16 +543,16 @@ PUBLIC int treedb_close_db(
 }
 
 /***************************************************************************
- // Return is NOT YOURS, pkey MUST be "id"
- // WARNING This function don't load hook links.
- // Intended to use for resources like rc_sqlite3
-   HACK IDEMPOTENT function
+    Return is NOT YOURS, pkey MUST be "id"
+    WARNING This function don't load hook links.
+    HACK IDEMPOTENT function
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     const char *topic_version,
+    const char *topic_options,
     json_t *cols // owned
 )
 {
@@ -586,8 +588,12 @@ PUBLIC json_t *treedb_create_topic(
     if(!topic_version) {
         topic_version = "";
     }
+    if(!topic_options) {
+        topic_options = "";
+    }
     json_t *jn_topic_var = json_object();
     json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
+    json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options));
 
     JSON_INCREF(cols);
     topic = tranger_create_topic(
@@ -772,32 +778,6 @@ PUBLIC json_t *treedb_list_topics(
     }
 
     return topic_list;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC int treedb_tag( // tag the current tree db
-    json_t *tranger,
-    const char *treedb_name,
-    const char *tag
-)
-{
-    // TODO tag
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC int treedb_reopen_db(
-    json_t *tranger,
-    const char *treedb_name,
-    const char *tag  // If empty tag then free the tree, active record will be the last record.
-)
-{
-    // TODO tag
-    return 0;
 }
 
 
@@ -5195,3 +5175,52 @@ PUBLIC int treedb_end_transaction(
     return 0;
 }
 
+
+
+
+                        /*------------------------------------*
+                         *      Tags
+                         *------------------------------------*/
+
+
+
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_snap_nodes( // tag the current tree db
+    json_t *tranger,
+    const char *treedb_name,
+    const char *tag
+)
+{
+    // TODO tag
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_set_nodes_snap( // Activate tag
+    json_t *tranger,
+    const char *treedb_name,
+    const char *tag
+)
+{
+    // TODO tag
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *treedb_list_nodes_snaps( // Return MUST be decref, list of snaps
+    json_t *tranger,
+    const char *treedb_name
+)
+{
+    json_t *jn_list = json_array();
+    // TODO tag
+
+    return jn_list;
+}

@@ -72,15 +72,17 @@ PUBLIC int treedb_close_db(
     const char *treedb_name
 );
 
-// Return is NOT YOURS, pkey MUST be "id"
-// WARNING This function don't load hook links.
-// Intended to use for resources like rc_sqlite3
-//   HACK IDEMPOTENT function
+/***************************************************************************
+    Return is NOT YOURS, pkey MUST be "id"
+    WARNING This function don't load hook links.
+    HACK IDEMPOTENT function
+ ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     const char *topic_version,
+    const char *topic_options,
     json_t *jn_cols // owned
 );
 PUBLIC int treedb_delete_topic(
@@ -268,6 +270,20 @@ PUBLIC json_t *treedb_get_parent_nodes( // Return MUST be decref
     const char *link // must be a fkey field
 );
 
+PUBLIC int treedb_snap_nodes( // tag the current tree db
+    json_t *tranger,
+    const char *treedb_name,
+    const char *tag
+);
+PUBLIC int treedb_set_nodes_snap( // Activate tag
+    json_t *tranger,
+    const char *treedb_name,
+    const char *tag
+);
+PUBLIC json_t *treedb_list_nodes_snaps( // Return MUST be decref, list of snaps
+    json_t *tranger,
+    const char *treedb_name
+);
 
 #ifdef __cplusplus
 }
