@@ -3155,7 +3155,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw,    // owned
+    json_t *kw,    // owned (node)
     const char *options // "create" ["permissive"], "clean"
 )
 {
@@ -3452,7 +3452,7 @@ PUBLIC int treedb_delete_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw,    // owned
+    json_t *kw,    // owned (node, WARNING only 'id' field is used to find the node to delete)
     const char *options // "force"
 )
 {

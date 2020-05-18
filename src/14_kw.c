@@ -3099,6 +3099,16 @@ PUBLIC json_t *kwid_get_ids(
         json_array_append_new(new_ids, json_string(json_string_value(ids)));
         break;
 
+    case JSON_INTEGER:
+        /*
+            $id
+         */
+        json_array_append_new(
+            new_ids,
+            json_sprintf("%"JSON_INTEGER_FORMAT, json_integer_value(ids))
+        );
+        break;
+
     case JSON_OBJECT:
         /*
             {
@@ -3133,6 +3143,17 @@ PUBLIC json_t *kwid_get_ids(
                         }
                     }
                     break;
+
+                case JSON_INTEGER:
+                    /*
+                        $id
+                    */
+                    json_array_append_new(
+                        new_ids,
+                        json_sprintf("%"JSON_INTEGER_FORMAT, json_integer_value(jn_value))
+                    );
+                    break;
+
                 case JSON_OBJECT:
                     /*
                         [
