@@ -206,7 +206,10 @@ PUBLIC json_t *kw_deserialize(
  ***************************************************************************/
 PUBLIC json_t *kw_incref(json_t *kw)
 {
-    if(!kw || kw->refcount <= 0) {
+    if(!kw) {
+        return 0;
+    }
+    if(kw->refcount <= 0) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -250,7 +253,10 @@ PUBLIC json_t *kw_incref(json_t *kw)
  ***************************************************************************/
 PUBLIC json_t *kw_decref(json_t* kw)
 {
-    if(!kw || kw->refcount <= 0) {
+    if(!kw) {
+        return 0;
+    }
+    if(kw->refcount <= 0) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
