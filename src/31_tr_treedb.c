@@ -74,6 +74,7 @@ PRIVATE int _unlink_nodes(
  *              Data
  ***************************************************************/
 PRIVATE json_t *topic_cols_desc = 0;
+PRIVATE BOOL treedb_trace = 0;
 
 /***************************************************************************
  *
@@ -2793,6 +2794,16 @@ PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
     }
 
     return jn_beautiful_names;
+}
+
+/***************************************************************************
+
+ ***************************************************************************/
+PUBLIC int treedb_set_trace(BOOL set)
+{
+    BOOL old = treedb_trace;
+    treedb_trace = set?1:0;
+    return old;
 }
 
 

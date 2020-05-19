@@ -144,6 +144,7 @@ PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
     json_t *value
 );
 
+PUBLIC int treedb_set_trace(BOOL set);
 
 /*------------------------------------*
  *      Manage the tree's nodes
