@@ -2966,6 +2966,13 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *-------------------------------*/
     json_object_set_new(indexx, id, record);
 
+    /*-------------------------------*
+     *  Trace
+     *-------------------------------*/
+    if(treedb_trace) {
+        log_debug_json(0, record, "treedb_create_node: Ok (%s, %s)", treedb_name, topic_name);
+    }
+
     JSON_DECREF(kw);
     return record;
 }
@@ -3019,6 +3026,13 @@ PUBLIC int treedb_save_node(
         &md_record
     );
     json_object_set_new(node, "__md_treedb__", jn_record_md);
+
+    /*-------------------------------*
+     *  Trace
+     *-------------------------------*/
+    if(treedb_trace) {
+        log_debug_json(0, record, "treedb_save_node: Ok (%s, %s)", treedb_name, topic_name);
+    }
 
     return 0;
 }
@@ -3268,7 +3282,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     char parent_topic_name[NAME_MAX];
     char parent_id[NAME_MAX];
     char hook_name[NAME_MAX];
-    BOOL to_update = FALSE;
 
     const char *col_name; json_t *col;
     json_object_foreach(cols, col_name, col) {
@@ -3283,7 +3296,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 json_t *old_value = kw_get_dict_value(child_node, col_name, 0, 0);
                 json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
                 if(new_value && !kw_is_identical(old_value, new_value)) {
-                    to_update = TRUE;
                     json_object_set(child_node, col_name, new_value);
                 }
             }
@@ -3351,8 +3363,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 continue;
             }
 
-            to_update = TRUE;
-
             _link_nodes(
                 tranger,
                 hook_name,
@@ -3416,12 +3426,9 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                         col_name,
                         ref
                     );
-                    to_update = TRUE;
                 }
                 continue;
             }
-
-            to_update = TRUE;
 
             _unlink_nodes(
                 tranger,
@@ -3445,11 +3452,9 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Write to tranger
      *-------------------------------*/
-    if(to_update) {
-        if(treedb_save_node(tranger, child_node)<0) {
-            // Error already logged
-            return 0;
-        }
+    if(treedb_save_node(tranger, child_node)<0) {
+        // Error already logged
+        return 0;
     }
     return child_node;
 }
@@ -3674,7 +3679,34 @@ PUBLIC int treedb_delete_node(
      *  Delete the record
      *-------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
-        json_object_del(indexx, id); // node owned
+        if(json_object_del(indexx, id)<0) { // node owned
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "json_object_del() FAILED",
+                "path",         "%s", path,
+                "topic_name",   "%s", topic_name,
+                "id",           "%s", id,
+                NULL
+            );
+        } else {
+            /*-------------------------------*
+             *  Trace
+             *-------------------------------*/
+            if(treedb_trace) {
+                log_debug(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INFO,
+                    "msg",          "%s", "json_object_del() Ok",
+                    "path",         "%s", path,
+                    "topic_name",   "%s", topic_name,
+                    "id",           "%s", id,
+                    NULL
+                );
+            }
+        }
     } else {
         log_error(0,
             "gobj",         "%s", __FILE__,
