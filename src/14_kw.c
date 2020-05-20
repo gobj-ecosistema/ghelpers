@@ -3361,10 +3361,32 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
         );
         return FALSE;
     }
+    if(kw->refcount <= 0) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "refcount <= 0",
+            "refcount",     "%d", (int)kw->refcount,
+            NULL
+        );
+        return FALSE;
+    }
 
     switch(json_typeof(kw)) {
     case JSON_ARRAY:
         {
+            if(kw->refcount <= 0) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount <= 0",
+                    "refcount",     "%d", (int)kw->refcount,
+                    NULL
+                );
+                return FALSE;
+            }
             int idx; json_t *jn_value;
             json_array_foreach(kw, idx, jn_value) {
                 if(!kw_check_refcounts(jn_value, max_refcount)) {
@@ -3375,6 +3397,17 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
         break;
     case JSON_OBJECT:
         {
+            if(kw->refcount <= 0) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount <= 0",
+                    "refcount",     "%d", (int)kw->refcount,
+                    NULL
+                );
+                return FALSE;
+            }
             const char *key; json_t *jn_value;
             json_object_foreach(kw, key, jn_value) {
                 if(!kw_check_refcounts(jn_value, max_refcount)) {
