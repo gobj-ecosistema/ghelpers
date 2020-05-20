@@ -233,14 +233,17 @@ PUBLIC int treedb_link_multiple_nodes(
         - the ref (childs, to down) have 2 ^ fields
     WARNING Returned list in "collapsed" mode have duplicated nodes,
             otherwise it returns original nodes.
+
+    HACK id is converted in ids (using kwid_get_ids())
+    HACK if __filter__ exists in jn_filter it will be used as filter
+
 **rst**/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *jn_ids,     // owned
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "collapsed"
+    json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned

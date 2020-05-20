@@ -4590,9 +4590,8 @@ PRIVATE int link_or_unlink_nodes2(
                     tranger,
                     treedb_name,
                     child_topic_name,
-                    0,  // jn_ids, owned
                     jn_param,  // owned
-                    0,  // jn_options, owned "collapsed"
+                    0,  // options, "collapsed"
                     0   //match_fn
                 );
                 if(json_array_size(nodes)!=1) {
@@ -4856,20 +4855,29 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         - the ref (childs, to down) have 2 ^ fields
     WARNING Returned list in "collapsed" mode have duplicate nodes,
             otherwise it returns original nodes.
+
+    HACK id is converted in ids (using kwid_get_ids())
+    HACK if __filter__ exists in jn_filter it will be used as filter
+
  ***************************************************************************/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *jn_ids,     // owned
-    json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "collapsed"
+    json_t *jn_filter_,  // owned
+    json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
     )
 )
 {
+    /*-------------------------------*
+     *      Use duplicate
+     *-------------------------------*/
+    json_t *jn_filter = kw_duplicate(jn_filter_);
+    JSON_DECREF(jn_filter_);
+
     /*-------------------------------*
      *      Get indexx
      *-------------------------------*/
@@ -4891,67 +4899,109 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             "topic_name",   "%s", topic_name,
             NULL
         );
-        JSON_DECREF(jn_ids);
         JSON_DECREF(jn_filter);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
-    /*-------------------------------*
-     *      Read
-     *-------------------------------*/
-
+    /*--------------------------------------------*
+     *      Search
+     *  Extract from jn_filter
+     *      the ids and the fields of topic
+     *--------------------------------------------*/
     if(!match_fn) {
         match_fn = kw_match_simple;
     }
 
-    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
+    /*
+     *  Extrae ids
+     */
+    json_t *ids_list = 0;
+    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT);
+    if(jn_id) {
+        ids_list = kwid_get_ids(jn_id);
+        JSON_DECREF(jn_id);
+    }
+
+    /*
+     *  Usa __filter__ si existe
+     */
+    if(kw_has_key(jn_filter, "__filter__")) {
+        json_t *jn_filter_ = kw_get_dict_value(jn_filter, "__filter__", 0, KW_EXTRACT);
+        JSON_DECREF(jn_filter);
+        jn_filter = jn_filter_;
+    }
+
+    /*
+     *  Filtra de jn_filter solo las keys del topic
+     */
     json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
+    jn_filter = kw_clone_by_keys(
+        jn_filter,     // owned
+        kw_incref(topic_desc), // owned
+        TRUE
+    );
+
+    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
 
     json_t *list = json_array();
 
     if(json_is_array(indexx)) {
-        size_t idx;
-        json_t *node;
+        size_t idx; json_t *node;
         json_array_foreach(indexx, idx, node) {
-            if(!kwid_match_id(jn_ids, kw_get_str(node, "id", 0, 0))) {
+            if(!kwid_match_id(ids_list, kw_get_str(node, "id", 0, 0))) {
                 continue;
             }
             JSON_INCREF(jn_filter);
             if(match_fn(node, jn_filter)) {
-                if(!collapsed) {
-                    // Full tree
-                    json_array_append(list, node);
-                } else {
-                    // Collapse records (hook fields)
-                    json_array_append_new(
-                        list,
-                        node_collapsed_view(
-                            topic_desc,
-                            node
-                        )
-                    );
+                /*
+                 *  Now check n-n fields
+                 */
+                BOOL n_n_matched = TRUE;
+                // TODO
+
+                if(n_n_matched) {
+                    if(!collapsed) {
+                        // Full tree
+                        json_array_append(list, node);
+                    } else {
+                        // Collapse records (hook fields)
+                        json_array_append_new(
+                            list,
+                            node_collapsed_view(
+                                topic_desc,
+                                node
+                            )
+                        );
+                    }
                 }
             }
         }
     } else if(json_is_object(indexx)) {
         const char *id; json_t *node;
         json_object_foreach(indexx, id, node) {
-            if(!kwid_match_id(jn_ids, id)) {
+            if(!kwid_match_id(ids_list, id)) {
                 continue;
             }
             JSON_INCREF(jn_filter);
             if(match_fn(node, jn_filter)) {
-                if(!collapsed) {
-                    json_array_append(list, node);
-                } else {
-                    json_array_append_new(
-                        list,
-                        node_collapsed_view(
-                            topic_desc,
-                            node
-                        )
-                    );
+                /*
+                 *  Now check n-n fields
+                 */
+                BOOL n_n_matched = TRUE;
+                // TODO
+
+                if(n_n_matched) {
+                    if(!collapsed) {
+                        json_array_append(list, node);
+                    } else {
+                        json_array_append_new(
+                            list,
+                            node_collapsed_view(
+                                topic_desc,
+                                node
+                            )
+                        );
+                    }
                 }
             }
         }
@@ -4968,9 +5018,8 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     }
 
     json_decref(topic_desc);
-    JSON_DECREF(jn_ids);
     JSON_DECREF(jn_filter);
-    JSON_DECREF(jn_options);
+    JSON_DECREF(ids_list);
 
     return list;
 }
