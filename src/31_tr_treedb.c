@@ -3031,7 +3031,7 @@ PUBLIC int treedb_save_node(
      *  Trace
      *-------------------------------*/
     if(treedb_trace) {
-        log_debug_json(0, record, "treedb_save_node: Ok (%s, %s)", treedb_name, topic_name);
+        log_debug_json(0, node, "treedb_save_node: Ok");
     }
 
     return 0;
@@ -4875,7 +4875,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     /*-------------------------------*
      *      Use duplicate
      *-------------------------------*/
-    json_t *jn_filter = kw_duplicate(jn_filter_);
+    json_t *jn_filter = jn_filter_?kw_duplicate(jn_filter_):0;
     JSON_DECREF(jn_filter_);
 
     /*-------------------------------*
@@ -4916,7 +4916,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
      *  Extrae ids
      */
     json_t *ids_list = 0;
-    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT);
+    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT|KW_DONT_LOG);
     if(jn_id) {
         ids_list = kwid_get_ids(jn_id);
         JSON_DECREF(jn_id);
@@ -4938,7 +4938,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     jn_filter = kw_clone_by_keys(
         jn_filter,     // owned
         kw_incref(topic_desc), // owned
-        TRUE
+        FALSE
     );
 
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
