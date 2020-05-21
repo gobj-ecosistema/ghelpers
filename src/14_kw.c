@@ -3352,7 +3352,7 @@ PUBLIC json_t *kwid_get_id_records(
 PUBLIC int kw_check_refcounts(
     json_t *kw, // not owned
     int max_refcount,
-    int *result
+    int *result // firstly initalize to 0
 )
 {
     if(!kw) {

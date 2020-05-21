@@ -208,6 +208,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     if(options && strstr(options,"persistent")) {
         json_int_t schema_new_version = kw_get_int(jn_schema, "schema_version", 0, KW_WILD_NUMBER);
         do {
+            BOOL recreating = FALSE;
             if(file_exists(schema_full_path, 0)) {
                 json_t *old_jn_schema = load_json_from_file(
                     schema_full_path,
@@ -217,7 +218,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 if(!master) {
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
-                    break;
+                    break; // Nothing to do
                 }
                 json_int_t schema_old_version = kw_get_int(
                     old_jn_schema,
@@ -228,8 +229,9 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 if(schema_new_version <= schema_old_version) {
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
-                    break;
+                    break; // Nothing to do
                 } else {
+                    recreating = TRUE;
                     JSON_DECREF(old_jn_schema);
                 }
             }
@@ -237,7 +239,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INFO,
-                "msg",          "%s", "Creating TreeDB schema file.",
+                "msg",          "%s", recreating?"Re-Creating TreeDB schema file":"Creating TreeDB schema file",
                 "treedb_name",  "%s", treedb_name,
                 "schema_file",  "%s", schema_full_path,
                 NULL
@@ -2197,14 +2199,15 @@ PRIVATE int load_hook_links(
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Child node without fkey field",
                 "treedb_name",  "%s", treedb_name,
                 "topic_name",   "%s", topic_name,
                 "col_name",     "%s", col_name,
-                "record",       "%j", child_node,
                 NULL
             );
+            log_debug_json(0, col, "Child node without fkey field descriptor: col desc");
+            log_debug_json(0, child_node, "Child node without fkey field descriptor: node");
             ret += -1;
             continue;
         }
@@ -2881,9 +2884,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                 "msg",          "%s", "Field 'id' required",
                 "path",         "%s", path,
                 "topic_name",   "%s", topic_name,
-                "kw",           "%j", kw,
                 NULL
             );
+            log_debug_json(0, kw, "Field 'id' required");
             JSON_DECREF(kw);
             return 0;
         }

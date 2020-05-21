@@ -128,6 +128,7 @@ PUBLIC json_t *msg2db_open_db(
     if(options && strstr(options,"persistent")) {
         json_int_t schema_new_version = kw_get_int(jn_schema, "schema_version", 0, KW_WILD_NUMBER);
         do {
+            BOOL recreating = FALSE;
             if(file_exists(schema_full_path, 0)) {
                 json_t *old_jn_schema = load_json_from_file(
                     schema_full_path,
@@ -137,7 +138,7 @@ PUBLIC json_t *msg2db_open_db(
                 if(!master) {
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
-                    break;
+                    break; // Nothing to do
                 }
                 json_int_t schema_old_version = kw_get_int(
                     old_jn_schema,
@@ -148,14 +149,17 @@ PUBLIC json_t *msg2db_open_db(
                 if(schema_new_version <= schema_old_version) {
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
-                    break;
+                    break; // Nothing to do
+                } else {
+                    recreating = TRUE;
+                    JSON_DECREF(old_jn_schema);
                 }
             }
             log_info(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INFO,
-                "msg",          "%s", "Creating Msg2DB schema file.",
+                "msg",          "%s", recreating?"Re-Creating Msg2DB schema file":"Creating Msg2DB schema file",
                 "msg2db_name",  "%s", msg2db_name,
                 "schema_file",  "%s", schema_full_path,
                 NULL
