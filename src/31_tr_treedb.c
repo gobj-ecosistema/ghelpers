@@ -2206,8 +2206,8 @@ PRIVATE int load_hook_links(
                 "col_name",     "%s", col_name,
                 NULL
             );
-            log_debug_json(0, col, "Review schema; child node without fkey field descriptor: col desc");
-            log_debug_json(0, child_node, "Review schema; child node without fkey field descriptor: node");
+            log_debug_json(0, col, "Not explicit link done; child node without fkey field descriptor: col desc");
+            log_debug_json(0, child_node, "Not explicit link done; child node without fkey field descriptor: node");
             ret += -1;
             continue;
         }
