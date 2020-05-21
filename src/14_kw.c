@@ -3349,7 +3349,11 @@ PUBLIC json_t *kwid_get_id_records(
 /***************************************************************************
  *  Check deeply the refcount of kw
  ***************************************************************************/
-PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
+PUBLIC int kw_check_refcounts(
+    json_t *kw, // not owned
+    int max_refcount,
+    int *result
+)
 {
     if(!kw) {
         log_error(LOG_OPT_TRACE_STACK,
@@ -3359,18 +3363,7 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
             "msg",          "%s", "kw NULL",
             NULL
         );
-        return FALSE;
-    }
-    if(kw->refcount <= 0) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "refcount <= 0",
-            "refcount",     "%d", (int)kw->refcount,
-            NULL
-        );
-        return FALSE;
+        (*result)--;
     }
 
     switch(json_typeof(kw)) {
@@ -3385,13 +3378,26 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
                     "refcount",     "%d", (int)kw->refcount,
                     NULL
                 );
-                return FALSE;
+                (*result)--;
             }
+
+            if(max_refcount > 0 && kw->refcount > max_refcount) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount > max_refcount",
+                    "refcount",     "%d", (int)kw->refcount,
+                    "max_refcount", "%d", (int)max_refcount,
+                    NULL
+                );
+                log_debug_json(0, kw, "refcount > max_refcount");
+                (*result)--;
+            }
+
             int idx; json_t *jn_value;
             json_array_foreach(kw, idx, jn_value) {
-                if(!kw_check_refcounts(jn_value, max_refcount)) {
-                    return FALSE;
-                }
+                kw_check_refcounts(jn_value, max_refcount, result);
             }
         }
         break;
@@ -3406,13 +3412,26 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
                     "refcount",     "%d", (int)kw->refcount,
                     NULL
                 );
-                return FALSE;
+                (*result)--;
             }
+
+            if(max_refcount > 0 && kw->refcount > max_refcount) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount > max_refcount",
+                    "refcount",     "%d", (int)kw->refcount,
+                    "max_refcount", "%d", (int)max_refcount,
+                    NULL
+                );
+                log_debug_json(0, kw, "refcount > max_refcount");
+                (*result)--;
+            }
+
             const char *key; json_t *jn_value;
             json_object_foreach(kw, key, jn_value) {
-                if(!kw_check_refcounts(jn_value, max_refcount)) {
-                    return FALSE;
-                }
+                kw_check_refcounts(jn_value, max_refcount, result);
             }
         }
         break;
@@ -3429,7 +3448,7 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
                 "refcount",     "%d", (int)kw->refcount,
                 NULL
             );
-            return FALSE;
+            (*result)--;
         }
         if(max_refcount > 0 && kw->refcount > max_refcount) {
             log_error(0,
@@ -3441,7 +3460,7 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
                 "max_refcount", "%d", (int)max_refcount,
                 NULL
             );
-            return FALSE;
+            (*result)--;
         }
         break;
     case JSON_TRUE:
@@ -3459,10 +3478,10 @@ PUBLIC BOOL kw_check_refcounts(json_t *kw, int max_refcount) // not owned
             "max_refcount", "%d", (int)max_refcount,
             NULL
         );
-        return FALSE;
+        (*result)--;
     }
 
-    return TRUE;
+    return *result;
 }
 
 /***************************************************************************

@@ -731,9 +731,10 @@ PUBLIC json_t *kwid_get_id_records(
 /**rst**
     Check all refcounts
 **rst**/
-PUBLIC BOOL kw_check_refcounts(
+PUBLIC int kw_check_refcounts(
     json_t *kw, // not owned
-    int max_refcount
+    int max_refcount,
+    int *result
 );
 
 /**rst**
