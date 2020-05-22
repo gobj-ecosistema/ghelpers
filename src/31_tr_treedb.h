@@ -276,6 +276,15 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 );
 
 /*
+ *  Return number of parent nodes pointed by the link (fkey)
+ */
+PUBLIC size_t treedb_parents_size(
+    json_t *tranger,
+    const char *link, // must be a fkey field
+    json_t *node // not owned
+);
+
+/*
  *  Return a list of child nodes of the hook (WARNING ONLY first level)
  */
 PUBLIC json_t *treedb_list_childs(
@@ -284,6 +293,14 @@ PUBLIC json_t *treedb_list_childs(
     json_t *node // not owned
 );
 
+/*
+ *  Return number of child nodes of the hook (WARNING ONLY first level)
+ */
+PUBLIC size_t treedb_childs_size(
+    json_t *tranger,
+    const char *hook,
+    json_t *node // not owned
+);
 
 /*----------------------------*
  *          Schema

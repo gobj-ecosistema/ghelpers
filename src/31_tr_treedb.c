@@ -3573,9 +3573,8 @@ PUBLIC int treedb_delete_node(
                 int idx; json_t *child;
                 json_array_foreach(childs, idx, child) {
                     treedb_unlink_nodes(tranger, hook, node, child);
-                    print_json(node); // TODO TEST
-                    print_json(child); // TODO TEST
                 }
+                JSON_DECREF(childs);
             }
             JSON_DECREF(jn_hooks);
 
@@ -5253,6 +5252,21 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 }
 
 /***************************************************************************
+ *  Return number of parent nodes pointed by the link (fkey)
+ ***************************************************************************/
+PUBLIC size_t treedb_parents_size(
+    json_t *tranger,
+    const char *link, // must be a fkey field
+    json_t *node // not owned
+)
+{
+    json_t *list = treedb_list_parents(tranger, link, node);
+    size_t size = json_array_size(list);
+    JSON_DECREF(list);
+    return size;
+}
+
+/***************************************************************************
  *  Return a list of child nodes of the hook (WARNING ONLY first level)
  ***************************************************************************/
 PUBLIC json_t *treedb_list_childs(
@@ -5262,6 +5276,21 @@ PUBLIC json_t *treedb_list_childs(
 )
 {
     return kwid_new_list("verbose", node, hook);
+}
+
+/***************************************************************************
+ *  Return number of child nodes of the hook (WARNING ONLY first level)
+ ***************************************************************************/
+PUBLIC size_t treedb_childs_size(
+    json_t *tranger,
+    const char *hook,
+    json_t *node // not owned
+)
+{
+    json_t *list = kwid_new_list("verbose", node, hook);
+    size_t size = json_array_size(list);
+    JSON_DECREF(list);
+    return size;
 }
 
 
