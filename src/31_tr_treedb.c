@@ -2154,7 +2154,7 @@ PRIVATE int link_child_to_parent(
                 "gobj",                 "%s", __FILE__,
                 "function",             "%s", __FUNCTION__,
                 "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                "msg",                  "%s", "wrong parent hook type",
+                "msg",                  "%s", "Review the scheme: wrong parent hook type",
                 "parent_topic_name",    "%s", parent_topic_name,
                 "link",                 "%s", hook_name,
                 NULL
