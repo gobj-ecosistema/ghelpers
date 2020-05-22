@@ -272,7 +272,8 @@ PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
 PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
     const char *link, // must be a fkey field
-    json_t *node // not owned
+    json_t *node, // not owned
+    json_t *jn_options // owned, "collapsed"
 );
 
 /*
@@ -290,7 +291,8 @@ PUBLIC size_t treedb_parents_size(
 PUBLIC json_t *treedb_list_childs(
     json_t *tranger,
     const char *hook,
-    json_t *node // not owned
+    json_t *node, // not owned
+    json_t *jn_options // owned, "collapsed"
 );
 
 /*
