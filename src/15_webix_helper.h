@@ -30,7 +30,8 @@ extern "C"{
 PUBLIC json_t *webix_new_list_tree(
     json_t *tree,  // NOT owned
     const char *hook,
-    json_t *filter,  // owned
+    const char *renamed_hook, // if not empty change the hook name in the result
+    json_t *filter,  // owned (fields of tree'records to include, and possible field rename)
     const char *options // "permissive" "verbose"
 );
 

@@ -10,6 +10,7 @@
  ****************************************************************************/
 #pragma once
 
+#include "15_webix_helper.h"
 #include "30_timeranger.h"
 
 #ifdef __cplusplus
@@ -266,13 +267,49 @@ PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
 );
 
 /*
- *  Return a list of parent nodes pointed by the link
+ *  Return a list of parent nodes pointed by the link (fkey)
  */
-PUBLIC json_t *treedb_get_parent_nodes( // Return MUST be decref
+PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
-    json_t *node, // not owned
-    const char *link // must be a fkey field
+    const char *link, // must be a fkey field
+    json_t *node // not owned
 );
+
+/*
+ *  Return a list of child nodes of the hook (WARNING ONLY first level)
+ */
+PUBLIC json_t *treedb_list_childs(
+    json_t *tranger,
+    const char *hook,
+    json_t *node // not owned
+);
+
+
+/*----------------------------*
+ *          Schema
+ *----------------------------*/
+/*
+ *  Return a list with the cols that are links (fkeys) of the topic
+ */
+PUBLIC json_t *treedb_get_topic_links(
+    json_t *tranger,
+    const char *topic_name
+);
+
+/*
+ *  Return a list with the cols that are hooks of the topic
+ */
+PUBLIC json_t *treedb_get_topic_hooks(
+    json_t *tranger,
+    const char *topic_name
+);
+
+// TODO treedb_short_schema()
+// TODO treedb_full_schema()
+
+/*----------------------------*
+ *          Snaps
+ *----------------------------*/
 
 PUBLIC int treedb_snap_nodes( // tag the current tree db
     json_t *tranger,
