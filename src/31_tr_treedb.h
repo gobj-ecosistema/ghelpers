@@ -127,7 +127,6 @@ PUBLIC json_t *treedb_get_index( // Return is NOT YOURS
     const char *index_name
 );
 
-
 /**rst**
     Return refs of fkeys of col_name field
 **rst**/
