@@ -4918,6 +4918,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(jn_options);
         JSON_DECREF(jn_filter);
         return 0;
     }
@@ -5039,6 +5040,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_decref(topic_desc);
     JSON_DECREF(jn_filter);
     JSON_DECREF(ids_list);
+    JSON_DECREF(jn_options);
 
     return list;
 }
