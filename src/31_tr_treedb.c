@@ -2062,7 +2062,8 @@ PRIVATE int link_child_to_parent(
         tranger,
         treedb_name,
         parent_topic_name,
-        parent_id
+        parent_id,
+        0
     );
     if(!parent_node) {
         log_error(0,
@@ -3222,7 +3223,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             tranger,
             treedb_name,
             topic_name,
-            id
+            id,
+            0
         );
     }
     if(!node) {
@@ -3351,7 +3353,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 tranger,
                 treedb_name,
                 parent_topic_name,
-                parent_id
+                parent_id,
+                0
             );
             if(!parent_node) {
                 log_error(0,
@@ -3406,7 +3409,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 tranger,
                 treedb_name,
                 parent_topic_name,
-                parent_id
+                parent_id,
+                0
             );
             if(!parent_node) {
                 log_error(0,
@@ -3505,7 +3509,8 @@ PUBLIC int treedb_delete_node(
         tranger,
         treedb_name,
         topic_name,
-        id
+        id,
+        0
     );
     if(!node) {
         log_error(LOG_OPT_TRACE_STACK,
@@ -3634,7 +3639,8 @@ PUBLIC int treedb_delete_node(
                     tranger,
                     treedb_name,
                     parent_topic_name,
-                    parent_id
+                    parent_id,
+                    0
                 );
                 if(parent_node) {
                     _unlink_nodes(
@@ -4531,7 +4537,8 @@ PRIVATE int link_or_unlink_nodes2(
         tranger,
         treedb_name,
         parent_topic_name,
-        parent_id
+        parent_id,
+        0
     );
     if(!parent_node) {
         log_error(0,
@@ -4651,7 +4658,8 @@ PRIVATE int link_or_unlink_nodes2(
             tranger,
             treedb_name,
             child_topic_name,
-            child_id
+            child_id,
+            0
         );
     }
 
@@ -5074,7 +5082,8 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *id
+    const char *id,
+    json_t *jn_options // owned, "collapsed"
 )
 {
     /*-------------------------------*
@@ -5098,17 +5107,26 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
             "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(jn_options);
         return 0;
     }
 
     /*-------------------------------*
      *      Get
      *-------------------------------*/
-    json_t *record = kw_get_dict(indexx, id, 0, 0);
-    if(!record) {
+    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
+    json_t *node = kw_get_dict(indexx, id, 0, 0);
+    if(!node) {
         // Silence
+        JSON_DECREF(jn_options);
+        return 0;
     }
-    return record;
+    if(collapsed) {
+        node = kw_decref(treedb_collapse_node(tranger, node));
+    }
+
+    JSON_DECREF(jn_options);
+    return node;
 }
 
 /***************************************************************************
@@ -5241,7 +5259,8 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
             tranger,
             treedb_name,
             parent_topic_name,
-            parent_id
+            parent_id,
+            0
         );
         if(!parent_node) {
             log_error(0,
