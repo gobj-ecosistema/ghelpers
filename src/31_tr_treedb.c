@@ -3594,9 +3594,6 @@ PUBLIC int treedb_delete_node(
                 "id",           "%s", id,
                 NULL
             );
-            log_debug_json(0, down_refs, "Cannot delete node: has down links");
-            JSON_DECREF(down_refs);
-            return -1;
         }
     }
     JSON_DECREF(down_refs);
@@ -3720,16 +3717,7 @@ PUBLIC int treedb_delete_node(
              *  Trace
              *-------------------------------*/
             if(treedb_trace) {
-                log_debug(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_INFO,
-                    "msg",          "%s", "json_object_del() Ok",
-                    "path",         "%s", path,
-                    "topic_name",   "%s", topic_name,
-                    "id",           "%s", id,
-                    NULL
-                );
+                trace_msg("json_object_del() Ok, path %s, topic %s, id %s", path, topic_name, id);
             }
         }
     } else {
