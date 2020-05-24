@@ -2404,8 +2404,8 @@ PRIVATE json_t *get_hook_refs(
                         "msg",                  "%s", "__md_treedb__ not found",
                         NULL
                     );
-                    log_debug_json(0, hook_data, "hook_data: __md_treedb__ not found");
-                    log_debug_json(0, jn_value, "jn_value: __md_treedb__ not found");
+                    log_debug_json(0, jn_value, "__md_treedb__ not found: value");
+                    log_debug_json(0, hook_data, "__md_treedb__ not found: hook_data");
                     continue;
                 }
                 snprintf(mix_id, sizeof(mix_id), "%s^%s", topic_name, id);
@@ -2446,8 +2446,8 @@ PRIVATE json_t *get_hook_refs(
                                     "msg",                  "%s", "__md_treedb__ not found",
                                     NULL
                                 );
-                                log_debug_json(0, hook_data, "hook_data: __md_treedb__ not found");
-                                log_debug_json(0, jn_value, "jn_value: __md_treedb__ not found");
+                                log_debug_json(0, jn_value, "__md_treedb__ not found: value");
+                                log_debug_json(0, hook_data, "__md_treedb__ not found: hook_data");
                                 break;
                             }
                             snprintf(mix_id, sizeof(mix_id), "%s^%s", topic_name, id);
@@ -2474,10 +2474,10 @@ PRIVATE json_t *get_hook_refs(
                         "function",             "%s", __FUNCTION__,
                         "msgset",               "%s", MSGSET_TREEDB_ERROR,
                         "msg",                  "%s", "wrong array child hook type",
-                        "jn_value",             "%j", jn_value,
-                        "hook_data",            "%j", hook_data,
                         NULL
                     );
+                    log_debug_json(0, jn_value, "wrong array child hook type: value");
+                    log_debug_json(0, hook_data, "wrong array child hook type: hook data");
                     break;
                 }
             }
@@ -4858,8 +4858,16 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
             json_object_set_new(node_view, col_name, json_deep_copy(field_value));
         }
     }
-
-    json_object_del(json_object_get(node_view, "__md_treedb__"), "__original_node__");
+    json_object_set_new(
+        node_view,
+        "__md_treedb__",
+        kw_duplicate(json_object_get(node, "__md_treedb__"))
+    );
+    json_object_set_new(
+        json_object_get(node_view, "__md_treedb__"),
+        "__original_node__",
+        json_false()
+    );
     return node_view;
 }
 
@@ -5110,7 +5118,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
         return 0;
     }
     if(collapsed) {
-        node = kw_decref(treedb_collapse_node(tranger, node));
+        node = treedb_collapse_node(tranger, node);
     }
 
     JSON_DECREF(jn_options);
