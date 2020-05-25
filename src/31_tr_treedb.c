@@ -52,7 +52,8 @@ PRIVATE int load_record_callback(
 );
 
 PRIVATE json_t *get_hook_refs(
-    json_t *hook_data // not owned
+    json_t *hook_data, // not owned
+    BOOL original_node
 );
 PRIVATE json_t *get_fkey_refs(
     json_t *field_data // not owned
@@ -748,7 +749,7 @@ PUBLIC json_t *treedb_list_treedb(
 PUBLIC json_t *treedb_list_topics(
     json_t *tranger,
     const char *treedb_name,
-    const char *options
+    const char *options // "dict" return list of dicts, otherwise return list of strings
 )
 {
     json_t *topic_list = json_array();
@@ -2360,7 +2361,8 @@ PRIVATE int load_all_hook_links(
     return a new list of all node's mix_id
  ***************************************************************************/
 PRIVATE json_t *get_hook_refs(
-    json_t *hook_data // not owned
+    json_t *hook_data, // not owned
+    BOOL original_node
 )
 {
     char mix_id[NAME_MAX];
@@ -2383,7 +2385,7 @@ PRIVATE json_t *get_hook_refs(
                 int ampersands = count_char(id, '^');
                 int tildes = count_char(id, '~');
 
-                if(tildes== 2) {
+                if(tildes == 2) {
                     json_array_append_new(refs, json_string(id));
                     continue;
                 } else if(ampersands == 2) {
@@ -2460,11 +2462,14 @@ PRIVATE json_t *get_hook_refs(
                         int ampersands = count_char(json_string_value(jn_value), '^');
                         int tildes = count_char(json_string_value(jn_value), '~');
 
-
-                        if(tildes== 2) {
+                        if(tildes == 2) {
                             json_array_append(refs, jn_value);
                             break;
                         } else if(ampersands == 2) {
+                            break;
+                        } else if(ampersands == 1 && !original_node) {
+                            // Can be a collapsed node
+                            json_array_append(refs, jn_value);
                             break;
                         }
                     }
@@ -2578,6 +2583,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
 
     const char *col_name; json_t *col;
     json_object_foreach(cols, col_name, col) {
@@ -2604,7 +2610,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
             continue;
         }
 
-        json_t *ref = get_hook_refs(field_data);
+        json_t *ref = get_hook_refs(field_data, original_node);
         json_array_extend(refs, ref);
         JSON_DECREF(ref);
     }
@@ -3751,7 +3757,7 @@ PRIVATE int _link_nodes(
     /*---------------------------------------*
      *  Check if original nodes
      *---------------------------------------*/
-    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -3762,7 +3768,7 @@ PRIVATE int _link_nodes(
         );
         return -1;
     }
-    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -4076,7 +4082,7 @@ PRIVATE int _unlink_nodes(
     /*---------------------------------------*
      *  Check if original nodes
      *---------------------------------------*/
-    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -4087,7 +4093,7 @@ PRIVATE int _unlink_nodes(
         );
         return -1;
     }
-    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, KW_WILD_NUMBER)) {
+    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -4822,6 +4828,7 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
     json_t *node // not owned
 )
 {
+    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
     json_t *node_view = json_object();
 
     const char *col_name; json_t *col;
@@ -4839,7 +4846,7 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
                     json_array(),
                     KW_CREATE
                 );
-                json_t *hook_refs = get_hook_refs(field_value);
+                json_t *hook_refs = get_hook_refs(field_value, original_node);
                 json_array_extend(list, hook_refs);
                 json_decref(hook_refs);
             }
@@ -5309,6 +5316,7 @@ PUBLIC json_t *treedb_list_childs(
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
 
     json_t *col = kw_get_dict_value(cols, hook, 0, 0);
     if(!col) {
@@ -5343,15 +5351,15 @@ PUBLIC json_t *treedb_list_childs(
         JSON_DECREF(cols);
         return 0;
     }
+    JSON_DECREF(jn_options);
+    JSON_DECREF(cols);
 
     if(!collapsed) {
-        JSON_DECREF(jn_options);
-        JSON_DECREF(cols);
         return kwid_new_list("verbose", node, hook);
     }
 
     json_t *field_value = kw_get_dict_value(node, hook, 0, KW_REQUIRED);
-    return get_hook_refs(field_value);
+    return get_hook_refs(field_value, original_node);
 }
 
 /***************************************************************************
