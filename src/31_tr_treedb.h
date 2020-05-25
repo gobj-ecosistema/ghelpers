@@ -312,6 +312,7 @@ PUBLIC size_t treedb_childs_size(
  */
 PUBLIC json_t *treedb_get_topic_links(
     json_t *tranger,
+    const char *treedb_name,
     const char *topic_name
 );
 
@@ -320,6 +321,7 @@ PUBLIC json_t *treedb_get_topic_links(
  */
 PUBLIC json_t *treedb_get_topic_hooks(
     json_t *tranger,
+    const char *treedb_name,
     const char *topic_name
 );
 

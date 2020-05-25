@@ -752,8 +752,6 @@ PUBLIC json_t *treedb_list_topics(
     const char *options // "dict" return list of dicts, otherwise return list of strings
 )
 {
-    json_t *topic_list = json_array();
-
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
         log_error(0,
@@ -764,8 +762,10 @@ PUBLIC json_t *treedb_list_topics(
             "treedb_name",  "%s", treedb_name,
             NULL
         );
-        return topic_list;
+        return 0;
     }
+
+    json_t *topic_list = json_array();
 
     char list_id[NAME_MAX];
     const char *topic_name; json_t *topic_records;
@@ -3575,6 +3575,7 @@ PUBLIC int treedb_delete_node(
         if(options && strstr(options, "force")) {
             json_t *jn_hooks = treedb_get_topic_hooks(
                 tranger,
+                treedb_name,
                 topic_name
             );
             int idx; json_t *jn_hook;
@@ -5392,9 +5393,26 @@ PUBLIC size_t treedb_childs_size(
  ***************************************************************************/
 PUBLIC json_t *treedb_get_topic_links(
     json_t *tranger,
+    const char *treedb_name,
     const char *topic_name
 )
 {
+    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    if(!json_str_in_list(topics, topic_name, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "topic not found",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(topics);
+        return 0;
+    }
+    JSON_DECREF(topics);
+
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
     json_t *jn_list = json_array();
 
@@ -5415,9 +5433,26 @@ PUBLIC json_t *treedb_get_topic_links(
  ***************************************************************************/
 PUBLIC json_t *treedb_get_topic_hooks(
     json_t *tranger,
+    const char *treedb_name,
     const char *topic_name
 )
 {
+    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    if(!json_str_in_list(topics, topic_name, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "topic not found",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(topics);
+        return 0;
+    }
+    JSON_DECREF(topics);
+
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
     json_t *jn_list = json_array();
 
