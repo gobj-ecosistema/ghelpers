@@ -5516,7 +5516,7 @@ PUBLIC int treedb_end_transaction(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_snap_nodes( // tag the current tree db
+PUBLIC int treedb_shoot_snap( // tag the current tree db
     json_t *tranger,
     const char *treedb_name,
     const char *tag
@@ -5529,7 +5529,7 @@ PUBLIC int treedb_snap_nodes( // tag the current tree db
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_set_nodes_snap( // Activate tag
+PUBLIC int treedb_activate_snap( // Activate tag
     json_t *tranger,
     const char *treedb_name,
     const char *tag
@@ -5542,7 +5542,7 @@ PUBLIC int treedb_set_nodes_snap( // Activate tag
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *treedb_list_nodes_snaps( // Return MUST be decref, list of snaps
+PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
     json_t *tranger,
     const char *treedb_name
 )

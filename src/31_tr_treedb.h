@@ -325,24 +325,20 @@ PUBLIC json_t *treedb_get_topic_hooks(
     const char *topic_name
 );
 
-// TODO treedb_short_schema()
-// TODO treedb_full_schema()
-
 /*----------------------------*
  *          Snaps
  *----------------------------*/
-
-PUBLIC int treedb_snap_nodes( // tag the current tree db
+PUBLIC int treedb_shoot_snap( // tag the current tree db
     json_t *tranger,
     const char *treedb_name,
     const char *tag
 );
-PUBLIC int treedb_set_nodes_snap( // Activate tag
+PUBLIC int treedb_activate_snap( // Activate tag
     json_t *tranger,
     const char *treedb_name,
     const char *tag
 );
-PUBLIC json_t *treedb_list_nodes_snaps( // Return MUST be decref, list of snaps
+PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
     json_t *tranger,
     const char *treedb_name
 );
