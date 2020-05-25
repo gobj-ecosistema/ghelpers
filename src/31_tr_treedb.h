@@ -338,6 +338,10 @@ PUBLIC int treedb_activate_snap( // Activate tag
     const char *treedb_name,
     const char *tag
 );
+PUBLIC uint32_t treedb_get_active_snap(
+    json_t *tranger,
+    const char *treedb_name
+);
 PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
     json_t *tranger,
     const char *treedb_name
