@@ -71,6 +71,12 @@ PRIVATE int _unlink_nodes(
     json_t *child_node      // not owned
 );
 
+PRIVATE json_t * treedb_get_activated_snap_tag(
+    json_t *tranger,
+    const char *treedb_name,
+    uint32_t *user_flag
+);
+
 /***************************************************************
  *              Data
  ***************************************************************/
@@ -329,45 +335,69 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     /*-------------------------------*
      *  Open/Create "system" topics
      *-------------------------------*/
-    char *tags_topic_name = "__tags__";
-    const char *tags_topic_version = "1";
-    json_t *jn_tags_topic_var = json_object();
-    json_object_set_new(jn_tags_topic_var, "topic_version", json_string(tags_topic_version));
+    char *snaps_topic_name = "__snaps__";
+    const char *snaps_topic_version = "1";
+    json_t *jn_snaps_topic_var = json_object();
+    json_object_set_new(jn_snaps_topic_var, "topic_version", json_string(snaps_topic_version));
 
-    json_t *tags_topic = tranger_create_topic(
+    json_t *tag_schema = json_pack(
+        "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]}}",
+        "id",
+            "id", "id",
+            "header", "Id",
+            "fillspace", 8,
+            "type", "string",
+            "flag",
+                "persistent","required","rowid",
+
+        "name",
+            "id", "name",
+            "header", "Name",
+            "fillspace", 30,
+            "type", "string",
+            "flag",
+                "persistent", "required",
+        "date",
+            "id", "date",
+            "header", "Date",
+            "fillspace", 30,
+            "type", "string",
+            "flag",
+                "persistent", "required",
+        "active",
+            "id", "active",
+            "header", "Active",
+            "fillspace", 8,
+            "type", "boolean",
+            "flag",
+                "persistent", "required"
+    );
+    if(!tag_schema) {
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Bad __snaps__ json schema",
+            NULL
+        );
+    }
+
+    json_t *snaps_topic = tranger_create_topic(
         tranger,    // If topic exists then only needs (tranger,name) parameters
-        tags_topic_name,
+        snaps_topic_name,
         "id",
         "",
-        sf_rowid_key,
-        json_pack(
-            "{s:{s:s, s:s, s:s, s:[s,s]}, s:{s:s, s:s, s:s, s:[s,s]}, s:{s:s, s:s, s:s, s:[s,s]}}",
-            "id",
-                "id", "id",
-                "header", "Id",
-                "type", "integer",
-                "flag",
-                    "persistent","required",
-
-            "name",
-                "id", "name",
-                "header", "Name",
-                "type", "string",
-                "flag",
-                    "persistent", "required",
-            "active",
-                "id", "active",
-                "header", "Active",
-                "type", "boolean",
-                "flag",
-                    "persistent", "required"
-        ),
-        jn_tags_topic_var
+        sf_string_key,
+        tag_schema,
+        jn_snaps_topic_var
     );
 
     parse_schema_cols(
         topic_cols_desc,
-        kwid_new_list("verbose", tags_topic, "cols")
+        kwid_new_list("verbose", snaps_topic, "cols")
     );
 
     /*------------------------------*
@@ -433,16 +463,23 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *  Open "system" lists
      *------------------------------*/
     char path[NAME_MAX];
-    build_treedb_index_path(path, sizeof(path), treedb_name, tags_topic_name, "id");
-
-    kw_get_subdict_value(treedb, tags_topic_name, "id", json_object(), KW_CREATE);
+    build_treedb_index_path(path, sizeof(path), treedb_name, snaps_topic_name, "id");
+    kw_get_subdict_value(treedb, snaps_topic_name, "id", json_object(), KW_CREATE);
 
     json_t *jn_filter = json_pack("{s:b}",
         "backward", 1
     );
+
+    uint32_t user_flag = 0;
+    treedb_get_activated_snap_tag(
+        tranger,
+        treedb_name,
+        &user_flag
+    );
+
     json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
         "id", path,
-        "topic_name", tags_topic_name,
+        "topic_name", snaps_topic_name,
         "match_cond", jn_filter,
         "load_record_callback", (json_int_t)(size_t)load_record_callback,
         "treedb_name", treedb_name,
@@ -466,16 +503,20 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 
         kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
 
-        json_t *jn_filter = json_pack("{s:b}", // TODO tag pon el current tag
+        json_t *jn_filter = json_pack("{s:b}",
             "backward", 1
         );
+        if(user_flag) {
+            // pon el current tag
+            json_object_set_new(jn_filter, "user_flag", json_integer(user_flag));
+        }
         json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
             "id", path,
             "topic_name", topic_name,
             "match_cond", jn_filter,
             "load_record_callback", (json_int_t)(size_t)load_record_callback,
             "treedb_name", treedb_name,
-            "deleted_records"
+            "deleted_records" // TODO debería cambiarlo a delete real
         );
         tranger_open_list(
             tranger,
@@ -647,7 +688,7 @@ PUBLIC json_t *treedb_create_topic(
 
     kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
 
-    json_t *jn_filter = json_pack("{s:b}", // TODO tag pon el current tag
+    json_t *jn_filter = json_pack("{s:b}",
         "backward", 1
     );
     json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
@@ -1364,7 +1405,7 @@ PRIVATE int set_tranger_field_value(
 {
     const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
     if(!field) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1377,7 +1418,7 @@ PRIVATE int set_tranger_field_value(
     }
     const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
     if(!type) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1415,7 +1456,7 @@ PRIVATE int set_tranger_field_value(
      */
     if(json_is_null(value)) {
         if(kw_has_word(desc_flag, "notnull", 0)) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1495,7 +1536,7 @@ PRIVATE int set_tranger_field_value(
                 json_object_set_new(record, field, json_string(v));
                 gbmem_free(v);
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1519,7 +1560,7 @@ PRIVATE int set_tranger_field_value(
                 json_int_t v = jn2integer(value);
                 json_object_set_new(record, field, json_integer(v));
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1542,7 +1583,7 @@ PRIVATE int set_tranger_field_value(
                 double v = jn2real(value);
                 json_object_set_new(record, field, json_real(v));
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1567,7 +1608,7 @@ PRIVATE int set_tranger_field_value(
             break;
 
         DEFAULTS
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -5516,159 +5557,21 @@ PUBLIC int treedb_end_transaction(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_shoot_snap( // tag the current tree db
+PRIVATE json_t * treedb_get_activated_snap_tag(
     json_t *tranger,
     const char *treedb_name,
-    const char *tag
+    uint32_t *user_flag
 )
 {
-    /*
-     *  Check if the tag already exists
-     */
-    json_t *jn_tag = json_pack("{s:s}",
-        "name", tag
-    );
-    json_t *snaps = treedb_list_nodes( // Return MUST be decref
-        tranger,
-        treedb_name,
-        "__tags__",
-        jn_tag,  // filter, owned
-        0,  // options, "collapsed"
-        0   //match_fn
-    );
-    if(json_array_size(snaps)>0) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Snap tag already exists",
-            "tag",          "%s", tag,
-            NULL
-        );
-        JSON_DECREF(snaps);
-        return -1;
-    }
-    JSON_DECREF(snaps);
+    *user_flag = 0;
 
-    /*
-     *  Register the tag
-     */
-    json_t *jn_new_snap = json_pack("{s:s, s:b}",
-        "name", tag,
-        "active", 0
-    );
-
-    md_record_t md_record;
-    if(tranger_append_record(
-        tranger,
-        "__tags__",
-        0, // if 0 then the time will be set by TimeRanger with now time
-        0, // uint32_t user_flag,
-        &md_record, // required
-        jn_new_snap  // owned
-    )<0) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Cannot save record tag",
-            "tag",          "%s", tag,
-            NULL
-        );
-        return -1;
-    }
-
-    if(md_record.__rowid__ >= 0xFFFFFFFF) {
-        log_critical(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "rowid for tag too big",
-            "tag",          "%s", tag,
-            NULL
-        );
-        return -1;
-    }
-    uint32_t user_flag = (uint32_t)md_record.__rowid__;
-
-    int ret = 0;
-    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
-    int idx; json_t *jn_topic;
-    json_array_foreach(topics, idx, jn_topic) {
-        const char *topic_name = json_string_value(jn_topic);
-        json_t *topic = tranger_topic(tranger, topic_name);
-        uint64_t topic_rowid = kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
-        ret += tranger_write_user_flag(
-            tranger,
-            topic_name,
-            topic_rowid,
-            user_flag
-        );
-        if(ret < 0) {
-            JSON_DECREF(topics);
-            log_critical(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Cannot write tag",
-                "topic_name",   "%s", topic_name,
-                "tag",          "%s", tag,
-                NULL
-            );
-        }
-    }
-
-    JSON_DECREF(topics);
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC int treedb_activate_snap( // Activate tag
-    json_t *tranger,
-    const char *treedb_name,
-    const char *tag
-)
-{
-    uint32_t user_flag = treedb_get_active_snap(
-        tranger,
-        treedb_name
-    );
-    if(user_flag) {
-        // desactivate tag TODO
-    }
-
-
-    json_t *jn_tag = json_pack("{s:s}",
-        "name", tag
-    );
-    json_t *snaps = treedb_list_nodes( // Return MUST be decref
-        tranger,
-        treedb_name,
-        "__tags__",
-        jn_tag,  // filter, owned
-        0,  // options, "collapsed"
-        0   //match_fn
-    );
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC uint32_t treedb_get_active_snap(
-    json_t *tranger,
-    const char *treedb_name
-)
-{
     json_t *jn_tag = json_pack("{s:b}",
         "active", 1
     );
     json_t *snaps = treedb_list_nodes( // Return MUST be decref
         tranger,
         treedb_name,
-        "__tags__",
+        "__snaps__",
         jn_tag,  // filter, owned
         0,  // options, "collapsed"
         0   //match_fn
@@ -5688,17 +5591,232 @@ PUBLIC uint32_t treedb_get_active_snap(
         );
         log_debug_json(0, snaps, "Too much actives tags");
 
-        json_t *snap = json_array_get(snaps, size-1);
-        uint32_t user_flag = kw_get_int(snap, "id", 0, KW_REQUIRED);
+        int idx; json_t *snap;
+        json_array_foreach(snaps, idx, snap) {
+            if(idx == size -1) {
+                break;
+            }
+            json_object_set_new(snap, "active", json_false());
+            treedb_save_node(tranger, snap);
+        }
+
+        snap = json_array_get(snaps, size-1);
+        *user_flag = (uint32_t)kw_get_int(snap, "id", 0, KW_REQUIRED|KW_WILD_NUMBER);
         JSON_DECREF(snaps);
-        return user_flag;
+        return snap;
 
     } else {
         json_t *snap = json_array_get(snaps, 0);
-        uint32_t user_flag = kw_get_int(snap, "id", 0, KW_REQUIRED);
+        *user_flag = kw_get_int(snap, "id", 0, KW_REQUIRED|KW_WILD_NUMBER);
         JSON_DECREF(snaps);
-        return user_flag;
+        return snap;
     }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_shoot_snap( // tag the current tree db
+    json_t *tranger,
+    const char *treedb_name,
+    const char *snap_name
+)
+{
+    /*-----------------------------------*
+     *  Check if the tag already exists
+     *-----------------------------------*/
+    json_t *jn_tag = json_pack("{s:s}",
+        "name", snap_name
+    );
+    json_t *snaps = treedb_list_nodes( // Return MUST be decref
+        tranger,
+        treedb_name,
+        "__snaps__",
+        jn_tag,  // filter, owned
+        0,  // options, "collapsed"
+        0   //match_fn
+    );
+    if(json_array_size(snaps)>0) {
+        char temp[80];
+        snprintf(temp, sizeof(temp), "Snap already exists: '%s'", snap_name);
+        log_info(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", temp,
+            "snap",         "%s", snap_name,
+            NULL
+        );
+        JSON_DECREF(snaps);
+        return -1;
+    }
+    JSON_DECREF(snaps);
+
+    /*
+     *  Register the tag
+     */
+    time_t t;
+    time(&t);
+    struct tm tm;
+    gmtime_r(&t, &tm);
+    char date[80];
+    strftime(date, sizeof(date), "%d %b %Y %T %z", &tm);
+    json_t *jn_new_snap = json_pack("{s:s, s:s, s:b}",
+        "name", snap_name,
+        "date", date,
+        "active", 0
+    );
+
+    json_t *snap = treedb_create_node( // Return is NOT YOURS
+        tranger,
+        treedb_name,
+        "__snaps__",
+        jn_new_snap, // owned
+        0
+    );
+
+    if(!snap) {
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot save record tag",
+            "snap",         "%s", snap_name,
+            NULL
+        );
+        return -1;
+    }
+
+    uint32_t user_flag = kw_get_int(snap, "id", 0, KW_REQUIRED|KW_WILD_NUMBER);
+    if(user_flag==0 || user_flag >= 0xFFFFFFFF) {
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "rowid for tag too big",
+            "snap",         "%s", snap_name,
+            NULL
+        );
+        return -1;
+    }
+
+    int ret = 0;
+    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    int idx; json_t *jn_topic;
+    json_array_foreach(topics, idx, jn_topic) {
+        const char *topic_name = json_string_value(jn_topic);
+        if(strncmp(topic_name, "__", 2)==0) { // Ignore meta-tables
+            continue;
+        }
+        json_t *topic = tranger_topic(tranger, topic_name);
+        uint64_t topic_rowid = kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
+        ret += tranger_write_user_flag(
+            tranger,
+            topic_name,
+            topic_rowid,
+            user_flag
+        );
+        if(ret < 0) {
+            JSON_DECREF(topics);
+            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Cannot write tag",
+                "topic_name",   "%s", topic_name,
+                "snap",         "%s", snap_name,
+                NULL
+            );
+        }
+    }
+
+    JSON_DECREF(topics);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_activate_snap( // Activate tag
+    json_t *tranger,
+    const char *treedb_name,
+    const char *snap_name
+)
+{
+    /*--------------------------------*
+     *  Recover new activated snap
+     *--------------------------------*/
+    json_t *jn_tag = json_pack("{s:s}",
+        "name", snap_name
+    );
+    json_t *snaps = treedb_list_nodes( // Return MUST be decref
+        tranger,
+        treedb_name,
+        "__snaps__",
+        jn_tag,  // filter, owned
+        0,  // options, "collapsed"
+        0   //match_fn
+    );
+    json_t *snap = json_array_get(snaps, 0);
+    JSON_DECREF(snaps);
+
+    if(!snap) {
+        char temp[80];
+        snprintf(temp, sizeof(temp), "Snap not found: '%s'", snap_name);
+        log_info(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", temp,
+            "snap",         "%s", snap_name,
+            NULL
+        );
+        return -1;
+    }
+
+
+    /*-------------------------------------*
+     *  Deactivate current activated snap
+     *-------------------------------------*/
+    uint32_t user_flag = 0;
+    json_t *old_snap = treedb_get_activated_snap_tag(
+        tranger,
+        treedb_name,
+        &user_flag
+    );
+    if(old_snap) {
+        if(snap == old_snap) {
+            // Already active
+            char temp[80];
+            snprintf(temp, sizeof(temp), "Snap already activated: '%s'", snap_name);
+            log_info(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", temp,
+                "snap",         "%s", snap_name,
+                NULL
+            );
+            return -1;
+        }
+        // desactivate tag
+        json_object_set_new(snap, "active", json_false());
+        if(treedb_save_node(tranger, snap)<0) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Cannot deactivate snap",
+                "snap",         "%s", snap_name,
+                NULL
+            );
+        }
+    }
+
+    // activate tag
+    json_object_set_new(snap, "active", json_true());
+
+    return treedb_save_node(tranger, snap);
 }
 
 /***************************************************************************
@@ -5706,14 +5824,15 @@ PUBLIC uint32_t treedb_get_active_snap(
  ***************************************************************************/
 PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
     json_t *tranger,
-    const char *treedb_name
+    const char *treedb_name,
+    json_t *filter
 )
 {
     json_t *snaps = treedb_list_nodes( // Return MUST be decref
         tranger,
         treedb_name,
-        "__tags__",
-        0,  // filter, owned
+        "__snaps__",
+        filter,  // filter, owned
         0,  // options, "collapsed"
         0   //match_fn
     );

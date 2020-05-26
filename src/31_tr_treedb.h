@@ -331,20 +331,17 @@ PUBLIC json_t *treedb_get_topic_hooks(
 PUBLIC int treedb_shoot_snap( // tag the current tree db
     json_t *tranger,
     const char *treedb_name,
-    const char *tag
+    const char *snap_name
 );
 PUBLIC int treedb_activate_snap( // Activate tag
     json_t *tranger,
     const char *treedb_name,
-    const char *tag
-);
-PUBLIC uint32_t treedb_get_active_snap(
-    json_t *tranger,
-    const char *treedb_name
+    const char *snap_name
 );
 PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
     json_t *tranger,
-    const char *treedb_name
+    const char *treedb_name,
+    json_t *filter
 );
 
 #ifdef __cplusplus

@@ -488,6 +488,15 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
             topic_name,
             jn_cols
         );
+        log_info(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INFO,
+            "msg",          "%s", "Creating topic_cols.json",
+            "database",     "%s", kw_get_str(tranger, "database", "", KW_REQUIRED),
+            "topic",        "%s", topic_name,
+            NULL
+        );
 
         /*----------------------------------------*
          *      Create topic_var.json
@@ -497,6 +506,15 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
             tranger,
             topic_name,
             jn_var
+        );
+        log_info(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INFO,
+            "msg",          "%s", "Creating topic_var.json",
+            "database",     "%s", kw_get_str(tranger, "database", "", KW_REQUIRED),
+            "topic",        "%s", topic_name,
+            NULL
         );
 
         /*----------------------------------------*
@@ -562,7 +580,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INFO,
-                "msg",          "%s", "Re-create topic_var.json",
+                "msg",          "%s", "Re-Creating topic_var.json",
                 "database",     "%s", kw_get_str(tranger, "database", "", KW_REQUIRED),
                 "topic",        "%s", topic_name,
                 NULL
@@ -583,7 +601,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INFO,
-                "msg",          "%s", "Re-create topic_cols.json",
+                "msg",          "%s", "Re-Creating topic_cols.json",
                 "database",     "%s", kw_get_str(tranger, "database", "", KW_REQUIRED),
                 "topic",        "%s", topic_name,
                 NULL
