@@ -5743,6 +5743,33 @@ PUBLIC int treedb_activate_snap( // Activate tag
     const char *snap_name
 )
 {
+    if(strcmp(snap_name, "__clear__")==0) {
+        /*-------------------------*
+         *  Deactivate snap
+         *-------------------------*/
+        uint32_t user_flag = 0;
+        json_t *old_snap = treedb_get_activated_snap_tag(
+            tranger,
+            treedb_name,
+            &user_flag
+        );
+        if(old_snap) {
+            // desactivate tag
+            json_object_set_new(old_snap, "active", json_false());
+            if(treedb_save_node(tranger, old_snap)<0) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Cannot deactivate snap",
+                    "snap",         "%s", snap_name,
+                    NULL
+                );
+            }
+        }
+        return 0;
+    }
+
     /*--------------------------------*
      *  Recover new activated snap
      *--------------------------------*/
@@ -5774,7 +5801,6 @@ PUBLIC int treedb_activate_snap( // Activate tag
         return -1;
     }
 
-
     /*-------------------------------------*
      *  Deactivate current activated snap
      *-------------------------------------*/
@@ -5800,14 +5826,14 @@ PUBLIC int treedb_activate_snap( // Activate tag
             return -1;
         }
         // desactivate tag
-        json_object_set_new(snap, "active", json_false());
-        if(treedb_save_node(tranger, snap)<0) {
+        json_object_set_new(old_snap, "active", json_false());
+        if(treedb_save_node(tranger, old_snap)<0) {
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
                 "msg",          "%s", "Cannot deactivate snap",
-                "snap",         "%s", snap_name,
+                "snap",         "%s", kw_get_str(old_snap, "name", "", KW_REQUIRED),
                 NULL
             );
         }
