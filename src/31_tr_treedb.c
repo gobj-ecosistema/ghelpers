@@ -5823,7 +5823,7 @@ PUBLIC int treedb_activate_snap( // Activate tag
                 "snap",         "%s", snap_name,
                 NULL
             );
-            return -1;
+            return 1; // Retorna +1
         }
         // desactivate tag
         json_object_set_new(old_snap, "active", json_false());

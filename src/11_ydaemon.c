@@ -26,7 +26,7 @@ PRIVATE volatile int relaunch_times = 0;
 PRIVATE volatile int debug = 0;
 PRIVATE volatile int exit_code;
 PRIVATE volatile int signal_code;
-
+PRIVATE volatile int watcher_pid = 0;
 
 /***************************************************************************
  *  funcion like daemon() syscall
@@ -212,6 +212,9 @@ PUBLIC int daemon_run(
     void (*catch_signals)(void))
 {
     int ret;
+
+    watcher_pid = getpid();
+
     continue_as_daemon(work_dir, process_name);
     while((ret=relauncher(process, process_name, work_dir, domain_dir, catch_signals))<0) {
         // sleep 2 sec and launch again while relauncher return negative
@@ -400,4 +403,12 @@ PUBLIC int daemon_set_debug_mode(BOOL set)
 PUBLIC BOOL daemon_get_debug_mode(void)
 {
     return debug;
+}
+
+/***************************************************************************
+ *  Get debug mode
+ ***************************************************************************/
+PUBLIC int get_watcher_pid()
+{
+    return watcher_pid;
 }

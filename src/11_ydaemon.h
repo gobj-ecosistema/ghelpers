@@ -18,10 +18,10 @@
 extern "C"{
 #endif
 
-
 /*********************************************************************
  *      Prototypes
  *********************************************************************/
+PUBLIC int get_watcher_pid(void);
 PUBLIC void daemon_shutdown(const char *process_name);
 PUBLIC int daemon_run(
     void (*process)(const char *process_name, const char *work_dir, const char *domain_dir),
