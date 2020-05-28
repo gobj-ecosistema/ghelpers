@@ -2877,30 +2877,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *options // "permissive" "verbose"
 )
 {
-    /*-------------------------------*
-     *      Get indexx
-     *-------------------------------*/
-    char path[NAME_MAX];
-    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-    json_t *indexx = kw_get_dict(
-        tranger,
-        path,
-        0,
-        KW_REQUIRED
-    );
-    if(!indexx) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
-            "path",         "%s", path,
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        JSON_DECREF(kw);
-        return 0;
-    }
+    BOOL verbose = (options && strstr(options, "verbose"))?TRUE:FALSE;
 
     /*-------------------------------*
      *  Get the id, it's mandatory
@@ -2924,23 +2901,60 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             json_object_set_new(kw, "id", json_sprintf("%"JSON_INTEGER_FORMAT, rowid));
             id = kw_get_str(kw, "id", 0, 0);
         } else {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Field 'id' required",
-                "path",         "%s", path,
-                "topic_name",   "%s", topic_name,
-                NULL
-            );
-            log_debug_json(0, kw, "Field 'id' required");
+            if(verbose) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Field 'id' required",
+                    "topic_name",   "%s", topic_name,
+                    NULL
+                );
+                log_debug_json(0, kw, "Field 'id' required");
+            }
             JSON_DECREF(kw);
             return 0;
         }
     }
 
+    /*-------------------------------*
+     *      Get indexx
+     *-------------------------------*/
     const char *topic_options = tranger_topic_options(tranger_topic(tranger, topic_name));
     BOOL multiple = (topic_options && strstr(topic_options, "multiple"))?TRUE:FALSE;
+
+    char path[NAME_MAX];
+    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+
+    json_t *indexx = 0;
+    if(!multiple) {
+        indexx = kw_get_dict(
+            tranger,
+            path,
+            0,
+            KW_REQUIRED
+        );
+    } else {
+        indexx = kw_get_list(
+            tranger,
+            path,
+            0,
+            KW_REQUIRED
+        );
+    }
+    if(!indexx) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+            "path",         "%s", path,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
 
     json_t *record=0;
 
@@ -3023,7 +3037,11 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Write node
      *-------------------------------*/
-    json_object_set_new(indexx, id, record);
+    if(!multiple) {
+        json_object_set_new(indexx, id, record);
+    } else {
+        json_array_append_new(indexx, record);
+    }
 
     /*-------------------------------*
      *  Trace
