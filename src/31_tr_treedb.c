@@ -2939,26 +2939,33 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         }
     }
 
-    /*-------------------------------*
-     *  Exists already the id?
-     *-------------------------------*/
-    json_t *record = kw_get_dict(indexx, id, 0, 0);
-    if(record) {
-        /*
-         *  Yes
-         */
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Node already exists",
-            "path",         "%s", path,
-            "topic_name",   "%s", topic_name,
-            "id",           "%s", id,
-            NULL
-        );
-        JSON_DECREF(kw);
-        return 0;
+    const char *topic_options = tranger_topic_options(tranger_topic(tranger, topic_name));
+    BOOL multiple = (topic_options && strstr(topic_options, "multiple"))?TRUE:FALSE;
+
+    json_t *record=0;
+
+    if(!multiple) {
+        /*-----------------------------------*
+         *  Single: exists already the id?
+         *-----------------------------------*/
+        record = kw_get_dict(indexx, id, 0, 0);
+        if(record) {
+            /*
+             *  Yes
+             */
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Node already exists",
+                "path",         "%s", path,
+                "topic_name",   "%s", topic_name,
+                "id",           "%s", id,
+                NULL
+            );
+            JSON_DECREF(kw);
+            return 0;
+        }
     }
 
     /*----------------------------------------*
@@ -2970,6 +2977,16 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(kw);
         return 0;
     }
+
+    /*--------------------------------------------*
+     *  Set volatil data
+     *--------------------------------------------*/
+    set_volatil_values(
+        tranger,
+        topic_name,
+        record,  // not owned
+        kw // not owned
+    );
 
     /*-------------------------------*
      *  Write to tranger
@@ -2990,16 +3007,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(record);
         return 0;
     }
-
-    /*--------------------------------------------*
-     *  Set volatil data
-     *--------------------------------------------*/
-    set_volatil_values(
-        tranger,
-        topic_name,
-        record,  // not owned
-        kw // not owned
-    );
 
     /*--------------------------------------------*
      *  Build metadata, creating node in memory
@@ -3752,7 +3759,7 @@ PUBLIC int treedb_delete_node(
      *  Delete the record
      *-------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
-    //if(tranger_delete_record(tranger, topic_name, __rowid__)==0) { // WARNING collateral damages?
+    //TODO if(tranger_delete_record(tranger, topic_name, __rowid__)==0) { // WARNING collateral damages?
         if(json_object_del(indexx, id)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
