@@ -60,6 +60,12 @@ extern "C"{
 
 #define JSON_TYPEOF(json, tipo) (json && json_typeof(json)==tipo)
 
+
+#define json_array_backward(array, index, value) \
+    for(index = json_array_size(array) - 1; \
+        index >= 0 && (value = json_array_get(array, index)); \
+        index--)
+
 /***********************************************************************
  *      Prototypes
  ***********************************************************************/
