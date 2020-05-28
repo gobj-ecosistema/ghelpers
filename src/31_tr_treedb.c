@@ -146,7 +146,7 @@ PUBLIC const char *tranger_topic_options(
     json_t *topic
 )
 {
-    return kw_get_str(topic, "topic_options", "", KW_REQUIRED);
+    return kw_get_str(topic, "topic_options", "", 0);
 }
 
 /***************************************************************************
@@ -346,7 +346,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *  Open/Create "system" topics
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
-    const char *snaps_topic_version = "1";
+    const char *snaps_topic_version = "2";
     json_t *jn_snaps_topic_var = json_object();
     json_object_set_new(jn_snaps_topic_var, "topic_version", json_string(snaps_topic_version));
     json_object_set_new(jn_snaps_topic_var, "topic_options", json_string(""));
