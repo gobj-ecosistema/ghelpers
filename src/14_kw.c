@@ -2674,15 +2674,13 @@ PUBLIC BOOL kw_has_word(
         - delimiter are '`' and '.'
  ***************************************************************************/
 PRIVATE json_t *_kwid_get(
-    const char *options, // "verbose", "lower"
+    const char *options, // "verbose", "lower", "backward"
     json_t *kw,  // NOT owned
     char *path
 )
 {
-    BOOL verbose = FALSE;
-    if(options && strstr(options, "verbose")) {
-        verbose = TRUE;
-    }
+    BOOL verbose = (options && strstr(options, "verbose"))?TRUE:FALSE;
+    BOOL backward = (options && strstr(options, "backward"))?TRUE:FALSE;
 
     if(options && strstr(options, "lower")) {
         strtolower(path);
@@ -2722,18 +2720,34 @@ PRIVATE json_t *_kwid_get(
             {
                 int idx; json_t *v_;
                 BOOL found = FALSE;
-                json_array_foreach(v, idx, v_) {
-                    const char *id = json_string_value(json_object_get(v_, "id"));
-                    if(id && strcmp(id, segment)==0) {
-                        v = v_;
-                        found = TRUE;
-                        break;
+                if(!backward) {
+                    json_array_foreach(v, idx, v_) {
+                        const char *id = json_string_value(json_object_get(v_, "id"));
+                        if(id && strcmp(id, segment)==0) {
+                            v = v_;
+                            found = TRUE;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        v = 0;
+                        fin = TRUE;
+                    }
+                } else {
+                    json_array_backward(v, idx, v_) {
+                        const char *id = json_string_value(json_object_get(v_, "id"));
+                        if(id && strcmp(id, segment)==0) {
+                            v = v_;
+                            found = TRUE;
+                            break;
+                        }
+                    }
+                    if(!found) {
+                        v = 0;
+                        fin = TRUE;
                     }
                 }
-                if(!found) {
-                    v = 0;
-                    fin = TRUE;
-                }
+
             }
             break;
         default:
@@ -2755,7 +2769,7 @@ PRIVATE json_t *_kwid_get(
         - delimiter are '`' and '.'
  ***************************************************************************/
 PUBLIC json_t *kwid_get( // Return is NOT YOURS
-    const char *options, // "verbose", "lower"
+    const char *options, // "verbose", "lower", "backward"
     json_t *kw,  // NOT owned
     const char *path,
     ...

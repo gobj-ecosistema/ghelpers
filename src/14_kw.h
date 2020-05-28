@@ -627,7 +627,7 @@ PUBLIC BOOL kw_has_word(
         - delimiter is '`' and '.'
 **rst**/
 PUBLIC json_t *kwid_get( // Return is NOT YOURS
-    const char *options, // "verbose", "lower"
+    const char *options, // "verbose", "lower", "backward"
     json_t *kw,  // NOT owned
     const char *path,
     ...
