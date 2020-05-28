@@ -140,6 +140,16 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
 }
 
 /***************************************************************************
+   Return topic options of topic.
+ ***************************************************************************/
+PUBLIC const char *tranger_topic_options(
+    json_t *topic
+)
+{
+    return kw_get_str(topic, "topic_options", "", KW_REQUIRED);
+}
+
+/***************************************************************************
  *
  ***************************************************************************/
 PUBLIC char *build_treedb_index_path(
@@ -339,6 +349,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     const char *snaps_topic_version = "1";
     json_t *jn_snaps_topic_var = json_object();
     json_object_set_new(jn_snaps_topic_var, "topic_version", json_string(snaps_topic_version));
+    json_object_set_new(jn_snaps_topic_var, "topic_options", json_string(""));
 
     json_t *tag_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"
@@ -500,7 +511,13 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         }
         build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
 
-        kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
+        const char *topic_options = tranger_topic_options(tranger_topic(tranger, topic_name));
+        BOOL multiple = (topic_options && strstr(topic_options, "multiple"))?TRUE:FALSE;
+        if(!multiple) {
+            kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
+        } else {
+            kw_get_subdict_value(treedb, topic_name, "id", json_array(), KW_CREATE);
+        }
 
         json_t *jn_filter = json_pack("{s:b}",
             "backward", 1
@@ -635,6 +652,8 @@ PUBLIC json_t *treedb_create_topic(
     if(!topic_options) {
         topic_options = "";
     }
+    BOOL multiple = (topic_options && strstr(topic_options, "multiple"))?TRUE:FALSE;
+
     json_t *jn_topic_var = json_object();
     json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
     json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options));
@@ -685,7 +704,11 @@ PUBLIC json_t *treedb_create_topic(
     char path[NAME_MAX];
     build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
 
-    kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
+    if(!multiple) {
+        kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
+    } else {
+        kw_get_subdict_value(treedb, topic_name, "id", json_array(), KW_CREATE);
+    }
 
     json_t *jn_filter = json_pack("{s:b}",
         "backward", 1
@@ -1856,6 +1879,10 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
+    const char *topic_name = tranger_topic_name(topic);
+    const char *topic_options = tranger_topic_options(topic);
+    BOOL multiple = (topic_options && strstr(topic_options, "multiple"))?TRUE:FALSE;
+
     json_t *deleted_records = kw_get_dict(list, "deleted_records", 0, KW_REQUIRED);
 
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
@@ -1876,47 +1903,60 @@ PRIVATE int load_record_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                /*-------------------------------*
-                 *      Get indexx
-                 *-------------------------------*/
-                const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
-                const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
-
-                char path[NAME_MAX];
-                build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-                json_t *indexx = kw_get_dict(
-                    tranger,
-                    path,
-                    0,
-                    KW_REQUIRED
-                );
-                if(!indexx) {
-                    log_error(0,
-                        "gobj",         "%s", __FILE__,
-                        "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
-                        "path",         "%s", path,
-                        "topic_name",   "%s", topic_name,
-                        NULL
-                    );
-                    JSON_DECREF(jn_record);
-                    return 0;  // Timeranger: does not load the record, it's mine.
-                }
-
-                /*-------------------------------*
-                 *  Exists already the node?
-                 *-------------------------------*/
-                if(kw_get_dict(
-                        indexx,
-                        md_record->key.s,
-                        0,
-                        0
-                    )!=0) {
-                    // The node with this key already exists
-                } else {
+                do {
                     /*-------------------------------*
-                     *  Append new node
+                     *      Get indexx
+                     *-------------------------------*/
+                    const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
+
+                    char path[NAME_MAX];
+                    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+
+                    json_t *indexx = 0;
+                    if(!multiple) {
+                        indexx = kw_get_dict(
+                            tranger,
+                            path,
+                            0,
+                            KW_REQUIRED
+                        );
+                    } else {
+                        indexx = kw_get_list(
+                            tranger,
+                            path,
+                            0,
+                            KW_REQUIRED
+                        );
+                    }
+                    if(!indexx) {
+                        log_error(0,
+                            "gobj",         "%s", __FILE__,
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                            "path",         "%s", path,
+                            "topic_name",   "%s", topic_name,
+                            NULL
+                        );
+                        break;
+                    }
+
+                    /*-------------------------------*
+                     *  Exists already the node?
+                     *-------------------------------*/
+                    if(!multiple) {
+                        if(kw_get_dict(
+                                indexx,
+                                md_record->key.s,
+                                0,
+                                0
+                            )!=0) {
+                            // The node with this key already exists
+                            break;
+                        }
+                    }
+                    /*-------------------------------*
+                     *      Append new node
                      *-------------------------------*/
                     /*---------------------------------------------*
                      *  Build metadata, loading node from tranger
@@ -1930,7 +1970,7 @@ PRIVATE int load_record_callback(
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
 
                     /*--------------------------------------------*
-                     *  Set volatil data
+                     *      Set volatil data
                      *--------------------------------------------*/
                     set_volatil_values(
                         tranger,
@@ -1940,14 +1980,21 @@ PRIVATE int load_record_callback(
                     );
 
                     /*-------------------------------*
-                     *  Write node
+                     *      Write node
                      *-------------------------------*/
-                    json_object_set(
-                        indexx,
-                        md_record->key.s,
-                        jn_record
-                    );
-                }
+                    if(!multiple) {
+                        json_object_set(
+                            indexx,
+                            md_record->key.s,
+                            jn_record
+                        );
+                    } else {
+                        json_array_append(
+                            indexx,
+                            jn_record
+                        );
+                    }
+                } while(0);
             }
         }
     } else {
@@ -2342,6 +2389,10 @@ PRIVATE int load_all_hook_links(
          */
         char path[NAME_MAX];
         build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+
+        const char *topic_options = tranger_topic_options(topic);
+        BOOL multiple = (topic_options && strstr(topic_options, "multiple"))?TRUE:FALSE;
+
         json_t *indexx = kw_get_dict(
             tranger,
             path,
