@@ -2978,16 +2978,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         return 0;
     }
 
-    /*--------------------------------------------*
-     *  Set volatil data
-     *--------------------------------------------*/
-    set_volatil_values(
-        tranger,
-        topic_name,
-        record,  // not owned
-        kw // not owned
-    );
-
     /*-------------------------------*
      *  Write to tranger
      *-------------------------------*/
@@ -3007,6 +2997,18 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(record);
         return 0;
     }
+
+    /*--------------------------------------------------*
+     *  Set volatil data
+     *  HACK set volatil after tranger_append_record:
+     *      Volatil data must not be save in file!
+     *--------------------------------------------------*/
+    set_volatil_values(
+        tranger,
+        topic_name,
+        record,  // not owned
+        kw // not owned
+    );
 
     /*--------------------------------------------*
      *  Build metadata, creating node in memory
