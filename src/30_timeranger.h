@@ -211,6 +211,13 @@ PUBLIC const char *tranger_topic_name(
 );
 
 /**rst**
+   Return topic options of topic.
+**rst**/
+PUBLIC const char *tranger_topic_options(
+    json_t *topic
+);
+
+/**rst**
    Close record topic.
 **rst**/
 PUBLIC int tranger_close_topic(

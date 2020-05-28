@@ -906,6 +906,16 @@ PUBLIC const char *tranger_topic_name(
 }
 
 /***************************************************************************
+   Return topic options of topic.
+ ***************************************************************************/
+PUBLIC const char *tranger_topic_options(
+    json_t *topic
+)
+{
+    return kw_get_str(topic, "topic_options", "", KW_REQUIRED);
+}
+
+/***************************************************************************
    Close record topic.
  ***************************************************************************/
 PUBLIC int tranger_close_topic(
