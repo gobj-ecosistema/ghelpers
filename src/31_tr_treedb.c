@@ -470,13 +470,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         "backward", 1
     );
 
-    uint32_t user_flag = 0;
-    treedb_get_activated_snap_tag(
-        tranger,
-        treedb_name,
-        &user_flag
-    );
-
     json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
         "id", path,
         "topic_name", snaps_topic_name,
@@ -490,6 +483,12 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         jn_list // owned
     );
 
+    uint32_t user_flag = 0;
+    treedb_get_activated_snap_tag(
+        tranger,
+        treedb_name,
+        &user_flag
+    );
 
     /*------------------------------*
      *  Open "user" lists
@@ -3517,6 +3516,10 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     "force" delete links.
     If there are links are not force then delete_node will fail
     WARNING that kw can be node, the node to delete!!
+
+    HACK: delete will be delete the record forever, for that reason,
+          a node with snap tag cannot be delete!
+
  ***************************************************************************/
 PUBLIC int treedb_delete_node(
     json_t *tranger,
@@ -3749,6 +3752,7 @@ PUBLIC int treedb_delete_node(
      *  Delete the record
      *-------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
+    //if(tranger_delete_record(tranger, topic_name, __rowid__)==0) { // WARNING collateral damages?
         if(json_object_del(indexx, id)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -3773,7 +3777,7 @@ PUBLIC int treedb_delete_node(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Cannot mark node as deleted",
+            "msg",          "%s", "Cannot delete node",
             "path",         "%s", path,
             "topic_name",   "%s", topic_name,
             "id",           "%s", id,
@@ -5708,26 +5712,55 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         if(strncmp(topic_name, "__", 2)==0) { // Ignore meta-tables
             continue;
         }
-        json_t *topic = tranger_topic(tranger, topic_name);
-        uint64_t topic_rowid = kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
-        ret += tranger_write_user_flag(
+
+        /*
+         *  Tag each current key of topic
+         */
+        char path[NAME_MAX];
+        build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+        json_t *indexx = kw_get_dict(
             tranger,
-            topic_name,
-            topic_rowid,
-            user_flag
+            path,
+            0,
+            0
         );
-        if(ret < 0) {
-            JSON_DECREF(topics);
-            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Cannot write tag",
-                "topic_name",   "%s", topic_name,
-                "snap",         "%s", snap_name,
-                NULL
-            );
+        if(!indexx) {
+            // It's not a treedb topic
+            continue;
         }
+
+        /*
+         *  Firstly create a new node. Last node can already have a snap tag
+         */
+        const char *node_id; json_t *node;
+        json_object_foreach(indexx, node_id, node) {
+            uint64_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
+            treedb_save_node(tranger, node);
+            __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
+
+            ret += tranger_write_user_flag(
+                tranger,
+                topic_name,
+                __rowid__,
+                user_flag
+            );
+            if(ret < 0) {
+                log_critical(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Cannot write tag",
+                    "topic_name",   "%s", topic_name,
+                    "snap",         "%s", snap_name,
+                    NULL
+                );
+            }
+        }
+
+        /*
+         *  Mark
+         */
+
     }
 
     JSON_DECREF(topics);
