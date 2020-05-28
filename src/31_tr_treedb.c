@@ -140,16 +140,6 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
 }
 
 /***************************************************************************
-   Return topic options of topic.
- ***************************************************************************/
-PUBLIC const char *tranger_topic_options(
-    json_t *topic
-)
-{
-    return kw_get_str(topic, "topic_options", "", 0);
-}
-
-/***************************************************************************
  *
  ***************************************************************************/
 PUBLIC char *build_treedb_index_path(
@@ -346,10 +336,9 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *  Open/Create "system" topics
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
-    const char *snaps_topic_version = "2";
+    const char *snaps_topic_version = "1";
     json_t *jn_snaps_topic_var = json_object();
     json_object_set_new(jn_snaps_topic_var, "topic_version", json_string(snaps_topic_version));
-    json_object_set_new(jn_snaps_topic_var, "topic_options", json_string(""));
 
     json_t *tag_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"
@@ -509,7 +498,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         if(empty_string(topic_name)) {
             continue;
         }
-
         build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
 
         kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
@@ -1868,8 +1856,6 @@ PRIVATE int load_record_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
-    const char *topic_name = tranger_topic_name(topic);
-
     json_t *deleted_records = kw_get_dict(list, "deleted_records", 0, KW_REQUIRED);
 
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
@@ -1890,50 +1876,47 @@ PRIVATE int load_record_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                do {
-                    /*-------------------------------*
-                     *      Get indexx
-                     *-------------------------------*/
-                    const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
+                /*-------------------------------*
+                 *      Get indexx
+                 *-------------------------------*/
+                const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
+                const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
 
-                    char path[NAME_MAX];
-                    build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-
-                    json_t *indexx = 0;
-                    indexx = kw_get_dict(
-                        tranger,
-                        path,
-                        0,
-                        KW_REQUIRED
+                char path[NAME_MAX];
+                build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+                json_t *indexx = kw_get_dict(
+                    tranger,
+                    path,
+                    0,
+                    KW_REQUIRED
+                );
+                if(!indexx) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                        "path",         "%s", path,
+                        "topic_name",   "%s", topic_name,
+                        NULL
                     );
-                    if(!indexx) {
-                        log_error(0,
-                            "gobj",         "%s", __FILE__,
-                            "function",     "%s", __FUNCTION__,
-                            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
-                            "path",         "%s", path,
-                            "topic_name",   "%s", topic_name,
-                            NULL
-                        );
-                        break;
-                    }
+                    JSON_DECREF(jn_record);
+                    return 0;  // Timeranger: does not load the record, it's mine.
+                }
 
+                /*-------------------------------*
+                 *  Exists already the node?
+                 *-------------------------------*/
+                if(kw_get_dict(
+                        indexx,
+                        md_record->key.s,
+                        0,
+                        0
+                    )!=0) {
+                    // The node with this key already exists
+                } else {
                     /*-------------------------------*
-                     *  Exists already the node?
-                     *-------------------------------*/
-                    if(kw_get_dict(
-                            indexx,
-                            md_record->key.s,
-                            0,
-                            0
-                        )!=0) {
-                        // The node with this key already exists
-                        break;
-                    }
-
-                    /*-------------------------------*
-                     *      Append new node
+                     *  Append new node
                      *-------------------------------*/
                     /*---------------------------------------------*
                      *  Build metadata, loading node from tranger
@@ -1947,7 +1930,7 @@ PRIVATE int load_record_callback(
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
 
                     /*--------------------------------------------*
-                     *      Set volatil data
+                     *  Set volatil data
                      *--------------------------------------------*/
                     set_volatil_values(
                         tranger,
@@ -1957,14 +1940,14 @@ PRIVATE int load_record_callback(
                     );
 
                     /*-------------------------------*
-                     *      Write node
+                     *  Write node
                      *-------------------------------*/
                     json_object_set(
                         indexx,
                         md_record->key.s,
                         jn_record
                     );
-                } while(0);
+                }
             }
         }
     } else {
@@ -2359,9 +2342,7 @@ PRIVATE int load_all_hook_links(
          */
         char path[NAME_MAX];
         build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-
-        json_t *indexx = 0;
-        indexx = kw_get_dict(
+        json_t *indexx = kw_get_dict(
             tranger,
             path,
             0,
@@ -2386,8 +2367,8 @@ PRIVATE int load_all_hook_links(
             }
 
             /*
-            *  Loop desc cols searching fkey
-            */
+             *  Loop desc cols searching fkey
+             */
             ret += load_hook_links(
                 tranger,
                 child_node
@@ -2939,11 +2920,11 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *      Get indexx
      *-------------------------------*/
+
     char path[NAME_MAX];
     build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
 
-    json_t *indexx = 0;
-    indexx = kw_get_dict(
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
@@ -2966,13 +2947,13 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *record=0;
 
     /*-----------------------------------*
-        *  Single: exists already the id?
-        *-----------------------------------*/
+     *  Single: exists already the id?
+     *-----------------------------------*/
     record = kw_get_dict(indexx, id, 0, 0);
     if(record) {
         /*
-         *  Yes
-         */
+            *  Yes
+            */
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -3618,9 +3599,7 @@ PUBLIC int treedb_delete_node(
      *-------------------------------*/
     char path[NAME_MAX];
     build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-
-    json_t *indexx = 0;
-    indexx = kw_get_dict(
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
@@ -3783,7 +3762,6 @@ PUBLIC int treedb_delete_node(
      *-------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
     //TODO if(tranger_delete_record(tranger, topic_name, __rowid__)==0) { // WARNING collateral damages?
-        BOOL deleted = TRUE;
         if(json_object_del(indexx, id)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -3795,9 +3773,7 @@ PUBLIC int treedb_delete_node(
                 "id",           "%s", id,
                 NULL
             );
-            deleted = FALSE;
-        }
-        if(deleted) {
+        } else {
             /*-------------------------------*
              *  Trace
              *-------------------------------*/
@@ -4915,8 +4891,8 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
-        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
+        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_persistent?KW_REQUIRED:0);
         if(is_hook || is_fkey) {
             if(is_hook) {
                 json_t *list = kw_get_dict_value(
@@ -4992,9 +4968,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
      *-------------------------------*/
     char path[NAME_MAX];
     build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-
-    json_t *indexx = 0;
-    indexx = kw_get_dict(
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
@@ -5123,10 +5097,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "BAD indexx",
+            "msg",          "%s", "kw MUST BE a json array or object",
             NULL
         );
-        log_debug_json(0, indexx, "BAD indexx");
         JSON_DECREF(list);
     }
 
@@ -5176,9 +5149,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *-------------------------------*/
     char path[NAME_MAX];
     build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
-
-    json_t *indexx = 0;
-    indexx = kw_get_dict(
+    json_t *indexx = kw_get_dict(
         tranger,
         path,
         0,
@@ -5202,8 +5173,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *      Get
      *-------------------------------*/
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
-    json_t *node = 0;
-    node = kw_get_dict(indexx, id, 0, 0);
+    json_t *node = kw_get_dict(indexx, id, 0, 0);
     if(!node) {
         // Silence
         JSON_DECREF(jn_options);
