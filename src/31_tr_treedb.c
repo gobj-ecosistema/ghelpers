@@ -5046,8 +5046,8 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
-        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_persistent?KW_REQUIRED:0);
+        BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
+        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
         if(is_hook || is_fkey) {
             if(is_hook) {
                 json_t *list = kw_get_dict_value(
