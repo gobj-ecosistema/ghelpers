@@ -120,21 +120,26 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
     json_t *cols_desc,  // not owned
     json_t *data        // owned
 );
-PUBLIC char *build_treedb_index_path(
+PUBLIC int parse_hooks(
+    json_t *tranger
+);
+PUBLIC char *build_id_index_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name
+);
+PUBLIC char *build_pkey_index_path(
     char *bf,
     int bfsize,
     const char *treedb_name,
     const char *topic_name,
-    const char *key
+    const char *pkey
 );
-PUBLIC int parse_hooks(
-    json_t *tranger
-);
-PUBLIC json_t *treedb_get_index( // Return is NOT YOURS
+PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
-    const char *topic_name,
-    const char *index_name
+    const char *topic_name
 );
 
 /**rst**
