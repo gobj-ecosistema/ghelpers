@@ -2549,9 +2549,10 @@ PRIVATE int load_all_hook_links(
     /*
      *  Loop topics, as child nodes
      */
-    json_t *topics = kw_get_dict(tranger, "topics", 0, KW_REQUIRED);
-    const char *topic_name; json_t *topic;
-    json_object_foreach(topics, topic_name, topic) {
+    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    int idx; json_t *jn_topic;
+    json_array_foreach(topics, idx, jn_topic) {
+        const char *topic_name = json_string_value(jn_topic);
         /*
          *  Loop nodes searching links
          */
@@ -2584,6 +2585,7 @@ PRIVATE int load_all_hook_links(
         }
     }
 
+    JSON_DECREF(topics);
     return ret;
 }
 
@@ -5319,6 +5321,8 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     )
 )
 {
+    // TODO
+    return 0;
 }
 
 /***************************************************************************
