@@ -385,7 +385,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         );
     }
 
-    json_t *snaps_topic = tranger_create_topic(
+    json_t *snaps_topic = tranger_create_topic( // System topic
         tranger,    // If topic exists then only needs (tranger,name) parameters
         snaps_topic_name,
         "id",
@@ -437,7 +437,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         json_t *jn_topic_var = json_object();
         json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
         json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options));
-        json_t *topic = tranger_create_topic(
+        json_t *topic = tranger_create_topic( // User topic
             tranger,    // If topic exists then only needs (tranger,name) parameters
             topic_name,
             pkey,
@@ -483,6 +483,9 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         jn_list // owned
     );
 
+    /*------------------------------*
+     *  Open "user" lists
+     *------------------------------*/
     uint32_t user_flag = 0;
     treedb_get_activated_snap_tag(
         tranger,
@@ -490,9 +493,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         &user_flag
     );
 
-    /*------------------------------*
-     *  Open "user" lists
-     *------------------------------*/
     json_array_foreach(jn_schema_topics, idx, schema_topic) {
         const char *topic_name = kw_get_str(schema_topic, "topic_name", "", 0);
         if(empty_string(topic_name)) {
@@ -640,7 +640,7 @@ PUBLIC json_t *treedb_create_topic(
     json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options));
 
     JSON_INCREF(cols);
-    topic = tranger_create_topic(
+    topic = tranger_create_topic( // User topic
         tranger,    // If topic exists then only needs (tranger,name) parameters
         topic_name,
         "id",
@@ -3552,7 +3552,7 @@ PUBLIC int treedb_delete_node(
         );
         log_debug_json(0, kw, "kw without id");
         JSON_DECREF(kw);
-        return 0;
+        return -1;
     }
 
     /*-------------------------------*
@@ -3583,7 +3583,7 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(kw);
-        return 0;
+        return -1;
     }
     if(kw != node) {
         JSON_DECREF(kw);
@@ -3607,7 +3607,7 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(kw);
-        return 0;
+        return -1;
     }
 
     /*-------------------------------*
