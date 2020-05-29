@@ -88,6 +88,13 @@ PUBLIC json_t *treedb_create_topic(
     uint32_t snap_tag,
     BOOL create_schema
 );
+
+PUBLIC int treedb_close_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+);
+
 PUBLIC int treedb_delete_topic(
     json_t *tranger,
     const char *treedb_name,

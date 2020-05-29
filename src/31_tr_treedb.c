@@ -534,42 +534,22 @@ PUBLIC int treedb_close_db(
 )
 {
     /*------------------------------*
-     *  Close treedb lists
+     *  Close treedb topics
+     *------------------------------*/
+    json_t *topics = treedb_list_topics(tranger, treedb_name, 0);
+    int idx; json_t *topic;
+    json_array_foreach(topics, idx, topic) {
+        const char *topic_name = json_string_value(topic);
+        treedb_close_topic(tranger, treedb_name, topic_name);
+    }
+    JSON_DECREF(topics);
+
+    /*------------------------------*
+     *  Delete treedb
      *------------------------------*/
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, KW_EXTRACT);
-    if(!treedb) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDB not found.",
-            "treedb_name",  "%s", treedb_name,
-            NULL
-        );
-        return -1;
-    }
-
-    char list_id[NAME_MAX];
-    const char *topic_name; json_t *topic_records;
-    json_object_foreach(treedb, topic_name, topic_records) {
-        build_treedb_index_path(list_id, sizeof(list_id), treedb_name, topic_name, "id");
-        json_t *list = tranger_get_list(tranger, list_id);
-        if(!list) {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "List not found.",
-                "treedb_name",  "%s", treedb_name,
-                "list",         "%s", list_id,
-                NULL
-            );
-            continue;
-        }
-        tranger_close_list(tranger, list);
-    }
-
     JSON_DECREF(treedb);
+
     JSON_DECREF(topic_cols_desc);
     return 0;
 }
@@ -732,20 +712,10 @@ PUBLIC int treedb_close_topic( // TODO implementa y revisa treedb_delete_topic
     const char *topic_name
 )
 {
-    // TODO
-    return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC int treedb_delete_topic(
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name
-)
-{
-    json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, KW_EXTRACT);
+    /*------------------------------*
+     *  Close treedb lists
+     *------------------------------*/
+    json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -758,7 +728,6 @@ PUBLIC int treedb_delete_topic(
         return -1;
     }
 
-    // TODO revisa si se elimina el treedb de datos del topic
     char list_id[NAME_MAX];
     build_treedb_index_path(list_id, sizeof(list_id), treedb_name, topic_name, "id");
     json_t *list = tranger_get_list(tranger, list_id);
@@ -776,9 +745,30 @@ PUBLIC int treedb_delete_topic(
         );
     }
 
-    tranger_delete_topic(tranger, topic_name);
+    json_t *indexx = kw_get_dict(
+        tranger,
+        list_id,
+        0,
+        KW_REQUIRED|KW_EXTRACT
+    );
+    if(indexx) {
+        JSON_DECREF(indexx);
+    }
 
     return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_delete_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    treedb_close_topic(tranger, treedb_name, topic_name);
+    return tranger_delete_topic(tranger, topic_name);
 }
 
 /***************************************************************************
