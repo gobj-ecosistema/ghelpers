@@ -26,6 +26,19 @@
 /***************************************************************
  *              Prototypes
  ***************************************************************/
+PRIVATE char *build_id_index_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name
+);
+PRIVATE char *build_pkey_index_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *pkey
+);
 PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,

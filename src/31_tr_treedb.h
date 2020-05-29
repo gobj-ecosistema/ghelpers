@@ -123,19 +123,6 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
 PUBLIC int parse_hooks(
     json_t *tranger
 );
-PUBLIC char *build_id_index_path(
-    char *bf,
-    int bfsize,
-    const char *treedb_name,
-    const char *topic_name
-);
-PUBLIC char *build_pkey_index_path(
-    char *bf,
-    int bfsize,
-    const char *treedb_name,
-    const char *topic_name,
-    const char *pkey
-);
 PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
