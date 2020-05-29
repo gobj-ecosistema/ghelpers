@@ -431,6 +431,27 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     );
 
     /*------------------------------*
+     *  Get snap tab
+     *------------------------------*/
+    uint32_t snap_tag = 0;
+    treedb_get_activated_snap_tag(
+        tranger,
+        treedb_name,
+        &snap_tag
+    );
+    if(snap_tag) {
+        char temp[80];
+        snprintf(temp, sizeof(temp), "loading snap_tag %d", snap_tag);
+        log_info(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INFO,
+            "msg",          "%s", temp,
+            "snap_tag",     "%d", (int)snap_tag,
+            NULL
+        );
+    }
+    /*------------------------------*
      *  Create "user" topics
      *------------------------------*/
     int idx;
@@ -462,64 +483,31 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             );
             continue;
         }
-        const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
-        const char *topic_options = kw_get_str(schema_topic, "topic_options", "", 0);
-        json_t *jn_topic_var = json_object();
-        json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
-        json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options));
-        json_t *topic = tranger_create_topic( // User topic
-            tranger,    // If topic exists then only needs (tranger,name) parameters
-            topic_name,
-            pkey,
-            kw_get_str(schema_topic, "tkey", "", 0),
-            tranger_str2system_flag(kw_get_str(schema_topic, "system_flag", "", 0)),
-            kwid_new_dict("verbose", schema_topic, "cols"),
-            jn_topic_var
-        );
-
-        parse_schema_cols(
-            topic_cols_desc,
-            kwid_new_list("verbose", topic, "cols")
-        );
-    }
-
-    /*------------------------------*
-     *  Open "user" lists
-     *------------------------------*/
-    uint32_t user_flag = 0;
-    treedb_get_activated_snap_tag(
-        tranger,
-        treedb_name,
-        &user_flag
-    );
-
-    json_array_foreach(jn_schema_topics, idx, schema_topic) {
-        const char *topic_name = kw_get_str(schema_topic, "topic_name", "", 0);
-        if(empty_string(topic_name)) {
+        const char *system_flag = kw_get_str(schema_topic, "system_flag", "", 0);
+        if(strcmp(system_flag, "sf_string_key")!=0) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Schema topic without system_flag=sf_string_key",
+                "treedb_name",  "%s", treedb_name,
+                "schema_topic", "%j", schema_topic,
+                NULL
+            );
             continue;
         }
-        build_treedb_index_path(path, sizeof(path), treedb_name, topic_name, "id");
+        const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
+        const char *topic_options = kw_get_str(schema_topic, "topic_options", "", 0);
 
-        kw_get_subdict_value(treedb, topic_name, "id", json_object(), KW_CREATE);
-
-        json_t *jn_filter = json_pack("{s:b}",
-            "backward", 1
-        );
-        if(user_flag) {
-            // pon el current tag
-            json_object_set_new(jn_filter, "user_flag", json_integer(user_flag));
-        }
-        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
-            "id", path,
-            "topic_name", topic_name,
-            "match_cond", jn_filter,
-            "load_record_callback", (json_int_t)(size_t)load_record_callback,
-            "treedb_name", treedb_name,
-            "deleted_records" // TODO debería cambiarlo a delete real
-        );
-        tranger_open_list(
+        treedb_create_topic(
             tranger,
-            jn_list // owned
+            treedb_name,
+            topic_name,
+            topic_version,
+            topic_options,
+            kwid_new_dict("verbose", schema_topic, "cols"), // owned
+            snap_tag,
+            FALSE // create_schema
         );
     }
 
@@ -597,9 +585,34 @@ PUBLIC json_t *treedb_create_topic(
     const char *topic_name,
     const char *topic_version,
     const char *topic_options,
-    json_t *cols // owned
+    json_t *cols, // owned
+    uint32_t snap_tag,
+    BOOL create_schema
 )
 {
+    if(empty_string(treedb_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "treedb_name empty",
+            NULL
+        );
+        JSON_DECREF(cols);
+        return 0;
+    }
+    if(empty_string(topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "topic_name empty",
+            NULL
+        );
+        JSON_DECREF(cols);
+        return 0;
+    }
+
     /*------------------------------*
      *  Get treedb list
      *------------------------------*/
@@ -629,25 +642,20 @@ PUBLIC json_t *treedb_create_topic(
     /*------------------------------*
      *  Open/Create "user" topic
      *------------------------------*/
-    if(!topic_version) {
-        topic_version = "";
-    }
-    if(!topic_options) {
-        topic_options = "";
-    }
     json_t *jn_topic_var = json_object();
-    json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version));
-    json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options));
+    json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version?topic_version:""));
+    json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options?topic_options:""));
 
     JSON_INCREF(cols);
+    JSON_INCREF(jn_topic_var);
     topic = tranger_create_topic( // User topic
         tranger,    // If topic exists then only needs (tranger,name) parameters
         topic_name,
-        "id",
-        "", // tkey
-        tranger_str2system_flag("sf_string_key"),
+        "id",       // HACK pkey fixed
+        "",         // HACK tkey fixed
+        tranger_str2system_flag("sf_string_key"), // HACK system_flag fixed
         cols,           // owned below
-        jn_topic_var    // owned
+        jn_topic_var    // owned below
     );
 
     parse_schema_cols(
@@ -655,29 +663,34 @@ PUBLIC json_t *treedb_create_topic(
         kwid_new_list("verbose", topic, "cols")
     );
 
-    json_t *jn_schema = json_object();
-    kw_get_str(jn_schema, "topic_name", topic_name, KW_CREATE);
-    kw_get_str(jn_schema, "pkey", "id", KW_CREATE);
-    kw_get_str(jn_schema, "system_flag", "sf_string_key", KW_CREATE);
-    kw_get_str(jn_schema, "topic_version", topic_version, KW_CREATE);
-    kw_get_dict(jn_schema, "cols", cols, KW_CREATE); // cols owned
+    if(create_schema) {
+        json_t *jn_schema = json_object();
+        kw_get_str(jn_schema, "topic_name", topic_name, KW_CREATE);
+        kw_get_str(jn_schema, "pkey", "id", KW_CREATE);
+        kw_get_str(jn_schema, "system_flag", "sf_string_key", KW_CREATE);
+        kw_get_dict(jn_schema, "cols", cols, KW_CREATE); // cols owned
+        json_object_update(jn_schema, jn_topic_var);
 
-    char schema_filename[NAME_MAX];
-    snprintf(schema_filename, sizeof(schema_filename), "%s-%s.treedb_schema.json",
-        treedb_name,
-        topic_name
-    );
+        char schema_filename[NAME_MAX];
+        snprintf(schema_filename, sizeof(schema_filename), "%s-%s.treedb_schema.json",
+            treedb_name,
+            topic_name
+        );
 
-    save_json_to_file(
-        kw_get_str(tranger, "directory", 0, KW_REQUIRED),
-        schema_filename,
-        kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
-        kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
-        kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-        TRUE, // Create file if not exists or overwrite.
-        FALSE, // only_read
-        jn_schema     // owned
-    );
+        save_json_to_file(
+            kw_get_str(tranger, "directory", 0, KW_REQUIRED),
+            schema_filename,
+            kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+            kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+            kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            TRUE, // Create file if not exists or overwrite.
+            FALSE, // only_read
+            jn_schema     // owned
+        );
+    } else {
+        JSON_DECREF(cols);
+    }
+    JSON_DECREF(jn_topic_var);
 
     /*------------------------------*
      *  Open "user" list
@@ -690,25 +703,37 @@ PUBLIC json_t *treedb_create_topic(
     json_t *jn_filter = json_pack("{s:b}",
         "backward", 1
     );
+    if(snap_tag) {
+        // pon el current tag
+        json_object_set_new(jn_filter, "user_flag", json_integer(snap_tag));
+    }
     json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
         "id", path,
         "topic_name", topic_name,
         "match_cond", jn_filter,
         "load_record_callback", (json_int_t)(size_t)load_record_callback,
         "treedb_name", treedb_name,
-        "deleted_records"
+        "deleted_records" // TODO debería cambiarlo a delete real
     );
     tranger_open_list(
         tranger,
         jn_list // owned
     );
 
-    /*------------------------------*
-     *  Parse hooks
-     *------------------------------*/
-    parse_hooks(tranger);
-
     return topic;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_close_topic( // TODO implementa y revisa treedb_delete_topic
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    // TODO
+    return 0;
 }
 
 /***************************************************************************
@@ -733,6 +758,7 @@ PUBLIC int treedb_delete_topic(
         return -1;
     }
 
+    // TODO revisa si se elimina el treedb de datos del topic
     char list_id[NAME_MAX];
     build_treedb_index_path(list_id, sizeof(list_id), treedb_name, topic_name, "id");
     json_t *list = tranger_get_list(tranger, list_id);
