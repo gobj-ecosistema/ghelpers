@@ -251,6 +251,18 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         json_t *jn_filter   // owned
     )
 );
+PUBLIC json_t *treedb_node_instances( // Return MUST be decref
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *pkey2_field,
+    json_t *jn_filter,  // owned
+    json_t *jn_options, // owned, "collapsed"
+    BOOL (*match_fn) (
+        json_t *kw,         // not owned
+        json_t *jn_filter   // owned
+    )
+);
 
 PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     json_t *tranger,
