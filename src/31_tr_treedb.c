@@ -497,8 +497,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             continue;
         }
         const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
-        const char *topic_tkey = kw_get_str(schema_topic, "topic_tkey", "", 0);
-        json_t *topic_pkey2 = kw_get_dict_value(schema_topic, "topic_pkey2", 0, 0);
+        const char *topic_tkey = kw_get_str(schema_topic, "tkey", "", 0);
+        json_t *topic_pkey2 = kw_get_dict_value(schema_topic, "pkey2", 0, 0);
 
         treedb_create_topic(
             tranger,
@@ -506,7 +506,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             topic_name,
             topic_version,
             topic_tkey,
-            topic_pkey2,
+            json_incref(topic_pkey2),
             kwid_new_dict("verbose", schema_topic, "cols"), // owned
             snap_tag,
             FALSE // create_schema
