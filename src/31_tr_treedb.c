@@ -332,8 +332,14 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         return 0;
     }
 
+    /*------------------------------*
+     *  Create the root of treedb
+     *------------------------------*/
+    json_t *treedbs = kw_get_dict(tranger, "treedbs", json_object(), KW_CREATE);
+    treedb = kw_get_dict(treedbs, treedb_name, json_object(), KW_CREATE);
+
     /*-------------------------------*
-     *  Open/Create "system" topics
+     *  Create "system" topics
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
     const char *snaps_topic_version = "1";
@@ -401,7 +407,31 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     );
 
     /*------------------------------*
-     *  Open/Create "user" topics
+     *  Open "system" lists
+     *------------------------------*/
+    char path[NAME_MAX];
+    build_treedb_index_path(path, sizeof(path), treedb_name, snaps_topic_name, "id");
+    kw_get_subdict_value(treedb, snaps_topic_name, "id", json_object(), KW_CREATE);
+
+    json_t *jn_filter = json_pack("{s:b}",
+        "backward", 1
+    );
+
+    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
+        "id", path,
+        "topic_name", snaps_topic_name,
+        "match_cond", jn_filter,
+        "load_record_callback", (json_int_t)(size_t)load_record_callback,
+        "treedb_name", treedb_name,
+        "deleted_records"
+    );
+    tranger_open_list(
+        tranger,
+        jn_list // owned
+    );
+
+    /*------------------------------*
+     *  Create "user" topics
      *------------------------------*/
     int idx;
     json_t *schema_topic;
@@ -452,36 +482,6 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             kwid_new_list("verbose", topic, "cols")
         );
     }
-
-    /*------------------------------*
-     *  Create the root of treedb
-     *------------------------------*/
-    json_t *treedbs = kw_get_dict(tranger, "treedbs", json_object(), KW_CREATE);
-    treedb = kw_get_dict(treedbs, treedb_name, json_object(), KW_CREATE);
-
-    /*------------------------------*
-     *  Open "system" lists
-     *------------------------------*/
-    char path[NAME_MAX];
-    build_treedb_index_path(path, sizeof(path), treedb_name, snaps_topic_name, "id");
-    kw_get_subdict_value(treedb, snaps_topic_name, "id", json_object(), KW_CREATE);
-
-    json_t *jn_filter = json_pack("{s:b}",
-        "backward", 1
-    );
-
-    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
-        "id", path,
-        "topic_name", snaps_topic_name,
-        "match_cond", jn_filter,
-        "load_record_callback", (json_int_t)(size_t)load_record_callback,
-        "treedb_name", treedb_name,
-        "deleted_records"
-    );
-    tranger_open_list(
-        tranger,
-        jn_list // owned
-    );
 
     /*------------------------------*
      *  Open "user" lists
