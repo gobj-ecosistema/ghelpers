@@ -5316,7 +5316,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC char *build_id_index_path(
+PRIVATE char *build_id_index_path(
     char *bf,
     int bfsize,
     const char *treedb_name,
@@ -5330,7 +5330,7 @@ PUBLIC char *build_id_index_path(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC char *build_pkey_index_path(
+PRIVATE char *build_pkey_index_path(
     char *bf,
     int bfsize,
     const char *treedb_name,
