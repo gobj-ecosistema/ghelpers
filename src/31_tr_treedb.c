@@ -3593,6 +3593,22 @@ PUBLIC int treedb_delete_node(
      *      Get record info
      *-------------------------------*/
     json_int_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
+    json_int_t __tag__ = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
+    if(__tag__) {
+        // TODO añade opción de borrar un snap que desmarque los nodos
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "cannot delete node, it has a tag",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            "id",           "%s", id,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
 
     /*-------------------------------*
      *      Get indexx
