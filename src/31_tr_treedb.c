@@ -497,14 +497,16 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             continue;
         }
         const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
-        const char *topic_options = kw_get_str(schema_topic, "topic_options", "", 0);
+        const char *topic_tkey = kw_get_str(schema_topic, "topic_tkey", "", 0);
+        json_t *topic_pkey2 = kw_get_dict_value(schema_topic, "topic_pkey2", 0, 0);
 
         treedb_create_topic(
             tranger,
             treedb_name,
             topic_name,
             topic_version,
-            topic_options,
+            topic_tkey,
+            topic_pkey2,
             kwid_new_dict("verbose", schema_topic, "cols"), // owned
             snap_tag,
             FALSE // create_schema
@@ -564,7 +566,8 @@ PUBLIC json_t *treedb_create_topic(
     const char *treedb_name,
     const char *topic_name,
     const char *topic_version,
-    const char *topic_options,
+    const char *topic_tkey,
+    json_t *topic_pkey2, // owned, a string or list of strings
     json_t *cols, // owned
     uint32_t snap_tag,
     BOOL create_schema
@@ -624,7 +627,16 @@ PUBLIC json_t *treedb_create_topic(
      *------------------------------*/
     json_t *jn_topic_var = json_object();
     json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version?topic_version:""));
-    json_object_set_new(jn_topic_var, "topic_options", json_string(topic_options?topic_options:""));
+    if(json_is_string(topic_pkey2)) {
+        json_t *list = json_array();
+        json_array_append_new(list, topic_pkey2);
+        json_object_set_new(jn_topic_var, "topic_pkey2", list);
+    } else if(json_is_array(topic_pkey2)) {
+        json_object_set_new(jn_topic_var, "topic_pkey2", topic_pkey2);
+    } else {
+        JSON_DECREF(topic_pkey2);
+        json_object_set_new(jn_topic_var, "topic_pkey2", json_array());
+    }
 
     JSON_INCREF(cols);
     JSON_INCREF(jn_topic_var);
@@ -632,7 +644,7 @@ PUBLIC json_t *treedb_create_topic(
         tranger,    // If topic exists then only needs (tranger,name) parameters
         topic_name,
         "id",       // HACK pkey fixed
-        "",         // HACK tkey fixed
+        topic_tkey, // tkey
         tranger_str2system_flag("sf_string_key"), // HACK system_flag fixed
         cols,           // owned below
         jn_topic_var    // owned below

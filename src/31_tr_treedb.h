@@ -83,7 +83,8 @@ PUBLIC json_t *treedb_create_topic(
     const char *treedb_name,
     const char *topic_name,
     const char *topic_version,
-    const char *topic_options,
+    const char *topic_tkey,
+    json_t *topic_pkey2, // owned, a string or list of strings
     json_t *jn_cols, // owned
     uint32_t snap_tag,
     BOOL create_schema
