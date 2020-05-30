@@ -106,7 +106,7 @@ PUBLIC json_t *treedb_list_treedb( // Return a list with treedb names
     json_t *tranger
 );
 
-PUBLIC json_t *treedb_list_topics(
+PUBLIC json_t *treedb_topics( //Return a list with topic names of the treedb
     json_t *tranger,
     const char *treedb_name,
     const char *options // "dict" return list of dicts, otherwise return list of strings

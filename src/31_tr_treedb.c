@@ -602,7 +602,7 @@ PUBLIC int treedb_close_db(
     /*------------------------------*
      *  Close treedb topics
      *------------------------------*/
-    json_t *topics = treedb_list_topics(tranger, treedb_name, 0);
+    json_t *topics = treedb_topics(tranger, treedb_name, 0);
     int idx; json_t *topic;
     json_array_foreach(topics, idx, topic) {
         const char *topic_name = json_string_value(topic);
@@ -912,7 +912,7 @@ PUBLIC json_t *treedb_list_treedb(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *treedb_list_topics(
+PUBLIC json_t *treedb_topics(
     json_t *tranger,
     const char *treedb_name,
     const char *options // "dict" return list of dicts, otherwise return list of strings
@@ -2578,7 +2578,7 @@ PRIVATE int load_all_hook_links(
     /*
      *  Loop topics, as child nodes
      */
-    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, "");
     int idx; json_t *jn_topic;
     json_array_foreach(topics, idx, jn_topic) {
         const char *topic_name = json_string_value(jn_topic);
@@ -5648,7 +5648,7 @@ PUBLIC json_t *treedb_get_topic_links(
     const char *topic_name
 )
 {
-    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, "");
     if(!json_str_in_list(topics, topic_name, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -5688,7 +5688,7 @@ PUBLIC json_t *treedb_get_topic_hooks(
     const char *topic_name
 )
 {
-    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, "");
     if(!json_str_in_list(topics, topic_name, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -5911,7 +5911,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
     }
 
     int ret = 0;
-    json_t *topics = treedb_list_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, "");
     int idx; json_t *jn_topic;
     json_array_foreach(topics, idx, jn_topic) {
         const char *topic_name = json_string_value(jn_topic);
