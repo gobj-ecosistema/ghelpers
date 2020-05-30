@@ -112,10 +112,10 @@ PRIVATE char *build_pkey_index_path(
     int bfsize,
     const char *treedb_name,
     const char *topic_name,
-    const char *pkey
+    const char *pkey2
 )
 {
-    snprintf(bf, bfsize, "treedbs`%s`%s`%s", treedb_name, topic_name, pkey);
+    snprintf(bf, bfsize, "treedbs`%s`%s`%s", treedb_name, topic_name, pkey2);
     return bf;
 }
 
@@ -130,6 +130,28 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
 {
     char path[NAME_MAX];
     build_id_index_path(path, sizeof(path), treedb_name, topic_name);
+    json_t *indexx = kw_get_dict(
+        tranger,
+        path,
+        0,
+        KW_REQUIRED
+    );
+    return indexx;
+
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *treedb_get_pkey2_index( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *pkey2
+)
+{
+    char path[NAME_MAX];
+    build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2);
     json_t *indexx = kw_get_dict(
         tranger,
         path,
@@ -724,7 +746,6 @@ PUBLIC json_t *treedb_create_topic(
     } else {
         JSON_DECREF(cols);
     }
-    JSON_DECREF(jn_topic_var);
 
     /*------------------------------------*
      *      Open "user" lists
@@ -760,12 +781,13 @@ PUBLIC json_t *treedb_create_topic(
     /*----------------------*
      *   Secondary indexes
      *----------------------*/
+    json_t *iter_pkey2 = kw_get_list(jn_topic_var, "topic_pkey2", 0, KW_REQUIRED);
     int idx; json_t *jn_pkey2;
-    json_array_foreach(topic_pkey2, idx, jn_pkey2) {
+    json_array_foreach(iter_pkey2, idx, jn_pkey2) {
         const char *pkey2 = json_string_value(jn_pkey2);
 
         build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2);
-        kw_get_dict_value(tranger, path, json_array(), KW_CREATE);
+        kw_get_dict_value(tranger, path, json_object(), KW_CREATE);
 
         json_t *jn_filter = json_pack("{s:b}",
             "backward", 1
@@ -784,7 +806,7 @@ PUBLIC json_t *treedb_create_topic(
             jn_list // owned
         );
     }
-
+    JSON_DECREF(jn_topic_var);
 
     return topic;
 }
@@ -792,7 +814,7 @@ PUBLIC json_t *treedb_create_topic(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_close_topic( // TODO implementa y revisa treedb_delete_topic
+PUBLIC int treedb_close_topic(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name
@@ -840,6 +862,8 @@ PUBLIC int treedb_close_topic( // TODO implementa y revisa treedb_delete_topic
     if(indexx) {
         JSON_DECREF(indexx);
     }
+
+    // TODO borra los indices pkey2
 
     return 0;
 }
@@ -2008,6 +2032,7 @@ PRIVATE int load_id_callback(
                         0
                     )!=0) {
                     // The node with this key already exists
+                    // HACK using backward, the first record is the last record
                 } else {
                     /*-------------------------------*
                      *  Append new node
@@ -2097,24 +2122,24 @@ PRIVATE int load_pkey2_callback(
                 const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
                 const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
 
-                char path[NAME_MAX];
-                build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2);
-                json_t *indexx = kw_get_list(
-                    tranger,
-                    path,
-                    0,
-                    KW_REQUIRED
-                );
+                json_t *indexx = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
                 if(!indexx) {
                     log_error(0,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
                         "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
-                        "path",         "%s", path,
                         "topic_name",   "%s", topic_name,
+                        "pkey2",        "%s", pkey2,
                         NULL
                     );
+                    JSON_DECREF(jn_record);
+                    return 0;  // Timeranger: does not load the record, it's mine.
+                }
+
+                const char *pkey2_value = kw_get_str(jn_record, pkey2, 0, 0);
+                if(empty_string(pkey2_value)) {
+                    // Silence
                     JSON_DECREF(jn_record);
                     return 0;  // Timeranger: does not load the record, it's mine.
                 }
@@ -2122,13 +2147,15 @@ PRIVATE int load_pkey2_callback(
                 /*-------------------------------*
                  *  Exists already the node?
                  *-------------------------------*/
-                if(kw_get_dict(
+                if(kw_get_subdict_value(
                         indexx,
                         md_record->key.s,
+                        pkey2_value,
                         0,
                         0
                     )!=0) {
                     // The node with this key already exists
+                    // HACK using backward, the first record is the last record
                 } else {
                     /*-------------------------------*
                      *  Append new node
@@ -2141,8 +2168,8 @@ PRIVATE int load_pkey2_callback(
                         topic_name,
                         md_record
                     );
-                    json_object_set_new(jn_record_md, "__pending_links__", json_true());
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
+                    json_object_set_new(jn_record_md, "pkey2", json_string(pkey2));
 
                     /*--------------------------------------------*
                      *  Set volatil data
@@ -2157,11 +2184,13 @@ PRIVATE int load_pkey2_callback(
                     /*-------------------------------*
                      *  Write node
                      *-------------------------------*/
-//  TODO                   json_array_append(
-//                         indexx,
-//                         md_record->key.s,
-//                         jn_record
-//                     );
+                    JSON_INCREF(jn_record);
+                    kw_set_subdict_value(
+                        indexx,
+                        md_record->key.s,
+                        pkey2_value,
+                        jn_record
+                    );
                 }
             }
         }
@@ -5093,8 +5122,8 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
-        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_persistent?KW_REQUIRED:0);
+        BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
+        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
         if(is_hook || is_fkey) {
             if(is_hook) {
                 json_t *list = kw_get_dict_value(
@@ -5233,26 +5262,18 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             }
             JSON_INCREF(jn_filter);
             if(match_fn(node, jn_filter)) {
-                /*
-                 *  Now check n-n fields
-                 */
-                BOOL n_n_matched = TRUE;
-                // TODO
-
-                if(n_n_matched) {
-                    if(!collapsed) {
-                        // Full tree
-                        json_array_append(list, node);
-                    } else {
-                        // Collapse records (hook fields)
-                        json_array_append_new(
-                            list,
-                            node_collapsed_view(
-                                topic_desc,
-                                node
-                            )
-                        );
-                    }
+                if(!collapsed) {
+                    // Full tree
+                    json_array_append(list, node);
+                } else {
+                    // Collapse records (hook fields)
+                    json_array_append_new(
+                        list,
+                        node_collapsed_view(
+                            topic_desc,
+                            node
+                        )
+                    );
                 }
             }
         }
@@ -5264,24 +5285,16 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             }
             JSON_INCREF(jn_filter);
             if(match_fn(node, jn_filter)) {
-                /*
-                 *  Now check n-n fields
-                 */
-                BOOL n_n_matched = TRUE;
-                // TODO
-
-                if(n_n_matched) {
-                    if(!collapsed) {
-                        json_array_append(list, node);
-                    } else {
-                        json_array_append_new(
-                            list,
-                            node_collapsed_view(
-                                topic_desc,
-                                node
-                            )
-                        );
-                    }
+                if(!collapsed) {
+                    json_array_append(list, node);
+                } else {
+                    json_array_append_new(
+                        list,
+                        node_collapsed_view(
+                            topic_desc,
+                            node
+                        )
+                    );
                 }
             }
         }
@@ -5321,7 +5334,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     )
 )
 {
-    // TODO
+    int x; // TODO
     return 0;
 }
 
