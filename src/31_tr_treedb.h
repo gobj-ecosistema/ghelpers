@@ -128,6 +128,11 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name
 );
+PUBLIC json_t *treedb_topic_pkey2s( // Return list of pkey2, must be decref
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+);
 
 /**rst**
     Return refs of fkeys of col_name field
@@ -347,7 +352,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
     const char *treedb_name,
     const char *snap_name
 );
-PUBLIC int treedb_activate_snap( // Activate tag
+PUBLIC int treedb_activate_snap( // Activate tag, return the snap tag
     json_t *tranger,
     const char *treedb_name,
     const char *snap_name

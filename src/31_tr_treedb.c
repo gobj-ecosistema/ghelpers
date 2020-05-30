@@ -137,7 +137,28 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
         KW_REQUIRED
     );
     return indexx;
+}
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *treedb_topic_pkey2s( // Return must be decref
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    json_t *topic_desc = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
+    if(!topic_desc) {
+        // Silence
+        return json_array();
+    }
+    json_t *list = kw_get_list(topic_desc, "topic_pkey2", 0, 0);
+    if(!list) {
+        // Silence
+        return json_array();
+    }
+    return kw_duplicate(list);
 }
 
 /***************************************************************************
@@ -2059,7 +2080,7 @@ PRIVATE int load_id_callback(
                     );
 
                     /*-------------------------------*
-                     *  Write node
+                     *  Write node in memory: id
                      *-------------------------------*/
                     json_object_set(
                         indexx,
@@ -2182,7 +2203,7 @@ PRIVATE int load_pkey2_callback(
                     );
 
                     /*-------------------------------*
-                     *  Write node
+                     *  Write node in memory: pkey2
                      *-------------------------------*/
                     JSON_INCREF(jn_record);
                     kw_set_subdict_value(
@@ -3181,8 +3202,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     record = kw_get_dict(indexx, id, 0, 0);
     if(record) {
         /*
-            *  Yes
-            */
+         *  Yes
+         */
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -3228,7 +3249,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
 
     /*--------------------------------------------------*
      *  Set volatil data
-     *  HACK set volatil after tranger_append_record:
+     *  HACK set volatil after append record:
      *      Volatil data must not be save in file!
      *--------------------------------------------------*/
     set_volatil_values(
@@ -3249,7 +3270,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_object_set_new(record, "__md_treedb__", jn_record_md);
 
     /*-------------------------------*
-     *  Write node
+     *  Write node in memory: id
      *-------------------------------*/
     json_object_set_new(indexx, id, record);
 
@@ -5326,7 +5347,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     const char *pkey2_field,
-    json_t *jn_filter,  // owned
+    json_t *jn_filter_,  // owned
     json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (
         json_t *kw,         // not owned
@@ -5334,8 +5355,134 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     )
 )
 {
-    int x; // TODO
-    return 0;
+    /*-------------------------------*
+     *      Use duplicate
+     *-------------------------------*/
+    json_t *jn_filter = jn_filter_?kw_duplicate(jn_filter_):0;
+    JSON_DECREF(jn_filter_);
+
+    /*-------------------------------*
+     *      Get indexx
+     *-------------------------------*/
+    json_t *indexx = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_field);
+    if(!indexx) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        JSON_DECREF(jn_filter);
+        return 0;
+    }
+
+    /*--------------------------------------------*
+     *      Search
+     *  Extract from jn_filter
+     *      the ids and the fields of topic
+     *--------------------------------------------*/
+    if(!match_fn) {
+        match_fn = kw_match_simple;
+    }
+
+    /*
+     *  Extrae ids
+     */
+    json_t *ids_list = 0;
+    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT|KW_DONT_LOG);
+    if(jn_id) {
+        ids_list = kwid_get_ids(jn_id);
+        JSON_DECREF(jn_id);
+    }
+
+    /*
+     *  Usa __filter__ si existe
+     */
+    if(kw_has_key(jn_filter, "__filter__")) {
+        json_t *jn_filter_ = kw_get_dict_value(jn_filter, "__filter__", 0, KW_EXTRACT);
+        JSON_DECREF(jn_filter);
+        jn_filter = jn_filter_;
+    }
+
+    /*
+     *  Filtra de jn_filter solo las keys del topic
+     */
+    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
+    jn_filter = kw_clone_by_keys(
+        jn_filter,     // owned
+        kw_incref(topic_desc), // owned
+        FALSE
+    );
+
+    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
+
+    json_t *list = json_array();
+
+    if(json_is_array(indexx)) {
+        size_t idx; json_t *node;
+        json_array_foreach(indexx, idx, node) {
+            if(!kwid_match_id(ids_list, kw_get_str(node, "id", 0, 0))) {
+                continue;
+            }
+            JSON_INCREF(jn_filter);
+            if(match_fn(node, jn_filter)) {
+                if(!collapsed) {
+                    // Full tree
+                    json_array_append(list, node);
+                } else {
+                    // Collapse records (hook fields)
+                    json_array_append_new(
+                        list,
+                        node_collapsed_view(
+                            topic_desc,
+                            node
+                        )
+                    );
+                }
+            }
+        }
+    } else if(json_is_object(indexx)) {
+        const char *id; json_t *node;
+        json_object_foreach(indexx, id, node) {
+            if(!kwid_match_id(ids_list, id)) {
+                continue;
+            }
+            JSON_INCREF(jn_filter);
+            if(match_fn(node, jn_filter)) {
+                if(!collapsed) {
+                    json_array_append(list, node);
+                } else {
+                    json_array_append_new(
+                        list,
+                        node_collapsed_view(
+                            topic_desc,
+                            node
+                        )
+                    );
+                }
+            }
+        }
+
+    } else  {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "kw MUST BE a json array or object",
+            NULL
+        );
+        JSON_DECREF(list);
+    }
+
+    json_decref(topic_desc);
+    JSON_DECREF(jn_filter);
+    JSON_DECREF(ids_list);
+    JSON_DECREF(jn_options);
+
+    return list;
 }
 
 /***************************************************************************
@@ -5969,7 +6116,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_activate_snap( // Activate tag
+PUBLIC int treedb_activate_snap( // Activate tag, return the snap tag
     json_t *tranger,
     const char *treedb_name,
     const char *snap_name
@@ -6055,7 +6202,7 @@ PUBLIC int treedb_activate_snap( // Activate tag
                 "snap",         "%s", snap_name,
                 NULL
             );
-            return 1; // Retorna +1
+            return user_flag;
         }
         // desactivate tag
         json_object_set_new(old_snap, "active", json_false());
@@ -6074,7 +6221,12 @@ PUBLIC int treedb_activate_snap( // Activate tag
     // activate tag
     json_object_set_new(snap, "active", json_true());
 
-    return treedb_save_node(tranger, snap);
+    int ret = treedb_save_node(tranger, snap);
+    if(ret < 0) {
+        return ret;
+    }
+
+    return user_flag;
 }
 
 /***************************************************************************
