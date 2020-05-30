@@ -189,9 +189,18 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
 );
 
 /**rst**
-   Get topic by his topic_name. Topic is opened if need it.
+   Get list of opened topics
 **rst**/
-PUBLIC json_t *tranger_topic(
+PUBLIC json_t *tranger_opened_topics( // Return must be decref
+    json_t *tranger
+);
+
+/**rst**
+   Get topic by his topic_name.
+   Topic is opened if it's not opened.
+   HACK topic can exists in disk, but it's not opened until tranger_open_topic()
+**rst**/
+PUBLIC json_t *tranger_topic( // WARNING returned json IS NOT YOURS
     json_t *tranger,
     const char *topic_name
 );

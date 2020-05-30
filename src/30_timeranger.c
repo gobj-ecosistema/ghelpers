@@ -860,9 +860,28 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
 }
 
 /***************************************************************************
-   Get topic by his topic_name. Topic is opened if need it.
+   Get list of topics
  ***************************************************************************/
-PUBLIC json_t *tranger_topic(
+PUBLIC json_t *tranger_opened_topics( // Return must be decref
+    json_t *tranger
+)
+{
+    json_t *list = json_array();
+
+    const char *topic_name; json_t *topic_desc;
+    json_object_foreach(kw_get_dict(tranger, "topics", 0, KW_REQUIRED), topic_name, topic_desc) {
+        json_array_append_new(list, json_string(topic_name));
+    }
+
+    return list;
+}
+
+/***************************************************************************
+   Get topic by his topic_name.
+   Topic is opened if it's not opened.
+   HACK topic can exists in disk, but it's not opened until tranger_open_topic()
+ ***************************************************************************/
+PUBLIC json_t *tranger_topic( // WARNING returned json IS NOT YOURS
     json_t *tranger,
     const char *topic_name
 )
