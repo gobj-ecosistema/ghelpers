@@ -3272,6 +3272,22 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Write node in memory: id
      *-------------------------------*/
+
+    /*---------------------------------------------------*
+     *  Si tienes la marca grupo, pasas, eres el activo.
+     *  Si no tienes la marca,
+     *  pasas a la cola secundaria de instancias,
+     *  pasas a existir por la clave secundaria,
+     *  si eres la última instancia claro.
+     *  En este mundo sólo hay un activo,
+     *  o el que tiene la marca de grupo,
+     *  o el último en llegar si no hay marca de grupo.
+     *  El resto son instancias,
+     *  que viven por su identificación secundaria.
+     *  En repetición de claves secundarias,
+     *  la última es que prevalece y existe.
+     *---------------------------------------------------*/
+
     json_object_set_new(indexx, id, record);
 
     /*-------------------------------*
