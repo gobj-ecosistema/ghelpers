@@ -122,13 +122,13 @@ PRIVATE char *build_pkey_index_path(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int current_snap_tag(json_t *tranger, const char *treedb_name)
-{
-    char path[NAME_MAX];
-    snprintf(path, sizeof(path), "treedbs_snaps`%s`activated_snap_tag", treedb_name);
-
-    return kw_get_int(tranger, path, 0, KW_REQUIRED);
-}
+// PRIVATE int current_snap_tag(json_t *tranger, const char *treedb_name)
+// {
+//     char path[NAME_MAX];
+//     snprintf(path, sizeof(path), "treedbs_snaps`%s`activated_snap_tag", treedb_name);
+//
+//     return kw_get_int(tranger, path, 0, KW_REQUIRED);
+// }
 
 /***************************************************************************
  *
@@ -168,7 +168,7 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return must be decref
         // Silence
         return json_array();
     }
-    return kw_duplicate(list);
+    return json_incref(list);
 }
 
 /***************************************************************************
@@ -3216,16 +3216,54 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         return 0;
     }
 
-    json_t *record=0;
-
     /*-----------------------------------*
      *  Single: exists already the id?
      *-----------------------------------*/
-    record = kw_get_dict(indexx, id, 0, 0);
-    if(record) {
-        /*
-         *  Yes
-         */
+    BOOL save_pkey = FALSE;
+    BOOL save_id = FALSE;
+    json_t *pkey2_list = json_array(); // save pkeys to save
+
+    json_t *record_prev = kw_get_dict(indexx, id, 0, 0);
+    if(!record_prev) {
+        save_id = TRUE;
+    }
+
+    /*-----------------------------------*
+     *  Look for a secondary key change
+     *-----------------------------------*/
+    json_t *pkey2s = treedb_topic_pkey2s(tranger, topic_name);
+    int idx; json_t *jn_pkey2;
+    json_array_foreach(pkey2s, idx, jn_pkey2) {
+        const char *pkey2 = json_string_value(jn_pkey2);
+        json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
+        if(!indexy) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                "topic_name",   "%s", topic_name,
+                "pkey2",        "%s", pkey2,
+                NULL
+            );
+            continue;
+        }
+        const char *pkey2_value = kw_get_str(kw, pkey2, 0, 0);
+        if(kw_get_subdict_value(
+                indexy,
+                id,
+                pkey2_value,
+                0,
+                0
+            )!=0) {
+            // Not exist
+            save_pkey = TRUE;
+            json_array_append_new(pkey2_list, json_string(pkey2));
+        }
+    }
+    JSON_DECREF(pkey2s);
+
+    if(!save_id && !save_pkey) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -3235,6 +3273,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             "id",           "%s", id,
             NULL
         );
+        JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
         return 0;
     }
@@ -3242,9 +3281,10 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*----------------------------------------*
      *  Create the tranger record to create
      *----------------------------------------*/
-    record = record2tranger(tranger, topic_name, kw, options, TRUE);
+    json_t *record = record2tranger(tranger, topic_name, kw, options, TRUE);
     if(!record) {
         // Error already logged
+        JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
         return 0;
     }
@@ -3264,6 +3304,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     );
     if(ret < 0) {
         // Error already logged
+        JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
         JSON_DECREF(record);
         return 0;
@@ -3309,7 +3350,39 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Write node in memory: id
      *-------------------------------*/
-    json_object_set_new(indexx, id, record);
+    if(save_id) {
+        json_object_set(indexx, id, record);
+    }
+
+    /*-------------------------------*
+     *  Write node in memory: pkey2
+     *-------------------------------*/
+    if(save_pkey) {
+        int idx; json_t *jn_pkey2;
+        json_array_foreach(pkey2_list, idx, jn_pkey2) {
+            const char *pkey2 = json_string_value(jn_pkey2);
+            json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
+            if(!indexy) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                    "topic_name",   "%s", topic_name,
+                    "pkey2",        "%s", pkey2,
+                    NULL
+                );
+                continue;
+            }
+            const char *pkey2_value = kw_get_str(kw, pkey2, 0, 0);
+            kw_set_subdict_value(
+                indexy,
+                id,
+                pkey2_value,
+                json_incref(record)
+            );
+        }
+    }
 
     /*-------------------------------*
      *  Trace
@@ -3318,6 +3391,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         log_debug_json(0, record, "treedb_create_node: Ok (%s, %s)", treedb_name, topic_name);
     }
 
+    json_decref(record);
+    JSON_DECREF(pkey2_list);
     JSON_DECREF(kw);
     return record;
 }
