@@ -122,6 +122,17 @@ PRIVATE char *build_pkey_index_path(
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int current_snap_tag(json_t *tranger, const char *treedb_name)
+{
+    char path[NAME_MAX];
+    snprintf(path, sizeof(path), "treedbs_snaps`%s`activated_snap_tag", treedb_name);
+
+    return kw_get_int(tranger, path, 0, KW_REQUIRED);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
@@ -173,14 +184,13 @@ PUBLIC json_t *treedb_get_pkey2_index( // Return is NOT YOURS
 {
     char path[NAME_MAX];
     build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2);
-    json_t *indexx = kw_get_dict(
+    json_t *indexy = kw_get_dict(
         tranger,
         path,
         0,
         KW_REQUIRED
     );
-    return indexx;
-
+    return indexy;
 }
 
 /***************************************************************************
@@ -424,7 +434,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     treedb = kw_get_dict(treedbs, treedb_name, json_object(), KW_CREATE);
 
     /*-------------------------------*
-     *  Create "system" topics
+     *  Create "system" topics:
+     *      __snaps__ topic
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
     const char *snaps_topic_version = "1";
@@ -492,7 +503,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     );
 
     /*------------------------------*
-     *  Open "system" lists
+     *  Open "system" lists:
+     *      __snaps__ topic
      *------------------------------*/
     char path[NAME_MAX];
     build_id_index_path(path, sizeof(path), treedb_name, snaps_topic_name);
@@ -518,6 +530,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     /*------------------------------*
      *  Get snap tab
      *------------------------------*/
+    json_t *treedb_snaps = kw_get_dict(tranger, "treedbs_snaps", json_object(), KW_CREATE);
+
     uint32_t snap_tag = 0;
     treedb_get_activated_snap_tag(
         tranger,
@@ -536,6 +550,11 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             NULL
         );
     }
+
+    // Save current snap tag
+    json_t *treedb_snap = kw_get_dict(treedb_snaps, treedb_name, json_object(), KW_CREATE);
+    json_object_set_new(treedb_snap, "activated_snap_tag", json_integer(snap_tag));
+
     /*------------------------------*
      *  Create "user" topics
      *------------------------------*/
@@ -583,7 +602,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         }
         const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
         const char *topic_tkey = kw_get_str(schema_topic, "tkey", "", 0);
-        json_t *topic_pkey2 = kw_get_dict_value(schema_topic, "pkey2", 0, 0);
+        json_t *topic_pkey2 = kw_get_dict_value(schema_topic, "topic_pkey2", 0, 0);
 
         treedb_create_topic(
             tranger,
@@ -786,9 +805,10 @@ PUBLIC json_t *treedb_create_topic(
         // pon el current tag
         json_object_set_new(jn_filter, "user_flag", json_integer(snap_tag));
     }
-    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
+    json_t *jn_list = json_pack("{s:s, s:s, s:i, s:o, s:I, s:s, s:{}}",
         "id", path,
         "topic_name", topic_name,
+        "snap_tag", (int)snap_tag,
         "match_cond", jn_filter,
         "load_record_callback", (json_int_t)(size_t)load_id_callback,
         "treedb_name", treedb_name,
@@ -813,9 +833,10 @@ PUBLIC json_t *treedb_create_topic(
         json_t *jn_filter = json_pack("{s:b}",
             "backward", 1
         );
-        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:s, s:{}}",
+        json_t *jn_list = json_pack("{s:s, s:s, s:i, s:o, s:I, s:s, s:s, s:{}}",
             "id", path,
             "topic_name", topic_name,
+            "snap_tag", (int)snap_tag,
             "match_cond", jn_filter,
             "load_record_callback", (json_int_t)(size_t)load_pkey2_callback,
             "treedb_name", treedb_name,
@@ -2087,6 +2108,10 @@ PRIVATE int load_id_callback(
                         md_record->key.s,
                         jn_record
                     );
+
+
+
+
                 }
             }
         }
@@ -2138,18 +2163,18 @@ PRIVATE int load_pkey2_callback(
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
                 /*-------------------------------*
-                 *      Get indexx
+                 *      Get indexy
                  *-------------------------------*/
                 const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
                 const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
 
-                json_t *indexx = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
-                if(!indexx) {
+                json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
+                if(!indexy) {
                     log_error(0,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                        "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
                         "topic_name",   "%s", topic_name,
                         "pkey2",        "%s", pkey2,
                         NULL
@@ -2169,7 +2194,7 @@ PRIVATE int load_pkey2_callback(
                  *  Exists already the node?
                  *-------------------------------*/
                 if(kw_get_subdict_value(
-                        indexx,
+                        indexy,
                         md_record->key.s,
                         pkey2_value,
                         0,
@@ -2207,7 +2232,7 @@ PRIVATE int load_pkey2_callback(
                      *-------------------------------*/
                     JSON_INCREF(jn_record);
                     kw_set_subdict_value(
-                        indexx,
+                        indexy,
                         md_record->key.s,
                         pkey2_value,
                         jn_record
@@ -3203,6 +3228,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     if(record) {
         /*
          *  Yes
+         *  TODO mira si hay que añadirlo a indexy
          */
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -3216,6 +3242,13 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(kw);
         return 0;
     }
+
+    /*-------------------------------*
+     *      Get indexy
+     *-------------------------------*/
+    // Mira si hay añadirlo a indexy
+//    json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, ""); // TODO
+
 
     /*----------------------------------------*
      *  Create the tranger record to create
@@ -3269,10 +3302,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     );
     json_object_set_new(record, "__md_treedb__", jn_record_md);
 
-    /*-------------------------------*
-     *  Write node in memory: id
-     *-------------------------------*/
-
     /*---------------------------------------------------*
      *  Si tienes la marca grupo, pasas, eres el activo.
      *  Si no tienes la marca,
@@ -3288,7 +3317,14 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  la última es que prevalece y existe.
      *---------------------------------------------------*/
 
+    /*-------------------------------*
+     *  Write node in memory: id
+     *-------------------------------*/
+
     json_object_set_new(indexx, id, record);
+
+
+    int snap_tag = current_snap_tag(tranger, treedb_name);
 
     /*-------------------------------*
      *  Trace
@@ -3890,6 +3926,8 @@ PUBLIC int treedb_delete_node(
         );
         return -1;
     }
+
+    // TODO y el indexy
 
     /*-------------------------------*
      *  Check hooks and fkeys
@@ -5249,6 +5287,8 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         return 0;
     }
 
+    // TODO y el indexy?
+
     /*--------------------------------------------*
      *      Search
      *  Extract from jn_filter
@@ -5378,10 +5418,10 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     JSON_DECREF(jn_filter_);
 
     /*-------------------------------*
-     *      Get indexx
+     *      Get indexy
      *-------------------------------*/
-    json_t *indexx = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_field);
-    if(!indexx) {
+    json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_field);
+    if(!indexy) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -5437,9 +5477,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
 
     json_t *list = json_array();
 
-    if(json_is_array(indexx)) {
+    if(json_is_array(indexy)) {
         size_t idx; json_t *node;
-        json_array_foreach(indexx, idx, node) {
+        json_array_foreach(indexy, idx, node) {
             if(!kwid_match_id(ids_list, kw_get_str(node, "id", 0, 0))) {
                 continue;
             }
@@ -5460,9 +5500,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
                 }
             }
         }
-    } else if(json_is_object(indexx)) {
+    } else if(json_is_object(indexy)) {
         const char *id; json_t *node;
-        json_object_foreach(indexx, id, node) {
+        json_object_foreach(indexy, id, node) {
             if(!kwid_match_id(ids_list, id)) {
                 continue;
             }
@@ -5528,6 +5568,8 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
         JSON_DECREF(jn_options);
         return 0;
     }
+
+    // TODO y aquí el indexy?
 
     /*-------------------------------*
      *      Get
