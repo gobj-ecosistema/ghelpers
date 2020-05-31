@@ -155,7 +155,6 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
  ***************************************************************************/
 PUBLIC json_t *treedb_topic_pkey2s( // Return must be decref
     json_t *tranger,
-    const char *treedb_name,
     const char *topic_name
 )
 {
@@ -2073,6 +2072,7 @@ PRIVATE int load_id_callback(
                         0,
                         0
                     )!=0) {
+                    // Ignore
                     // The node with this key already exists
                     // HACK using backward, the first record is the last record
                 } else {
@@ -2108,10 +2108,6 @@ PRIVATE int load_id_callback(
                         md_record->key.s,
                         jn_record
                     );
-
-
-
-
                 }
             }
         }
@@ -2200,6 +2196,7 @@ PRIVATE int load_pkey2_callback(
                         0,
                         0
                     )!=0) {
+                    // Ignore
                     // The node with this key already exists
                     // HACK using backward, the first record is the last record
                 } else {
@@ -3228,7 +3225,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     if(record) {
         /*
          *  Yes
-         *  TODO mira si hay que añadirlo a indexy
          */
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -3243,13 +3239,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         return 0;
     }
 
-    /*-------------------------------*
-     *      Get indexy
-     *-------------------------------*/
-    // Mira si hay añadirlo a indexy
-//    json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, ""); // TODO
-
-
     /*----------------------------------------*
      *  Create the tranger record to create
      *----------------------------------------*/
@@ -3261,7 +3250,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     }
 
     /*-------------------------------*
-     *  Write to tranger
+     *  Write to tranger (Creating)
      *-------------------------------*/
     md_record_t md_record;
     JSON_INCREF(record);
@@ -3320,11 +3309,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-------------------------------*
      *  Write node in memory: id
      *-------------------------------*/
-
     json_object_set_new(indexx, id, record);
-
-
-    int snap_tag = current_snap_tag(tranger, treedb_name);
 
     /*-------------------------------*
      *  Trace
@@ -3360,9 +3345,9 @@ PUBLIC int treedb_save_node(
         return -1;
     }
 
-    /*-------------------------------*
-     *  Write to tranger
-     *-------------------------------*/
+    /*-------------------------------------*
+     *  Write to tranger (save, updating)
+     *-------------------------------------*/
     md_record_t md_record;
     int ret = tranger_append_record(
         tranger,
@@ -3927,7 +3912,7 @@ PUBLIC int treedb_delete_node(
         return -1;
     }
 
-    // TODO y el indexy
+    // TODO y el indexy?
 
     /*-------------------------------*
      *  Check hooks and fkeys

@@ -128,9 +128,8 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name
 );
-PUBLIC json_t *treedb_topic_pkey2s( // Return list of pkey2, must be decref
+PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref
     json_t *tranger,
-    const char *treedb_name,
     const char *topic_name
 );
 
