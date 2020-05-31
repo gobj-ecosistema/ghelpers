@@ -811,7 +811,7 @@ PUBLIC json_t *treedb_create_topic(
         "match_cond", jn_filter,
         "load_record_callback", (json_int_t)(size_t)load_id_callback,
         "treedb_name", treedb_name,
-        "deleted_records" // TODO debería cambiarlo a delete real
+        "deleted_records"
     );
     tranger_open_list(
         tranger,
@@ -840,7 +840,7 @@ PUBLIC json_t *treedb_create_topic(
             "load_record_callback", (json_int_t)(size_t)load_pkey2_callback,
             "treedb_name", treedb_name,
             "pkey2", pkey2,
-            "deleted_records" // TODO debería cambiarlo a delete real
+            "deleted_records"
         );
         tranger_open_list(
             tranger,
@@ -3987,7 +3987,7 @@ PUBLIC int treedb_delete_node(
         return -1;
     }
 
-    // TODO y el indexy?
+    // TODO y borrar el indexy?
 
     /*-------------------------------*
      *  Check hooks and fkeys
@@ -5630,8 +5630,6 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
         JSON_DECREF(jn_options);
         return 0;
     }
-
-    // TODO y aquí el indexy?
 
     /*-------------------------------*
      *      Get
