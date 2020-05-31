@@ -3241,7 +3241,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
                 "topic_name",   "%s", topic_name,
                 "pkey2",        "%s", pkey2,
                 NULL
@@ -3367,7 +3367,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                    "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
                     "topic_name",   "%s", topic_name,
                     "pkey2",        "%s", pkey2,
                     NULL
@@ -4125,11 +4125,13 @@ PUBLIC int treedb_delete_node(
         return -1;
     }
 
-    /*-------------------------------*
+    /*-------------------------------------------------*
      *  Delete the record
-     *-------------------------------*/
+     *  HACK cannot use tranger_delete_record()
+     *  List of deleted id's in memory
+     *  (borrar un id record en tranger, y el resto?)
+     *-------------------------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
-    //TODO if(tranger_delete_record(tranger, topic_name, __rowid__)==0) { // WARNING collateral damages?
         if(json_object_del(indexx, id)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -5486,7 +5488,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+            "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
             "topic_name",   "%s", topic_name,
             NULL
         );
