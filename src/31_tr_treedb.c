@@ -204,7 +204,7 @@ PRIVATE const char *get_key2_value(
 )
 {
     // TODO combined no, de momento solo claves simples
-    const char *pkey2_value = kw_get_str(kw, pkey2_name, 0, KW_REQUIRED);
+    const char *pkey2_value = kw_get_str(kw, pkey2_name, "", 0);
     return pkey2_value;
 }
 
@@ -3216,6 +3216,62 @@ PUBLIC int treedb_set_trace(BOOL set)
 
 
 /***************************************************************************
+ *  Inherit links FROM primary_node TO secondary_node. In collapse mode.
+ ***************************************************************************/
+PRIVATE int inherit_links(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *secondary_node, // not owned
+    json_t *primary_node  // not owned
+)
+{
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    if(!cols) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic without cols",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        return -1;
+    }
+
+    const char *col_name; json_t *col;
+    json_object_foreach(cols, col_name, col) {
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        if(!is_fkey) {
+            continue;
+        }
+
+        /*
+         *  Copy fkeys
+         */
+        json_t *fkeys = treedb_node_up_refs(tranger, primary_node, topic_name, col_name);
+        json_t *cell = kw_get_dict_value(secondary_node, col_name, 0, KW_REQUIRED);
+        if(cell) {
+            int idx; json_t *fkey;
+            json_array_foreach(fkeys, idx, fkey) {
+                // **FKEY**
+                const char *ref = json_string_value(fkey);
+                if(json_is_array(cell)) {
+                    json_array_append_new(cell, json_string(ref));
+                } else if(json_is_string(cell)) {
+                    json_object_set_new(secondary_node, col_name, json_string(ref));
+                }
+            }
+        }
+
+        json_decref(fkeys);
+    }
+
+    JSON_DECREF(cols);
+    return 0;
+}
+
+/***************************************************************************
     This function does NOT auto build links
  ***************************************************************************/
 PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
@@ -3290,8 +3346,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     BOOL save_id = FALSE;
     json_t *pkey2_list = json_array(); // save pkeys to save
 
-    json_t *record_prev = kw_get_dict(indexx, id, 0, 0);
-    if(!record_prev) {
+    json_t *prev_record = kw_get_dict(indexx, id, 0, 0);
+    if(!prev_record) {
         save_id = TRUE;
     }
 
@@ -3360,6 +3416,12 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
         return 0;
+    }
+    if(!save_id) {
+        /*
+         *  Si es un nodo secundario, copia las claves del primario.
+         */
+        inherit_links(tranger, topic_name, record, prev_record);
     }
 
     /*-------------------------------*
