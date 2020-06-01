@@ -728,14 +728,26 @@ PUBLIC json_t *treedb_create_topic(
     /*------------------------------*
      *  Open/Create "user" topic
      *------------------------------*/
+    // Topic version
     json_t *jn_topic_var = json_object();
     json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version?topic_version:""));
+
+    // Topic pkey2s
     if(json_is_string(topic_pkey2)) {
         json_t *list = json_array();
         json_array_append_new(list, topic_pkey2);
         json_object_set_new(jn_topic_var, "topic_pkey2", list);
     } else if(json_is_array(topic_pkey2)) {
         json_object_set_new(jn_topic_var, "topic_pkey2", topic_pkey2);
+    } else if(json_is_object(topic_pkey2)) {
+        // TODO
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "pkey2s as combined keys NOT IMPLEMENTED",
+            NULL
+        );
     } else {
         JSON_DECREF(topic_pkey2);
         json_object_set_new(jn_topic_var, "topic_pkey2", json_array());
