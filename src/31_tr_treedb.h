@@ -77,6 +77,12 @@ PUBLIC int treedb_close_db(
     Return is NOT YOURS, pkey MUST be "id"
     WARNING This function don't load hook links.
     HACK IDEMPOTENT function
+
+    pkey2s: 1) string -> only one simple key (name of pkey2 is the name of topic field
+      TODO  2) dict   -> several types of keys -> { name of pkey2: pkey2 type and his fields}
+                values of dict:
+                        string: one simple key, same as 1)
+                        list of strings: combined key
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(
     json_t *tranger,
@@ -84,7 +90,7 @@ PUBLIC json_t *treedb_create_topic(
     const char *topic_name,
     const char *topic_version,
     const char *topic_tkey,
-    json_t *topic_pkey2s, // owned, a string or dict with list/dict of strings
+    json_t *topic_pkey2s, // owned, string or dict of string | [strings]
     json_t *jn_cols, // owned
     uint32_t snap_tag,
     BOOL create_schema

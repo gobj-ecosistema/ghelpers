@@ -676,7 +676,7 @@ PUBLIC json_t *treedb_create_topic(
     const char *topic_name,
     const char *topic_version,
     const char *topic_tkey,
-    json_t *topic_pkey2s, // owned, a string or dict with list/dict of strings
+    json_t *topic_pkey2s, // owned, string or dict of string | [strings]
     json_t *cols, // owned
     uint32_t snap_tag,
     BOOL create_schema
