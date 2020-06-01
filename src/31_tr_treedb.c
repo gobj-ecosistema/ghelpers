@@ -5339,6 +5339,15 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
         BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
         json_t *field_value = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
+        if(!field_value) {
+            // Something wrong
+            json_object_set_new(
+                node_view,
+                col_name,
+                json_null()
+            );
+            continue;
+        }
         if(is_hook || is_fkey) {
             if(is_hook) {
                 json_t *list = kw_get_dict_value(
@@ -5363,7 +5372,11 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
                 json_decref(fkey_refs);
             }
         } else {
-            json_object_set_new(node_view, col_name, json_deep_copy(field_value));
+            json_object_set_new(
+                node_view,
+                col_name,
+                json_deep_copy(field_value)
+            );
         }
     }
     json_object_set_new(
@@ -5490,7 +5503,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                 }
             }
         }
-
     } else  {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -5502,7 +5514,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         JSON_DECREF(list);
     }
 
-    json_decref(topic_desc);
+    JSON_DECREF(topic_desc);
     JSON_DECREF(jn_filter);
     JSON_DECREF(ids_list);
     JSON_DECREF(jn_options);
@@ -5604,30 +5616,30 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
             continue;
         }
 
-print_json(indexy); // TODO TEST
-
         if(json_is_object(indexy)) {
-            const char *id; json_t *node;
-            json_object_foreach(indexy, id, node) {
+            const char *id; json_t *pkey2_dict;
+            json_object_foreach(indexy, id, pkey2_dict) {
                 if(!kwid_match_id(ids_list, id)) {
                     continue;
                 }
-                JSON_INCREF(jn_filter);
-                if(match_fn(node, jn_filter)) {
-                    if(!collapsed) {
-                        json_array_append(list, node);
-                    } else {
-                        json_array_append_new(
-                            list,
-                            node_collapsed_view(
-                                topic_desc,
-                                node
-                            )
-                        );
+                const char *pkey2; json_t *node;
+                json_object_foreach(pkey2_dict, pkey2, node) {
+                    JSON_INCREF(jn_filter);
+                    if(match_fn(node, jn_filter)) {
+                        if(!collapsed) {
+                            json_array_append(list, node);
+                        } else {
+                            json_array_append_new(
+                                list,
+                                node_collapsed_view(
+                                    topic_desc,
+                                    node
+                                )
+                            );
+                        }
                     }
                 }
             }
-
         } else  {
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -5639,7 +5651,8 @@ print_json(indexy); // TODO TEST
         }
     }
 
-    json_decref(topic_desc);
+    JSON_DECREF(iter_pkey2s);
+    JSON_DECREF(topic_desc);
     JSON_DECREF(ids_list);
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
