@@ -3322,13 +3322,13 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             kw
         );
 
-        if(kw_get_subdict_value(
+        if(!kw_get_subdict_value(
                 indexy,
                 id,
                 pkey2_value,
                 0,
                 0
-            )!=0) {
+            )) {
             // Not exist
             save_pkey = TRUE;
             json_array_append_new(pkey2_list, json_string(pkey2_name));
