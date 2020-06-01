@@ -265,7 +265,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *pkey2,
+    const char *pkey2_name,
     json_t *jn_filter,  // owned
     json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (
