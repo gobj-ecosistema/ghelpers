@@ -181,7 +181,7 @@ PRIVATE json_t *treedb_get_pkey2_index( // Return is NOT YOURS
     const char *pkey2_name
 )
 {
-    // TODO de momento si claves combinadas, el nombre de la pkey es el nombre del field
+    // TODO de momento sin claves combinadas, el nombre de la pkey es el nombre del field
     char path[NAME_MAX];
     build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2_name);
     json_t *indexy = kw_get_dict(
@@ -191,6 +191,21 @@ PRIVATE json_t *treedb_get_pkey2_index( // Return is NOT YOURS
         KW_REQUIRED
     );
     return indexy;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE const char *get_key2_value(
+    json_t *tranger,
+    const char *topic_name,
+    const char *pkey2_name,
+    json_t *kw
+)
+{
+    // TODO combined no, de momento solo claves simples
+    const char *pkey2_value = kw_get_str(kw, pkey2_name, 0, KW_REQUIRED);
+    return pkey2_value;
 }
 
 /***************************************************************************
@@ -751,12 +766,11 @@ PUBLIC json_t *treedb_create_topic(
             json_object_set(dict, json_string_value(topic_pkey2s), topic_pkey2s);
             json_object_set_new(jn_topic_var, "topic_pkey2s", dict);
         } else if(json_is_object(topic_pkey2s)) {
-            // TODO implement combined keys
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "TODO combined pkey2s NOT IMPLEMENTED",
+                "msg",          "%s", "combined pkey2s NOT IMPLEMENTED",
                 "treedb_name",  "%s", treedb_name,
                 "topic_name",   "%s", topic_name,
                 NULL
@@ -862,12 +876,11 @@ PUBLIC json_t *treedb_create_topic(
     json_object_foreach(iter_pkey2, pkey2_name, jn_pkey2_fields) {
         const char *pkey2_fields = json_string_value(jn_pkey2_fields);
         if(!pkey2_fields) {
-            // TODO implement combined keys
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "TODO combined pkey2s NOT IMPLEMENTED",
+                "msg",          "%s", "combined pkey2s NOT IMPLEMENTED",
                 "treedb_name",  "%s", treedb_name,
                 "topic_name",   "%s", topic_name,
                 NULL
@@ -2233,12 +2246,12 @@ PRIVATE int load_pkey2_callback(
                     return 0;  // Timeranger: does not load the record, it's mine.
                 }
 
-                const char *pkey2_value = kw_get_str(jn_record, pkey2_name, 0, 0); // TODO combined
-                if(empty_string(pkey2_value)) {
-                    // Silence
-                    JSON_DECREF(jn_record);
-                    return 0;  // Timeranger: does not load the record, it's mine.
-                }
+                const char *pkey2_value = get_key2_value(
+                    tranger,
+                    topic_name,
+                    pkey2_name,
+                    jn_record
+                );
 
                 /*-------------------------------*
                  *  Exists already the node?
@@ -3285,9 +3298,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     /*-----------------------------------*
      *  Look for a secondary key change
      *-----------------------------------*/
-    json_t *pkey2s = treedb_topic_pkey2s(tranger, topic_name);
+    json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
     const char *pkey2_name; json_t *jn_pkey2_fields;
-    json_object_foreach(pkey2s, pkey2_name, jn_pkey2_fields) {
+    json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
         json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_name);
         if(!indexy) {
             log_error(0,
@@ -3301,7 +3314,14 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             );
             continue;
         }
-        const char *pkey2_value = kw_get_str(kw, pkey2_name, 0, 0); // TODO combined pkey2s
+
+        const char *pkey2_value = get_key2_value(
+            tranger,
+            topic_name,
+            pkey2_name,
+            kw
+        );
+
         if(kw_get_subdict_value(
                 indexy,
                 id,
@@ -3314,7 +3334,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             json_array_append_new(pkey2_list, json_string(pkey2_name));
         }
     }
-    JSON_DECREF(pkey2s);
+    JSON_DECREF(iter_pkey2s);
 
     if(!save_id && !save_pkey) {
         log_error(0,
@@ -3413,8 +3433,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     if(save_pkey) {
         int idx; json_t *jn_pkey2;
         json_array_foreach(pkey2_list, idx, jn_pkey2) {
-            const char *pkey2 = json_string_value(jn_pkey2);
-            json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
+            const char *pkey2_name = json_string_value(jn_pkey2);
+            json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_name);
             if(!indexy) {
                 log_error(0,
                     "gobj",         "%s", __FILE__,
@@ -3422,12 +3442,17 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
                     "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
                     "topic_name",   "%s", topic_name,
-                    "pkey2",        "%s", pkey2,
+                    "pkey2_name",   "%s", pkey2_name,
                     NULL
                 );
                 continue;
             }
-            const char *pkey2_value = kw_get_str(kw, pkey2, 0, 0); // TODO combined
+            const char *pkey2_value = get_key2_value(
+                tranger,
+                topic_name,
+                pkey2_name,
+                kw
+            );
             kw_set_subdict_value(
                 indexy,
                 id,
