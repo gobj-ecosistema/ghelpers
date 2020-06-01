@@ -5469,30 +5469,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
 
     json_t *list = json_array();
 
-    if(json_is_array(indexx)) {
-        size_t idx; json_t *node;
-        json_array_foreach(indexx, idx, node) {
-            if(!kwid_match_id(ids_list, kw_get_str(node, "id", 0, 0))) {
-                continue;
-            }
-            JSON_INCREF(jn_filter);
-            if(match_fn(node, jn_filter)) {
-                if(!collapsed) {
-                    // Full tree
-                    json_array_append(list, node);
-                } else {
-                    // Collapse records (hook fields)
-                    json_array_append_new(
-                        list,
-                        node_collapsed_view(
-                            topic_desc,
-                            node
-                        )
-                    );
-                }
-            }
-        }
-    } else if(json_is_object(indexx)) {
+    if(json_is_object(indexx)) {
         const char *id; json_t *node;
         json_object_foreach(indexx, id, node) {
             if(!kwid_match_id(ids_list, id)) {
@@ -5627,30 +5604,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
             continue;
         }
 
-        if(json_is_array(indexy)) {
-            size_t idx; json_t *node;
-            json_array_foreach(indexy, idx, node) {
-                if(!kwid_match_id(ids_list, kw_get_str(node, "id", 0, 0))) {
-                    continue;
-                }
-                JSON_INCREF(jn_filter);
-                if(match_fn(node, jn_filter)) {
-                    if(!collapsed) {
-                        // Full tree
-                        json_array_append(list, node);
-                    } else {
-                        // Collapse records (hook fields)
-                        json_array_append_new(
-                            list,
-                            node_collapsed_view(
-                                topic_desc,
-                                node
-                            )
-                        );
-                    }
-                }
-            }
-        } else if(json_is_object(indexy)) {
+print_json(indexy); // TODO TEST
+
+        if(json_is_object(indexy)) {
             const char *id; json_t *node;
             json_object_foreach(indexy, id, node) {
                 if(!kwid_match_id(ids_list, id)) {
