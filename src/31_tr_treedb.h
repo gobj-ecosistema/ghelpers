@@ -84,7 +84,7 @@ PUBLIC json_t *treedb_create_topic(
     const char *topic_name,
     const char *topic_version,
     const char *topic_tkey,
-    json_t *topic_pkey2, // owned, a string or list of strings
+    json_t *topic_pkey2s, // owned, a string or dict with list/dict of strings
     json_t *jn_cols, // owned
     uint32_t snap_tag,
     BOOL create_schema
@@ -128,7 +128,7 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name
 );
-PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref
+PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
     json_t *tranger,
     const char *topic_name
 );
@@ -259,7 +259,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *pkey2_field,
+    const char *pkey2,
     json_t *jn_filter,  // owned
     json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (

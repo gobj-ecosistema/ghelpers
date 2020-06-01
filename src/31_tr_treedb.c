@@ -153,7 +153,7 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *treedb_topic_pkey2s( // Return must be decref
+PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
     json_t *tranger,
     const char *topic_name
 )
@@ -161,14 +161,14 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return must be decref
     json_t *topic_desc = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
     if(!topic_desc) {
         // Silence
-        return json_array();
+        return json_object();
     }
-    json_t *list = kw_get_list(topic_desc, "topic_pkey2", 0, 0);
-    if(!list) {
+    json_t *dict = kw_get_dict(topic_desc, "topic_pkey2s", 0, 0);
+    if(!dict) {
         // Silence
-        return json_array();
+        return json_object();
     }
-    return json_incref(list);
+    return json_incref(dict);
 }
 
 /***************************************************************************
@@ -601,7 +601,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         }
         const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
         const char *topic_tkey = kw_get_str(schema_topic, "tkey", "", 0);
-        json_t *topic_pkey2 = kw_get_dict_value(schema_topic, "topic_pkey2", 0, 0);
+        json_t *topic_pkey2s = kw_get_dict_value(schema_topic, "topic_pkey2s", 0, 0);
 
         treedb_create_topic(
             tranger,
@@ -609,7 +609,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             topic_name,
             topic_version,
             topic_tkey,
-            json_incref(topic_pkey2),
+            json_incref(topic_pkey2s),
             kwid_new_dict("verbose", schema_topic, "cols"), // owned
             snap_tag,
             FALSE // create_schema
@@ -663,6 +663,12 @@ PUBLIC int treedb_close_db(
     Return is NOT YOURS, pkey MUST be "id"
     WARNING This function don't load hook links.
     HACK IDEMPOTENT function
+
+    pkey2s: 1) string -> only one simple key (name of pkey2 is the name of topic field
+      TODO  2) dict   -> several types of keys -> { name of pkey2: pkey2 type and his fields}
+                values of dict:
+                        string: one simple key, same as 1)
+                        list of strings: combined key
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(
     json_t *tranger,
@@ -670,7 +676,7 @@ PUBLIC json_t *treedb_create_topic(
     const char *topic_name,
     const char *topic_version,
     const char *topic_tkey,
-    json_t *topic_pkey2, // owned, a string or list of strings
+    json_t *topic_pkey2s, // owned, a string or dict with list/dict of strings
     json_t *cols, // owned
     uint32_t snap_tag,
     BOOL create_schema
@@ -684,6 +690,7 @@ PUBLIC json_t *treedb_create_topic(
             "msg",          "%s", "treedb_name empty",
             NULL
         );
+        JSON_DECREF(topic_pkey2s);
         JSON_DECREF(cols);
         return 0;
     }
@@ -695,6 +702,7 @@ PUBLIC json_t *treedb_create_topic(
             "msg",          "%s", "topic_name empty",
             NULL
         );
+        JSON_DECREF(topic_pkey2s);
         JSON_DECREF(cols);
         return 0;
     }
@@ -710,8 +718,10 @@ PUBLIC json_t *treedb_create_topic(
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "TreeDB not found.",
             "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
             NULL
         );
+        JSON_DECREF(topic_pkey2s);
         JSON_DECREF(cols);
         return 0;
     }
@@ -721,6 +731,7 @@ PUBLIC json_t *treedb_create_topic(
      *------------------------------*/
     json_t *topic = kw_get_dict(treedb, topic_name, 0, 0);
     if(topic) {
+        JSON_DECREF(topic_pkey2s);
         JSON_DECREF(cols);
         return topic;
     }
@@ -733,24 +744,35 @@ PUBLIC json_t *treedb_create_topic(
     json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version?topic_version:""));
 
     // Topic pkey2s
-    if(json_is_string(topic_pkey2)) {
-        json_t *list = json_array();
-        json_array_append_new(list, topic_pkey2);
-        json_object_set_new(jn_topic_var, "topic_pkey2", list);
-    } else if(json_is_array(topic_pkey2)) {
-        json_object_set_new(jn_topic_var, "topic_pkey2", topic_pkey2);
-    } else if(json_is_object(topic_pkey2)) {
-        // TODO
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "pkey2s as combined keys NOT IMPLEMENTED",
-            NULL
-        );
-    } else {
-        JSON_DECREF(topic_pkey2);
-        json_object_set_new(jn_topic_var, "topic_pkey2", json_array());
+    if(topic_pkey2s) {
+        if(json_is_string(topic_pkey2s)) {
+            json_t *dict = json_object();
+            json_object_set(dict, json_string_value(topic_pkey2s), topic_pkey2s);
+            json_object_set_new(jn_topic_var, "topic_pkey2s", dict);
+        } else if(json_is_object(topic_pkey2s)) {
+            // TODO
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "TODO combined pkey2s NOT IMPLEMENTED",
+                "treedb_name",  "%s", treedb_name,
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+        } else {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "pkey2s INVALID TYPE",
+                "treedb_name",  "%s", treedb_name,
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+            log_debug_json(0, topic_pkey2s, "pkey2s INVALID TYPE");
+        }
+        JSON_DECREF(topic_pkey2s);
     }
 
     JSON_INCREF(cols);
@@ -814,6 +836,7 @@ PUBLIC json_t *treedb_create_topic(
     );
     if(snap_tag) {
         // pon el current tag
+        // TODO hay que moverlo a la carga de datos
         json_object_set_new(jn_filter, "user_flag", json_integer(snap_tag));
     }
     json_t *jn_list = json_pack("{s:s, s:s, s:i, s:o, s:I, s:s, s:{}}",
@@ -833,10 +856,14 @@ PUBLIC json_t *treedb_create_topic(
     /*----------------------*
      *   Secondary indexes
      *----------------------*/
-    json_t *iter_pkey2 = kw_get_list(jn_topic_var, "topic_pkey2", 0, KW_REQUIRED);
-    int idx; json_t *jn_pkey2;
-    json_array_foreach(iter_pkey2, idx, jn_pkey2) {
+    json_t *iter_pkey2 = kw_get_dict(jn_topic_var, "topic_pkey2s", 0, 0);
+    const char *pkey2_name; json_t *jn_pkey2;
+    json_object_foreach(iter_pkey2, pkey2_name, jn_pkey2) {
         const char *pkey2 = json_string_value(jn_pkey2);
+        if(!pkey2) {
+            // TODO implement combined keys
+            continue;
+        }
 
         build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2);
         kw_get_dict_value(tranger, path, json_object(), KW_CREATE);
@@ -3244,9 +3271,13 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  Look for a secondary key change
      *-----------------------------------*/
     json_t *pkey2s = treedb_topic_pkey2s(tranger, topic_name);
-    int idx; json_t *jn_pkey2;
-    json_array_foreach(pkey2s, idx, jn_pkey2) {
+    const char *pkey2_name; json_t *jn_pkey2;
+    json_object_foreach(pkey2s, pkey2_name, jn_pkey2) {
         const char *pkey2 = json_string_value(jn_pkey2);
+        if(!pkey2) {
+            // TODO implement dict
+            continue;
+        }
         json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
         if(!indexy) {
             log_error(0,
@@ -5337,9 +5368,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     )
 )
 {
-    /*-------------------------------*
-     *      Use duplicate
-     *-------------------------------*/
+    /*-----------------------------------*
+     *  Use duplicate, will be modified
+     *-----------------------------------*/
     json_t *jn_filter = jn_filter_?kw_duplicate(jn_filter_):0;
     JSON_DECREF(jn_filter_);
 
@@ -5360,8 +5391,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         JSON_DECREF(jn_filter);
         return 0;
     }
-
-    // TODO y el indexy?
 
     /*--------------------------------------------*
      *      Search
@@ -5476,7 +5505,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *pkey2_field,
+    const char *pkey2,
     json_t *jn_filter_,  // owned
     json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (
@@ -5485,29 +5514,11 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     )
 )
 {
-    /*-------------------------------*
-     *      Use duplicate
-     *-------------------------------*/
+    /*-----------------------------------*
+     *  Use duplicate, will be modified
+     *-----------------------------------*/
     json_t *jn_filter = jn_filter_?kw_duplicate(jn_filter_):0;
     JSON_DECREF(jn_filter_);
-
-    /*-------------------------------*
-     *      Get indexy
-     *-------------------------------*/
-    json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_field);
-    if(!indexy) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        JSON_DECREF(jn_options);
-        JSON_DECREF(jn_filter);
-        return 0;
-    }
 
     /*--------------------------------------------*
      *      Search
@@ -5550,6 +5561,25 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
 
     json_t *list = json_array();
+
+    /*-------------------------------*
+     *      Get indexy
+     *-------------------------------*/
+    json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2);
+    if(!indexy) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(ids_list);
+        JSON_DECREF(jn_options);
+        JSON_DECREF(jn_filter);
+        return 0;
+    }
 
     if(json_is_array(indexy)) {
         size_t idx; json_t *node;
@@ -5608,8 +5638,8 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     }
 
     json_decref(topic_desc);
-    JSON_DECREF(jn_filter);
     JSON_DECREF(ids_list);
+    JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
 
     return list;
