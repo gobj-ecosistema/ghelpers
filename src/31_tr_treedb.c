@@ -2261,7 +2261,7 @@ PRIVATE int load_pkey2_callback(
                         md_record->key.s,
                         pkey2_value,
                         0,
-                        0
+                        KW_EMPTY_VALID
                     )!=0) {
                     // Ignore
                     // The node with this key already exists
@@ -3327,7 +3327,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
                 id,
                 pkey2_value,
                 0,
-                0
+                KW_EMPTY_VALID
             )) {
             // Not exist
             save_pkey = TRUE;
