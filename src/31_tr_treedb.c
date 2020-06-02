@@ -3536,7 +3536,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  Build links to hooks
      *-------------------------------*/
     if(links_inherited) {
-
+        load_links(tranger, record);
     }
 
     /*-------------------------------*
