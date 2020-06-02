@@ -2180,7 +2180,7 @@ PRIVATE int load_id_callback(
                  *  Exists already the node?
                  *-------------------------------*/
                 BOOL multiple = FALSE; // TODO
-
+                int x;
                 if(exist_primary_node(indexx, md_record->key.s, multiple)) {
                     // Ignore
                     // The node with this key already exists
@@ -3625,7 +3625,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
 }
 
 /***************************************************************************
- *  Direct saving to tranger. WARNING be care, must be a pure node
+ *  Direct saving to tranger.
+    WARNING be care, must be a pure node.
+    Tag __tag__ (user_flag) will be inherited.
  ***************************************************************************/
 PUBLIC int treedb_save_node(
     json_t *tranger,
@@ -3637,6 +3639,7 @@ PUBLIC int treedb_save_node(
      *-------------------------------*/
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    uint32_t tag = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
 
     /*---------------------------------------*
      *  Create the tranger record to update
@@ -3655,7 +3658,7 @@ PUBLIC int treedb_save_node(
         tranger,
         topic_name,
         0, // __t__,         // if 0 then the time will be set by TimeRanger with now time
-        0, // user_flag,
+        tag, // user_flag,
         &md_record, // md_record,
         record // owned
     );
@@ -4360,6 +4363,7 @@ PUBLIC int treedb_delete_node(
      *-------------------------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
         BOOL multiple = FALSE; // TODO
+        int x;
         if(delete_primary_node(indexx, id, multiple)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -5874,7 +5878,9 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *      Get
      *-------------------------------*/
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
-    json_t *node = exist_primary_node(indexx, id, FALSE);
+    BOOL multiple = FALSE;
+    int x;
+    json_t *node = exist_primary_node(indexx, id, multiple);
     if(!node) {
         // Silence
         JSON_DECREF(jn_options);
