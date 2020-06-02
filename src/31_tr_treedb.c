@@ -122,13 +122,13 @@ PRIVATE char *build_pkey_index_path(
 /***************************************************************************
  *
  ***************************************************************************/
-// PRIVATE int current_snap_tag(json_t *tranger, const char *treedb_name)
-// {
-//     char path[NAME_MAX];
-//     snprintf(path, sizeof(path), "treedbs_snaps`%s`activated_snap_tag", treedb_name);
-//
-//     return kw_get_int(tranger, path, 0, KW_REQUIRED);
-// }
+PUBLIC int current_snap_tag(json_t *tranger, const char *treedb_name)
+{
+    char path[NAME_MAX];
+    snprintf(path, sizeof(path), "treedbs_snaps`%s`activated_snap_tag", treedb_name);
+
+    return kw_get_int(tranger, path, 0, KW_REQUIRED);
+}
 
 /***************************************************************************
  * PUBLIC to use in tests

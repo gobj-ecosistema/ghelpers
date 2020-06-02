@@ -129,6 +129,12 @@ PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
 PUBLIC int parse_hooks(
     json_t *tranger
 );
+
+PUBLIC int current_snap_tag(
+    json_t *tranger,
+    const char *treedb_name
+);
+
 PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
