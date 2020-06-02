@@ -3319,10 +3319,11 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive" "verbose"
+    const char *options // "permissive" "verbose" "multiple"
 )
 {
     BOOL verbose = (options && strstr(options, "verbose"))?TRUE:FALSE;
+    BOOL multiple = (options && strstr(options, "multiple"))?TRUE:FALSE;
 
     /*-------------------------------*
      *  Get the id, it's mandatory
