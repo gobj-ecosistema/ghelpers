@@ -3254,13 +3254,15 @@ PUBLIC int treedb_set_trace(BOOL set)
 /***************************************************************************
  *  Inherit links FROM primary_node TO secondary_node. In collapse mode.
  ***************************************************************************/
-PRIVATE int inherit_links(
+PRIVATE BOOL inherit_links(
     json_t *tranger,
     const char *topic_name,
     json_t *secondary_node, // not owned
     json_t *primary_node  // not owned
 )
 {
+    BOOL ret = FALSE;
+
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
     if(!cols) {
         log_error(0,
@@ -3271,7 +3273,7 @@ PRIVATE int inherit_links(
             "topic_name",   "%s", topic_name,
             NULL
         );
-        return -1;
+        return FALSE;
     }
 
     const char *col_name; json_t *col;
@@ -3294,8 +3296,10 @@ PRIVATE int inherit_links(
                 const char *ref = json_string_value(fkey);
                 if(json_is_array(cell)) {
                     json_array_append_new(cell, json_string(ref));
+                    ret = TRUE;
                 } else if(json_is_string(cell)) {
                     json_object_set_new(secondary_node, col_name, json_string(ref));
+                    ret = TRUE;
                 }
             }
         }
@@ -3304,7 +3308,7 @@ PRIVATE int inherit_links(
     }
 
     JSON_DECREF(cols);
-    return 0;
+    return ret;
 }
 
 /***************************************************************************
@@ -3461,9 +3465,10 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(kw);
         return 0;
     }
-    if(!save_id) {
+    if(save_pkey || (save_id && prev_record)) {
         /*
          *  Si es un nodo secundario, copia las claves del primario.
+         *  Si es un nodo primario multiple, copia las claves del primario.
          */
         inherit_links(tranger, topic_name, record, prev_record);
     }
