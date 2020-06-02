@@ -3361,7 +3361,12 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
     const char *pkey2_name; json_t *jn_pkey2_fields;
     json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
-        json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_name);
+        json_t *indexy = treedb_get_pkey2_index(
+            tranger,
+            treedb_name,
+            topic_name,
+            pkey2_name
+        );
         if(!indexy) {
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -3500,7 +3505,12 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         int idx; json_t *jn_pkey2;
         json_array_foreach(pkey2_list, idx, jn_pkey2) {
             const char *pkey2_name = json_string_value(jn_pkey2);
-            json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_name);
+            json_t *indexy = treedb_get_pkey2_index(
+                tranger,
+                treedb_name,
+                topic_name,
+                pkey2_name
+            );
             if(!indexy) {
                 log_error(0,
                     "gobj",         "%s", __FILE__,
@@ -5692,7 +5702,12 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
 
     json_t *pkey2_fields;
     json_object_foreach(iter_pkey2s, pkey2_name, pkey2_fields) {
-        json_t *indexy = treedb_get_pkey2_index(tranger, treedb_name, topic_name, pkey2_name);
+        json_t *indexy = treedb_get_pkey2_index(
+            tranger,
+            treedb_name,
+            topic_name,
+            pkey2_name
+        );
         if(!indexy) {
             log_error(0,
                 "gobj",         "%s", __FILE__,
