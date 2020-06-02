@@ -961,7 +961,7 @@ PUBLIC int treedb_close_topic(
 )
 {
     /*------------------------------*
-     *  Close treedb lists
+     *  Close id list
      *------------------------------*/
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
@@ -976,9 +976,9 @@ PUBLIC int treedb_close_topic(
         return -1;
     }
 
-    char list_id[NAME_MAX];
-    build_id_index_path(list_id, sizeof(list_id), treedb_name, topic_name);
-    json_t *list = tranger_get_list(tranger, list_id);
+    char path[NAME_MAX];
+    build_id_index_path(path, sizeof(path), treedb_name, topic_name);
+    json_t *list = tranger_get_list(tranger, path);
     if(list) {
         tranger_close_list(tranger, list);
     } else {
@@ -988,26 +988,52 @@ PUBLIC int treedb_close_topic(
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "List not found.",
             "treedb_name",  "%s", treedb_name,
-            "list",         "%s", list_id,
+            "list",         "%s", path,
             NULL
         );
     }
 
-    /*
-     *  Remove indexx
-     */
-    json_t *indexx = kw_get_dict(
+    /*------------------------------*
+     *  Close pkey2 lists
+     *------------------------------*/
+    json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
+    const char *pkey2_name; json_t *jn_pkey2_fields;
+    json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
+        const char *pkey2_fields = json_string_value(jn_pkey2_fields);
+        if(!pkey2_fields) {
+            continue;
+        }
+        build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2_name);
+
+        json_t *list = tranger_get_list(tranger, path);
+        if(list) {
+            tranger_close_list(tranger, list);
+        } else {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "List not found.",
+                "treedb_name",  "%s", treedb_name,
+                "list",         "%s", path,
+                NULL
+            );
+        }
+    }
+    JSON_DECREF(iter_pkey2s);
+
+    /*----------------------*
+     *  Remove topic data
+     *----------------------*/
+    snprintf(path, sizeof(path), "treedbs`%s`%s", treedb_name, topic_name);
+    json_t *data = kw_get_dict(
         tranger,
-        list_id,
+        path,
         0,
         KW_REQUIRED|KW_EXTRACT
     );
-    json_decref(indexx);
+    json_decref(data);
 
-    /*
-     *  Remove indexy
-     */
-    // TODO borra los indices pkey2
 
     return 0;
 }
