@@ -39,7 +39,7 @@ PRIVATE json_t *_md2json(
     md_record_t *md_record
 );
 
-PRIVATE int load_all_hook_links(
+PRIVATE int load_all_links(
     json_t *tranger,
     const char *treedb_name
 );
@@ -638,9 +638,9 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     parse_hooks(tranger);
 
     /*------------------------------*
-     *  Load hook links
+     *  Load links
      *------------------------------*/
-    load_all_hook_links(tranger, treedb_name);
+    load_all_links(tranger, treedb_name);
 
     JSON_DECREF(jn_schema);
     return treedb;
@@ -2109,9 +2109,9 @@ PRIVATE int load_id_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                /*-------------------------------*
-                 *      Get indexx
-                 *-------------------------------*/
+                /*----------------------------------*
+                 *  Get indexx: to load from disk
+                 *----------------------------------*/
                 const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
                 const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
 
@@ -2568,9 +2568,9 @@ PRIVATE int link_child_to_parent(
 
 
 /***************************************************************************
- *  Loading hook links
+ *  Load links (child's fkeys to parent's hooks)
  ***************************************************************************/
-PRIVATE int load_hook_links(
+PRIVATE int load_links(
     json_t *tranger,
     json_t *child_node
 )
@@ -2680,9 +2680,9 @@ PRIVATE int load_hook_links(
 }
 
 /***************************************************************************
- *  Load hook links
+ *  Load links from childs to parents  (child's fkeys to parent's hooks)
  ***************************************************************************/
-PRIVATE int load_all_hook_links(
+PRIVATE int load_all_links(
     json_t *tranger,
     const char *treedb_name
 )
@@ -2699,6 +2699,9 @@ PRIVATE int load_all_hook_links(
         /*
          *  Loop nodes searching links
          */
+        /*----------------------------------*
+         *  Get indexx: to load links
+         *----------------------------------*/
         json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
         if(!indexx) {
             // It's not a treedb topic
@@ -2721,7 +2724,7 @@ PRIVATE int load_all_hook_links(
             /*
              *  Loop desc cols searching fkey
              */
-            ret += load_hook_links(
+            ret += load_links(
                 tranger,
                 child_node
             );
