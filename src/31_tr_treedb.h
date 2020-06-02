@@ -179,6 +179,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *options // "permissive"
 );
 
+/**rst**
+    Direct saving to tranger. WARNING be care, must be a pure node
+**rst**/
 PUBLIC int treedb_save_node(
     json_t *tranger,
     json_t *node    // not owned

@@ -3465,12 +3465,13 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(kw);
         return 0;
     }
+    BOOL links_inherited = FALSE;
     if(save_pkey || (save_id && prev_record)) {
         /*
          *  Si es un nodo secundario, copia las claves del primario.
          *  Si es un nodo primario multiple, copia las claves del primario.
          */
-        inherit_links(tranger, topic_name, record, prev_record);
+        links_inherited = inherit_links(tranger, topic_name, record, prev_record);
     }
 
     /*-------------------------------*
@@ -3530,6 +3531,13 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  En repetición de claves secundarias,
      *  la última es que prevalece y existe.
      *---------------------------------------------------*/
+
+    /*-------------------------------*
+     *  Build links to hooks
+     *-------------------------------*/
+    if(links_inherited) {
+
+    }
 
     /*-------------------------------*
      *  Write node in memory: id
@@ -3596,7 +3604,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
 }
 
 /***************************************************************************
- *
+ *  Direct saving to tranger. WARNING be care, must be a pure node
  ***************************************************************************/
 PUBLIC int treedb_save_node(
     json_t *tranger,
