@@ -93,35 +93,6 @@ PRIVATE BOOL treedb_trace = 0;
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE char *build_id_index_path(
-    char *bf,
-    int bfsize,
-    const char *treedb_name,
-    const char *topic_name
-)
-{
-    snprintf(bf, bfsize, "treedbs`%s`%s`id", treedb_name, topic_name);
-    return bf;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE char *build_pkey_index_path(
-    char *bf,
-    int bfsize,
-    const char *treedb_name,
-    const char *topic_name,
-    const char *pkey2_name
-)
-{
-    snprintf(bf, bfsize, "treedbs`%s`%s`%s", treedb_name, topic_name, pkey2_name);
-    return bf;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PUBLIC int current_snap_tag(json_t *tranger, const char *treedb_name)
 {
     char path[NAME_MAX];
@@ -149,6 +120,35 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
         return json_object();
     }
     return json_incref(dict);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE char *build_id_index_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    snprintf(bf, bfsize, "treedbs`%s`%s`id", treedb_name, topic_name);
+    return bf;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE char *build_pkey_index_path(
+    char *bf,
+    int bfsize,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *pkey2_name
+)
+{
+    snprintf(bf, bfsize, "treedbs`%s`%s`%s", treedb_name, topic_name, pkey2_name);
+    return bf;
 }
 
 /***************************************************************************
