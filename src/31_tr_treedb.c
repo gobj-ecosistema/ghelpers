@@ -2109,12 +2109,12 @@ PRIVATE int load_id_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                /*----------------------------------*
-                 *  Get indexx: to load from disk
-                 *----------------------------------*/
                 const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
                 const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
 
+                /*----------------------------------*
+                 *  Get indexx: to load from disk
+                 *----------------------------------*/
                 json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
                 if(!indexx) {
                     log_error(0,
@@ -2224,12 +2224,12 @@ PRIVATE int load_pkey2_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                /*-------------------------------*
-                 *      Get indexy
-                 *-------------------------------*/
                 const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
                 const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
 
+                /*---------------------------------*
+                 *  Get indexy: to load from disk
+                 *---------------------------------*/
                 json_t *indexy = treedb_get_pkey2_index(
                     tranger,
                     treedb_name,
@@ -3330,7 +3330,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     }
 
     /*-------------------------------*
-     *      Get indexx
+     *  Get indexx: to create node
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
     if(!indexx) {
@@ -3364,6 +3364,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
     const char *pkey2_name; json_t *jn_pkey2_fields;
     json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
+        /*---------------------------------*
+         *  Get indexy: to create node
+         *---------------------------------*/
         json_t *indexy = treedb_get_pkey2_index(
             tranger,
             treedb_name,
@@ -3508,6 +3511,10 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         int idx; json_t *jn_pkey2;
         json_array_foreach(pkey2_list, idx, jn_pkey2) {
             const char *pkey2_name = json_string_value(jn_pkey2);
+
+            /*---------------------------------*
+             *  Get indexy: to create node
+             *---------------------------------*/
             json_t *indexy = treedb_get_pkey2_index(
                 tranger,
                 treedb_name,
@@ -4129,7 +4136,7 @@ PUBLIC int treedb_delete_node(
     }
 
     /*-------------------------------*
-     *      Get indexx
+     *  Get indexx: to delete node
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
     if(!indexx) {
@@ -5502,7 +5509,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     JSON_DECREF(jn_filter_);
 
     /*-------------------------------*
-     *      Get indexx
+     *  Get indexx: to list nodes
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
     if(!indexx) {
@@ -5705,6 +5712,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
 
     json_t *pkey2_fields;
     json_object_foreach(iter_pkey2s, pkey2_name, pkey2_fields) {
+        /*---------------------------------*
+         *  Get indexy: to list instances
+         *---------------------------------*/
         json_t *indexy = treedb_get_pkey2_index(
             tranger,
             treedb_name,
@@ -5780,7 +5790,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
 )
 {
     /*-------------------------------*
-     *      Get indexx
+     *  Get indexx: to get node
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
     if(!indexx) {
@@ -6349,9 +6359,13 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
             continue;
         }
 
-        /*
+        /*---------------------------------*
          *  Tag each current key of topic
-         */
+         *---------------------------------*/
+
+        /*----------------------------------*
+         *  Get indexx: to tag nodes
+         *----------------------------------*/
         json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
         if(!indexx) {
             // It's not a treedb topic
