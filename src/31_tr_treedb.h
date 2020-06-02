@@ -182,7 +182,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
 /**rst**
     Direct saving to tranger.
     WARNING be care, must be a pure node.
-    Tag __tag__ (user_flag) will be inherited.
+    Tag __tag__ (user_flag) is inherited.
 **rst**/
 PUBLIC int treedb_save_node(
     json_t *tranger,
