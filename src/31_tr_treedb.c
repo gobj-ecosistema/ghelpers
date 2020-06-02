@@ -898,8 +898,11 @@ PUBLIC json_t *treedb_create_topic(
     );
     if(snap_tag) {
         // pon el current tag
-        // TODO hay que moverlo a la carga de datos
-        json_object_set_new(jn_filter, "user_flag", json_integer(snap_tag));
+        json_object_set_new(
+            jn_filter,
+            "user_flag",
+            json_integer(snap_tag)
+        );
     }
     json_t *jn_list = json_pack("{s:s, s:s, s:i, s:o, s:I, s:s, s:{}}",
         "id", path,
