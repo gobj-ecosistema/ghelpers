@@ -131,26 +131,6 @@ PUBLIC int current_snap_tag(json_t *tranger, const char *treedb_name)
 }
 
 /***************************************************************************
- * PUBLIC to use in tests
- ***************************************************************************/
-PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name
-)
-{
-    char path[NAME_MAX];
-    build_id_index_path(path, sizeof(path), treedb_name, topic_name);
-    json_t *indexx = kw_get_dict(
-        tranger,
-        path,
-        0,
-        KW_REQUIRED
-    );
-    return indexx;
-}
-
-/***************************************************************************
  *
  ***************************************************************************/
 PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
@@ -169,6 +149,26 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
         return json_object();
     }
     return json_incref(dict);
+}
+
+/***************************************************************************
+ * PUBLIC to use in tests
+ ***************************************************************************/
+PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    char path[NAME_MAX];
+    build_id_index_path(path, sizeof(path), treedb_name, topic_name);
+    json_t *indexx = kw_get_dict(
+        tranger,
+        path,
+        0,
+        KW_REQUIRED
+    );
+    return indexx;
 }
 
 /***************************************************************************
