@@ -213,17 +213,10 @@ PRIVATE const char *get_key2_value(
  ***************************************************************************/
 PRIVATE json_t *exist_primary_node(
     json_t *indexx,
-    const char *key,
-    BOOL multiple
+    const char *key
 )
-{ // TODO
-    json_t *node = kw_get_dict(
-        indexx,
-        key,
-        0,
-        0
-    );
-    return node;
+{
+    return json_object_get(indexx, key);
 }
 
 /***************************************************************************
@@ -232,15 +225,10 @@ PRIVATE json_t *exist_primary_node(
 PRIVATE int add_primary_node(
     json_t *indexx,
     const char *key,
-    json_t *node, // incref
-    BOOL multiple
+    json_t *node // incref
 )
-{ // TODO
-    return json_object_set(
-        indexx,
-        key,
-        node
-    );
+{
+    return json_object_set(indexx, key, node);
 }
 
 /***************************************************************************
@@ -248,10 +236,9 @@ PRIVATE int add_primary_node(
  ***************************************************************************/
 PRIVATE int delete_primary_node(
     json_t *indexx,
-    const char *key,
-    BOOL multiple
+    const char *key
 )
-{ // TODO
+{
     return json_object_del(indexx, key);
 }
 
@@ -2182,9 +2169,7 @@ PRIVATE int load_id_callback(
                 /*-------------------------------*
                  *  Exists already the node?
                  *-------------------------------*/
-                BOOL multiple = FALSE; // TODO
-                int x;
-                if(exist_primary_node(indexx, md_record->key.s, multiple)) {
+                if(exist_primary_node(indexx, md_record->key.s)) {
                     // Ignore
                     // The node with this key already exists
                     // HACK using backward, the first record is the last record
@@ -2219,8 +2204,7 @@ PRIVATE int load_id_callback(
                     add_primary_node(
                         indexx,
                         md_record->key.s,
-                        jn_record,
-                        multiple
+                        jn_record
                     );
                 }
             }
@@ -3332,18 +3316,19 @@ PRIVATE BOOL inherit_links(
 }
 
 /***************************************************************************
-    This function does NOT auto build links
+    WARNING This function does NOT auto build links
+    If you want to create node with auto build links
+    then you must use treedb_update_node() with "create"
  ***************************************************************************/
 PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive" "verbose" "multiple"
+    const char *options // "permissive" "verbose"
 )
 {
     BOOL verbose = (options && strstr(options, "verbose"))?TRUE:FALSE;
-    BOOL multiple = (options && strstr(options, "multiple"))?TRUE:FALSE;
 
     /*-------------------------------*
      *  Get the id, it's mandatory
@@ -3407,14 +3392,10 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     BOOL save_id = FALSE;
     json_t *pkey2_list = json_array(); // collect pkeys to save
 
-    json_t *prev_record = exist_primary_node(indexx, id, multiple);
+    json_t *prev_record = exist_primary_node(indexx, id);
     if(!prev_record) {
         save_id = TRUE;
     }
-    if(multiple) {
-        save_id = TRUE;
-    }
-
     /*-----------------------------------*
      *  Look for a secondary key change
      *-----------------------------------*/
@@ -3567,7 +3548,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  Write node in memory: id
      *-------------------------------*/
     if(save_id) {
-        add_primary_node(indexx, id, record, multiple);
+        add_primary_node(indexx, id, record);
     }
 
     /*-------------------------------*
@@ -4365,9 +4346,7 @@ PUBLIC int treedb_delete_node(
      *  (borrar un id record en tranger, y el resto?)
      *-------------------------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
-        BOOL multiple = FALSE; // TODO
-        int x;
-        if(delete_primary_node(indexx, id, multiple)<0) { // node owned
+        if(delete_primary_node(indexx, id)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
@@ -5881,9 +5860,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *      Get
      *-------------------------------*/
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
-    BOOL multiple = FALSE;
-    int x;
-    json_t *node = exist_primary_node(indexx, id, multiple);
+    json_t *node = exist_primary_node(indexx, id);
     if(!node) {
         // Silence
         JSON_DECREF(jn_options);

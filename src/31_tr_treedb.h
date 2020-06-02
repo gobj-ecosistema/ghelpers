@@ -170,6 +170,8 @@ PUBLIC int treedb_set_trace(BOOL set);
 
 /**rst**
     WARNING This function does NOT auto build links
+    If you want to create node with auto build links
+    then you must use treedb_update_node() with "create"
 **rst**/
 PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *tranger,
