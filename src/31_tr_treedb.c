@@ -1034,7 +1034,6 @@ PUBLIC int treedb_close_topic(
     );
     json_decref(data);
 
-
     return 0;
 }
 
@@ -2766,7 +2765,6 @@ PRIVATE int load_all_links(
             continue;
         }
 
-        // Y si es un array? TODO
         const char *child_id; json_t *child_node;
         json_object_foreach(indexx, child_id, child_node) {
             json_t *__md_treedb__ = kw_get_dict(child_node, "__md_treedb__", 0, KW_REQUIRED);
@@ -4227,8 +4225,6 @@ PUBLIC int treedb_delete_node(
         return -1;
     }
 
-    // TODO y borrar el indexy?
-
     /*-------------------------------*
      *  Check hooks and fkeys
      *-------------------------------*/
@@ -4372,6 +4368,9 @@ PUBLIC int treedb_delete_node(
      *  (borrar un id record en tranger, y el resto?)
      *-------------------------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
+        /*-------------------------------*
+         *      Borra indexx data
+         *-------------------------------*/
         if(delete_primary_node(indexx, id)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -4390,6 +4389,53 @@ PUBLIC int treedb_delete_node(
                 trace_msg("json_object_del() Ok, topic %s, id %s", topic_name, id);
             }
         }
+
+        /*-------------------------------*
+         *      Borra indexy data
+         *-------------------------------*/
+        json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
+        const char *pkey2_name; json_t *jn_pkey2_fields;
+        json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
+            /*---------------------------------*
+             *  Get indexy: to delete node
+             *---------------------------------*/
+            json_t *indexy = treedb_get_pkey2_index(
+                tranger,
+                treedb_name,
+                topic_name,
+                pkey2_name
+            );
+            if(!indexy) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
+                    "topic_name",   "%s", topic_name,
+                    "pkey2_name",   "%s", pkey2_name,
+                    NULL
+                );
+                continue;
+            }
+
+            const char *pkey2_value = get_key2_value(
+                tranger,
+                topic_name,
+                pkey2_name,
+                node
+            );
+
+            json_t * key2v = kw_get_subdict_value(
+                indexy,
+                id,
+                pkey2_value,
+                0,
+                KW_EXTRACT
+            );
+            json_decref(key2v);
+        }
+        JSON_DECREF(iter_pkey2s);
+
     } else {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -6451,7 +6497,6 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         /*
          *  Firstly create a new node. Last node can already have a snap tag
          */
-        // TODO y si es un array?
         const char *node_id; json_t *node;
         json_object_foreach(indexx, node_id, node) {
             treedb_save_node(tranger, node);
