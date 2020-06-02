@@ -2159,7 +2159,7 @@ PRIVATE int load_id_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_values(
+                    set_volatil_values( // crea campos vacios
                         tranger,
                         topic_name,
                         jn_record,  // not owned
@@ -2288,7 +2288,7 @@ PRIVATE int load_pkey2_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_values(
+                    set_volatil_values( // crea campos vacios
                         tranger,
                         topic_name,
                         jn_record,  // not owned
@@ -3465,7 +3465,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  HACK set volatil after append record:
      *      Volatil data must not be save in file!
      *--------------------------------------------------*/
-    set_volatil_values(
+    set_volatil_values( // crea campos vacios o con los valores de kw
         tranger,
         topic_name,
         record,  // not owned
