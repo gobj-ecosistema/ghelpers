@@ -956,16 +956,20 @@ PUBLIC int treedb_close_topic(
         );
     }
 
+    /*
+     *  Remove indexx
+     */
     json_t *indexx = kw_get_dict(
         tranger,
         list_id,
         0,
         KW_REQUIRED|KW_EXTRACT
     );
-    if(indexx) {
-        JSON_DECREF(indexx);
-    }
+    json_decref(indexx);
 
+    /*
+     *  Remove indexy
+     */
     // TODO borra los indices pkey2
 
     return 0;
