@@ -6360,9 +6360,8 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
          */
         const char *node_id; json_t *node;
         json_object_foreach(indexx, node_id, node) {
-            uint64_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
             treedb_save_node(tranger, node);
-            __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
+            uint64_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
 
             ret += tranger_write_user_flag(
                 tranger,
