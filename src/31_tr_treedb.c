@@ -2078,6 +2078,39 @@ PRIVATE json_t *_md2json(
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *exist_primary_node(
+    json_t *indexx,
+    const char *key
+)
+{
+    json_t *node = kw_get_dict(
+        indexx,
+        key,
+        0,
+        0
+    );
+    return node;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int add_primary_node(
+    json_t *indexx,
+    const char *key,
+    json_t *node
+)
+{
+    return json_object_set(
+        indexx,
+        key,
+        node
+    );
+}
+
+/***************************************************************************
  *  When record is loaded from disk then create the node
  *  when is loaded from memory then notify to subscribers
  ***************************************************************************/
@@ -2132,12 +2165,7 @@ PRIVATE int load_id_callback(
                 /*-------------------------------*
                  *  Exists already the node?
                  *-------------------------------*/
-                if(kw_get_dict(
-                        indexx,
-                        md_record->key.s,
-                        0,
-                        0
-                    )!=0) {
+                if(exist_primary_node(indexx, md_record->key.s)) {
                     // Ignore
                     // The node with this key already exists
                     // HACK using backward, the first record is the last record
@@ -2169,7 +2197,7 @@ PRIVATE int load_id_callback(
                     /*-------------------------------*
                      *  Write node in memory: id
                      *-------------------------------*/
-                    json_object_set(
+                    add_primary_node(
                         indexx,
                         md_record->key.s,
                         jn_record
@@ -2708,6 +2736,7 @@ PRIVATE int load_all_links(
             continue;
         }
 
+        // Y si es un array? TODO
         const char *child_id; json_t *child_node;
         json_object_foreach(indexx, child_id, child_node) {
             json_t *__md_treedb__ = kw_get_dict(child_node, "__md_treedb__", 0, KW_REQUIRED);
@@ -3353,7 +3382,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     BOOL save_id = FALSE;
     json_t *pkey2_list = json_array(); // save pkeys to save
 
-    json_t *prev_record = kw_get_dict(indexx, id, 0, 0);
+    json_t *prev_record = exist_primary_node(indexx, id);
     if(!prev_record) {
         save_id = TRUE;
     }
@@ -3501,7 +3530,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  Write node in memory: id
      *-------------------------------*/
     if(save_id) {
-        json_object_set(indexx, id, record);
+        add_primary_node(indexx, id, record);
     }
 
     /*-------------------------------*
@@ -4296,6 +4325,7 @@ PUBLIC int treedb_delete_node(
      *  (borrar un id record en tranger, y el resto?)
      *-------------------------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
+        // TODO y si es un array?
         if(json_object_del(indexx, id)<0) { // node owned
             log_error(0,
                 "gobj",         "%s", __FILE__,
@@ -5810,7 +5840,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
      *      Get
      *-------------------------------*/
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
-    json_t *node = kw_get_dict(indexx, id, 0, 0);
+    json_t *node = exist_primary_node(indexx, id);
     if(!node) {
         // Silence
         JSON_DECREF(jn_options);
@@ -6375,6 +6405,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         /*
          *  Firstly create a new node. Last node can already have a snap tag
          */
+        // TODO y si es un array?
         const char *node_id; json_t *node;
         json_object_foreach(indexx, node_id, node) {
             treedb_save_node(tranger, node);
