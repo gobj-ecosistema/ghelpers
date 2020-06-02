@@ -4368,6 +4368,8 @@ PUBLIC int treedb_delete_node(
      *  (borrar un id record en tranger, y el resto?)
      *-------------------------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
+        BOOL ok_deleted = TRUE;
+
         /*-------------------------------*
          *      Borra indexx data
          *-------------------------------*/
@@ -4381,13 +4383,7 @@ PUBLIC int treedb_delete_node(
                 "id",           "%s", id,
                 NULL
             );
-        } else {
-            /*-------------------------------*
-             *  Trace
-             *-------------------------------*/
-            if(treedb_trace) {
-                trace_msg("json_object_del() Ok, topic %s, id %s", topic_name, id);
-            }
+            ok_deleted = FALSE;
         }
 
         /*-------------------------------*
@@ -4415,26 +4411,42 @@ PUBLIC int treedb_delete_node(
                     "pkey2_name",   "%s", pkey2_name,
                     NULL
                 );
+                ok_deleted = FALSE;
                 continue;
             }
 
-            const char *pkey2_value = get_key2_value(
-                tranger,
-                topic_name,
-                pkey2_name,
-                node
-            );
-
-            json_t * key2v = kw_get_subdict_value(
+            json_t * key2v = kw_get_dict_value(
                 indexy,
                 id,
-                pkey2_value,
                 0,
                 KW_EXTRACT
             );
-            json_decref(key2v);
+            if(key2v) {
+                json_decref(key2v);
+            } else {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "delete pkey2 FAILED",
+                    "topic_name",   "%s", topic_name,
+                    "id",           "%s", id,
+                    "pkey2_name",   "%s", pkey2_name,
+                    NULL
+                );
+                ok_deleted = FALSE;
+            }
         }
         JSON_DECREF(iter_pkey2s);
+
+        if(ok_deleted) {
+            /*-------------------------------*
+             *  Trace
+             *-------------------------------*/
+            if(treedb_trace) {
+                trace_msg("json_object_del() Ok, topic %s, id %s", topic_name, id);
+            }
+        }
 
     } else {
         log_error(0,
