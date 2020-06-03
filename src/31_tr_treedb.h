@@ -152,7 +152,8 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     json_t *tranger,
     json_t *node,    // not owned
     const char *topic_name,
-    const char *col_name
+    const char *col_name,
+    BOOL verbose
 );
 
 /**rst**

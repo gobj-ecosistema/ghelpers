@@ -2560,7 +2560,7 @@ PRIVATE int link_child_to_parent(
         const char *child_topic_name = json_string_value(
             kwid_get("", child_node, "__md_treedb__`topic_name")
         );
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2569,6 +2569,7 @@ PRIVATE int link_child_to_parent(
             "field",        "%s", fkey_col_name,
             NULL
         );
+        log_debug_json(0, child_node, "fkey field not found in the node");
         return -1;
     }
 
@@ -3048,7 +3049,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
 
         json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
         if(!field_data) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -3058,6 +3059,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
                 "field",        "%s", col_name,
                 NULL
             );
+            log_debug_json(0, node, "field not found in the node");
         }
         if(json_empty(field_data)) {
             continue;
@@ -3096,7 +3098,7 @@ PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
 
         json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
         if(!field_data) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -3106,6 +3108,7 @@ PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
                 "field",        "%s", col_name,
                 NULL
             );
+            log_debug_json(0, node, "field not found in the node");
         }
 
         if(json_empty(field_data)) {
@@ -3128,14 +3131,15 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     json_t *tranger,
     json_t *node,    // not owned
     const char *topic_name,
-    const char *col_name
+    const char *col_name,
+    BOOL verbose
 )
 {
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
 
     json_t *col = kw_get_dict_value(cols, col_name, 0, 0);
     if(!col) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -3150,7 +3154,7 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
     json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
     BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
     if(!is_fkey) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -3167,15 +3171,18 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
 
     json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
     if(!field_data) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "field not found in the node",
-            "topic_name",   "%s", topic_name,
-            "field",        "%s", col_name,
-            NULL
-        );
+        if(verbose) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "field not found in the node",
+                "topic_name",   "%s", topic_name,
+                "field",        "%s", col_name,
+                NULL
+            );
+            log_debug_json(0, node, "field not found in the node");
+        }
     }
 
     if(json_empty(field_data)) {
@@ -3315,7 +3322,7 @@ PRIVATE BOOL inherit_links(
         /*
          *  Copy fkeys
          */
-        json_t *fkeys = treedb_node_up_refs(tranger, primary_node, topic_name, col_name);
+        json_t *fkeys = treedb_node_up_refs(tranger, primary_node, topic_name, col_name, FALSE);
         json_t *cell = kw_get_dict_value(secondary_node, col_name, 0, KW_REQUIRED);
         if(cell) {
             int idx; json_t *fkey;
@@ -3708,7 +3715,7 @@ PRIVATE int remove_wrong_up_ref(
 {
     json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
     if(!field_data) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -3717,6 +3724,7 @@ PRIVATE int remove_wrong_up_ref(
             "field",        "%s", col_name,
             NULL
         );
+        log_debug_json(0, node, "field not found in the node");
     }
 
     if(json_empty(field_data)) {
@@ -3964,8 +3972,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
         /*
          *  link/unlink fkeys
          */
-        json_t *old_fkeys = treedb_node_up_refs(tranger, node, topic_name, col_name);
-        json_t *new_fkeys = treedb_node_up_refs(tranger, kw, topic_name, col_name);
+        json_t *old_fkeys = treedb_node_up_refs(tranger, node, topic_name, col_name, TRUE);
+        json_t *new_fkeys = treedb_node_up_refs(tranger, kw, topic_name, col_name, TRUE);
 
         int idx; json_t *new_fkey;
         json_array_foreach(new_fkeys, idx, new_fkey) {
@@ -4642,7 +4650,7 @@ PRIVATE int _link_nodes(
 
     json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
     if(!child_data) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -4651,6 +4659,7 @@ PRIVATE int _link_nodes(
             "field",        "%s", child_field,
             NULL
         );
+        log_debug_json(0, child_node, "field not found in the node");
     }
 
     /*--------------------------------------------------*
@@ -4970,7 +4979,7 @@ PRIVATE int _unlink_nodes(
 
     json_t *child_data = kw_get_dict_value(child_node, child_field, 0, 0);
     if(!child_data) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -4979,6 +4988,7 @@ PRIVATE int _unlink_nodes(
             "field",        "%s", child_field,
             NULL
         );
+        log_debug_json(0, child_node, "field not found in the node");
     }
 
     /*--------------------------------------------------*
@@ -6146,7 +6156,7 @@ PUBLIC json_t *treedb_list_childs(
 
     json_t *col = kw_get_dict_value(cols, hook, 0, 0);
     if(!col) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
