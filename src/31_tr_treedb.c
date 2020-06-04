@@ -3477,7 +3477,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     JSON_DECREF(iter_pkey2s);
 
     if(!save_id && !save_pkey) {
-        log_error(0,
+        log_warning(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
