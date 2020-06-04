@@ -4130,7 +4130,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
 
 /***************************************************************************
     "force" delete links.
-    If there are links are not force then delete_node will fail
+    If there are links and not force then delete_node will fail
     WARNING that kw can be node, the node to delete!!
 
     HACK: delete will be delete the record forever, for that reason,
