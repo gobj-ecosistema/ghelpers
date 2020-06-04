@@ -284,13 +284,13 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:s}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
             "enum",
                 "","persistent","required","fkey",
-                "hook","uuid","notnull","wild","rowid",
+                "hook","uuid","notnull","wild","rowid","inherit",
             "flag",
                 ""
         )
@@ -3287,6 +3287,53 @@ PUBLIC int treedb_set_trace(BOOL set)
 
 
 /***************************************************************************
+ *  Copy inherit fieldss FROM primary_node TO secondary_node
+ ***************************************************************************/
+PRIVATE BOOL copy_inherit_fields(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *secondary_node, // not owned
+    json_t *primary_node  // not owned
+)
+{
+    BOOL ret = FALSE;
+
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    if(!cols) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic without cols",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        return FALSE;
+    }
+
+    const char *col_name; json_t *col;
+    json_object_foreach(cols, col_name, col) {
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_inherit = kw_has_word(desc_flag, "inherit", 0)?TRUE:FALSE;
+        if(!is_inherit) {
+            continue;
+        }
+
+        /*
+         *  Copy inherit field
+         */
+        json_t *cell = kw_get_dict_value(primary_node, col_name, 0, KW_REQUIRED);
+        if(cell) {
+            json_object_set(secondary_node, col_name, cell);
+            ret = TRUE;
+        }
+    }
+
+    JSON_DECREF(cols);
+    return ret;
+}
+
+/***************************************************************************
  *  Inherit links FROM primary_node TO secondary_node. In collapse mode.
  ***************************************************************************/
 PRIVATE BOOL inherit_links(
@@ -3502,12 +3549,16 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         return 0;
     }
     BOOL links_inherited = FALSE;
-    if(save_pkey || (save_id && prev_record)) {
+    if(save_pkey) {
         /*
-         *  Si es un nodo secundario, copia las claves del primario.
-         *  Si es un nodo primario multiple, copia las claves del primario.
+         *  Si es un nodo secundario, copia los links del primario.
          */
         links_inherited = inherit_links(tranger, topic_name, record, prev_record);
+
+        /*
+         *  Si es un nodo secundario, copia los inherit fields
+         */
+        copy_inherit_fields(tranger, topic_name, record, prev_record);
     }
 
     /*-------------------------------*
