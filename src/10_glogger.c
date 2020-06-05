@@ -57,7 +57,7 @@ PRIVATE char __app_version__[64] = {0};
 PRIVATE char __executable__[512] = {0};
 PRIVATE inform_cb_t __inform_cb__ = 0;
 PRIVATE void *__inform_cb_user_data__ = 0;
-PRIVATE char last_message[256];
+PRIVATE char last_message[4*1024+1];
 PRIVATE uint32_t __alert_count__ = 0;
 PRIVATE uint32_t __critical_count__ = 0;
 PRIVATE uint32_t __error_count__ = 0;
