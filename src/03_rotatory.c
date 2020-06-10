@@ -581,8 +581,9 @@ PRIVATE int _rotatory(rotatory_log_t *hr, const char *bf, size_t len)
                     print_error(
                         PEF_CONTINUE,
                         "YUNETA ERROR",
-                        "rotatory(): stop logging because full disk: %d%% free",
-                        free_percent
+                        "rotatory(): stop logging because full disk: %d%% free (<%d%%)",
+                        free_percent,
+                        hr->min_free_disk_percentage
                     );
                     rotatory_flush(hr);
                     disk_full_informed = 1;
