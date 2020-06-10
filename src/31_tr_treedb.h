@@ -83,6 +83,9 @@ PUBLIC int treedb_close_db(
                 values of dict:
                         string: one simple key, same as 1)
                         list of strings: combined key
+
+    type of fields: "string","integer","object","array","real","boolean","enum","blob"
+
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(
     json_t *tranger,
