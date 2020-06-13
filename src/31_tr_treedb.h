@@ -84,7 +84,15 @@ PUBLIC int treedb_close_db(
                         string: one simple key, same as 1)
                         list of strings: combined key
 
-    type of fields: "string","integer","object","array","real","boolean","enum","blob"
+    type of fields:
+        "string",
+        "integer",
+        "object" or "dict",
+        "array" or "list",
+        "real",
+        "boolean",
+        "enum",
+        "blob"
 
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(

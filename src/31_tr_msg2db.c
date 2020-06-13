@@ -500,6 +500,7 @@ PRIVATE int set_tranger_field_value(
     }
 
     SWITCHS(type) {
+        CASES("list")
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
                 json_object_set(record, field, value);
@@ -508,6 +509,7 @@ PRIVATE int set_tranger_field_value(
             }
             break;
 
+        CASES("dict")
         CASES("object")
             if(JSON_TYPEOF(value, JSON_OBJECT)) {
                 json_object_set(record, field, value);
@@ -622,6 +624,7 @@ PRIVATE int set_volatil_field_value(
 )
 {
     SWITCHS(type) {
+        CASES("list")
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
                 json_object_set(record, field, value);
@@ -630,6 +633,7 @@ PRIVATE int set_volatil_field_value(
             }
             break;
 
+        CASES("dict")
         CASES("object")
             if(JSON_TYPEOF(value, JSON_OBJECT)) {
                 json_object_set(record, field, value);

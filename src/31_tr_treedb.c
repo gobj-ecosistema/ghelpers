@@ -272,12 +272,12 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s], s:[s,s]}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:[s,s]}",
             "id", "type",
             "header", "Type",
             "type", "enum",
             "enum",
-                "string","integer","object","array","real","boolean","enum","blob",
+                "string","integer","object","dict","array","list","real","boolean","enum","blob",
             "flag",
                 "required", "notnull"
         )
@@ -1777,6 +1777,7 @@ PRIVATE int set_tranger_field_value(
     }
 
     SWITCHS(type) {
+        CASES("list")
         CASES("array")
             if(is_fkey || is_hook) {
                 if(create) {
@@ -1798,6 +1799,7 @@ PRIVATE int set_tranger_field_value(
             }
             break;
 
+        CASES("dict")
         CASES("object")
             if(is_fkey || is_hook) {
                 if(create) {
@@ -1930,6 +1932,7 @@ PRIVATE int set_volatil_field_value(
 )
 {
     SWITCHS(type) {
+        CASES("list")
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
                 json_object_set(record, field, value);
@@ -1938,6 +1941,7 @@ PRIVATE int set_volatil_field_value(
             }
             break;
 
+        CASES("dict")
         CASES("object")
             if(JSON_TYPEOF(value, JSON_OBJECT)) {
                 json_object_set(record, field, value);
