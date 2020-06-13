@@ -85,7 +85,7 @@ PUBLIC int treedb_close_db(
                         list of strings: combined key
 
     type of fields:
-        "string",
+        "string",       TODO podría tener los subtipos "password" "email" "url"
         "integer",
         "object" or "dict",
         "array" or "list",
