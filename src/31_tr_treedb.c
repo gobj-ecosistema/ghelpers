@@ -3326,7 +3326,7 @@ PRIVATE BOOL copy_inherit_fields(
         /*
          *  Copy inherit field
          */
-        json_t *cell = kw_get_dict_value(primary_node, col_name, 0, KW_REQUIRED);
+        json_t *cell = kw_get_dict_value(primary_node, col_name, 0, 0);
         if(cell) {
             json_object_set(secondary_node, col_name, cell);
             ret = TRUE;
