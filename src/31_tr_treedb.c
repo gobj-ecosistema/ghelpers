@@ -291,7 +291,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
             "enum",
                 "","persistent","required","fkey",
                 "hook","uuid","notnull","wild","rowid","inherit",
-                "stats","rstats","rstats","writable","readable",
+                "readable","writable","stats","rstats","pstats",
                 "password","email","url",
             "flag",
                 ""

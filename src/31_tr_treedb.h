@@ -113,7 +113,7 @@ PUBLIC int treedb_close_db(
     -----------
 
         ""
-        "persistent"
+        "persistent"    // implicit "writable"
         "required"
         "fkey"
         "hook"
@@ -123,11 +123,11 @@ PUBLIC int treedb_close_db(
         "rowid"
         "inherit"
 
-        "stats"
-        "rstats"
-        "rstats"
-        "writable"
-        "readable"
+        "readable"      // Field readable by user
+        "writable"      // Field writable by user, implicit "readable"
+        "stats"         // field with stats, implicit "readable"
+        "rstats"        // field with resettable stats, implicit "stats"
+        "pstats"        // field with persistent stats, implicit "stats"
 
         "password"
         "email"
