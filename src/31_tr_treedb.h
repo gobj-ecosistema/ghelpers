@@ -123,6 +123,7 @@ PUBLIC int treedb_close_db(
         "rowid"
         "inherit"
 
+                        // For use in gobj attributes
         "readable"      // Field readable by user
         "writable"      // Field writable by user, implicit "readable"
         "stats"         // field with stats, implicit "readable"
