@@ -84,15 +84,54 @@ PUBLIC int treedb_close_db(
                         string: one simple key, same as 1)
                         list of strings: combined key
 
-    type of fields:
-        "string",       TODO podría tener los subtipos "password" "email" "url"
-        "integer",
-        "object" or "dict",
-        "array" or "list",
-        "real",
-        "boolean",
-        "enum",
+
+    Schema (jn_cols)
+    ================
+
+    Dictionary of
+        $key: {
+            "header":       string
+            "fillspace":    integer
+            "type":         enum
+            "flag":         enum
+            "default":      blob
+        }
+
+    "type" enum
+    -----------
+
+        "string"
+        "integer"
+        "object" or "dict"
+        "array" or "list"
+        "real"
+        "boolean"
+        "enum"
         "blob"
+
+    "flag" enum
+    -----------
+
+        ""
+        "persistent"
+        "required"
+        "fkey"
+        "hook"
+        "uuid"
+        "notnull"
+        "wild"
+        "rowid"
+        "inherit"
+
+        "stats"
+        "rstats"
+        "rstats"
+        "writable"
+        "readable"
+
+        "password"
+        "email"
+        "url"
 
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(

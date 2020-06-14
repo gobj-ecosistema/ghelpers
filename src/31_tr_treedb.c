@@ -284,17 +284,31 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:s}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
             "enum",
                 "","persistent","required","fkey",
                 "hook","uuid","notnull","wild","rowid","inherit",
+                "stats","rstats","rstats","writable","readable",
+                "password","email","url",
             "flag",
                 ""
         )
     );
+    json_array_append_new(
+        topic_cols_desc,
+        json_pack("{s:s, s:s, s:s, s:s}",
+            "id", "default",
+            "header", "Default",
+            "type",
+                "blob",
+            "flag",
+                ""
+        )
+    );
+
     return topic_cols_desc;
 }
 
@@ -1137,6 +1151,8 @@ PRIVATE const char *my_json_type(json_t *field)
     if(json_is_string(field)) {
         if(strcasecmp(json_string_value(field), "enum")==0) {
             return "enum";
+        } else if(strcasecmp(json_string_value(field), "blob")==0) {
+            return "blob";
         } else {
             return "string";
         }
@@ -1197,10 +1213,9 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
     }
 
     /*
-     *  Get value and type
+     *  Get value
      */
     json_t *value = kw_get_dict_value(dato, desc_id, 0, 0);
-    const char *value_type = my_json_type(value);
 
     /*
      *  Check required
@@ -1312,9 +1327,16 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
             break;
 
         /*----------------------------*
+         *      Enum
+         *----------------------------*/
+        CASES("blob")
+            break;
+
+        /*----------------------------*
          *      Json basic types
          *----------------------------*/
         DEFAULTS
+            const char *value_type = my_json_type(value);
             if(!kw_has_word(desc_type, value_type, 0)) {
                 log_error(0,
                     "gobj",         "%s", __FILE__,
@@ -2091,6 +2113,9 @@ PRIVATE json_t *record2tranger(
     const char *field; json_t *col;
     json_object_foreach(cols, field, col) {
         json_t *value = kw_get_dict_value(kw, field, 0, 0);
+        if(!value && create) {
+            value = kw_get_dict_value(col, "default", 0, 0);
+        }
         if(set_tranger_field_value(
                 topic_name,
                 col,
