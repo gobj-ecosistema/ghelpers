@@ -240,6 +240,7 @@ PUBLIC json_t *tranger_startup(
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "Cannot startup TimeRanger. Not found and not master",
+                "path",         "%s", directory,
                 NULL
             );
             return 0;
