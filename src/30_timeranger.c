@@ -385,7 +385,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
     /*-------------------------------*
      *      Check directory
      *-------------------------------*/
-    char directory[PATH_MAX];
+    char directory[PATH_MAX-30];
     snprintf(
         directory,
         sizeof(directory),
