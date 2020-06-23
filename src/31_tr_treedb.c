@@ -364,7 +364,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         );
     }
 
-    char schema_full_path[NAME_MAX];
+    char schema_full_path[NAME_MAX*2];
     snprintf(schema_full_path, sizeof(schema_full_path), "%s/%s",
         kw_get_str(tranger, "directory", "", KW_REQUIRED),
         schema_filename
