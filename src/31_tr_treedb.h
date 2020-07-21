@@ -113,7 +113,7 @@ PUBLIC int treedb_close_db(
     -----------
 
         ""
-        "persistent"    // implicit "writable"
+        "persistent"    // implicit "readable"
         "required"
         "fkey"
         "hook"
