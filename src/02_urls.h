@@ -40,6 +40,18 @@ PUBLIC int parse_http_url(
 );
 PUBLIC char *host2ip(const char *host);
 
+PUBLIC int parse_full_http_url(
+    const char *uri,
+    char *schema, int schema_size,
+    char *host, int host_size,
+    char *port, int port_size,
+    char *path, int path_size,
+    char *query, int query_size,
+    char *fragment, int fragment_size,
+    char *user_info, int user_info_size,
+    BOOL no_schema
+);
+
 
 #ifdef __cplusplus
 }
