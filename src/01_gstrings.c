@@ -88,6 +88,85 @@ PUBLIC char *get_parameter(char *s, char **save_ptr)
 }
 
 /***************************************************************************
+ *  Return TRUE if char is in chars
+ ***************************************************************************/
+PUBLIC BOOL char_in_chars(const char *chars, char c)
+{
+    while(chars && *chars) {
+        if(c == *chars) {
+            return TRUE;
+        }
+        chars++;
+    }
+    return FALSE;
+}
+
+/***************************************************************************
+ *  Extract parameter: delimited by any char in f
+ *  The string is modified (nulls inserted)!
+ ***************************************************************************/
+PUBLIC char *get_parameter2(char *s, char *f, char **save_ptr)
+{
+    char c;
+    char *p;
+
+    if(!s || !f) {
+        if(save_ptr) {
+            *save_ptr = 0;
+        }
+        return 0;
+    }
+
+    /*
+     *  Find first no-blank
+     */
+    while(1) {
+        c = *s;
+        if(c==0)
+            return 0;
+        if(!char_in_chars(f, c))
+            break;
+        s++;
+    }
+
+    /*
+     *  Check quotes
+     */
+    if(c=='\'' || c=='"') {
+        p = strchr(s+1, c);
+        if(p) {
+            *p = 0;
+            if(save_ptr) {
+                *save_ptr = p+1;
+            }
+            return s+1;
+        }
+    }
+
+    /*
+     *  Find first blank
+     */
+    p = s;
+    while(1) {
+        c = *s;
+        if(c==0) {
+            if(save_ptr) {
+                *save_ptr = 0;
+            }
+            return p;
+        }
+        if(char_in_chars(f, c)) {
+            *s = 0;
+            if(save_ptr) {
+                *save_ptr = s+1;
+            }
+            return p;
+        }
+        s++;
+    }
+}
+
+/***************************************************************************
  *  Extract key=value or key='this value' parameter
  *  Return the value, the key in `key`
  *  The string is modified (nulls inserted)!

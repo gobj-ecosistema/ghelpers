@@ -133,6 +133,19 @@ static inline BOOL empty_string(const char *str)
 **rst**/
 PUBLIC char *get_parameter(char *s, char **save_ptr);
 
+PUBLIC BOOL char_in_chars(const char *chars, char c);
+
+/**rst**
+
+.. function:: char *get_parameter2(char *s, char *f, char **save_ptr)
+
+   Extract parameter: delimited by any char in f
+   The string is modified (nulls inserted)!
+
+**rst**/
+PUBLIC char *get_parameter2(char *s, char *f, char **save_ptr);
+
+
 /**rst**
 
 .. function:: char *get_key_value_parameter(char *s, char **key, char **save_ptr)
