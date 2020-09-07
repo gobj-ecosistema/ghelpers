@@ -70,7 +70,7 @@ PUBLIC void end_ghelpers_library(void);
 /*********************************************************************
  *      Version
  *********************************************************************/
-#define __ghelpers_version__  "4.2.9"
+#define __ghelpers_version__  "4.2.10"
 
 
 #ifdef __cplusplus
