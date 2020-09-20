@@ -1020,7 +1020,19 @@ PUBLIC int kw_set_dict_value(
             return kw_set_dict_value(node_dict, p+1, value);
         }
     }
-    return json_object_set_new(kw, path, value);
+    int ret = json_object_set_new(kw, path, value);
+    if(ret < 0) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "json_object_set_new() FAILED",
+            "path",         "%s", path,
+            NULL
+        );
+        log_debug_json(0, value, "json_object_set_new() FAILED");
+    }
+    return ret;
 }
 
 /***************************************************************************
