@@ -137,7 +137,7 @@ PUBLIC int print_json(json_t *jn)
         return -1;
     }
     size_t flags = JSON_INDENT(4)|JSON_ENCODE_ANY;
-    fprintf(stdout, "\n");
+    fprintf(stdout, "refcount: %d\n", (int)jn->refcount);
     json_dumpf(jn, stdout, flags);
     fprintf(stdout, "\n");
     return 0;
