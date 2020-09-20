@@ -81,6 +81,11 @@ PUBLIC json_t * nonlegalstring2json(const char* str, BOOL verbose);
 PUBLIC json_t * nonlegalbuffer2json(const char* bf, size_t len, BOOL verbose);
 
 /**rst**
+   Convert any json file to json binary.
+**rst**/
+PUBLIC json_t * nonlegalfile2json(const char *path, BOOL verbose);
+
+/**rst**
    Convert a legal json string to json binary.
    Legal json string: MUST BE an array [] or object {}
 **rst**/

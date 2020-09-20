@@ -50,7 +50,38 @@ PUBLIC json_t * nonlegalstring2json(const char *str, BOOL verbose)
 /***************************************************************************
  *  Convert any json string to json binary.
  ***************************************************************************/
-PUBLIC json_t * nonlegalbuffer2json(const char *bf, size_t len, BOOL verbose)
+PUBLIC json_t * nonlegalfile2json(const char *path, BOOL verbose)
+{
+    size_t flags = JSON_DECODE_ANY;
+    json_error_t error;
+
+    json_t *jn = json_load_file(path, flags, &error);
+    if(!jn) {
+        if(verbose) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "json_loadf() FAILED",
+                "path",         "%s", path,
+                "error",        "%s", error.text,
+                "line",         "%d", error.line,
+                "column",       "%d", error.column,
+                "position",     "%d", error.position,
+                NULL
+            );
+        }
+    }
+    return jn;
+}
+
+/***************************************************************************
+ *  Convert any json string to json binary.
+ ***************************************************************************/
+PUBLIC json_t * nonlegalfile2json(const char *bf, size_t len, BOOL verbose)
 {
     size_t flags = JSON_DECODE_ANY;
     json_error_t error;
