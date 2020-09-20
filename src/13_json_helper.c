@@ -50,38 +50,7 @@ PUBLIC json_t * nonlegalstring2json(const char *str, BOOL verbose)
 /***************************************************************************
  *  Convert any json string to json binary.
  ***************************************************************************/
-PUBLIC json_t * nonlegalfile2json(const char *path, BOOL verbose)
-{
-    size_t flags = JSON_DECODE_ANY;
-    json_error_t error;
-
-    json_t *jn = json_load_file(path, flags, &error);
-    if(!jn) {
-        if(verbose) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "json_loadf() FAILED",
-                "path",         "%s", path,
-                "error",        "%s", error.text,
-                "line",         "%d", error.line,
-                "column",       "%d", error.column,
-                "position",     "%d", error.position,
-                NULL
-            );
-        }
-    }
-    return jn;
-}
-
-/***************************************************************************
- *  Convert any json string to json binary.
- ***************************************************************************/
-PUBLIC json_t * nonlegalfile2json(const char *bf, size_t len, BOOL verbose)
+PUBLIC json_t * nonlegalbuffer2json(const char *bf, size_t len, BOOL verbose)
 {
     size_t flags = JSON_DECODE_ANY;
     json_error_t error;
@@ -97,7 +66,6 @@ PUBLIC json_t * nonlegalfile2json(const char *bf, size_t len, BOOL verbose)
                 "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "json_loads(2) FAILED",
-                "str",          "%s", bf,
                 "error",        "%s", error.text,
                 "line",         "%d", error.line,
                 "column",       "%d", error.column,
@@ -105,6 +73,37 @@ PUBLIC json_t * nonlegalfile2json(const char *bf, size_t len, BOOL verbose)
                 NULL
             );
             log_debug_dump(0, bf, len, "json_loads(2) FAILED");
+        }
+    }
+    return jn;
+}
+
+/***************************************************************************
+ *  Convert any json string to json binary.
+ ***************************************************************************/
+PUBLIC json_t * nonlegalfile2json(const char *path, BOOL verbose)
+{
+    size_t flags = JSON_DECODE_ANY;
+    json_error_t error;
+
+    json_t *jn = json_load_file(path, flags, &error);
+    if(!jn) {
+        if(verbose) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "json_load_file() FAILED",
+                "path",         "%s", path,
+                "error",        "%s", error.text,
+                "line",         "%d", error.line,
+                "column",       "%d", error.column,
+                "position",     "%d", error.position,
+                NULL
+            );
         }
     }
     return jn;
@@ -168,7 +167,6 @@ PUBLIC int print_json(json_t *jn)
         return -1;
     }
     size_t flags = JSON_INDENT(4)|JSON_ENCODE_ANY;
-    fprintf(stdout, "-- refcount: %d --\n", (int)jn->refcount);
     json_dumpf(jn, stdout, flags);
     fprintf(stdout, "\n");
     return 0;
@@ -183,8 +181,12 @@ PUBLIC int print_json2(const char *label, json_t *jn)
         fprintf(stdout, "ERROR print_json(2): json NULL or refcount is 0\n");
         return -1;
     }
+    if(!label) {
+        label = "";
+    }
+
     size_t flags = JSON_INDENT(4); //JSON_SORT_KEYS |
-    fprintf(stdout, "%s ==>\n", label);
+    fprintf(stdout, "%s (refcount: %d) ==>\n", label, (int)jn->refcount);
     json_dumpf(jn, stdout, flags);
     fprintf(stdout, "\n");
     return 0;

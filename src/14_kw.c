@@ -3571,7 +3571,7 @@ size_t kwid_find_record_in_list(
     Get a the idx of simple json item in a json list.
     Return -1 if not found
  ***************************************************************************/
-PUBLIC size_t kwid_find_json_in_list(
+PUBLIC size_t kw_find_json_in_list(
     const char *options, // "verbose"
     json_t *kw_list,
     json_t *item
@@ -3619,7 +3619,8 @@ PUBLIC BOOL kwid_compare_records(
     json_t *record_, // NOT owned
     json_t *expected_, // NOT owned
     BOOL without_metadata,
-    BOOL without_private
+    BOOL without_private,
+    BOOL verbose
 )
 {
     BOOL ret = TRUE;
@@ -3642,7 +3643,12 @@ PUBLIC BOOL kwid_compare_records(
         switch(json_typeof(record)) {
             case JSON_ARRAY:
                 {
-                    if(!kwid_compare_lists(record, expected, without_metadata, without_private)) {
+                    if(!kwid_compare_lists(
+                            record,
+                            expected,
+                            without_metadata,
+                            without_private,
+                            verbose)) {
                         ret = FALSE;
                     }
                 }
@@ -3671,7 +3677,8 @@ PUBLIC BOOL kwid_compare_records(
                                     value,
                                     value2,
                                     without_metadata,
-                                    without_private
+                                    without_private,
+                                    FALSE
                                 )) {
                                 ret = FALSE;
                             }
@@ -3687,7 +3694,8 @@ PUBLIC BOOL kwid_compare_records(
                                     value,
                                     value2,
                                     without_metadata,
-                                    without_private
+                                    without_private,
+                                    verbose
                                 )) {
                                 ret = FALSE;
                             }
@@ -3737,7 +3745,8 @@ PUBLIC BOOL kwid_compare_lists(
     json_t *list_, // NOT owned
     json_t *expected_, // NOT owned
     BOOL without_metadata,
-    BOOL without_private
+    BOOL without_private,
+    BOOL verbose
 )
 {
     BOOL ret = TRUE;
@@ -3774,7 +3783,7 @@ PUBLIC BOOL kwid_compare_lists(
                         }
                         json_t *r2 = json_array_get(expected, idx2);
 
-                        if(!kwid_compare_records(r1, r2, without_metadata, without_private)) {
+                        if(!kwid_compare_records(r1, r2, without_metadata, without_private, FALSE)) {
                             ret = FALSE;
                         }
                         if(ret == FALSE) {
@@ -3789,7 +3798,7 @@ PUBLIC BOOL kwid_compare_lists(
                         /*--------------------------------*
                          *  List with any json items
                          *--------------------------------*/
-                        int idx2 = kwid_find_json_in_list("", expected, r1);
+                        int idx2 = kw_find_json_in_list("", expected, r1);
                         if(idx2 < 0) {
                             ret = FALSE;
                             break;
@@ -3814,7 +3823,7 @@ PUBLIC BOOL kwid_compare_lists(
 
         case JSON_OBJECT:
             {
-                if(!kwid_compare_records(list, expected, without_metadata, without_private)) {
+                if(!kwid_compare_records(list, expected, without_metadata, without_private, FALSE)) {
                     ret = FALSE;
                 }
             }
@@ -4188,5 +4197,112 @@ PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify th
 
     JSON_DECREF(jn_filter);
     return new_list;
+}
+
+/***************************************************************************
+    Return a new json with all arrays or dicts greater than `limit`
+        with [{"__collapsed__": {"path": path, "size": size}}]
+        or   {{"__collapsed__": {"path": path, "size": size}}}
+ ***************************************************************************/
+PRIVATE json_t *collapse(
+    json_t *kw,         // not owned
+    char *path,
+    BOOL collapse_lists,
+    BOOL collapse_dicts,
+    size_t limit
+)
+{
+    if(!json_is_object(kw)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "collapse() kw must be a dictionary",
+            NULL
+        );
+        return 0;
+    }
+    json_t *new_kw = json_object();
+    const char *key; json_t *jn_value;
+    json_object_foreach(kw, key, jn_value) {
+        if(json_is_object(jn_value)) {
+            if(collapse_dicts && (!limit || json_object_size(jn_value)>limit)) {
+                json_object_set_new(
+                    new_kw,
+                    key,
+                    json_pack("{s:{s:s, s:I}}",
+                        "__collapsed__",
+                            "path", path,
+                            "size", (json_int_t)json_object_size(jn_value)
+                    )
+                );
+            } else {
+                json_object_set_new(
+                    new_kw,
+                    key,
+                    collapse(jn_value, path, collapse_lists, collapse_dicts, limit)
+                );
+            }
+        } else if(json_is_array(jn_value)) {
+            if(collapse_lists && (!limit || json_array_size(jn_value)>limit)) {
+                json_object_set_new(
+                    new_kw,
+                    key,
+                    json_pack("[{s:{s:s, s:I}}]",
+                        "__collapsed__",
+                            "path", path,
+                            "size", (json_int_t)json_array_size(jn_value)
+                    )
+                );
+            } else {
+                json_t *new_list = json_array();
+                json_object_set_new(new_kw, key, new_list);
+                int idx; json_t *v;
+                json_array_foreach(jn_value, idx, v) {
+                    if(json_is_object(v)) {
+                        json_array_append_new(
+                            new_list,
+                            collapse(v, path, collapse_lists, collapse_dicts, limit)
+                        );
+                    } else if(json_is_array(v)) {
+                        json_array_append(new_list, v); // ???
+                    } else {
+                        json_array_append(new_list, v);
+                    }
+                }
+            }
+        } else {
+            json_object_set(
+                new_kw,
+                key,
+                jn_value
+            );
+        }
+    }
+
+    return new_kw;
+}
+PUBLIC json_t *kw_collapse(
+    json_t *kw,         // not owned
+    BOOL collapse_lists,
+    BOOL collapse_dicts,
+    size_t limit
+)
+{
+    if(!json_is_object(kw)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw_collapse() kw must be a dictionary",
+            NULL
+        );
+        return 0;
+    }
+    char *path = gbmem_malloc(1); *path = 0;
+    json_t *new_kw = collapse(kw, path, collapse_lists, collapse_dicts, limit);
+    gbmem_free(path);
+
+    return new_kw;
 }
 

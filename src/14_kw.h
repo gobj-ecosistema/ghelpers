@@ -753,7 +753,7 @@ size_t kwid_find_record_in_list(
     Get a the idx of simple json item in a json list.
     Return -1 if not found
 **rst**/
-PUBLIC size_t kwid_find_json_in_list(
+PUBLIC size_t kw_find_json_in_list(
     const char *options, // "verbose"
     json_t *kw_list,
     json_t *item
@@ -766,7 +766,8 @@ PUBLIC BOOL kwid_compare_records(
     json_t *record, // NOT owned
     json_t *expected, // NOT owned
     BOOL without_metadata,
-    BOOL without_private
+    BOOL without_private,
+    BOOL verbose
 );
 
 /**rst**
@@ -776,7 +777,8 @@ PUBLIC BOOL kwid_compare_lists(
     json_t *list, // NOT owned
     json_t *expected, // NOT owned
     BOOL without_metadata,
-    BOOL without_private
+    BOOL without_private,
+    BOOL verbose
 );
 
 /**rst**
@@ -881,6 +883,16 @@ PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify th
         json_t *kw,         // not owned
         json_t *jn_filter   // owned
     )
+);
+
+/**rst**
+    Return a new json with all arrays or dicts greater than `limit` collapsed with [[size]]
+**rst**/
+PUBLIC json_t *kw_collapse(
+    json_t *kw,         // not owned
+    BOOL collapse_lists,
+    BOOL collapse_dicts,
+    size_t limit
 );
 
 
