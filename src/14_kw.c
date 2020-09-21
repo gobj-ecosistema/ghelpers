@@ -346,7 +346,17 @@ PRIVATE json_t *_kw_search_path(json_t *kw, const char *path)
     }
 
     char segment[256];
-    snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+    if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "buffer too small",
+            "path",         "%s", path,
+            NULL
+        );
+    }
+
     json_t *deep_dict = json_object_get(kw, segment);
     return _kw_search_path(deep_dict, p+1);
 }
@@ -384,7 +394,17 @@ PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag)
     }
 
     char segment[256];
-    snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+    if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "buffer too small",
+            "path",         "%s", path,
+            NULL
+        );
+    }
+
     json_t *node_dict = json_object_get(kw, segment);
     if(!node_dict && (flag & KW_CREATE) && kw) {
         node_dict = json_object();
@@ -470,7 +490,16 @@ PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose)
     }
 
     char segment[256];
-    snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+    if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "buffer too small",
+            "path",         "%s", path,
+            NULL
+        );
+    }
 
     json_t *next_json = 0;
     if(json_is_object(kw)) {
@@ -658,7 +687,17 @@ PUBLIC int kw_delete(json_t *kw, const char *path)
     }
 
     char segment[256];
-    snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+    if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "buffer too small",
+            "path",         "%s", path,
+            NULL
+        );
+    }
+
     json_t *deep_dict = json_object_get(kw, segment);
     return kw_delete(deep_dict, p+1);
 }
@@ -1136,7 +1175,17 @@ PUBLIC int kw_set_dict_value(
     char *p = search_delimiter(path, delimiter[0]);
     if(p) {
         char segment[1024];
-        snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+        if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "buffer too small",
+                "path",         "%s", path,
+                NULL
+            );
+        }
+
         if(empty_string(segment)) {
             return kw_set_dict_value(kw, p+1, value);
         }
@@ -1322,7 +1371,17 @@ PUBLIC int kw_list_append(json_t *kw, const char *path, json_t *value)
     char *p = search_delimiter(path, delimiter[0]);
     if(p) {
         char segment[1024];
-        snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+        if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "buffer too small",
+                "path",         "%s", path,
+                NULL
+            );
+        }
+
         json_t *deep_dict = json_object_get(kw, segment);
         if(json_is_object(deep_dict)) {
             return kw_list_append(deep_dict, p+1, value);
@@ -2571,7 +2630,17 @@ PUBLIC int kw_set_key_value(
     char *p = search_delimiter(path, delimiter[0]);
     if(p) {
         char segment[1024];
-        snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+        if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "buffer too small",
+                "path",         "%s", path,
+                NULL
+            );
+        }
+
         if(empty_string(segment)) {
             return kw_set_key_value(kw, pkey, p+1, value);
         }
