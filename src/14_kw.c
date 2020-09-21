@@ -394,6 +394,131 @@ PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag)
 }
 
 /***************************************************************************
+ *  Return the json's value find by path
+ *  Walk over dicts and lists
+ ***************************************************************************/
+PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose)
+{
+    if(!json_is_object(kw) || !json_is_array(kw)) {
+        if(verbose) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "kw must be list or dict",
+                NULL
+            );
+        }
+        return 0;
+    }
+    if(empty_string(path)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "path EMPTY",
+            NULL
+        );
+        return 0;
+    }
+    if(kw->refcount <=0) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "json refcount 0",
+            "path",         "%s", path,
+            NULL
+        );
+        return 0;
+    }
+
+    char *p = search_delimiter(path, delimiter[0]);
+    if(!p) {
+        if(json_is_object(kw)) {
+            // Dict
+            json_t *value = json_object_get(kw, path);
+            if(!value && verbose) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "path not found",
+                    "path",         "%s", path,
+                    NULL
+                );
+            }
+            return value;
+
+        } else {
+            // Array
+            int idx = atoi(p);
+            json_t *value = json_array_get(kw, idx);
+            if(!value && verbose) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "path not found",
+                    "path",         "%s", path,
+                    "idx",          "%d", idx,
+                    NULL
+                );
+            }
+            return value;
+        }
+    }
+
+    char segment[256];
+    snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path);
+
+    json_t *next_json = 0;
+    if(json_is_object(kw)) {
+        // Dict
+        next_json = json_object_get(kw, segment);
+        if(!next_json) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "Dict segment not found",
+                "path",         "%s", path,
+                "segment",      "%s", segment,
+                NULL
+            );
+            return 0;
+        }
+    } else {
+        // Array
+        int idx = atoi(segment);
+        next_json = json_array_get(kw, idx);
+        if(!next_json) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "List segment not found",
+                "path",         "%s", path,
+                "segment",      "%s", segment,
+                "idx",          "%d", idx,
+                NULL
+            );
+            return 0;
+        }
+    }
+
+    return _kw_find_path(next_json, p+1, verbose);
+}
+
+/***************************************************************************
+    Return the json's value find by path, walking over lists and dicts
+ ***************************************************************************/
+PUBLIC json_t *kw_find_path(json_t *kw, const char *path, BOOL verbose)
+{
+    return _kw_find_path(kw, path, verbose);
+}
+
+/***************************************************************************
  *  Check if the dictionary ``kw`` has the key ``key``
  ***************************************************************************/
 PUBLIC BOOL kw_has_key(json_t *kw, const char *key)

@@ -113,6 +113,11 @@ PUBLIC json_t *kw_incref(json_t *kw);
 PUBLIC json_t *kw_decref(json_t *kw);
 
 /**rst**
+    Return the json's value find by path, walking over LISTS and DICTS
+**rst**/
+PUBLIC json_t *kw_find_path(json_t *kw, const char *path, BOOL verbose);
+
+/**rst**
    Return TRUE if the dictionary ``kw`` has the key ``key``.
 **rst**/
 PUBLIC BOOL kw_has_key(json_t *kw, const char *key);
