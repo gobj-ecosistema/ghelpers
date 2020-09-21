@@ -399,7 +399,7 @@ PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag)
  ***************************************************************************/
 PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose)
 {
-    if(!json_is_object(kw) || !json_is_array(kw)) {
+    if(!(json_is_object(kw) || json_is_array(kw))) {
         if(verbose) {
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
@@ -477,15 +477,17 @@ PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose)
         // Dict
         next_json = json_object_get(kw, segment);
         if(!next_json) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "Dict segment not found",
-                "path",         "%s", path,
-                "segment",      "%s", segment,
-                NULL
-            );
+            if(verbose) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "Dict segment not found",
+                    "path",         "%s", path,
+                    "segment",      "%s", segment,
+                    NULL
+                );
+            }
             return 0;
         }
     } else {
@@ -493,16 +495,18 @@ PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose)
         int idx = atoi(segment);
         next_json = json_array_get(kw, idx);
         if(!next_json) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "List segment not found",
-                "path",         "%s", path,
-                "segment",      "%s", segment,
-                "idx",          "%d", idx,
-                NULL
-            );
+            if(verbose) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "List segment not found",
+                    "path",         "%s", path,
+                    "segment",      "%s", segment,
+                    "idx",          "%d", idx,
+                    NULL
+                );
+            }
             return 0;
         }
     }
@@ -4350,6 +4354,12 @@ PRIVATE json_t *collapse(
     json_t *new_kw = json_object();
     const char *key; json_t *jn_value;
     json_object_foreach(kw, key, jn_value) {
+        char *new_path = gbmem_strndup(path, strlen(path)+strlen(key)+2);
+        if(strlen(new_path)>0) {
+            strcat(new_path, delimiter);
+        }
+        strcat(new_path, key);
+
         if(json_is_object(jn_value)) {
             if(collapse_dicts && (!limit || json_object_size(jn_value)>limit)) {
                 json_object_set_new(
@@ -4357,7 +4367,7 @@ PRIVATE json_t *collapse(
                     key,
                     json_pack("{s:{s:s, s:I}}",
                         "__collapsed__",
-                            "path", path,
+                            "path", new_path,
                             "size", (json_int_t)json_object_size(jn_value)
                     )
                 );
@@ -4365,9 +4375,10 @@ PRIVATE json_t *collapse(
                 json_object_set_new(
                     new_kw,
                     key,
-                    collapse(jn_value, path, collapse_lists, collapse_dicts, limit)
+                    collapse(jn_value, new_path, collapse_lists, collapse_dicts, limit)
                 );
             }
+
         } else if(json_is_array(jn_value)) {
             if(collapse_lists && (!limit || json_array_size(jn_value)>limit)) {
                 json_object_set_new(
@@ -4375,7 +4386,7 @@ PRIVATE json_t *collapse(
                     key,
                     json_pack("[{s:{s:s, s:I}}]",
                         "__collapsed__",
-                            "path", path,
+                            "path", new_path,
                             "size", (json_int_t)json_array_size(jn_value)
                     )
                 );
@@ -4384,18 +4395,28 @@ PRIVATE json_t *collapse(
                 json_object_set_new(new_kw, key, new_list);
                 int idx; json_t *v;
                 json_array_foreach(jn_value, idx, v) {
+                    char s_idx[40];
+                    snprintf(s_idx, sizeof(s_idx), "%d", idx);
+                    char *new_path2 = gbmem_strndup(new_path, strlen(new_path)+strlen(s_idx)+2);
+                    if(strlen(new_path2)>0) {
+                        strcat(new_path2, delimiter);
+                    }
+                    strcat(new_path2, s_idx);
+
                     if(json_is_object(v)) {
                         json_array_append_new(
                             new_list,
-                            collapse(v, path, collapse_lists, collapse_dicts, limit)
+                            collapse(v, new_path2, collapse_lists, collapse_dicts, limit)
                         );
                     } else if(json_is_array(v)) {
                         json_array_append(new_list, v); // ???
                     } else {
                         json_array_append(new_list, v);
                     }
+                    gbmem_free(new_path2);
                 }
             }
+
         } else {
             json_object_set(
                 new_kw,
@@ -4403,6 +4424,7 @@ PRIVATE json_t *collapse(
                 jn_value
             );
         }
+        gbmem_free(new_path);
     }
 
     return new_kw;
