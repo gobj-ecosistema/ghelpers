@@ -4429,7 +4429,7 @@ PRIVATE json_t *collapse(
         strcat(new_path, key);
 
         if(json_is_object(jn_value)) {
-            if(json_object_size(jn_value)>collapse_dicts_limit) {
+            if(collapse_dicts_limit>0 && json_object_size(jn_value)>collapse_dicts_limit) {
                 json_object_set_new(
                     new_kw,
                     key,
@@ -4448,7 +4448,7 @@ PRIVATE json_t *collapse(
             }
 
         } else if(json_is_array(jn_value)) {
-            if(json_array_size(jn_value)>collapse_lists_limit) {
+            if(collapse_lists_limit > 0 && json_array_size(jn_value)>collapse_lists_limit) {
                 json_object_set_new(
                     new_kw,
                     key,

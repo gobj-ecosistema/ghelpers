@@ -896,7 +896,7 @@ PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify th
             path:
             size:
         }
-
+    WARNING _limit must be > 0 to collapse
 **rst**/
 PUBLIC json_t *kw_collapse(
     json_t *kw,         // not owned
