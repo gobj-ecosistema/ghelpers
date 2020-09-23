@@ -891,13 +891,17 @@ PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify th
 );
 
 /**rst**
-    Return a new json with all arrays or dicts greater than `limit` collapsed with [[size]]
+    Return a new json with all arrays or dicts greater than `limit` collapsed with
+        __collapsed__: {
+            path:
+            size:
+        }
+
 **rst**/
 PUBLIC json_t *kw_collapse(
     json_t *kw,         // not owned
-    BOOL collapse_lists,
-    BOOL collapse_dicts,
-    size_t limit
+    int collapse_lists_limit,
+    int collapse_dicts_limit
 );
 
 

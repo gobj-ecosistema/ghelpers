@@ -4405,9 +4405,8 @@ PUBLIC json_t *kwid_new_list_tree_collect( // WARNING be care, you can modify th
 PRIVATE json_t *collapse(
     json_t *kw,         // not owned
     char *path,
-    BOOL collapse_lists,
-    BOOL collapse_dicts,
-    size_t limit
+    int collapse_lists_limit,
+    int collapse_dicts_limit
 )
 {
     if(!json_is_object(kw)) {
@@ -4430,7 +4429,7 @@ PRIVATE json_t *collapse(
         strcat(new_path, key);
 
         if(json_is_object(jn_value)) {
-            if(collapse_dicts && (!limit || json_object_size(jn_value)>limit)) {
+            if(json_object_size(jn_value)>collapse_dicts_limit) {
                 json_object_set_new(
                     new_kw,
                     key,
@@ -4444,12 +4443,12 @@ PRIVATE json_t *collapse(
                 json_object_set_new(
                     new_kw,
                     key,
-                    collapse(jn_value, new_path, collapse_lists, collapse_dicts, limit)
+                    collapse(jn_value, new_path, collapse_lists_limit, collapse_dicts_limit)
                 );
             }
 
         } else if(json_is_array(jn_value)) {
-            if(collapse_lists && (!limit || json_array_size(jn_value)>limit)) {
+            if(json_array_size(jn_value)>collapse_lists_limit) {
                 json_object_set_new(
                     new_kw,
                     key,
@@ -4475,7 +4474,7 @@ PRIVATE json_t *collapse(
                     if(json_is_object(v)) {
                         json_array_append_new(
                             new_list,
-                            collapse(v, new_path2, collapse_lists, collapse_dicts, limit)
+                            collapse(v, new_path2, collapse_lists_limit, collapse_dicts_limit)
                         );
                     } else if(json_is_array(v)) {
                         json_array_append(new_list, v); // ???
@@ -4500,9 +4499,8 @@ PRIVATE json_t *collapse(
 }
 PUBLIC json_t *kw_collapse(
     json_t *kw,         // not owned
-    BOOL collapse_lists,
-    BOOL collapse_dicts,
-    size_t limit
+    int collapse_lists_limit,
+    int collapse_dicts_limit
 )
 {
     if(!json_is_object(kw)) {
@@ -4516,7 +4514,7 @@ PUBLIC json_t *kw_collapse(
         return 0;
     }
     char *path = gbmem_malloc(1); *path = 0;
-    json_t *new_kw = collapse(kw, path, collapse_lists, collapse_dicts, limit);
+    json_t *new_kw = collapse(kw, path, collapse_lists_limit, collapse_dicts_limit);
     gbmem_free(path);
 
     return new_kw;
