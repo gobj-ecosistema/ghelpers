@@ -250,7 +250,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     json_t *topic_cols_desc = json_array();
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:[s,s], s:s}",
+        json_pack("{s:s, s:s, s:[s,s], s:[s]}",
             "id", "id",
             "header", "Id",
             "type",
@@ -261,13 +261,22 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:s}",
+        json_pack("{s:s, s:s, s:s, s:[]}",
             "id", "header",
             "header", "Header",
             "type",
                 "string",
-            "flag",
-                ""
+            "flag"
+        )
+    );
+    json_array_append_new(
+        topic_cols_desc,
+        json_pack("{s:s, s:s, s:s, s:[]}",
+            "id", "fillspace",
+            "header", "Fillspace",
+            "type",
+                "integer",
+            "flag"
         )
     );
     json_array_append_new(
@@ -284,7 +293,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:s}",
+        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[]}",
             "id", "flag",
             "header", "Flag",
             "type", "enum",
@@ -293,19 +302,17 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
                 "hook","uuid","notnull","wild","rowid","inherit",
                 "readable","writable","stats","rstats","pstats",
                 "password","email","url",
-            "flag",
-                ""
+            "flag"
         )
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:s}",
+        json_pack("{s:s, s:s, s:s, s:[]}",
             "id", "default",
             "header", "Default",
             "type",
                 "blob",
-            "flag",
-                ""
+            "flag"
         )
     );
 
@@ -1336,21 +1343,23 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
          *      Json basic types
          *----------------------------*/
         DEFAULTS
-            const char *value_type = my_json_type(value);
-            if(!kw_has_word(desc_type, value_type, 0)) {
-                log_error(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "Wrong basic type",
-                    "desc",         "%j", desc,
-                    "dato",         "%j", dato,
-                    "field",        "%s", desc_id,
-                    "value_type",   "%s", value_type,
-                    "value_to_be",  "%j", desc_type,
-                    NULL
-                );
-                ret += -1;
+            if(value) {
+                const char *value_type = my_json_type(value);
+                if(!kw_has_word(desc_type, value_type, 0)) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Wrong basic type",
+                        "desc",         "%j", desc,
+                        "dato",         "%j", dato,
+                        "field",        "%s", desc_id,
+                        "value_type",   "%s", value_type,
+                        "value_to_be",  "%j", desc_type,
+                        NULL
+                    );
+                    ret += -1;
+                }
             }
             break;
     } SWITCHS_END;
