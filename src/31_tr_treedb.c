@@ -250,9 +250,10 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     json_t *topic_cols_desc = json_array();
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:[s,s], s:[s]}",
+        json_pack("{s:s, s:s, s:i, s:[s,s], s:[s]}",
             "id", "id",
             "header", "Id",
+            "fillspace", 10,
             "type",
                 "string", "integer",
             "flag",
@@ -261,9 +262,10 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[]}",
+        json_pack("{s:s, s:s, s:i,s:s, s:[]}",
             "id", "header",
             "header", "Header",
+            "fillspace", 10,
             "type",
                 "string",
             "flag"
@@ -271,9 +273,10 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[]}",
             "id", "fillspace",
             "header", "Fillspace",
+            "fillspace", 4,
             "type",
                 "integer",
             "flag"
@@ -281,9 +284,10 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:[s,s]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:[s,s]}",
             "id", "type",
             "header", "Type",
+            "fillspace", 10,
             "type", "enum",
             "enum",
                 "string","integer","object","dict","array","list","real","boolean","enum","blob",
@@ -293,9 +297,10 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[]}",
             "id", "flag",
             "header", "Flag",
+            "fillspace", 10,
             "type", "enum",
             "enum",
                 "","persistent","required","fkey",
@@ -307,9 +312,10 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:s, s:[]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[]}",
             "id", "default",
             "header", "Default",
+            "fillspace", 10,
             "type",
                 "blob",
             "flag"
