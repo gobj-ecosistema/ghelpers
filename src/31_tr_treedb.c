@@ -250,12 +250,12 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     json_t *topic_cols_desc = json_array();
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:[s,s], s:[s]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s]}",
             "id", "id",
             "header", "Id",
             "fillspace", 10,
             "type",
-                "string", "integer",
+                "string",
             "flag",
                 "required"
         )
