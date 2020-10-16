@@ -250,41 +250,45 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     json_t *topic_cols_desc = json_array();
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[s]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s]}",
             "id", "id",
             "header", "Id",
             "fillspace", 10,
             "type",
                 "string",
             "flag",
-                "required"
+                "required",
+                "persistent"
         )
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i,s:s, s:[]}",
+        json_pack("{s:s, s:s, s:i,s:s, s:[s,s]}",
             "id", "header",
             "header", "Header",
             "fillspace", 10,
             "type",
                 "string",
-            "flag"
+            "flag",
+                "required",
+                "persistent"
         )
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s]}",
             "id", "fillspace",
             "header", "Fillspace",
             "fillspace", 4,
             "type",
                 "integer",
             "flag"
+                "persistent"
         )
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:[s,s]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:[s,s,s]}",
             "id", "type",
             "header", "Type",
             "fillspace", 10,
@@ -292,12 +296,14 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
             "enum",
                 "string","integer","object","dict","array","list","real","boolean","enum","blob",
             "flag",
-                "required", "notnull"
+                "required",
+                "persistent",
+                "notnull"
         )
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[s,s]}",
             "id", "flag",
             "header", "Flag",
             "fillspace", 10,
@@ -307,18 +313,21 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
                 "hook","uuid","notnull","wild","rowid","inherit",
                 "readable","writable","stats","rstats","pstats",
                 "password","email","url",
-            "flag"
+            "flag",
+                "required",
+                "persistent"
         )
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s]}",
             "id", "default",
             "header", "Default",
             "fillspace", 10,
             "type",
                 "blob",
-            "flag"
+            "flag",
+                "persistent"
         )
     );
 
