@@ -1767,7 +1767,7 @@ PRIVATE int set_tranger_field_value(
      *  Required
      */
     if(kw_has_word(desc_flag, "required", 0)) {
-        if(!value || json_is_null(value)) {
+        if(!value) { // WARNING efecto colateral? 16-oct-2020 || json_is_null(value)) {
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
