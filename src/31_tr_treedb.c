@@ -290,14 +290,15 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s], s:[s,s,s,s]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s], s:[s,s,s,s,s]}",
             "id", "type",
             "header", "Type",
             "fillspace", 10,
-            "type", "enum",
+            "type", "string",
             "enum",
-                "string","integer","object","dict","array","list","real","boolean","enum","blob",
+                "string","integer","object","dict","array","list","real","boolean","blob",
             "flag",
+                "enum",
                 "required",
                 "persistent",
                 "notnull",
@@ -306,17 +307,19 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[s,s]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[s,s,s,s]}",
             "id", "flag",
             "header", "Flag",
             "fillspace", 10,
-            "type", "enum",
+            "type", "array",
             "enum",
                 "persistent","required","fkey",
                 "hook","uuid","notnull","wild","rowid","inherit",
                 "readable","writable","stats","rstats","pstats",
                 "password","email","url",
             "flag",
+                "enum",
+                "required",
                 "persistent",
                 "writable"
         )
@@ -1175,9 +1178,7 @@ PUBLIC json_t *treedb_topics(
 PRIVATE const char *my_json_type(json_t *field)
 {
     if(json_is_string(field)) {
-        if(strcasecmp(json_string_value(field), "enum")==0) {
-            return "enum";
-        } else if(strcasecmp(json_string_value(field), "blob")==0) {
+        if(strcasecmp(json_string_value(field), "blob")==0) {
             return "blob";
         } else {
             return "string";
@@ -1266,6 +1267,10 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
      *  Check value type
      */
     const char *my_desc_type = my_json_type(desc_type);
+    if(kw_has_word(desc_flag, "enum", 0)) {
+        my_desc_type = "enum";
+    }
+
     SWITCHS(my_desc_type) {
         /*----------------------------*
          *      Enum
