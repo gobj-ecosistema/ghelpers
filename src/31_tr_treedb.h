@@ -112,7 +112,6 @@ PUBLIC int treedb_close_db(
     "flag" enum
     -----------
 
-        ""
         "persistent"    // implicit "readable"
         "required"
         "fkey"
