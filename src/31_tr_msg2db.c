@@ -128,10 +128,10 @@ PUBLIC json_t *msg2db_open_db(
         schema_filename
     );
 
-    int schema_version = 0;
+    json_int_t schema_new_version = kw_get_int(jn_schema, "schema_version", 0, KW_WILD_NUMBER);
+    int schema_version = schema_new_version;
 
     if(options && strstr(options,"persistent")) {
-        json_int_t schema_new_version = kw_get_int(jn_schema, "schema_version", 0, KW_WILD_NUMBER);
         do {
             BOOL recreating = FALSE;
             if(file_exists(schema_full_path, 0)) {
