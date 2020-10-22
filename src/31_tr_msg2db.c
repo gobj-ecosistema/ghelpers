@@ -125,6 +125,8 @@ PUBLIC json_t *msg2db_open_db(
         schema_filename
     );
 
+    int schema_version = 0;
+
     if(options && strstr(options,"persistent")) {
         json_int_t schema_new_version = kw_get_int(jn_schema, "schema_version", 0, KW_WILD_NUMBER);
         do {
@@ -149,19 +151,22 @@ PUBLIC json_t *msg2db_open_db(
                 if(schema_new_version <= schema_old_version) {
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
+                    schema_version = schema_old_version;
                     break; // Nothing to do
                 } else {
                     recreating = TRUE;
+                    schema_version = schema_old_version;
                     JSON_DECREF(old_jn_schema);
                 }
             }
             log_info(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INFO,
-                "msg",          "%s", recreating?"Re-Creating Msg2DB schema file":"Creating Msg2DB schema file",
-                "msg2db_name",  "%s", msg2db_name,
-                "schema_file",  "%s", schema_full_path,
+                "gobj",             "%s", __FILE__,
+                "function",         "%s", __FUNCTION__,
+                "msgset",           "%s", MSGSET_INFO,
+                "msg",              "%s", recreating?"Re-Creating Msg2DB schema file":"Creating Msg2DB schema file",
+                "msg2db_name",      "%s", msg2db_name,
+                "schema_version",   "%d", schema_new_version,
+                "schema_file",      "%s", schema_full_path,
                 NULL
             );
             JSON_INCREF(jn_schema);
@@ -315,6 +320,7 @@ PUBLIC json_t *msg2db_open_db(
      *------------------------------*/
     json_t *msg2dbs = kw_get_dict(tranger, "msg2dbs", json_object(), KW_CREATE);
     msg2db = kw_get_dict(msg2dbs, msg2db_name, json_object(), KW_CREATE);
+    kw_get_int(msg2db, "__schema_version__", schema_version, KW_CREATE|KW_WILD_NUMBER);
 
     /*------------------------------*
      *  Open "system" lists
@@ -379,6 +385,9 @@ PUBLIC int msg2db_close_db(
     char list_id[NAME_MAX];
     const char *topic_name; json_t *topic_records;
     json_object_foreach(msg2db, topic_name, topic_records) {
+        if(strcmp(topic_name, "__schema_version__")==0) {
+            continue;
+        }
         build_msg2db_index_path(list_id, sizeof(list_id), msg2db_name, topic_name, "id");
         json_t *list = tranger_get_list(tranger, list_id);
         if(!list) {

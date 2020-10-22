@@ -398,6 +398,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         schema_filename
     );
 
+    int schema_version = 0;
+
     if(options && strstr(options,"persistent")) {
         json_int_t schema_new_version = kw_get_int(jn_schema, "schema_version", 0, KW_WILD_NUMBER);
         do {
@@ -422,19 +424,22 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 if(schema_new_version <= schema_old_version) {
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
+                    schema_version = schema_old_version;
                     break; // Nothing to do
                 } else {
                     recreating = TRUE;
+                    schema_version = schema_new_version;
                     JSON_DECREF(old_jn_schema);
                 }
             }
             log_info(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INFO,
-                "msg",          "%s", recreating?"Re-Creating TreeDB schema file":"Creating TreeDB schema file",
-                "treedb_name",  "%s", treedb_name,
-                "schema_file",  "%s", schema_full_path,
+                "gobj",             "%s", __FILE__,
+                "function",         "%s", __FUNCTION__,
+                "msgset",           "%s", MSGSET_INFO,
+                "msg",              "%s", recreating?"Re-Creating TreeDB schema file":"Creating TreeDB schema file",
+                "treedb_name",      "%s", treedb_name,
+                "schema_version",   "%d", schema_new_version,
+                "schema_file",      "%s", schema_full_path,
                 NULL
             );
             JSON_INCREF(jn_schema);
@@ -523,6 +528,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
      *------------------------------*/
     json_t *treedbs = kw_get_dict(tranger, "treedbs", json_object(), KW_CREATE);
     treedb = kw_get_dict(treedbs, treedb_name, json_object(), KW_CREATE);
+    kw_get_int(treedb, "__schema_version__", schema_version, KW_CREATE|KW_WILD_NUMBER);
 
     /*-------------------------------*
      *  Create "system" topics:
@@ -737,6 +743,9 @@ PUBLIC int treedb_close_db(
     int idx; json_t *topic;
     json_array_foreach(topics, idx, topic) {
         const char *topic_name = json_string_value(topic);
+        if(strcmp(topic_name, "__schema_version__")==0) {
+            continue;
+        }
         treedb_close_topic(tranger, treedb_name, topic_name);
     }
     JSON_DECREF(topics);
@@ -1028,7 +1037,7 @@ PUBLIC int treedb_close_topic(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "List not found.",
+            "msg",          "%s", "List not found",
             "treedb_name",  "%s", treedb_name,
             "list",         "%s", path,
             NULL
@@ -2815,6 +2824,10 @@ PRIVATE int load_all_links(
     int idx; json_t *jn_topic;
     json_array_foreach(topics, idx, jn_topic) {
         const char *topic_name = json_string_value(jn_topic);
+        if(strcmp(topic_name, "__schema_version__")==0) {
+            continue;
+        }
+
         /*
          *  Loop nodes searching links
          */
