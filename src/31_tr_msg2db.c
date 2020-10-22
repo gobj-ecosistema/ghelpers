@@ -89,11 +89,14 @@ PUBLIC char *build_msg2db_index_path(
  ***************************************************************************/
 PUBLIC json_t *msg2db_open_db(
     json_t *tranger,
-    const char *msg2db_name,
+    const char *msg2db_name_,
     json_t *jn_schema,  // owned
     const char *options // "persistent"
 )
 {
+    char msg2db_name[NAME_MAX];
+    snprintf(msg2db_name, sizeof(msg2db_name), "%s", msg2db_name_);
+
     BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
 
     if(empty_string(msg2db_name)) {

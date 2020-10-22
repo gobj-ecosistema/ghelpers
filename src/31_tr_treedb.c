@@ -362,11 +362,14 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
  ***************************************************************************/
 PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
-    const char *treedb_name,
+    const char *treedb_name_,
     json_t *jn_schema,  // owned
     const char *options // "persistent"
 )
 {
+    char treedb_name[NAME_MAX];
+    snprintf(treedb_name, sizeof(treedb_name), "%s", treedb_name_);
+
     BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
 
     if(empty_string(treedb_name)) {
