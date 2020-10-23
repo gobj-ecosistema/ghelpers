@@ -336,6 +336,19 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
                 "writable"
         )
     );
+    json_array_append_new(
+        topic_cols_desc,
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s]}",
+            "id", "description",
+            "header", "Description",
+            "fillspace", 8,
+            "type",
+                "string",
+            "flag",
+                "persistent",
+                "writable"
+        )
+    );
 
     return topic_cols_desc;
 }
