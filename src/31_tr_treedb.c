@@ -397,7 +397,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         return 0;
     }
 
-    char schema_filename[NAME_MAX];
+    char schema_filename[NAME_MAX + sizeof(".treedb_schema.json")];
     if(strstr(treedb_name, ".treedb_schema.json")) {
         snprintf(schema_filename, sizeof(schema_filename), "%s",
             treedb_name

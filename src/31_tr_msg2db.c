@@ -111,7 +111,7 @@ PUBLIC json_t *msg2db_open_db(
         return 0;
     }
 
-    char schema_filename[NAME_MAX];
+    char schema_filename[NAME_MAX + sizeof(".msg2db_schema.json")];
     if(strstr(msg2db_name, ".msg2db_schema.json")) {
         snprintf(schema_filename, sizeof(schema_filename), "%s",
             msg2db_name
