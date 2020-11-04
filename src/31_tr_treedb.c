@@ -1506,6 +1506,7 @@ PUBLIC int parse_hooks(
                         "id",           "%s", id,
                         NULL
                     );
+                    log_debug_json(0, col, "hook field not found");
                     ret += -1;
                     continue;
                 }
@@ -2638,6 +2639,7 @@ PRIVATE int link_child_to_parent(
             "hook_name",        "%s", hook_name,
             NULL
         );
+        log_debug_json(0, parent_node, "hook field not found");
         return -1;
     }
 
@@ -4679,6 +4681,7 @@ PRIVATE int _link_nodes(
             "hook_name",    "%s", hook_name,
             NULL
         );
+        log_debug_json(0, parent_node, "hook field not found");
         return -1;
     }
 
@@ -5005,6 +5008,7 @@ PRIVATE int _unlink_nodes(
             "hook_name",    "%s", hook_name,
             NULL
         );
+        log_debug_json(0, parent_node, "hook field not found");
         return -1;
     }
 
