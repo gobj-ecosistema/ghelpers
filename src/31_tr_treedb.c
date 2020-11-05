@@ -3495,11 +3495,9 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive" "verbose"
+    const char *options // "permissive"
 )
 {
-    BOOL verbose = (options && strstr(options, "verbose"))?TRUE:FALSE;
-
     /*-------------------------------*
      *  Get the id, it's mandatory
      *-------------------------------*/
@@ -3522,17 +3520,15 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             json_object_set_new(kw, "id", json_sprintf("%"JSON_INTEGER_FORMAT, rowid));
             id = kw_get_str(kw, "id", 0, 0);
         } else {
-            if(verbose) {
-                log_error(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "Field 'id' required",
-                    "topic_name",   "%s", topic_name,
-                    NULL
-                );
-                log_debug_json(0, kw, "Field 'id' required");
-            }
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Field 'id' required",
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+            log_debug_json(0, kw, "Field 'id' required");
             JSON_DECREF(kw);
             return 0;
         }
