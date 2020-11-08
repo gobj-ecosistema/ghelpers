@@ -152,6 +152,21 @@ PRIVATE char *build_pkey_index_path(
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC BOOL treedb_is_treedbs_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    if(!treedb_get_id_index(tranger, treedb_name, topic_name)) {
+        return FALSE;
+    }
+    return TRUE;
+}
+
+/***************************************************************************
  * PUBLIC to use in tests
  ***************************************************************************/
 PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
@@ -1113,6 +1128,21 @@ PUBLIC int treedb_delete_topic(
     const char *topic_name
 )
 {
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        return -1;
+    }
+
     treedb_close_topic(tranger, treedb_name, topic_name);
     return tranger_delete_topic(tranger, topic_name);
 }
@@ -3512,6 +3542,22 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *options // "permissive"
 )
 {
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+
     /*-------------------------------*
      *  Get the id, it's mandatory
      *-------------------------------*/
@@ -3552,18 +3598,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  Get indexx: to create node
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
-    if(!indexx) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "What topic name? TreeDb index not found",
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        JSON_DECREF(kw);
-        return 0;
-    }
 
     /*-----------------------------------*
      *  Single: exists already the id?
@@ -4003,6 +4037,22 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *options // "create" ["permissive"], "clean"
 )
 {
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+
     BOOL create = (options && strstr(options, "create"))?TRUE:FALSE;
 
     /*-------------------------------*
@@ -4298,6 +4348,22 @@ PUBLIC int treedb_delete_node(
     const char *options // "force"
 )
 {
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        return 0;
+    }
+
     /*-------------------------------*
      *  Get id
      *-------------------------------*/
@@ -4374,17 +4440,6 @@ PUBLIC int treedb_delete_node(
      *  Get indexx: to delete node
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
-    if(!indexx) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "What topic name? TreeDb index not found",
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        return -1;
-    }
 
     /*-------------------------------*
      *  Check hooks and fkeys
@@ -5802,6 +5857,23 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
 )
 {
     /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_filter_);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    /*-----------------------------------*
      *  Use duplicate, will be modified
      *-----------------------------------*/
     json_t *jn_filter = jn_filter_?kw_duplicate(jn_filter_):0;
@@ -5811,19 +5883,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
      *  Get indexx: to list nodes
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
-    if(!indexx) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "What topic name? TreeDb index not found",
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        JSON_DECREF(jn_options);
-        JSON_DECREF(jn_filter);
-        return 0;
-    }
 
     /*--------------------------------------------*
      *      Search
@@ -5947,6 +6006,23 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     )
 )
 {
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_filter_);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
     /*-----------------------------------*
      *  Use duplicate, will be modified
      *-----------------------------------*/
@@ -6088,22 +6164,26 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     json_t *jn_options // owned, "collapsed"
 )
 {
-    /*-------------------------------*
-     *  Get indexx: to get node
-     *-------------------------------*/
-    json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
-    if(!indexx) {
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "What topic name? TreeDb index not found",
+            "msg",          "%s", "Topic name not found in treedbs",
             "topic_name",   "%s", topic_name,
             NULL
         );
         JSON_DECREF(jn_options);
         return 0;
     }
+
+    /*-------------------------------*
+     *  Get indexx: to get node
+     *-------------------------------*/
+    json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
 
     /*-------------------------------*
      *      Get

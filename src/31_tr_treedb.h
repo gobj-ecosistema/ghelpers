@@ -185,6 +185,11 @@ PUBLIC int current_snap_tag(
     const char *treedb_name
 );
 
+PUBLIC BOOL treedb_is_treedbs_topic(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+);
 PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
