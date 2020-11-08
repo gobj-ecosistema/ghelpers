@@ -98,7 +98,7 @@ PUBLIC int current_snap_tag(json_t *tranger, const char *treedb_name)
     char path[NAME_MAX];
     snprintf(path, sizeof(path), "treedbs_snaps`%s`activated_snap_tag", treedb_name);
 
-    return kw_get_int(tranger, path, 0, KW_REQUIRED);
+    return kw_get_int(tranger, path, 0, KW_REQUIRED|KW_DONT_LOG);
 }
 
 /***************************************************************************
@@ -166,7 +166,7 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
         tranger,
         path,
         0,
-        KW_REQUIRED
+        KW_REQUIRED|KW_DONT_LOG
     );
     return indexx;
 }
@@ -188,7 +188,7 @@ PRIVATE json_t *treedb_get_pkey2_index( // Return is NOT YOURS
         tranger,
         path,
         0,
-        KW_REQUIRED
+        KW_REQUIRED|KW_DONT_LOG
     );
     return indexy;
 }
@@ -383,7 +383,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     char treedb_name[NAME_MAX];
     snprintf(treedb_name, sizeof(treedb_name), "%s", treedb_name_);
 
-    BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
+    BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED|KW_DONT_LOG);
 
     if(empty_string(treedb_name)) {
         log_error(0,
@@ -410,7 +410,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 
     char schema_full_path[NAME_MAX*2];
     snprintf(schema_full_path, sizeof(schema_full_path), "%s/%s",
-        kw_get_str(tranger, "directory", "", KW_REQUIRED),
+        kw_get_str(tranger, "directory", "", KW_REQUIRED|KW_DONT_LOG),
         schema_filename
     );
 
@@ -424,7 +424,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 json_t *old_jn_schema = load_json_from_file(
                     schema_full_path,
                     "",
-                    kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
+                    kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG)
                 );
                 if(!master) {
                     JSON_DECREF(jn_schema);
@@ -460,11 +460,11 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
             );
             JSON_INCREF(jn_schema);
             save_json_to_file(
-                kw_get_str(tranger, "directory", 0, KW_REQUIRED),
+                kw_get_str(tranger, "directory", 0, KW_REQUIRED|KW_DONT_LOG),
                 schema_filename,
-                kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
-                kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
-                kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                kw_get_int(tranger, "xpermission", 0, KW_REQUIRED|KW_DONT_LOG),
+                kw_get_int(tranger, "rpermission", 0, KW_REQUIRED|KW_DONT_LOG),
+                kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
                 TRUE, // Create file if not exists or overwrite.
                 FALSE, // only_read
                 jn_schema     // owned
@@ -591,7 +591,7 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
                 "persistent", "required"
     );
     if(!tag_schema) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -923,11 +923,11 @@ PUBLIC json_t *treedb_create_topic(
         );
 
         save_json_to_file(
-            kw_get_str(tranger, "directory", 0, KW_REQUIRED),
+            kw_get_str(tranger, "directory", 0, KW_REQUIRED|KW_DONT_LOG),
             schema_filename,
-            kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
-            kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
-            kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            kw_get_int(tranger, "xpermission", 0, KW_REQUIRED|KW_DONT_LOG),
+            kw_get_int(tranger, "rpermission", 0, KW_REQUIRED|KW_DONT_LOG),
+            kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
             TRUE, // Create file if not exists or overwrite.
             FALSE, // only_read
             jn_schema     // owned
@@ -1097,7 +1097,7 @@ PUBLIC int treedb_close_topic(
         tranger,
         path,
         0,
-        KW_REQUIRED|KW_EXTRACT
+        KW_REQUIRED|KW_EXTRACT|KW_DONT_LOG
     );
     json_decref(data);
 
@@ -2238,7 +2238,9 @@ PRIVATE int load_id_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
-    json_t *deleted_records = kw_get_dict(list, "deleted_records", 0, KW_REQUIRED);
+    json_t *deleted_records = kw_get_dict(
+        list, "deleted_records", 0, KW_REQUIRED|KW_DONT_LOG
+    );
 
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
         /*---------------------------------*
@@ -2258,8 +2260,12 @@ PRIVATE int load_id_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
-                const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
+                const char *treedb_name = kw_get_str(
+                    list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
+                );
+                const char *topic_name = kw_get_str(
+                    list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
+                );
 
                 /*----------------------------------*
                  *  Get indexx: to load from disk
@@ -2347,8 +2353,12 @@ PRIVATE int load_pkey2_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 )
 {
-    const char *pkey2_name = kw_get_str(list, "pkey2_name", "", KW_REQUIRED);
-    json_t *deleted_records = kw_get_dict(list, "deleted_records", 0, KW_REQUIRED);
+    const char *pkey2_name = kw_get_str(
+        list, "pkey2_name", "", KW_REQUIRED|KW_DONT_LOG
+    );
+    json_t *deleted_records = kw_get_dict(
+        list, "deleted_records", 0, KW_REQUIRED|KW_DONT_LOG
+    );
 
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
         /*---------------------------------*
@@ -2368,8 +2378,12 @@ PRIVATE int load_pkey2_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                const char *treedb_name = kw_get_str(list, "treedb_name", 0, KW_REQUIRED);
-                const char *topic_name = kw_get_str(list, "topic_name", 0, KW_REQUIRED);
+                const char *treedb_name = kw_get_str(
+                    list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
+                );
+                const char *topic_name = kw_get_str(
+                    list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
+                );
 
                 /*---------------------------------*
                  *  Get indexy: to load from disk
@@ -5824,7 +5838,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
      *  Extrae ids
      */
     json_t *ids_list = 0;
-    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT|KW_DONT_LOG);
+    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT);
     if(jn_id) {
         ids_list = kwid_get_ids(jn_id);
         JSON_DECREF(jn_id);
@@ -5952,7 +5966,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
      *  Extrae ids
      */
     json_t *ids_list = 0;
-    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT|KW_DONT_LOG);
+    json_t *jn_id = kw_get_dict_value(jn_filter, "id", 0, KW_EXTRACT);
     if(jn_id) {
         ids_list = kwid_get_ids(jn_id);
         JSON_DECREF(jn_id);
@@ -6611,7 +6625,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
     );
 
     if(!snap) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -6624,7 +6638,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
 
     uint32_t user_flag = kw_get_int(snap, "id", 0, KW_REQUIRED|KW_WILD_NUMBER);
     if(user_flag==0 || user_flag >= 0xFFFFFFFF) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
