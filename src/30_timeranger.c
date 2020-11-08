@@ -1432,6 +1432,10 @@ PUBLIC json_t *tranger_list_topic_desc( // Return MUST be decref
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
+    if(!topic) {
+        // Error already logged
+        return 0;
+    }
     return kwid_new_list("verbose", topic, "cols");
 }
 
@@ -1444,6 +1448,10 @@ PUBLIC json_t *tranger_dict_topic_desc( // Return MUST be decref
 )
 {
     json_t *topic = tranger_topic(tranger, topic_name);
+    if(!topic) {
+        // Error already logged
+        return 0;
+    }
     return kwid_new_dict("verbose", topic, "cols");
 }
 

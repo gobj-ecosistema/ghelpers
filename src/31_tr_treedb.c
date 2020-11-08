@@ -166,7 +166,7 @@ PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
         tranger,
         path,
         0,
-        KW_REQUIRED|KW_DONT_LOG
+        0
     );
     return indexx;
 }
@@ -2276,7 +2276,7 @@ PRIVATE int load_id_callback(
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+                        "msg",          "%s", "What topic name? TreeDb index not found",
                         "topic_name",   "%s", topic_name,
                         NULL
                     );
@@ -3557,7 +3557,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+            "msg",          "%s", "What topic name? TreeDb index not found",
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -4379,7 +4379,7 @@ PUBLIC int treedb_delete_node(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+            "msg",          "%s", "What topic name? TreeDb index not found",
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -5812,11 +5812,11 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
      *-------------------------------*/
     json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
     if(!indexx) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+            "msg",          "%s", "What topic name? TreeDb index not found",
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -6097,7 +6097,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "TreeDb Topic indexx NOT FOUND",
+            "msg",          "%s", "What topic name? TreeDb index not found",
             "topic_name",   "%s", topic_name,
             NULL
         );
