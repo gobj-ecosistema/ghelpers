@@ -718,15 +718,15 @@ PUBLIC json_t *kw_get_dict(
             return default_value;
         }
         if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path NOT FOUND, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
             if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path NOT FOUND, default value returned",
-                    "path",         "%s", path,
-                    NULL
-                );
                 log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
             }
         }
@@ -772,15 +772,15 @@ PUBLIC json_t *kw_get_list(
             return default_value;
         }
         if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path NOT FOUND, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
             if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path NOT FOUND, default value returned",
-                    "path",         "%s", path,
-                    NULL
-                );
                 log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
             }
         }
@@ -826,15 +826,15 @@ PUBLIC json_int_t kw_get_int(
             return default_value;
         }
         if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path NOT FOUND, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
             if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path NOT FOUND, default value returned",
-                    "path",         "%s", path,
-                    NULL
-                );
                 log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
             }
         }
@@ -912,15 +912,15 @@ PUBLIC double kw_get_real(
             return default_value;
         }
         if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path NOT FOUND, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
             if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path NOT FOUND, default value returned",
-                    "path",         "%s", path,
-                    NULL
-                );
                 log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
             }
         }
@@ -991,15 +991,15 @@ PUBLIC BOOL kw_get_bool(
             return default_value;
         }
         if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path NOT FOUND, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
             if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path NOT FOUND, default value returned",
-                    "path",         "%s", path,
-                    NULL
-                );
                 log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
             }
         }
@@ -1082,15 +1082,15 @@ PUBLIC const char *kw_get_str(
             return default_value;
         }
         if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path NOT FOUND, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
             if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path NOT FOUND, default value returned",
-                    "path",         "%s", path,
-                    NULL
-                );
                 log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
             }
         }
@@ -1143,15 +1143,15 @@ PUBLIC json_t *kw_get_dict_value(
             return default_value;
         }
         if(flag & KW_REQUIRED) {
-            if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path NOT FOUND, default value returned",
-                    "path",         "%s", path,
-                    NULL
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path NOT FOUND, default value returned",
+                "path",         "%s", path,
+                NULL
                 );
+            if(!(flag & KW_DONT_LOG)) {
                 log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
             }
         }
