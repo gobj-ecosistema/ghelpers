@@ -2410,6 +2410,7 @@ PUBLIC json_t *kw_select( // WARNING return **duplicated** objects
     and returning the `keys` fields of row (select).
     If match_fn is 0 then kw_match_simple is used.
  ***************************************************************************/
+// TODO sin probar
 PUBLIC json_t *kw_select2( // WARNING return **clone** objects
     json_t *kw,         // NOT owned
     json_t *jn_keys,
