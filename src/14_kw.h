@@ -511,6 +511,22 @@ PUBLIC json_t *kw_select( // WARNING return **duplicated** objects
 
 /**rst**
     Being `kw` a row's list or list of dicts [{},...],
+    return a new list of **duplicated** kw filtering the rows by `jn_filter` (where),
+    and returning the `keys` fields of row (select).
+    If match_fn is 0 then kw_match_simple is used.
+**rst**/
+PUBLIC json_t *kw_select2( // WARNING return **clone** objects
+    json_t *kw,         // NOT owned
+    json_t *jn_keys,
+    json_t *jn_filter,  // owned
+    BOOL (*match_fn) (
+        json_t *kw,         // NOT owned
+        json_t *jn_filter   // owned
+    )
+);
+
+/**rst**
+    Being `kw` a row's list or list of dicts [{},...],
     return a new list of incref (clone) kw filtering the rows by `jn_filter` (where),
     If match_fn is 0 then kw_match_simple is used.
     NOTE Using JSON_INCREF/JSON_DECREF
