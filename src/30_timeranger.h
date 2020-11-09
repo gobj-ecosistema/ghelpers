@@ -318,32 +318,6 @@ PUBLIC int tranger_append_record(
 );
 
 /**rst**
-    Walk in topic through records, and callback with the matched record found.
-    The return is a list handler that must be close with tranger_close_list()
-    When the list is open, before return, all records will be sent to callback.
-    While the list is not closed, TimeRanger will be send new matched records to callback.
-
-    match_cond:
-
-        backward
-        only_md     (don't load jn_record on loading disk)
-
-        from_rowid
-        to_rowid
-        from_t
-        to_t
-        user_flag
-        not_user_flag
-        user_flag_mask_set
-        user_flag_mask_notset
-        key
-        notkey
-        from_tm
-        to_tm
-        rkey    regular expression of key
-**rst**/
-
-/**rst**
     Delete record.
 **rst**/
 PUBLIC int tranger_delete_record(
@@ -401,6 +375,34 @@ PUBLIC uint32_t tranger_read_user_flag(
 
 
 
+
+/**rst**
+    Walk in topic through records, and callback with the matched record found.
+    The return is a list handler that must be close with tranger_close_list()
+    When the list is open, before return, all records will be sent to callback.
+    While the list is not closed, TimeRanger will be send new matched records to callback.
+
+    match_cond:
+
+        backward
+        only_md     (don't load jn_record on loading disk)
+
+        from_rowid
+        to_rowid
+        from_t
+        to_t
+        user_flag
+        not_user_flag
+        user_flag_mask_set
+        user_flag_mask_notset
+        key
+        notkey
+        from_tm
+        to_tm
+        rkey    regular expression of key
+        filter  dict with fields to match
+
+**rst**/
 
 /*
  *  HACK Return of callback:
