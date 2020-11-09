@@ -789,35 +789,6 @@ PUBLIC BOOL kwid_compare_lists(
 /**rst**
     Utility for databases.
 
-    Being `kw` a {"id": "$id", ...}
-
-    return a **NEW** dict only with `fields` keys
-    if `kw` is matching `jn_filter`.
-
-    jn_fields can be
-        "$field"
-        ["$field1", "$field2",...]
-        {"$field1":{}, "$field2":{},...}
-
-    Return 0 if not matching
-
-    If match_fn is 0 then kw_match_simple is used.
-
-    NOTE Using JSON_INCREF/JSON_DECREF HACK
-**rst**/
-json_t *kwid_select( // WARNING be care, you can modify the origina kw
-    json_t *kw,             // not owned
-    json_t *jn_fields,      // owned
-    json_t *jn_filter,      // owned
-    BOOL (*match_fn) (
-        json_t *kw,         // not owned
-        json_t *jn_filter   // owned
-    )
-);
-
-/**rst**
-    Utility for databases.
-
     Being `kw` a:
 
     array-object:
