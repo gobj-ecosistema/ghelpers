@@ -363,7 +363,7 @@ PUBLIC q_msg trq_append(
 }
 
 /***************************************************************************
-    Get a message from iter by his key
+    Get a message from iter by his rowid
  ***************************************************************************/
 PUBLIC q_msg trq_get_by_rowid(tr_queue trq, uint64_t rowid)
 {
@@ -371,6 +371,22 @@ PUBLIC q_msg trq_get_by_rowid(tr_queue trq, uint64_t rowid)
 
     qmsg_foreach_forward(trq, msg) {
         if(msg->md_record.__rowid__ == rowid) {
+            return msg;
+        }
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+    Get a message from iter by his key
+ ***************************************************************************/
+PUBLIC q_msg trq_get_by_key(tr_queue trq, const char *key)
+{
+    register q_msg_t *msg;
+
+    qmsg_foreach_forward(trq, msg) {
+        if(strcmp(msg->md_record.key.s, key)==0) {
             return msg;
         }
     }

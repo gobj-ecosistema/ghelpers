@@ -89,9 +89,14 @@ PUBLIC q_msg trq_append(
 );
 
 /**rst**
-    Get a message from iter by his key
+    Get a message from iter by his rowid
 **rst**/
 PUBLIC q_msg trq_get_by_rowid(tr_queue trq, uint64_t rowid);
+
+/**rst**
+    Get a message from iter by his key
+**rst**/
+PUBLIC q_msg trq_get_by_key(tr_queue trq, const char *key);
 
 /**rst**
     Check pending status of a rowid (low level)
