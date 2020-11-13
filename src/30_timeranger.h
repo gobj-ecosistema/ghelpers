@@ -285,6 +285,10 @@ PUBLIC int tranger_write_topic_cols(
     json_t *jn_cols  // owned
 );
 
+PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
+    json_t *tranger,
+    const char *topic_name
+);
 PUBLIC json_t *tranger_list_topic_desc( // Return a list!,  MUST be decref
     json_t *tranger,
     const char *topic_name

@@ -1426,6 +1426,39 @@ PUBLIC int tranger_write_topic_cols(
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC json_t *tranger_topic_desc( // Return MUST be decref
+    json_t *tranger,
+    const char *topic_name
+)
+{
+    json_t *topic = tranger_topic(tranger, topic_name);
+    if(!topic) {
+        // Error already logged
+        return 0;
+    }
+    const char *fields[] = {
+        "topic_name",
+        "pkey",
+        "tkey",
+        "system_flag",
+        "topic_version",
+        0
+    };
+
+    json_t *desc = kw_clone_by_path(
+        json_incref(topic),
+        fields
+    );
+
+    json_t *cols = kwid_new_list("verbose", topic, "cols");
+    json_object_set_new(desc, "cols", cols);
+
+    return desc;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC json_t *tranger_list_topic_desc( // Return MUST be decref
     json_t *tranger,
     const char *topic_name
