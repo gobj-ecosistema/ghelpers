@@ -2611,6 +2611,8 @@ PUBLIC json_t *tranger_open_list(
     json_t *jn_list // owned
 )
 {
+    char title[256];
+
     json_t *list = create_json_record(list_json_desc);
     json_object_update(list, jn_list);
     JSON_DECREF(jn_list);
@@ -2629,6 +2631,8 @@ PUBLIC json_t *tranger_open_list(
     }
 
     json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
+
+    int trace_level = kw_get_int(tranger, "trace_level", 0, 0);
 
     tranger_load_record_callback_t load_record_callback =
         (tranger_load_record_callback_t)(size_t)kw_get_int(
@@ -2687,6 +2691,9 @@ PUBLIC json_t *tranger_open_list(
     }
 
     while(!end) {
+        if(trace_level) {
+            print_md1_record(tranger, topic, &md_record, title, sizeof(title));
+        }
         if(tranger_match_record(
                 tranger,
                 topic,
@@ -2694,6 +2701,10 @@ PUBLIC json_t *tranger_open_list(
                 &md_record,
                 &end
             )) {
+
+            if(trace_level) {
+                trace_msg0("ok - %s", title);
+            }
 
             json_t *jn_record = 0;
             md_record.__system_flag__ |= sf_loading_from_disk;
@@ -2745,6 +2756,10 @@ PUBLIC json_t *tranger_open_list(
                     data,
                     jn_record // owned
                 );
+            }
+        } else {
+            if(trace_level) {
+                trace_msg0("XX - %s", title);
             }
         }
         if(end) {
@@ -3804,3 +3819,13 @@ PUBLIC void print_record_filename(
     );
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC void tranger_set_trace_level(
+    json_t *tranger,
+    int trace_level
+)
+{
+    json_object_set_new(tranger, "trace_level", json_integer(trace_level));
+}

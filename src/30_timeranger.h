@@ -555,6 +555,11 @@ PUBLIC void print_record_filename(
     int bfsize
 );
 
+PUBLIC void tranger_set_trace_level(
+    json_t *tranger,
+    int trace_level
+);
+
 #ifdef __cplusplus
 }
 #endif
