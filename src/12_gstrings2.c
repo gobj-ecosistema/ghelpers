@@ -138,7 +138,7 @@ PUBLIC void split_free2(const char **list)
  ***************************************************************************/
 PUBLIC const char ** split3(const char *str, const char *delim, int *plist_size)
 {
-    char *ptr;
+    char *ptr, *p;
 
     if(plist_size) {
         *plist_size = 0; // error case
@@ -151,7 +151,8 @@ PUBLIC const char ** split3(const char *str, const char *delim, int *plist_size)
     // Get list size
     int list_size = 0;
 
-    while ((ptr = strsep(&buffer, delim)) != NULL) {
+    p = buffer;
+    while ((ptr = strsep(&p, delim)) != NULL) {
         list_size++;
     }
     gbmem_free(buffer);
@@ -166,7 +167,8 @@ PUBLIC const char ** split3(const char *str, const char *delim, int *plist_size)
 
     // Fill list
     int i = 0;
-    while ((ptr = strsep(&buffer, delim)) != NULL) {
+    p = buffer;
+    while ((ptr = strsep(&p, delim)) != NULL) {
         if (i < list_size) {
             list[i] = gbmem_strdup(ptr);
             i++;
