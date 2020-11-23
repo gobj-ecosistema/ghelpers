@@ -57,6 +57,15 @@ PUBLIC const char ** split2(const char *str, const char *delim, int *list_size);
 PUBLIC void split_free2(const char **list);
 
 /**rst**
+    Split a string by delim returning the list of strings.
+    Fill list_size if not null.
+    WARNING Remember free with split_free3().
+    HACK split() and split2() don't include the empty strings! this yes.
+**rst**/
+PUBLIC const char ** split3(const char *str, const char *delim, int *list_size);
+PUBLIC void split_free3(const char **list);
+
+/**rst**
     Get a substring from begin to end, like python
     WARNING Remember free with substring_free().
 **rst**/

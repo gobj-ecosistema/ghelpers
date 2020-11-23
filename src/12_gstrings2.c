@@ -131,6 +131,72 @@ PUBLIC void split_free2(const char **list)
 }
 
 /***************************************************************************
+    Split a string by delim returning the list of strings.
+    Fill list_size if not null.
+    WARNING Remember free with split_free3().
+    HACK split() and split2() don't include the empty strings! this yes.
+ ***************************************************************************/
+PUBLIC const char ** split3(const char *str, const char *delim, int *plist_size)
+{
+    char *ptr;
+
+    if(plist_size) {
+        *plist_size = 0; // error case
+    }
+    char *buffer = gbmem_strdup(str);
+    if(!buffer) {
+        return 0;
+    }
+
+    // Get list size
+    int list_size = 0;
+
+    while ((ptr = strsep(&buffer, delim)) != NULL) {
+        list_size++;
+    }
+    gbmem_free(buffer);
+
+    buffer = gbmem_strdup(str);   // Prev buffer is destroyed!
+    if(!buffer) {
+        return 0;
+    }
+    // Alloc list
+    int size = sizeof(char *) * (list_size + 1);
+    const char **list = gbmem_malloc(size);
+
+    // Fill list
+    int i = 0;
+    while ((ptr = strsep(&buffer, delim)) != NULL) {
+        if (i < list_size) {
+            list[i] = gbmem_strdup(ptr);
+            i++;
+        }
+    }
+    gbmem_free(buffer);
+
+    if(plist_size) {
+        *plist_size = i;
+    }
+    return list;
+}
+
+/***************************************************************************
+ *  Free split list content
+ ***************************************************************************/
+PUBLIC void split_free3(const char **list)
+{
+    if(list) {
+        char **p = (char **)list;
+        while(*p) {
+            gbmem_free(*p);
+            *p = 0;
+            p++;
+        }
+        gbmem_free(list);
+    }
+}
+
+/***************************************************************************
     Get a substring from begin to end, like python
     WARNING Remember gbmem_free with gbmem_free().
  ***************************************************************************/
