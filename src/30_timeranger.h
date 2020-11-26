@@ -125,7 +125,7 @@ typedef struct { // Size: 96 bytes
     uint32_t __user_flag__;
     union {
         uint64_t i;
-        char s[RECORD_KEY_VALUE_MAX];
+        char s[RECORD_KEY_VALUE_MAX];  // Maximum size of string keys is RECORD_KEY_VALUE_MAX-1
     } key;
 } md_record_t;
 
