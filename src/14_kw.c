@@ -3297,12 +3297,8 @@ PUBLIC BOOL kwid_match_nid(json_t *ids, const char *id, int max_id_size)
             int idx; json_t *jn_value;
             json_array_foreach(ids, idx, jn_value) {
                 const char *value = json_string_value(jn_value);
-                if(value) {
-                    int ret = strncmp(id, value, max_id_size);
-                    int x = strlen(id);
-                    if(strncmp(id, value, max_id_size)==0)  {
-                        return TRUE;
-                    }
+                if(value && strncmp(id, value, max_id_size)==0)  {
+                    return TRUE;
                 }
             }
         }
