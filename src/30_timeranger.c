@@ -3148,7 +3148,7 @@ PUBLIC BOOL tranger_match_record(
                     BOOL some = FALSE;
                     const char *key_; json_t *jn_value;
                     json_object_foreach(json_object_get(match_cond, "key"), key_, jn_value) {
-                        if(strncmp(md_record->key.s, key_, sizeof(md_record->key.s))==0) {
+                        if(strncmp(md_record->key.s, key_, sizeof(md_record->key.s)-1)==0) {
                             some = TRUE;
                             break; // Con un match de key ya es true
                         }
@@ -3167,7 +3167,7 @@ PUBLIC BOOL tranger_match_record(
                             if(strncmp(
                                     md_record->key.s,
                                     json_string_value(jn_value),
-                                    sizeof(md_record->key.s))==0) {
+                                    sizeof(md_record->key.s)-1)==0) {
                                 some = TRUE;
                                 break; // Con un match de key ya es true
                             }
@@ -3186,7 +3186,7 @@ PUBLIC BOOL tranger_match_record(
                     if(!key) {
                         return FALSE;
                     }
-                    if(strncmp(md_record->key.s, key, sizeof(md_record->key.s))!=0) {
+                    if(strncmp(md_record->key.s, key, sizeof(md_record->key.s)-1)!=0) {
                         return FALSE;
                     }
                 }
@@ -3445,7 +3445,7 @@ PUBLIC BOOL tranger_match_record(
             if(!notkey) {
                 return FALSE;
             }
-            if(strncmp(md_record->key.s, notkey, sizeof(md_record->key.s))==0) {
+            if(strncmp(md_record->key.s, notkey, sizeof(md_record->key.s)-1)==0) {
                 return FALSE;
             }
         } else {

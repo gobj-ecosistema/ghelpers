@@ -110,6 +110,7 @@ typedef enum { // WARNING table with name's strings in 30_timeranger.c
 } system_flag_t;
 
 #define RECORD_KEY_VALUE_MAX   (48)
+#define tranger_max_key_size() (RECORD_KEY_VALUE_MAX-1)
 
 #pragma pack(1)
 
