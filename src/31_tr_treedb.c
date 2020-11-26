@@ -3559,7 +3559,8 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     }
 
     /*-------------------------------*
-     *  Get the id, it's mandatory
+     *  Get the id to create node
+     *  it's mandatory
      *-------------------------------*/
     const char *id = kw_get_str(kw, "id", 0, 0);
     if(empty_string(id)) {
@@ -4056,7 +4057,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     BOOL create = (options && strstr(options, "create"))?TRUE:FALSE;
 
     /*-------------------------------*
-     *  Get id
+     *  Get id to update node
      *-------------------------------*/
     const char *id = kw_get_str(kw, "id", "", 0);
     if(empty_string(id)) {
@@ -4365,7 +4366,7 @@ PUBLIC int treedb_delete_node(
     }
 
     /*-------------------------------*
-     *  Get id
+     *  Get id to delete node
      *-------------------------------*/
     const char *id = kw_get_str(kw, "id", 0, 0);
     if(empty_string(id)) {
