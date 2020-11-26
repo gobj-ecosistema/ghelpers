@@ -3243,7 +3243,7 @@ PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
             int idx; json_t *jn_value;
             json_array_foreach(ids, idx, jn_value) {
                 const char *value = json_string_value(jn_value);
-                if(value && strcmp(value, id)==0)  {
+                if(value && strcmp(id, value)==0)  {
                     return TRUE;
                 }
             }
@@ -3253,7 +3253,7 @@ PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
         {
             const char *key; json_t *jn_value;
             json_object_foreach(ids, key, jn_value) {
-                if(strcmp(key, id)==0)  {
+                if(strcmp(id, key)==0)  {
                     return TRUE;
                 }
             }
@@ -3297,8 +3297,12 @@ PUBLIC BOOL kwid_match_nid(json_t *ids, const char *id, int max_id_size)
             int idx; json_t *jn_value;
             json_array_foreach(ids, idx, jn_value) {
                 const char *value = json_string_value(jn_value);
-                if(value && strncmp(value, id, max_id_size)==0)  {
-                    return TRUE;
+                if(value) {
+                    int ret = strncmp(id, value, max_id_size);
+                    int x = strlen(id);
+                    if(strncmp(id, value, max_id_size)==0)  {
+                        return TRUE;
+                    }
                 }
             }
         }
@@ -3307,7 +3311,7 @@ PUBLIC BOOL kwid_match_nid(json_t *ids, const char *id, int max_id_size)
         {
             const char *key; json_t *jn_value;
             json_object_foreach(ids, key, jn_value) {
-                if(strncmp(key, id, max_id_size)==0)  {
+                if(strncmp(id, key, max_id_size)==0)  {
                     return TRUE;
                 }
             }
