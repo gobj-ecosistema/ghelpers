@@ -697,6 +697,16 @@ PUBLIC BOOL kwid_match_id(
 
 /**rst**
     Utility for databases.
+    Return TRUE if `id` WITH LIMITED SIZE is in the list/dict/str `ids`
+**rst**/
+PUBLIC BOOL kwid_match_nid(
+    json_t *ids,
+    const char *id,
+    int max_id_size
+);
+
+/**rst**
+    Utility for databases.
     Being `kw` a:
         - list of strings [s,...]
         - list of dicts [{},...]

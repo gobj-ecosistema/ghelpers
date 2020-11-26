@@ -3274,6 +3274,60 @@ PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
 
 /***************************************************************************
     Utility for databases.
+    Return TRUE if `id` WITH LIMITED SIZE is in the list/dict/str `ids`
+ ***************************************************************************/
+PUBLIC BOOL kwid_match_nid(json_t *ids, const char *id, int max_id_size)
+{
+    if(!ids || !id) {
+        // Si no hay filtro pasan todos.
+        return TRUE;
+    }
+    if(json_is_object(ids) && json_object_size(ids)==0) {
+        // A empty object at first level evaluate as true.
+        return TRUE;
+    }
+    if(json_is_array(ids) && json_array_size(ids)==0) {
+        // A empty object at first level evaluate as true.
+        return TRUE;
+    }
+
+    switch(json_typeof(ids)) {
+    case JSON_ARRAY:
+        {
+            int idx; json_t *jn_value;
+            json_array_foreach(ids, idx, jn_value) {
+                const char *value = json_string_value(jn_value);
+                if(value && strncmp(value, id, max_id_size)==0)  {
+                    return TRUE;
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            const char *key; json_t *jn_value;
+            json_object_foreach(ids, key, jn_value) {
+                if(strncmp(key, id, max_id_size)==0)  {
+                    return TRUE;
+                }
+            }
+        }
+        break;
+
+    case JSON_STRING:
+        if(strncmp(id, json_string_value(ids), max_id_size)==0) {
+            return TRUE;
+        }
+        break;
+
+    default:
+        break;
+    }
+    return FALSE;
+}
+
+/***************************************************************************
+    Utility for databases.
     Being `kw` a:
         - list of strings [s,...]
         - list of dicts [{},...]
