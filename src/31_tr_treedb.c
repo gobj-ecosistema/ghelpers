@@ -231,7 +231,10 @@ PRIVATE json_t *exist_primary_node(
     const char *key
 )
 {
-    return json_object_get(indexx, key);
+    // HACK tranger keys have a maximum length
+    char key_[RECORD_KEY_VALUE_MAX];
+    snprintf(key_, sizeof(key_), "%s", key);
+    return json_object_get(indexx, key_);
 }
 
 /***************************************************************************
@@ -243,7 +246,10 @@ PRIVATE int add_primary_node(
     json_t *node // incref
 )
 {
-    return json_object_set(indexx, key, node);
+    // HACK tranger keys have a maximum length
+    char key_[RECORD_KEY_VALUE_MAX];
+    snprintf(key_, sizeof(key_), "%s", key);
+    return json_object_set(indexx, key_, node);
 }
 
 /***************************************************************************
@@ -4118,7 +4124,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 return 0;
             }
         } else {
-            log_error(LOG_OPT_TRACE_STACK,
+            log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -4399,7 +4405,7 @@ PUBLIC int treedb_delete_node(
         0
     );
     if(!node) {
-        log_error(LOG_OPT_TRACE_STACK,
+        log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
