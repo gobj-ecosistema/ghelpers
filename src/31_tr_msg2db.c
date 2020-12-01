@@ -854,6 +854,9 @@ PRIVATE int load_record_callback(
 )
 {
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
+        /*---------------------------------*
+         *  Loading from disk
+         *---------------------------------*/
         /*-------------------------------*
          *      Get indexx
          *-------------------------------*/
@@ -934,6 +937,10 @@ PRIVATE int load_record_callback(
             pkey2_value,
             jn_record
         );
+    } else {
+        /*---------------------------------*
+         *      Working in memory
+         *---------------------------------*/
     }
 
     JSON_DECREF(jn_record);

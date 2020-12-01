@@ -4477,6 +4477,7 @@ PUBLIC int treedb_delete_node(
             JSON_DECREF(jn_hooks);
 
         } else {
+            to_delete = FALSE;
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
