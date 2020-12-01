@@ -4421,9 +4421,6 @@ PUBLIC int treedb_delete_node(
         JSON_DECREF(kw);
         return -1;
     }
-    if(kw != node) {
-        JSON_DECREF(kw);
-    }
 
     /*-------------------------------*
      *      Get record info
@@ -4476,9 +4473,26 @@ PUBLIC int treedb_delete_node(
             }
             JSON_DECREF(jn_hooks);
 
+            /*
+             *  Re-checks down links
+             */
+            json_t *down_refs_ = get_node_down_refs(tranger, node);
+            if(json_array_size(down_refs_)>0) {
+                to_delete = FALSE;
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Cannot delete node: still has down links",
+                    "topic_name",   "%s", topic_name,
+                    "id",           "%s", id,
+                    NULL
+                );
+            }
+
         } else {
             to_delete = FALSE;
-            log_error(0,
+            log_warning(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -4569,7 +4583,7 @@ PUBLIC int treedb_delete_node(
 
         } else {
             to_delete = FALSE;
-            log_error(0,
+            log_warning(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -4584,7 +4598,7 @@ PUBLIC int treedb_delete_node(
 
     if(!to_delete) {
         // Error already logged
-        JSON_DECREF(node);
+        JSON_DECREF(kw);
         return -1;
     }
 
@@ -4685,10 +4699,11 @@ PUBLIC int treedb_delete_node(
             "id",           "%s", id,
             NULL
         );
-        JSON_DECREF(node);
+        JSON_DECREF(kw);
         return -1;
     }
 
+    JSON_DECREF(kw);
     return 0;
 }
 
