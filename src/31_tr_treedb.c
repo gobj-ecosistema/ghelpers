@@ -1864,30 +1864,9 @@ PRIVATE int set_tranger_field_value(
         }
     }
 
-    /*
-     *  Null
-     */
-    if(json_is_null(value)) {
-        if(kw_has_word(desc_flag, "notnull", 0)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Field cannot be null",
-                "topic_name",   "%s", topic_name,
-                "field",        "%s", field,
-                "value",        "%j", value,
-                NULL
-            );
-            return -1;
-        } else {
-            json_object_set(record, field, value);
-            return 0;
-        }
-    }
-
     BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
     BOOL wild_conversion = kw_has_word(desc_flag, "wild", 0)?TRUE:FALSE;
+    BOOL is_enum = kw_has_word(desc_flag, "enum", 0)?TRUE:FALSE;
     BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
     BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
     if(!(is_persistent || is_hook || is_fkey)) {
@@ -1895,49 +1874,131 @@ PRIVATE int set_tranger_field_value(
         return 0;
     }
 
+    /*
+     *  Null
+     */
+    if(json_is_null(value)) {
+        if(!(is_hook || is_fkey || is_enum)) {
+            if(kw_has_word(desc_flag, "notnull", 0)) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Field cannot be null",
+                    "topic_name",   "%s", topic_name,
+                    "field",        "%s", field,
+                    "value",        "%j", value,
+                    NULL
+                );
+                return -1;
+            } else {
+                json_object_set(record, field, value);
+                return 0;
+            }
+        }
+    }
+
+    const char *real_type = type;
+    if(is_hook) {
+        type = "hook";
+    } else if(is_fkey) {
+        type = "fkey";
+    } else if(is_enum) {
+        type = "enum";
+    }
+
     SWITCHS(type) {
+        CASES("hook")
+        CASES("fkey")
+            SWITCHS(real_type) {
+                CASES("list")
+                CASES("array")
+                    if(create) {
+                        json_object_set_new(record, field, json_array());
+                    } else {
+                        json_t *mix_ids = 0;
+                        if(is_fkey && (mix_ids=filtra_fkeys(value))) {
+                            json_object_set_new(record, field, mix_ids);
+                        } else {
+                            json_object_set_new(record, field, json_array());
+                        }
+                    }
+                    break;
+
+                CASES("dict")
+                CASES("object")
+                    if(create) {
+                        // No dejes poner datos en la creación.
+                        json_object_set_new(record, field, json_object());
+                    } else {
+                        json_t *mix_ids = 0;
+                        if(is_fkey && (mix_ids=filtra_fkeys(value))) {
+                            json_object_set_new(record, field, mix_ids);
+                        } else {
+                            json_object_set_new(record, field, json_object());
+                        }
+                    }
+                    break;
+
+                CASES("string")
+                    if(create) {
+                        // No dejes poner datos en la creación.
+                        json_object_set_new(record, field, json_string(""));
+                    } else {
+                        json_t *mix_ids = 0;
+                        if(is_fkey && (mix_ids=filtra_fkeys(value))) {
+                            json_object_set_new(record, field, mix_ids);
+                        } else {
+                            json_object_set_new(record, field, json_string(""));
+                        }
+                    }
+                    break;
+
+                DEFAULTS
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Bad hook/fkey col type ",
+                        "topic_name",   "%s", topic_name,
+                        "col",          "%j", col,
+                        "field",        "%s", field,
+                        "type",         "%s", type,
+                        NULL
+                    );
+                    return -1;
+            } SWITCHS_END;
+            break;
+
+        CASES("enum")
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "enum NOT IMPLEMENTED",
+                "topic_name",   "%s", topic_name,
+                "col",          "%j", col,
+                "field",        "%s", field,
+                "value",        "%j", value,
+                NULL
+            );
+            break;
+
         CASES("list")
         CASES("array")
-            if(is_fkey || is_hook) {
-                if(create) {
-                    json_object_set_new(record, field, json_array());
-                } else {
-                    json_t *mix_ids = 0;
-                    if(is_fkey && (mix_ids=filtra_fkeys(value))) {
-                        json_object_set_new(record, field, mix_ids);
-                    } else {
-                        json_object_set_new(record, field, json_array());
-                    }
-                }
+            if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                json_object_set(record, field, value);
             } else {
-                if(JSON_TYPEOF(value, JSON_ARRAY)) {
-                    json_object_set(record, field, value);
-                } else {
-                    json_object_set_new(record, field, json_array());
-                }
+                json_object_set_new(record, field, json_array());
             }
             break;
 
         CASES("dict")
         CASES("object")
-            if(is_fkey || is_hook) {
-                if(create) {
-                    // No dejes poner datos en la creación.
-                    json_object_set_new(record, field, json_object());
-                } else {
-                    json_t *mix_ids = 0;
-                    if(is_fkey && (mix_ids=filtra_fkeys(value))) {
-                        json_object_set_new(record, field, mix_ids);
-                    } else {
-                        json_object_set_new(record, field, json_object());
-                    }
-                }
+            if(JSON_TYPEOF(value, JSON_OBJECT)) {
+                json_object_set(record, field, value);
             } else {
-                if(JSON_TYPEOF(value, JSON_OBJECT)) {
-                    json_object_set(record, field, value);
-                } else {
-                    json_object_set_new(record, field, json_object());
-                }
+                json_object_set_new(record, field, json_object());
             }
             break;
 
@@ -1951,7 +2012,7 @@ PRIVATE int set_tranger_field_value(
                 json_object_set_new(record, field, json_string(v));
                 gbmem_free(v);
             } else {
-                log_error(LOG_OPT_TRACE_STACK,
+                log_error(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1975,7 +2036,7 @@ PRIVATE int set_tranger_field_value(
                 json_int_t v = jn2integer(value);
                 json_object_set_new(record, field, json_integer(v));
             } else {
-                log_error(LOG_OPT_TRACE_STACK,
+                log_error(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1998,7 +2059,7 @@ PRIVATE int set_tranger_field_value(
                 double v = jn2real(value);
                 json_object_set_new(record, field, json_real(v));
             } else {
-                log_error(LOG_OPT_TRACE_STACK,
+                log_error(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2023,7 +2084,7 @@ PRIVATE int set_tranger_field_value(
             break;
 
         DEFAULTS
-            log_error(LOG_OPT_TRACE_STACK,
+            log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2210,8 +2271,12 @@ PRIVATE json_t *record2tranger(
     const char *field; json_t *col;
     json_object_foreach(cols, field, col) {
         json_t *value = kw_get_dict_value(kw, field, 0, 0);
-        if(!value && create) {
-            value = kw_get_dict_value(col, "default", 0, 0);
+        if(!value) {
+            if(create) {
+                value = kw_get_dict_value(col, "default", 0, 0);
+            } else {
+                // TODO en update debería recoger los valores del node previo,
+            }
         }
         if(set_tranger_field_value(
                 topic_name,
@@ -3855,6 +3920,7 @@ PUBLIC int treedb_save_node(
 
     /*---------------------------------------*
      *  Create the tranger record to update
+     *  TODO debería añadir los campos que faltan
      *---------------------------------------*/
     json_t *record = record2tranger(tranger, topic_name, node, "", FALSE);
     if(!record) {
