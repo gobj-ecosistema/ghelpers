@@ -76,6 +76,11 @@ PUBLIC int treedb_close_db(
     const char *treedb_name
 );
 
+PUBLIC int treedb_set_callback(
+    json_t *tranger,
+    const char *treedb_name
+);
+
 /***************************************************************************
     Return is NOT YOURS, pkey MUST be "id"
     WARNING This function don't load hook links.

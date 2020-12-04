@@ -12,7 +12,6 @@
         "max_key_instances": 1
     },
     "load_record_callback": 94862617778903,
-    "record_loaded_callback": 0,
     "messages": {
         ----
     }

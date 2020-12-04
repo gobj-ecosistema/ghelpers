@@ -425,11 +425,6 @@ typedef int (*tranger_load_record_callback_t)(
      */
     json_t *jn_record // must be owned
 );
-typedef int (*tranger_record_loaded_callback_t)(
-    json_t *tranger,
-    json_t *topic,
-    json_t *list
-);
 
 /**rst**
     Open list, load records in memory
@@ -439,7 +434,6 @@ static const json_desc_t list_json_desc[] = {
 {"topic_name",              "str",      ""},
 {"match_cond",              "dict",     "{}"},
 {"load_record_callback",    "int",      ""},
-{"record_loaded_callback",  "int",      ""},
 {0}
 };
 PUBLIC json_t *tranger_open_list(

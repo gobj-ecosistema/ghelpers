@@ -2084,13 +2084,6 @@ PUBLIC int tranger_append_record(
                 md_record,
                 0
             )) {
-            tranger_record_loaded_callback_t record_loaded_callback =
-                (tranger_record_loaded_callback_t )(size_t)kw_get_int(
-                list,
-                "record_loaded_callback",
-                0,
-                0
-            );
             tranger_load_record_callback_t load_record_callback =
                 (tranger_load_record_callback_t)(size_t)kw_get_int(
                 list,
@@ -2117,14 +2110,6 @@ PUBLIC int tranger_append_record(
                         kw_get_list(list, "data", 0, KW_REQUIRED),
                         jn_record
                     );
-                    if(record_loaded_callback) {
-                        // Inform user list: record in real time
-                        record_loaded_callback(
-                            tranger,
-                            topic,
-                            list
-                        );
-                    }
                 }
             } else {
                 json_object_set_new(jn_record, "__md_tranger__", tranger_md2json(md_record));
@@ -2132,14 +2117,6 @@ PUBLIC int tranger_append_record(
                     kw_get_list(list, "data", 0, KW_REQUIRED),
                     jn_record
                 );
-                if(record_loaded_callback) {
-                    // Inform user list: record in real time
-                    record_loaded_callback(
-                        tranger,
-                        topic,
-                        list
-                    );
-                }
             }
         }
     }
