@@ -788,6 +788,38 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC int treedb_set_callback(
+    json_t *tranger,
+    const char *treedb_name,
+    tranger_load_record_callback_t load_record_callback
+)
+{
+    /*------------------------------*
+     *  Get treedb
+     *------------------------------*/
+    json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
+    if(!treedb) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDB not found.",
+            "treedb_name",  "%s", treedb_name,
+            NULL
+        );
+        return -1;
+    }
+    json_object_set_new(
+        treedb,
+        "__load_record_callback__",
+        json_integer((json_int_t)(size_t)load_record_callback)
+    );
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC int treedb_close_db(
     json_t *tranger,
     const char *treedb_name
@@ -800,9 +832,6 @@ PUBLIC int treedb_close_db(
     int idx; json_t *topic;
     json_array_foreach(topics, idx, topic) {
         const char *topic_name = json_string_value(topic);
-        if(strcmp(topic_name, "__schema_version__")==0) {
-            continue;
-        }
         treedb_close_topic(tranger, treedb_name, topic_name);
     }
     JSON_DECREF(topics);
@@ -866,7 +895,7 @@ PUBLIC json_t *treedb_create_topic(
     }
 
     /*------------------------------*
-     *  Get treedb list
+     *  Get treedb
      *------------------------------*/
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
@@ -1228,6 +1257,9 @@ PUBLIC json_t *treedb_topics(
     char list_id[NAME_MAX];
     const char *topic_name; json_t *topic_records;
     json_object_foreach(treedb, topic_name, topic_records) {
+        if(!json_is_object(topic_records)) {
+            continue;
+        }
         build_id_index_path(list_id, sizeof(list_id), treedb_name, topic_name);
         if(options && strstr(options, "dict")) {
             json_t *dict = json_object();
@@ -2975,9 +3007,6 @@ PRIVATE int load_all_links(
     int idx; json_t *jn_topic;
     json_array_foreach(topics, idx, jn_topic) {
         const char *topic_name = json_string_value(jn_topic);
-        if(strcmp(topic_name, "__schema_version__")==0) {
-            continue;
-        }
 
         /*
          *  Loop nodes searching links

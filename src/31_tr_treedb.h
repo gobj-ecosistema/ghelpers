@@ -78,7 +78,8 @@ PUBLIC int treedb_close_db(
 
 PUBLIC int treedb_set_callback(
     json_t *tranger,
-    const char *treedb_name
+    const char *treedb_name,
+    tranger_load_record_callback_t tranger_load_record_callback
 );
 
 /***************************************************************************
