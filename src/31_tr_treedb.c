@@ -788,10 +788,10 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_set_callback(
+PUBLIC int treedb_set_load_node_callback(
     json_t *tranger,
     const char *treedb_name,
-    tranger_load_record_callback_t load_record_callback
+    treedb_load_node_callback_t load_record_callback
 )
 {
     /*------------------------------*
@@ -2393,6 +2393,30 @@ PRIVATE int load_id_callback(
         list, "deleted_records", 0, KW_REQUIRED|KW_DONT_LOG
     );
 
+    const char *treedb_name = kw_get_str(
+        list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
+    );
+    const char *topic_name = kw_get_str(
+        list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
+    );
+
+    /*----------------------------------*
+     *  Get indexx: to load from disk
+     *----------------------------------*/
+    json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
+    if(!indexx) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "What topic name? TreeDb index not found",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_record);
+        return 0;  // Timeranger: does not load the record, it's mine.
+    }
+
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
         /*---------------------------------*
          *  Loading treedb from disk
@@ -2411,30 +2435,6 @@ PRIVATE int load_id_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                const char *treedb_name = kw_get_str(
-                    list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
-                );
-                const char *topic_name = kw_get_str(
-                    list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
-                );
-
-                /*----------------------------------*
-                 *  Get indexx: to load from disk
-                 *----------------------------------*/
-                json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
-                if(!indexx) {
-                    log_error(0,
-                        "gobj",         "%s", __FILE__,
-                        "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "What topic name? TreeDb index not found",
-                        "topic_name",   "%s", topic_name,
-                        NULL
-                    );
-                    JSON_DECREF(jn_record);
-                    return 0;  // Timeranger: does not load the record, it's mine.
-                }
-
                 /*-------------------------------*
                  *  Exists already the node?
                  *-------------------------------*/
@@ -2511,6 +2511,36 @@ PRIVATE int load_pkey2_callback(
         list, "deleted_records", 0, KW_REQUIRED|KW_DONT_LOG
     );
 
+    const char *treedb_name = kw_get_str(
+        list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
+    );
+    const char *topic_name = kw_get_str(
+        list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
+    );
+
+    /*---------------------------------*
+     *  Get indexy: to load from disk
+     *---------------------------------*/
+    json_t *indexy = treedb_get_pkey2_index(
+        tranger,
+        treedb_name,
+        topic_name,
+        pkey2_name
+    );
+    if(!indexy) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
+            "topic_name",   "%s", topic_name,
+            "pkey2_name",   "%s", pkey2_name,
+            NULL
+        );
+        JSON_DECREF(jn_record);
+        return 0;  // Timeranger: does not load the record, it's mine.
+    }
+
     if(md_record->__system_flag__ & (sf_loading_from_disk)) {
         /*---------------------------------*
          *  Loading treedb from disk
@@ -2529,36 +2559,6 @@ PRIVATE int load_pkey2_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
-                const char *treedb_name = kw_get_str(
-                    list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
-                );
-                const char *topic_name = kw_get_str(
-                    list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
-                );
-
-                /*---------------------------------*
-                 *  Get indexy: to load from disk
-                 *---------------------------------*/
-                json_t *indexy = treedb_get_pkey2_index(
-                    tranger,
-                    treedb_name,
-                    topic_name,
-                    pkey2_name
-                );
-                if(!indexy) {
-                    log_error(0,
-                        "gobj",         "%s", __FILE__,
-                        "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
-                        "topic_name",   "%s", topic_name,
-                        "pkey2_name",   "%s", pkey2_name,
-                        NULL
-                    );
-                    JSON_DECREF(jn_record);
-                    return 0;  // Timeranger: does not load the record, it's mine.
-                }
-
                 const char *pkey2_value = get_key2_value(
                     tranger,
                     topic_name,
@@ -2624,6 +2624,26 @@ PRIVATE int load_pkey2_callback(
         if(json_object_get(deleted_records, md_record->key.s)) {
             // This key is operative again
             json_object_del(deleted_records, md_record->key.s);
+        }
+        json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
+
+        tranger_load_record_callback_t load_record_callback =
+            (tranger_load_record_callback_t)(size_t)kw_get_int(
+            treedb,
+            "__load_record_callback__",
+            0,
+            0
+        );
+        if(load_record_callback) {
+            // Inform user list: record in real time
+            JSON_INCREF(jn_record);
+            load_record_callback(
+                tranger,
+                topic,
+                list,
+                md_record,
+                jn_record
+            );
         }
     }
 

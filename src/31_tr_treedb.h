@@ -76,10 +76,17 @@ PUBLIC int treedb_close_db(
     const char *treedb_name
 );
 
-PUBLIC int treedb_set_callback(
+typedef int (*treedb_load_node_callback_t)(
     json_t *tranger,
     const char *treedb_name,
-    tranger_load_record_callback_t tranger_load_record_callback
+    const char *topic_name,
+    json_t *jn_record // must be owned
+);
+
+PUBLIC int treedb_set_load_node_callback(
+    json_t *tranger,
+    const char *treedb_name,
+    treedb_load_node_callback_t tranger_load_record_callback
 );
 
 /***************************************************************************
