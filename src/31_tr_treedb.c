@@ -2288,8 +2288,6 @@ PRIVATE json_t *record2tranger(
         if(!value) {
             if(create) {
                 value = kw_get_dict_value(col, "default", 0, 0);
-            } else {
-                // TODO en update debería recoger los valores del node previo,
             }
         }
         if(set_tranger_field_value(
@@ -3618,6 +3616,8 @@ PRIVATE BOOL inherit_links(
 }
 
 /***************************************************************************
+    Create a new node
+
     WARNING This function does NOT auto build links
     If you want to create node with auto build links
     then you must use treedb_update_node() with "create"
@@ -3979,7 +3979,9 @@ PUBLIC int treedb_save_node(
 }
 
 /***************************************************************************
-    This function DOES auto build links
+    Update the existing current node with fields of kw
+
+    WARNING This function DOES auto build links
 
     "create" ["permissive"] create node if not exist
     "clean" clean wrong fkeys
@@ -4120,8 +4122,13 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                  */
                 json_t *old_value = kw_get_dict_value(node, col_name, 0, 0);
                 json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
-                if(new_value && !kw_is_identical(old_value, new_value)) {
-                    json_object_set(node, col_name, new_value);
+                if(new_value) {
+                    if(!kw_is_identical(old_value, new_value)) { // TODO kw_is_identical is SLOW!!!
+                        /*
+                         *  Field UPDATED
+                         */
+                        json_object_set(node, col_name, new_value);
+                    }
                 }
             }
             continue;

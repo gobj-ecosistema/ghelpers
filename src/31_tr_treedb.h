@@ -225,6 +225,8 @@ PUBLIC int treedb_set_trace(BOOL set);
  *------------------------------------*/
 
 /**rst**
+    Create a new node
+
     WARNING This function does NOT auto build links
     If you want to create node with auto build links
     then you must use treedb_update_node() with "create"
@@ -248,6 +250,8 @@ PUBLIC int treedb_save_node(
 );
 
 /**rst**
+    Update the existing current node with fields of kw
+
     WARNING This function DOES auto build links
 
     "create" ["permissive"] create node if not exist
@@ -257,7 +261,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *node,    // owned
+    json_t *kw,    // owned
     const char *options // "create" ["permissive"], "clean"
 );
 
