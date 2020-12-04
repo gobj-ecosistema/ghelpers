@@ -410,6 +410,9 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
         Once saved,
             if you want to change the schema
             then you must change the schema version and topic_version
+
+    Return a dict inside of tranger with path "treedbs`{treedb_name}" DO NOT use it directly
+
  ***************************************************************************/
 PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
     json_t *tranger,
