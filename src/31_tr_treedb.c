@@ -58,6 +58,20 @@ PRIVATE int load_pkey2_callback(
     json_t *jn_record // must be owned, can be null if sf_loading_from_disk
 );
 
+PRIVATE int remove_wrong_up_ref(
+    json_t *tranger,
+    json_t *node,
+    const char *topic_name,
+    const char *col_name,
+    const char *ref
+);
+PRIVATE int search_and_remove_wrong_up_ref(
+    json_t *tranger,
+    json_t *node,
+    const char *topic_name,
+    const char *ref
+);
+
 PRIVATE json_t *get_hook_refs(
     json_t *hook_data, // not owned
     BOOL original_node
@@ -3965,140 +3979,6 @@ PUBLIC int treedb_save_node(
 }
 
 /***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int remove_wrong_up_ref(
-    json_t *tranger,
-    json_t *node,
-    const char *topic_name,
-    const char *col_name,
-    const char *ref
-)
-{
-    json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
-    if(!field_data) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "field not found in the node",
-            "topic_name",   "%s", topic_name,
-            "field",        "%s", col_name,
-            NULL
-        );
-        log_debug_json(0, node, "field not found in the node");
-    }
-
-    if(json_empty(field_data)) {
-        return -1;
-    }
-
-    int ret = -1;
-
-    switch(json_typeof(field_data)) { // json_typeof PROTECTED
-    case JSON_STRING:
-        {
-            const char *ref_ = json_string_value(field_data);
-            if(ref_ && ref && strcmp(ref_, ref)==0) {
-                kw_set_dict_value(node, col_name, json_string(""));
-                ret = 0;
-                log_warning(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "Removing wrong fkey ref",
-                    "topic_name",   "%s", topic_name,
-                    "field",        "%s", col_name,
-                    "ref",          "%s", ref,
-                    NULL
-                );
-            }
-        }
-        break;
-    case JSON_ARRAY:
-        {
-            int idx; json_t *r;
-            json_array_foreach(field_data, idx, r) {
-                if(json_typeof(r)==JSON_STRING) {
-                    const char *ref_ = json_string_value(r);
-                    if(ref_ && ref && strcmp(ref_, ref)==0) {
-                        json_array_remove(field_data, idx);
-                        idx --;
-                        ret = 0;
-                        log_warning(0,
-                            "gobj",         "%s", __FILE__,
-                            "function",     "%s", __FUNCTION__,
-                            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                            "msg",          "%s", "Removing wrong fkey ref",
-                            "topic_name",   "%s", topic_name,
-                            "field",        "%s", col_name,
-                            "ref",          "%s", ref,
-                            NULL
-                        );
-                    }
-                }
-            }
-        }
-        break;
-    case JSON_OBJECT:
-        {
-            const char *ref_; json_t *v; void *n;
-            json_object_foreach_safe(field_data, n, ref_, v) {
-                if(ref_ && ref && strcmp(ref_, ref)==0) {
-                    json_object_del(field_data, ref_);
-                    ret = 0;
-                    log_warning(0,
-                        "gobj",         "%s", __FILE__,
-                        "function",     "%s", __FUNCTION__,
-                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "Removing wrong fkey ref",
-                        "topic_name",   "%s", topic_name,
-                        "field",        "%s", col_name,
-                        "ref",          "%s", ref,
-                        NULL
-                    );
-                }
-            }
-        }
-        break;
-    default:
-        break;
-    }
-
-    return ret;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int search_and_remove_wrong_up_ref(
-    json_t *tranger,
-    json_t *node,
-    const char *topic_name,
-    const char *ref
-)
-{
-    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
-    const char *col_name; json_t *col;
-    json_object_foreach(cols, col_name, col) {
-        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
-        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        if(!is_fkey) {
-            continue;
-        }
-        remove_wrong_up_ref(
-            tranger,
-            node,
-            topic_name,
-            col_name,
-            ref
-        );
-    }
-    json_decref(cols);
-    return 0;
-}
-
-/***************************************************************************
     This function DOES auto build links
 
     "create" ["permissive"] create node if not exist
@@ -4769,6 +4649,140 @@ PUBLIC int treedb_delete_node(
     }
 
     JSON_DECREF(kw);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int remove_wrong_up_ref(
+    json_t *tranger,
+    json_t *node,
+    const char *topic_name,
+    const char *col_name,
+    const char *ref
+)
+{
+    json_t *field_data = kw_get_dict_value(node, col_name, 0, 0);
+    if(!field_data) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "field not found in the node",
+            "topic_name",   "%s", topic_name,
+            "field",        "%s", col_name,
+            NULL
+        );
+        log_debug_json(0, node, "field not found in the node");
+    }
+
+    if(json_empty(field_data)) {
+        return -1;
+    }
+
+    int ret = -1;
+
+    switch(json_typeof(field_data)) { // json_typeof PROTECTED
+    case JSON_STRING:
+        {
+            const char *ref_ = json_string_value(field_data);
+            if(ref_ && ref && strcmp(ref_, ref)==0) {
+                kw_set_dict_value(node, col_name, json_string(""));
+                ret = 0;
+                log_warning(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Removing wrong fkey ref",
+                    "topic_name",   "%s", topic_name,
+                    "field",        "%s", col_name,
+                    "ref",          "%s", ref,
+                    NULL
+                );
+            }
+        }
+        break;
+    case JSON_ARRAY:
+        {
+            int idx; json_t *r;
+            json_array_foreach(field_data, idx, r) {
+                if(json_typeof(r)==JSON_STRING) {
+                    const char *ref_ = json_string_value(r);
+                    if(ref_ && ref && strcmp(ref_, ref)==0) {
+                        json_array_remove(field_data, idx);
+                        idx --;
+                        ret = 0;
+                        log_warning(0,
+                            "gobj",         "%s", __FILE__,
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                            "msg",          "%s", "Removing wrong fkey ref",
+                            "topic_name",   "%s", topic_name,
+                            "field",        "%s", col_name,
+                            "ref",          "%s", ref,
+                            NULL
+                        );
+                    }
+                }
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            const char *ref_; json_t *v; void *n;
+            json_object_foreach_safe(field_data, n, ref_, v) {
+                if(ref_ && ref && strcmp(ref_, ref)==0) {
+                    json_object_del(field_data, ref_);
+                    ret = 0;
+                    log_warning(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Removing wrong fkey ref",
+                        "topic_name",   "%s", topic_name,
+                        "field",        "%s", col_name,
+                        "ref",          "%s", ref,
+                        NULL
+                    );
+                }
+            }
+        }
+        break;
+    default:
+        break;
+    }
+
+    return ret;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int search_and_remove_wrong_up_ref(
+    json_t *tranger,
+    json_t *node,
+    const char *topic_name,
+    const char *ref
+)
+{
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    const char *col_name; json_t *col;
+    json_object_foreach(cols, col_name, col) {
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        if(!is_fkey) {
+            continue;
+        }
+        remove_wrong_up_ref(
+            tranger,
+            node,
+            topic_name,
+            col_name,
+            ref
+        );
+    }
+    json_decref(cols);
     return 0;
 }
 
