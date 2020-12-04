@@ -3497,7 +3497,7 @@ PUBLIC int treedb_set_trace(BOOL set)
 
 
 /***************************************************************************
- *  Copy inherit fieldss FROM primary_node TO secondary_node
+ *  Copy inherit fields FROM primary_node TO secondary_node
  ***************************************************************************/
 PRIVATE BOOL copy_inherit_fields(
     json_t *tranger,
@@ -3920,7 +3920,6 @@ PUBLIC int treedb_save_node(
 
     /*---------------------------------------*
      *  Create the tranger record to update
-     *  TODO debería añadir los campos que faltan
      *---------------------------------------*/
     json_t *record = record2tranger(tranger, topic_name, node, "", FALSE);
     if(!record) {

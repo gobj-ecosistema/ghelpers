@@ -663,6 +663,7 @@ PUBLIC json_t *kwid_get( // Return is NOT YOURS
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
+    If path is empty then use kw
 **rst**/
 PUBLIC json_t *kwid_new_list(
     const char *options, // "verbose", "lower"
@@ -678,6 +679,7 @@ PUBLIC json_t *kwid_new_list(
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
+    If path is empty then use kw
 **rst**/
 PUBLIC json_t *kwid_new_dict(
     const char *options, // "verbose", "lower"
