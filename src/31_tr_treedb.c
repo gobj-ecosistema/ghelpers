@@ -788,10 +788,10 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_set_load_node_callback(
+PUBLIC int treedb_set_callback(
     json_t *tranger,
     const char *treedb_name,
-    treedb_load_node_callback_t load_record_callback
+    treedb_callback_t treedb_callback
 )
 {
     /*------------------------------*
@@ -811,8 +811,8 @@ PUBLIC int treedb_set_load_node_callback(
     }
     json_object_set_new(
         treedb,
-        "__load_record_callback__",
-        json_integer((json_int_t)(size_t)load_record_callback)
+        "__treedb_callback__",
+        json_integer((json_int_t)(size_t)treedb_callback)
     );
     return 0;
 }
@@ -2486,6 +2486,30 @@ PRIVATE int load_id_callback(
             // This key is operative again
             json_object_del(deleted_records, md_record->key.s);
         }
+
+        /*
+         *  Call Callback
+         */
+        json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
+
+        treedb_callback_t treedb_callback =
+            (treedb_callback_t)(size_t)kw_get_int(
+            treedb,
+            "__treedb_callback__",
+            0,
+            0
+        );
+        if(treedb_callback) {
+            // Inform user list: record in real time
+            JSON_INCREF(jn_record);
+            treedb_callback(
+                tranger,
+                treedb_name,
+                topic_name,
+                "updated node",
+                jn_record
+            );
+        }
     }
 
     JSON_DECREF(jn_record);
@@ -2624,26 +2648,6 @@ PRIVATE int load_pkey2_callback(
         if(json_object_get(deleted_records, md_record->key.s)) {
             // This key is operative again
             json_object_del(deleted_records, md_record->key.s);
-        }
-        json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
-
-        tranger_load_record_callback_t load_record_callback =
-            (tranger_load_record_callback_t)(size_t)kw_get_int(
-            treedb,
-            "__load_record_callback__",
-            0,
-            0
-        );
-        if(load_record_callback) {
-            // Inform user list: record in real time
-            JSON_INCREF(jn_record);
-            load_record_callback(
-                tranger,
-                topic,
-                list,
-                md_record,
-                jn_record
-            );
         }
     }
 
@@ -4613,7 +4617,17 @@ PUBLIC int treedb_delete_node(
      *  (borrar un id record en tranger, y el resto?)
      *-------------------------------------------------*/
     if(tranger_write_mark1(tranger, topic_name, __rowid__, TRUE)==0) {
-        BOOL ok_deleted = TRUE;
+        /*-------------------------------*
+         *  Trace
+         *-------------------------------*/
+        if(treedb_trace) {
+            trace_msg("delete node, topic %s, id %s", topic_name, id);
+        }
+
+        /*-------------------------------*
+         *  Maintain node live
+         *-------------------------------*/
+        JSON_INCREF(node);
 
         /*-------------------------------*
          *      Borra indexx data
@@ -4628,7 +4642,6 @@ PUBLIC int treedb_delete_node(
                 "id",           "%s", id,
                 NULL
             );
-            ok_deleted = FALSE;
         }
 
         /*-------------------------------*
@@ -4656,7 +4669,6 @@ PUBLIC int treedb_delete_node(
                     "pkey2_name",   "%s", pkey2_name,
                     NULL
                 );
-                ok_deleted = FALSE;
                 continue;
             }
 
@@ -4679,19 +4691,38 @@ PUBLIC int treedb_delete_node(
                     "pkey2_name",   "%s", pkey2_name,
                     NULL
                 );
-                ok_deleted = FALSE;
             }
         }
         JSON_DECREF(iter_pkey2s);
 
-        if(ok_deleted) {
-            /*-------------------------------*
-             *  Trace
-             *-------------------------------*/
-            if(treedb_trace) {
-                trace_msg("json_object_del() Ok, topic %s, id %s", topic_name, id);
-            }
+        /*
+         *  Call Callback
+         */
+        json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
+
+        treedb_callback_t treedb_callback =
+            (treedb_callback_t)(size_t)kw_get_int(
+            treedb,
+            "__treedb_callback__",
+            0,
+            0
+        );
+        if(treedb_callback) {
+            // Inform user list: record in real time
+            JSON_INCREF(node);
+            treedb_callback(
+                tranger,
+                treedb_name,
+                topic_name,
+                "deleted node",
+                node
+            );
         }
+
+        /*-------------------------------*
+         *  Kill the node
+         *-------------------------------*/
+        JSON_DECREF(node);
 
     } else {
         log_error(0,
