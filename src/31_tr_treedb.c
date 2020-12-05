@@ -791,7 +791,8 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
 PUBLIC int treedb_set_callback(
     json_t *tranger,
     const char *treedb_name,
-    treedb_callback_t treedb_callback
+    treedb_callback_t treedb_callback,
+    void *user_data
 )
 {
     /*------------------------------*
@@ -813,6 +814,11 @@ PUBLIC int treedb_set_callback(
         treedb,
         "__treedb_callback__",
         json_integer((json_int_t)(size_t)treedb_callback)
+    );
+    json_object_set_new(
+        treedb,
+        "__treedb_callback_user_data__",
+        json_integer((json_int_t)(size_t)user_data)
     );
     return 0;
 }
@@ -2500,13 +2506,24 @@ PRIVATE int load_id_callback(
             0
         );
         if(treedb_callback) {
-            // Inform user list: record in real time
+            /*
+             *  Inform user in real time
+             */
+            void *user_data =
+                (void *)(size_t)kw_get_int(
+                treedb,
+                "__treedb_callback_user_data__",
+                0,
+                0
+            );
+
             JSON_INCREF(jn_record);
             treedb_callback(
+                user_data,
                 tranger,
                 treedb_name,
                 topic_name,
-                "updated node",
+                "EV_TREEDB_NODE_UPDATED",
                 jn_record
             );
         }
@@ -4708,13 +4725,23 @@ PUBLIC int treedb_delete_node(
             0
         );
         if(treedb_callback) {
-            // Inform user list: record in real time
+            /*
+             *  Inform user in real time
+             */
+            void *user_data =
+                (treedb_callback_t)(size_t)kw_get_int(
+                treedb,
+                "__treedb_callback_user_data__",
+                0,
+                0
+            );
             JSON_INCREF(node);
             treedb_callback(
+                user_data,
                 tranger,
                 treedb_name,
                 topic_name,
-                "deleted node",
+                "EV_TREEDB_NODE_DELETED",
                 node
             );
         }

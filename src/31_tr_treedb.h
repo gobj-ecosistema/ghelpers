@@ -77,17 +77,19 @@ PUBLIC int treedb_close_db(
 );
 
 typedef int (*treedb_callback_t)(
+    void *user_data,
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *operation,  // "node_updated", "node_deleted"
+    const char *operation,  // "EV_TREEDB_NODE_UPDATED", "EV_TREEDB_NODE_DELETED"
     json_t *node            // owned
 );
 
 PUBLIC int treedb_set_callback(
     json_t *tranger,
     const char *treedb_name,
-    treedb_callback_t treedb_callback
+    treedb_callback_t treedb_callback,
+    void *user_data
 );
 
 /***************************************************************************
