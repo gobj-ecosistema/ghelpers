@@ -1056,6 +1056,18 @@ PUBLIC int tranger_delete_topic(
     const char *topic_name
 )
 {
+    json_t *topic = tranger_topic(tranger, topic_name);
+    if(!topic) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "Topic not found",
+            "topic",        "%s", topic_name,
+            NULL
+        );
+        return -1;
+    }
 
     /*
      *  Close topic
