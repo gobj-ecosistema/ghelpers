@@ -894,7 +894,7 @@ PUBLIC json_t *tranger_topic( // WARNING returned json IS NOT YOURS
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "Cannot open topic",
                 "topic",        "%s", topic_name,
                 NULL
@@ -1830,12 +1830,11 @@ PUBLIC int tranger_append_record(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "Cannot append record, Cannot open topic",
+            "msg",          "%s", "Cannot append record, topic not found",
             "topic",        "%s", topic_name,
-            "errno",        "%s", strerror(errno),
             NULL
         );
-        log_debug_json(0, jn_record, "Cannot append record, Cannot open topic");
+        log_debug_json(0, jn_record, "Cannot append record, topic not found");
         JSON_DECREF(jn_record);
         return -1;
     }
@@ -2306,7 +2305,7 @@ PUBLIC int tranger_delete_record(
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             NULL
@@ -2412,7 +2411,7 @@ PUBLIC int tranger_write_mark1(
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
@@ -2465,7 +2464,7 @@ PUBLIC int tranger_write_user_flag(
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
@@ -2509,7 +2508,7 @@ PUBLIC int tranger_set_user_flag(
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
@@ -2562,7 +2561,7 @@ PUBLIC uint32_t tranger_read_user_flag(
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Cannot open topic",
             "topic",        "%s", topic_name,
             "errno",        "%s", strerror(errno),
