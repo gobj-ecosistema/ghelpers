@@ -889,7 +889,7 @@ PUBLIC json_t *tranger_topic( // WARNING returned json IS NOT YOURS
 {
     json_t *topic = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
     if(!topic) {
-        topic = tranger_open_topic(tranger, topic_name, TRUE);
+        topic = tranger_open_topic(tranger, topic_name, FALSE);
         if(!topic) {
             log_error(0,
                 "gobj",         "%s", __FILE__,
