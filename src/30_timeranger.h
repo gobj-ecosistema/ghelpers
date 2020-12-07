@@ -499,7 +499,7 @@ PUBLIC int tranger_find_record(
 );
 
 /**rst**
-    Walk over records
+    Walk over records (disk!)
 **rst**/
 PUBLIC int tranger_first_record(
     json_t *tranger,
