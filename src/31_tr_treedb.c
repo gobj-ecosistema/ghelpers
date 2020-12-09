@@ -30,7 +30,7 @@ PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
     json_t *kw,  // not owned
-    const char *options,
+    json_t *options,
     BOOL create // create or update
 );
 PRIVATE json_t *_md2json(
@@ -1212,7 +1212,8 @@ PUBLIC int treedb_delete_topic(
  *
  ***************************************************************************/
 PUBLIC json_t *treedb_list_treedb(
-    json_t *tranger
+    json_t *tranger,
+    json_t *kw
 )
 {
     json_t *treedb_list = json_array();
@@ -1226,12 +1227,15 @@ PUBLIC json_t *treedb_list_treedb(
             "msg",          "%s", "NO TreeDB found.",
             NULL
         );
+        KW_DECREF(kw);
         return treedb_list;
     }
     const char *treedb_name; json_t *treedb;
     json_object_foreach(treedbs, treedb_name, treedb) {
         json_array_append_new(treedb_list, json_string(treedb_name));
     }
+
+    KW_DECREF(kw);
 
     return treedb_list;
 }
@@ -1242,7 +1246,7 @@ PUBLIC json_t *treedb_list_treedb(
 PUBLIC json_t *treedb_topics(
     json_t *tranger,
     const char *treedb_name,
-    const char *options // "dict" return list of dicts, otherwise return list of strings
+    json_t *jn_options // "dict" return list of dicts, otherwise return list of strings
 )
 {
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
@@ -1267,7 +1271,7 @@ PUBLIC json_t *treedb_topics(
             continue;
         }
         build_id_index_path(list_id, sizeof(list_id), treedb_name, topic_name);
-        if(options && strstr(options, "dict")) {
+        if(kw_get_bool(jn_options, "dict", 0, 0)) {
             json_t *dict = json_object();
             json_object_set_new(dict, "id", json_string(list_id));
             json_object_set_new(dict, "value", json_string(topic_name));
@@ -2305,7 +2309,7 @@ PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
     json_t *kw,  // not owned
-    const char *options, // "permissive"
+    json_t *jn_options, // not owned, "permissive"
     BOOL create // create or update
 )
 {
@@ -2345,7 +2349,7 @@ PRIVATE json_t *record2tranger(
         }
     }
 
-    if(options && strstr(options, "permissive")) {
+    if(kw_get_bool(jn_options, "permissive", 0, 0)) {
         json_object_update_missing(new_record, kw);
     }
     json_object_del(new_record, "__md_treedb__");
@@ -3044,7 +3048,7 @@ PRIVATE int load_all_links(
     /*
      *  Loop topics, as child nodes
      */
-    json_t *topics = treedb_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, 0);
     int idx; json_t *jn_topic;
     json_array_foreach(topics, idx, jn_topic) {
         const char *topic_name = json_string_value(jn_topic);
@@ -3700,7 +3704,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive"
+    json_t *jn_options // bool "permissive"
 )
 {
     /*-----------------------------------*
@@ -3716,6 +3720,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             NULL
         );
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -3752,6 +3757,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             );
             log_debug_json(0, kw, "Field 'id' required");
             JSON_DECREF(kw);
+            JSON_DECREF(jn_options);
             return 0;
         }
     }
@@ -3833,17 +3839,19 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         );
         JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
     /*----------------------------------------*
      *  Create the tranger record to create
      *----------------------------------------*/
-    json_t *record = record2tranger(tranger, topic_name, kw, options, TRUE);
+    json_t *record = record2tranger(tranger, topic_name, kw, jn_options, TRUE);
     if(!record) {
         // Error already logged
         JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return 0;
     }
     BOOL links_inherited = FALSE;
@@ -3877,6 +3885,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
         JSON_DECREF(record);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -3985,6 +3994,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_decref(record);
     JSON_DECREF(pkey2_list);
     JSON_DECREF(kw);
+    JSON_DECREF(jn_options);
     return record;
 }
 
@@ -4008,7 +4018,7 @@ PUBLIC int treedb_save_node(
     /*---------------------------------------*
      *  Create the tranger record to update
      *---------------------------------------*/
-    json_t *record = record2tranger(tranger, topic_name, node, "", FALSE);
+    json_t *record = record2tranger(tranger, topic_name, node, 0, FALSE);
     if(!record) {
         // Error already logged
         return -1;
@@ -4064,7 +4074,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned (node)
-    const char *options // "create" ["permissive"], "clean"
+    json_t *jn_options // "create" ["permissive"], "clean"
 )
 {
     /*-----------------------------------*
@@ -4080,10 +4090,11 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             NULL
         );
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
-    BOOL create = (options && strstr(options, "create"))?TRUE:FALSE;
+    BOOL create = kw_get_bool(jn_options, "create", 0, 0);
 
     /*-------------------------------*
      *  Get id to update node
@@ -4099,6 +4110,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 NULL
             );
             JSON_DECREF(kw);
+            JSON_DECREF(jn_options);
             return 0;
         }
     }
@@ -4123,14 +4135,14 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
         );
     }
     if(!node) {
-        if(options && strstr(options, "create")) {
+        if(kw_get_bool(jn_options, "create", 0, 0)) {
             JSON_INCREF(kw);
             node = treedb_create_node(
                 tranger,
                 treedb_name,
                 topic_name,
                 kw, // owned
-                options
+                json_incref(jn_options)
             );
             if(!node) {
                 log_error(LOG_OPT_TRACE_STACK,
@@ -4144,6 +4156,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     NULL
                 );
                 JSON_DECREF(kw);
+                JSON_DECREF(jn_options);
                 return 0;
             }
         } else {
@@ -4158,6 +4171,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 NULL
             );
             JSON_DECREF(kw);
+            JSON_DECREF(jn_options);
             return 0;
         }
     }
@@ -4176,6 +4190,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             NULL
         );
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -4322,7 +4337,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                     "child",                "%s", node_name,
                     NULL
                 );
-                if(options && strstr(options, "clean")) {
+                if(kw_get_bool(jn_options, "clean", 0, 0)) {
                     /*
                      *  Remove reference, it's invalid
                      */
@@ -4349,12 +4364,13 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
         json_decref(new_fkeys);
     }
 
-    if(options && strstr(options, "permissive")) {
+    if(kw_get_bool(jn_options, "permissive", 0, 0)) {
         json_object_update_missing(node, kw);
     }
 
     JSON_DECREF(cols);
     JSON_DECREF(kw);
+    JSON_DECREF(jn_options);
 
     /*-------------------------------*
      *  Write to tranger
@@ -4379,8 +4395,8 @@ PUBLIC int treedb_delete_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw,    // owned (node, WARNING only 'id' field is used to find the node to delete)
-    const char *options // "force"
+    json_t *kw,    // owned (WARNING only 'id' field is used to find the node to delete)
+    json_t *jn_options // bool "force"
 )
 {
     /*-----------------------------------*
@@ -4396,6 +4412,7 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -4413,6 +4430,7 @@ PUBLIC int treedb_delete_node(
         );
         log_debug_json(0, kw, "kw without id");
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return -1;
     }
 
@@ -4444,6 +4462,7 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return -1;
     }
 
@@ -4465,6 +4484,7 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return -1;
     }
 
@@ -4480,7 +4500,7 @@ PUBLIC int treedb_delete_node(
 
     json_t *down_refs = get_node_down_refs(tranger, node);
     if(json_array_size(down_refs)>0) {
-        if(options && strstr(options, "force")) {
+        if(kw_get_bool(jn_options, "force", 0, 0)) {
             json_t *jn_hooks = treedb_get_topic_hooks(
                 tranger,
                 treedb_name,
@@ -4532,7 +4552,7 @@ PUBLIC int treedb_delete_node(
 
     json_t *up_refs = get_node_up_refs(tranger, node);
     if(json_array_size(up_refs)>0) {
-        if(options && strstr(options, "force")) {
+        if(kw_get_bool(jn_options, "force", 0, 0)) {
             int idx; json_t *old_fkey;
             json_array_foreach(up_refs, idx, old_fkey) {
                 /*
@@ -4624,6 +4644,7 @@ PUBLIC int treedb_delete_node(
     if(!to_delete) {
         // Error already logged
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return -1;
     }
 
@@ -4762,10 +4783,12 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
         return -1;
     }
 
     JSON_DECREF(kw);
+    JSON_DECREF(jn_options);
     return 0;
 }
 
@@ -6689,7 +6712,7 @@ PUBLIC json_t *treedb_get_topic_links(
     const char *topic_name
 )
 {
-    json_t *topics = treedb_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, 0);
     if(!json_str_in_list(topics, topic_name, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -6729,7 +6752,7 @@ PUBLIC json_t *treedb_get_topic_hooks(
     const char *topic_name
 )
 {
-    json_t *topics = treedb_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, 0);
     if(!json_str_in_list(topics, topic_name, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -6952,7 +6975,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
     }
 
     int ret = 0;
-    json_t *topics = treedb_topics(tranger, treedb_name, "");
+    json_t *topics = treedb_topics(tranger, treedb_name, 0);
     int idx; json_t *jn_topic;
     json_array_foreach(topics, idx, jn_topic) {
         const char *topic_name = json_string_value(jn_topic);

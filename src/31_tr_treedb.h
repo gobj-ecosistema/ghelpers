@@ -178,13 +178,14 @@ PUBLIC int treedb_delete_topic(
 );
 
 PUBLIC json_t *treedb_list_treedb( // Return a list with treedb names
-    json_t *tranger
+    json_t *tranger,
+    json_t *kw
 );
 
 PUBLIC json_t *treedb_topics( //Return a list with topic names of the treedb
     json_t *tranger,
     const char *treedb_name,
-    const char *options // "dict" return list of dicts, otherwise return list of strings
+    json_t *jn_options // "dict" return list of dicts, otherwise return list of strings
 );
 
 /*------------------------------------*
@@ -255,7 +256,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    const char *options // "permissive"
+    json_t *jn_options // bool "permissive"
 );
 
 /**rst**
@@ -281,7 +282,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned
-    const char *options // "create" ["permissive"], "clean"
+    json_t *jn_options // "create" ["permissive"], "clean"
 );
 
 /**rst**
@@ -291,8 +292,8 @@ PUBLIC int treedb_delete_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *node,    // owned (WARNING only 'id' field is used to find the node to delete)
-    const char *options // "force"
+    json_t *kw,    // owned (WARNING only 'id' field is used to find the node to delete)
+    json_t *jn_options // bool "force"
 );
 
 PUBLIC int treedb_link_nodes(
