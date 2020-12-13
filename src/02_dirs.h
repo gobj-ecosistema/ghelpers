@@ -69,6 +69,14 @@ PUBLIC char *build_path3(
     const char *dir2,
     const char *dir3
 );
+PUBLIC char *build_path4(
+    char *path,
+    int pathsize,
+    const char *dir1,
+    const char *dir2,
+    const char *dir3,
+    const char *dir4
+);
 
 #ifdef __cplusplus
 }
