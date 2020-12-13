@@ -556,3 +556,54 @@ PUBLIC char *build_path4(
     return path;
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC char *build_path5(
+    char *path,
+    int pathsize,
+    const char *dir1,
+    const char *dir2,
+    const char *dir3,
+    const char *dir4,
+    const char *dir5
+)
+{
+    snprintf(path, pathsize, "%s", dir1);
+    delete_right_char(path, '/');
+
+    if(dir2 && strlen(dir2)) {
+        int l = strlen(path);
+        snprintf(path+l, pathsize-l, "/");
+        l = strlen(path);
+        snprintf(path+l, pathsize-l, "%s", dir2);
+        delete_left_char(path+l, '/');
+        delete_right_char(path, '/');
+    }
+    if(dir3 && strlen(dir3)) {
+        int l = strlen(path);
+        snprintf(path+l, pathsize-l, "/");
+        l = strlen(path);
+        snprintf(path+l, pathsize-l, "%s", dir3);
+        delete_left_char(path+l, '/');
+        delete_right_char(path, '/');
+    }
+    if(dir4 && strlen(dir4)) {
+        int l = strlen(path);
+        snprintf(path+l, pathsize-l, "/");
+        l = strlen(path);
+        snprintf(path+l, pathsize-l, "%s", dir4);
+        delete_left_char(path+l, '/');
+        delete_right_char(path, '/');
+    }
+    if(dir5 && strlen(dir5)) {
+        int l = strlen(path);
+        snprintf(path+l, pathsize-l, "/");
+        l = strlen(path);
+        snprintf(path+l, pathsize-l, "%s", dir5);
+        delete_left_char(path+l, '/');
+        delete_right_char(path, '/');
+    }
+    return path;
+}
+
