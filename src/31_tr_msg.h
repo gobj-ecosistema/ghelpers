@@ -232,7 +232,7 @@ PUBLIC json_t *trmsg_get_instances( // Return (NOT yours) list: messages`message
 );
 
 /*
- *  Return a list of **duplicated** records with instances in 'data' hook.
+ *  Return a list of **cloned** records with instances in 'data' hook.
  *  Ready for webix use.
  *  WARNING Returned value is yours, must be decref.
  */
@@ -242,7 +242,7 @@ PUBLIC json_t *trmsg_data_tree(
 );
 
 /*
- *  Return a list of **duplicated** records (list of dicts).
+ *  Return a list of **cloned** records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
 PUBLIC json_t *trmsg_active_records(
@@ -251,7 +251,7 @@ PUBLIC json_t *trmsg_active_records(
 );
 
 /*
- *  Return a list of **duplicated** record's instances (list of dicts).
+ *  Return a list of **cloned** record's instances (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  */
 PUBLIC json_t *trmsg_record_instances(
@@ -261,9 +261,7 @@ PUBLIC json_t *trmsg_record_instances(
 );
 
 /*
- *  Foreach ACTIVE **duplicated** messages
- *  The parameter 'record' in the callback is a duplicated record
- *  (a copy of the original record)
+ *  Foreach ACTIVE **cloned** messages
  */
 PUBLIC int trmsg_foreach_active_messages(
     json_t *list,
@@ -280,9 +278,7 @@ PUBLIC int trmsg_foreach_active_messages(
 );
 
 /*
- *  Foreach INSTANCES **duplicated** messages
- *  The parameter 'record' in the callback is a duplicated record
- *  (a copy of the original record)
+ *  Foreach INSTANCES **cloned** messages
  */
 PUBLIC int trmsg_foreach_instances_messages(
     json_t *list,

@@ -384,7 +384,7 @@ PUBLIC json_t *trmsg_get_instances(
 }
 
 /***************************************************************************
- *  Return a list of **duplicated** records with instances in 'data' hook.
+ *  Return a list of **cloned** records with instances in 'data' hook.
  *  Ready for webix use.
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
@@ -402,7 +402,7 @@ PUBLIC json_t *trmsg_data_tree(
         json_t *active = kw_get_dict_value(message, "active", 0, KW_REQUIRED);
         JSON_INCREF(jn_filter);
         if(kw_match_simple(active, jn_filter)) {
-            json_t *jn_active = json_deep_copy(active);
+            json_t *jn_active = json_incref(active);
             json_array_append_new(jn_records, jn_active);
             json_t *jn_data = kw_get_list(jn_active, "data", json_array(), KW_CREATE);
             json_t *instances = kw_get_dict_value(message, "instances", 0, KW_REQUIRED);
@@ -425,7 +425,7 @@ PUBLIC json_t *trmsg_data_tree(
 
                 JSON_INCREF(jn_filter);
                 if(kw_match_simple(instance, jn_filter)) {
-                    json_t *jn_instance = json_deep_copy(instance);
+                    json_t *jn_instance = json_incref(instance);
                     json_array_append_new(jn_data, jn_instance);
                 }
             }
@@ -437,7 +437,7 @@ PUBLIC json_t *trmsg_data_tree(
 }
 
 /***************************************************************************
- *  Return a list of records (list of dicts).
+ *  Return a list of **cloned** records (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
 PUBLIC json_t *trmsg_active_records(
@@ -455,7 +455,7 @@ PUBLIC json_t *trmsg_active_records(
         json_t *active = json_object_get(message, "active");
         JSON_INCREF(jn_filter);
         if(kw_match_simple(active, jn_filter)) {
-            json_t *jn_active = json_deep_copy(active);
+            json_t *jn_active = json_incref(active);
             json_array_append_new(jn_records, jn_active);
         }
     }
@@ -465,7 +465,7 @@ PUBLIC json_t *trmsg_active_records(
 }
 
 /***************************************************************************
- *  Return a list of record's instances (list of dicts).
+ *  Return a list of **cloned** record's instances (list of dicts).
  *  WARNING Returned value is yours, must be decref.
  ***************************************************************************/
 PUBLIC json_t *trmsg_record_instances(
@@ -483,7 +483,7 @@ PUBLIC json_t *trmsg_record_instances(
     json_array_foreach(instances, idx, jn_value) {
         JSON_INCREF(jn_filter);
         if(kw_match_simple(jn_value, jn_filter)) {
-            json_t *jn_record = json_deep_copy(jn_value); // Your copy
+            json_t *jn_record = json_incref(jn_value); // Your copy
             json_array_append_new(jn_records, jn_record);
         }
     }
@@ -493,9 +493,7 @@ PUBLIC json_t *trmsg_record_instances(
 }
 
 /***************************************************************************
- *  Foreach ACTIVE **duplicated** messages
- *  The parameter 'record' in the callback is a duplicated record
- *  (a copy of the original record)
+ *  Foreach ACTIVE **cloned** messages
  ***************************************************************************/
 PUBLIC int trmsg_foreach_active_messages(
     json_t *list,
@@ -520,7 +518,7 @@ PUBLIC int trmsg_foreach_active_messages(
         json_t *active = json_object_get(message, "active");
         JSON_INCREF(jn_filter);
         if(kw_match_simple(active, jn_filter)) {
-            json_t *jn_active = json_deep_copy(active); // Your copy
+            json_t *jn_active = json_incref(active); // Your copy
 
             if(callback(list, key, jn_active, user_data1, user_data2)<0) {
                 JSON_DECREF(jn_filter);
@@ -534,9 +532,7 @@ PUBLIC int trmsg_foreach_active_messages(
 }
 
 /***************************************************************************
- *  Foreach INSTANCES **duplicated** messages
- *  The parameter 'record' in the callback is a duplicated record
- *  (a copy of the original record)
+ *  Foreach INSTANCES **cloned** messages
  ***************************************************************************/
 PUBLIC int trmsg_foreach_instances_messages(
     json_t *list,
@@ -565,7 +561,7 @@ PUBLIC int trmsg_foreach_instances_messages(
         json_array_foreach(instances, idx, instance) {
             JSON_INCREF(jn_filter);
             if(kw_match_simple(instance, jn_filter)) {
-                json_t *jn_instance = json_deep_copy(instance);
+                json_t *jn_instance = json_incref(instance);
                 json_array_append_new(jn_instances, jn_instance);
             }
         }
@@ -611,7 +607,7 @@ PUBLIC int trmsg_foreach_messages(
             if(duplicated) {
                 jn_message = json_deep_copy(message);
             } else {
-                jn_message = kw_incref(message);
+                jn_message = json_incref(message);
             }
 
             if(callback(list, key, jn_message, user_data1, user_data2)<0) {
