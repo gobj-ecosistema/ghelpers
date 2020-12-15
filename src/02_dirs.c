@@ -242,6 +242,14 @@ PUBLIC int mkrdir(const char *path, int index, int permission)
     if(access(bf, 0)!=0) {
         if(newdir(bf, permission)<0) {
             if(errno != EEXIST) {
+                print_error(
+                    PEF_CONTINUE,
+                    "ERROR YUNETA",
+                    "newdir() FAILED, %d %s, path %s",
+                    errno,
+                    strerror(errno),
+                    bf
+                );
                 return -1;
             }
         }
