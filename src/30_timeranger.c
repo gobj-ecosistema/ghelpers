@@ -166,7 +166,7 @@ PUBLIC json_t *tranger_startup(
      *  se clona para no joder el original,
      *  y porque se añaden campos de instancia, por ejemplo "fd_opened_files"
      */
-    json_t *tranger = create_json_record(tranger_json_desc);
+    json_t *tranger = create_json_record(tranger_json_desc); // no master by default
     json_object_update_existing(tranger, jn_tranger);
     JSON_DECREF(jn_tranger);
 
@@ -231,6 +231,25 @@ PUBLIC json_t *tranger_startup(
             &fd,
             master? TRUE:FALSE //exclusive
         );
+        if(!jn_disk_tranger) {
+            jn_disk_tranger = load_persistent_json(
+                directory,
+                "__timeranger__.json",
+                on_critical_error,
+                &fd,
+                FALSE //exclusive
+            );
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TRANGER_ERROR,
+                "msg",          "%s", "Open as not master, __timeranger__.json locked",
+                "path",         "%s", directory,
+                NULL
+            );
+            master = FALSE;
+            json_object_set_new(tranger, "master", json_false());
+        }
         json_object_update_existing(tranger, jn_disk_tranger);
         json_decref(jn_disk_tranger);
     } else {
@@ -274,6 +293,26 @@ PUBLIC json_t *tranger_startup(
             &fd,
             master? TRUE:FALSE //exclusive
         );
+        if(!jn_disk_tranger) {
+            jn_disk_tranger = load_persistent_json(
+                directory,
+                "__timeranger__.json",
+                on_critical_error,
+                &fd,
+                FALSE //exclusive
+            );
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TRANGER_ERROR,
+                "msg",          "%s", "Open as not master, __timeranger__.json locked",
+                "path",         "%s", directory,
+                NULL
+            );
+            master = FALSE;
+            json_object_set_new(tranger, "master", json_false());
+        }
+
         json_object_update_existing(tranger, jn_disk_tranger);
         json_decref(jn_disk_tranger);
     }
