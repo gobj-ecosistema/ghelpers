@@ -4534,6 +4534,7 @@ PUBLIC int treedb_delete_node(
                     NULL
                 );
             }
+            JSON_DECREF(down_refs_);
 
         } else {
             to_delete = FALSE;
