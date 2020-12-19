@@ -848,7 +848,7 @@ PUBLIC int treedb_close_db(
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, KW_EXTRACT);
     JSON_DECREF(treedb);
 
-    JSON_DECREF(topic_cols_desc);
+    json_decref(topic_cols_desc);
     return 0;
 }
 
