@@ -188,6 +188,12 @@ PUBLIC json_t *treedb_topics( //Return a list with topic names of the treedb
     json_t *jn_options // "dict" return list of dicts, otherwise return list of strings
 );
 
+PUBLIC size_t treedb_topic_size(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+);
+
 /*------------------------------------*
  *      Utils
  *------------------------------------*/

@@ -1284,6 +1284,23 @@ PUBLIC json_t *treedb_topics(
     return topic_list;
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC size_t treedb_topic_size(
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name
+)
+{
+    json_t *id_index = treedb_get_id_index( // Return is NOT YOURS
+        tranger,
+        treedb_name,
+        topic_name
+    );
+    return json_object_size(id_index);
+}
+
 
 
 
