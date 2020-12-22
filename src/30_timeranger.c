@@ -181,6 +181,7 @@ PUBLIC json_t *tranger_startup(
             "msg",          "%s", "Cannot startup TimeRanger. What path?",
             NULL
         );
+        json_decref(tranger);
         return 0;
     }
     kw_set_dict_value(tranger, "path", json_string(path));
@@ -196,6 +197,7 @@ PUBLIC json_t *tranger_startup(
                 "msg",          "%s", "Cannot startup TimeRanger. What database?",
                 NULL
             );
+            json_decref(tranger);
             return 0;
         }
         kw_set_dict_value(tranger, "path", json_string(path));
@@ -262,6 +264,7 @@ PUBLIC json_t *tranger_startup(
                 "path",         "%s", directory,
                 NULL
             );
+            json_decref(tranger);
             return 0;
         }
         /*
