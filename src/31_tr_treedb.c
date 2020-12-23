@@ -4244,7 +4244,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
          *  link/unlink fkeys
          */
         json_t *old_fkeys = treedb_node_up_refs(tranger, node, topic_name, col_name, TRUE);
-        json_t *new_fkeys = kw_get_dict_value(kw, col_name, 0, 0);
+        json_t *new_fkeys = json_incref(kw_get_dict_value(kw, col_name, 0, 0));
 
         int idx;
 

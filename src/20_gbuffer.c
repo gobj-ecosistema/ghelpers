@@ -1571,6 +1571,7 @@ PUBLIC json_t * gbuf2json(
     size_t flags = JSON_DECODE_ANY|JSON_ALLOW_NUL; // DANGER ojo added in 3/Feb/2020
     json_error_t jn_error;
     json_t *jn_msg = json_load_callback(on_load_callback, gbuf, flags, &jn_error);
+
     if(!jn_msg) {
         if(verbose) {
             log_error(LOG_OPT_TRACE_STACK,
