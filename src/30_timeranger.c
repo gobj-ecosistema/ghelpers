@@ -231,7 +231,8 @@ PUBLIC json_t *tranger_startup(
             "__timeranger__.json",
             on_critical_error,
             &fd,
-            master? TRUE:FALSE //exclusive
+            master? TRUE:FALSE, //exclusive
+            TRUE // silence
         );
         if(!jn_disk_tranger) {
             jn_disk_tranger = load_persistent_json(
@@ -239,16 +240,28 @@ PUBLIC json_t *tranger_startup(
                 "__timeranger__.json",
                 on_critical_error,
                 &fd,
-                FALSE //exclusive
+                FALSE, // exclusive
+                TRUE // silence
             );
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TRANGER_ERROR,
-                "msg",          "%s", "Open as not master, __timeranger__.json locked",
-                "path",         "%s", directory,
-                NULL
-            );
+            if(jn_disk_tranger) {
+                log_warning(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TRANGER_ERROR,
+                    "msg",          "%s", "Open as not master, __timeranger__.json locked",
+                    "path",         "%s", directory,
+                    NULL
+                );
+            } else {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TRANGER_ERROR,
+                    "msg",          "%s", "Cannot open __timeranger__",
+                    "path",         "%s", directory,
+                    NULL
+                );
+            }
             master = FALSE;
             json_object_set_new(tranger, "master", json_false());
         }
@@ -294,7 +307,8 @@ PUBLIC json_t *tranger_startup(
             "__timeranger__.json",
             on_critical_error,
             &fd,
-            master? TRUE:FALSE //exclusive
+            master? TRUE:FALSE, //exclusive
+            TRUE // silence
         );
         if(!jn_disk_tranger) {
             jn_disk_tranger = load_persistent_json(
@@ -302,16 +316,29 @@ PUBLIC json_t *tranger_startup(
                 "__timeranger__.json",
                 on_critical_error,
                 &fd,
-                FALSE //exclusive
+                FALSE, //exclusive
+                TRUE // silence
             );
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TRANGER_ERROR,
-                "msg",          "%s", "Open as not master, __timeranger__.json locked",
-                "path",         "%s", directory,
-                NULL
-            );
+
+            if(jn_disk_tranger) {
+                log_warning(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TRANGER_ERROR,
+                    "msg",          "%s", "Open as not master, __timeranger__.json locked",
+                    "path",         "%s", directory,
+                    NULL
+                );
+            } else {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TRANGER_ERROR,
+                    "msg",          "%s", "Cannot open __timeranger__",
+                    "path",         "%s", directory,
+                    NULL
+                );
+            }
             master = FALSE;
             json_object_set_new(tranger, "master", json_false());
         }
@@ -818,7 +845,8 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
         "topic_desc.json",
         kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
         0,
-        FALSE //exclusive
+        FALSE, // exclusive
+        FALSE // silence
     );
 
     /*
@@ -1246,7 +1274,8 @@ PUBLIC json_t *tranger_backup_topic(
         "topic_desc.json",
         0,
         0,
-        FALSE //exclusive
+        FALSE, // exclusive
+        FALSE // silence
     );
     if(!topic_desc) {
         log_error(0,

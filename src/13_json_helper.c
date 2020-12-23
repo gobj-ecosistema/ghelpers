@@ -1144,7 +1144,8 @@ PUBLIC json_t *load_persistent_json(
     const char *filename,
     log_opt_t on_critical_error,
     int *pfd,
-    BOOL exclusive
+    BOOL exclusive,
+    BOOL silence  // HACK to silence TRUE you MUST set on_critical_error=LOG_NONE
 )
 {
     if(pfd) {
@@ -1158,14 +1159,16 @@ PUBLIC json_t *load_persistent_json(
     build_path2(full_path, sizeof(full_path), directory, filename);
 
     if(access(full_path, 0)!=0) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "Cannot load json, file not exist.",
-            "path",         "%s", full_path,
-            NULL
-        );
+        if(!(silence && on_critical_error == LOG_NONE)) {
+            log_critical(on_critical_error,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "Cannot load json, file not exist.",
+                "path",         "%s", full_path,
+                NULL
+            );
+        }
         return 0;
     }
 
@@ -1177,15 +1180,17 @@ PUBLIC json_t *load_persistent_json(
         fd = open(full_path, O_RDONLY|O_NOFOLLOW);
     }
     if(fd<0) {
-        log_critical(on_critical_error,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot open json file",
-            "path",         "%s", full_path,
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
+        if(!(silence && on_critical_error == LOG_NONE)) {
+            log_critical(on_critical_error,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msg",          "%s", "Cannot open json file",
+                "path",         "%s", full_path,
+                "errno",        "%s", strerror(errno),
+                NULL
+            );
+        }
         return 0;
     }
 

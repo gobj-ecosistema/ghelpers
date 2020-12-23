@@ -121,7 +121,8 @@ PUBLIC json_t *wstats_open(
             "__simple_stats__.json",
             on_critical_error,
             &fd,
-            TRUE //exclusive
+            TRUE, // exclusive
+            FALSE // silence
         );
         json_object_update_existing(stats, jn_disk);
         JSON_DECREF(jn_disk);
@@ -151,7 +152,8 @@ PUBLIC json_t *wstats_open(
             "__simple_stats__.json",
             on_critical_error,
             &fd,
-            TRUE //exclusive
+            TRUE, // exclusive
+            FALSE // silence
         );
         json_object_update_existing(stats, jn_disk);
         JSON_DECREF(jn_disk);

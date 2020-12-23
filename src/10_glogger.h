@@ -138,7 +138,7 @@ typedef enum {
  *  Values for log_*() functions
  */
 typedef enum {
-    LOG_NONE                = 0x0001,   /* Backward compatibility */
+    LOG_NONE                = 0x0001,   /* Backward compatibility, only log */
     LOG_OPT_EXIT_ZERO       = 0x0002,   /* Exit(0) after log the error or critical */
     LOG_OPT_EXIT_NEGATIVE   = 0x0004,   /* Exit(-1) after log the error or critical */
     LOG_OPT_ABORT           = 0x0008,   /* abort() after log the error or critical */

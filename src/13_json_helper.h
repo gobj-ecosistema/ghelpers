@@ -269,7 +269,8 @@ PUBLIC json_t *load_persistent_json(
     const char *filename,
     log_opt_t on_critical_error,
     int *pfd,
-    BOOL exclusive
+    BOOL exclusive,
+    BOOL silence  // HACK to silence TRUE you MUST set on_critical_error=LOG_NONE
 );
 
 PUBLIC json_t *load_json_from_file(
