@@ -59,7 +59,7 @@ PRIVATE void show_backtrace(void)
  ***************************************************************************/
 PUBLIC void print_error(pe_flag_t quit, const char *prefix, const char *fmt, ...)
 {
-    char temp[BUFSIZ];
+    char temp[16*1024];
     va_list ap;
     va_start(ap, fmt);
     vsnprintf(temp, sizeof(temp), fmt, ap);

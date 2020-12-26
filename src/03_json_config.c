@@ -284,14 +284,14 @@ PRIVATE json_t * x_legalstring2json(dl_list_t* dl_op, char* reference, const cha
             "YUNETA ERROR",
             "Cannot convert legal json string to json binary.\n"
             "Reference: '%s'\n"
-            "Json string: \n%s\n"
-            "Error: '%s'\n in line %d, column %d, position %d.\n",
+            "Error: '%s'\n in line %d, column %d, position %d.\n"
+            "Json string: \n%s\n",
             reference,
-            bf,
             error.text,
             error.line,
             error.column,
-            error.position
+            error.position,
+            bf
         );
     }
     free(lines);
