@@ -651,10 +651,19 @@ PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
         jn_snaps_topic_var
     );
 
-    parse_schema_cols(
+    if(parse_schema_cols(
         topic_cols_desc,
         kwid_new_list("verbose", snaps_topic, "cols")
-    );
+    )<0) {
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "parse_schema_cols failed",
+            "schema",       "%s", "__snaps__",
+            NULL
+        );
+    }
 
     /*------------------------------*
      *  Open "system" lists:
@@ -979,10 +988,20 @@ PUBLIC json_t *treedb_create_topic(
         jn_topic_var    // owned below
     );
 
-    parse_schema_cols(
+    if(parse_schema_cols(
         topic_cols_desc,
         kwid_new_list("verbose", topic, "cols")
-    );
+    )<0) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "parse_schema_cols failed",
+            "treedb_name",  "%s", treedb_name,
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+    }
 
     if(create_schema) {
         json_t *jn_schema = json_object();
@@ -4220,19 +4239,22 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_object_foreach(cols, col_name, col) {
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
-        if(!(is_fkey || is_hook)) {
-            /*
-             *  Not a hook/fkey field, update it
-             */
-            json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
-            if(new_value) {
-                json_object_set(node, col_name, new_value);
+        if(!is_fkey) {
+            BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+            if(!is_hook) {
+                /*
+                 *  Check if has changed
+                 */
+                json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
+                if(new_value) {
+                    json_object_set(node, col_name, new_value);
+                }
             }
-            continue;
+            continue; // Not a fkey, continue
         }
 
         /*
+         *  HERE only fkeys
          *  link/unlink fkeys
          */
         json_t *old_fkeys = treedb_node_up_refs(tranger, node, topic_name, col_name, TRUE);
