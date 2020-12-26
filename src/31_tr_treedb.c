@@ -4220,16 +4220,14 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_object_foreach(cols, col_name, col) {
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        if(!is_fkey) {
-            BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
-            if(!is_hook) {
-                /*
-                 *  Check if has changed
-                 */
-                json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
-                if(new_value) {
-                    json_object_set(node, col_name, new_value);
-                }
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        if(!(is_fkey || is_hook)) {
+            /*
+             *  Not a hook/fkey field, update it
+             */
+            json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
+            if(new_value) {
+                json_object_set(node, col_name, new_value);
             }
             continue;
         }
