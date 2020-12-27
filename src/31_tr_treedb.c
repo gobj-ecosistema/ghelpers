@@ -6244,15 +6244,22 @@ PRIVATE BOOL match_node_simple(
             }
         } else {
             // Here hook fields and the others
-            if(!kwid_compare_records(
-                jn_record_value, // NOT owned
-                jn_filter_value, // NOT owned
-                FALSE, // without_metadata
-                FALSE, // without_private
-                FALSE  // verbose
-            )) {
-                matched = FALSE;
-                break;
+            if(json_is_object(jn_record_value)) {
+                if(!kwid_compare_records(
+                    jn_record_value, // NOT owned
+                    jn_filter_value, // NOT owned
+                    FALSE, // without_metadata
+                    FALSE, // without_private
+                    FALSE  // verbose
+                )) {
+                    matched = FALSE;
+                    break;
+                }
+            } else {
+                if(cmp_two_simple_json(jn_record_value, jn_filter_value)!=0) {
+                    matched = FALSE;
+                    break;
+                }
             }
         }
     }
