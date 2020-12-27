@@ -1407,7 +1407,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
      */
     if(kw_has_word(desc_flag, "required", 0)) {
         if(!value) {
-            log_error(LOG_OPT_TRACE_STACK,
+            log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1945,7 +1945,7 @@ PRIVATE int set_tranger_field_value(
      */
     if(kw_has_word(desc_flag, "required", 0)) {
         if(!value) { // WARNING efecto colateral? 16-oct-2020 || json_is_null(value)) {
-            log_error(LOG_OPT_TRACE_STACK,
+            log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -5905,7 +5905,7 @@ PRIVATE int link_or_unlink_nodes2(
                     child_topic_name,
                     jn_param,  // owned
                     0,  // options, "collapsed"
-                    0   //match_fn
+                    0   // match_fn
                 );
                 if(json_array_size(nodes)!=1) {
                     split_free2(func_param);
@@ -6281,7 +6281,11 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     if(json_is_array(indexx)) {
         size_t idx; json_t *node;
         json_array_foreach(indexx, idx, node) {
-            if(!kwid_match_nid(ids_list, kw_get_str(node, "id", 0, 0), tranger_max_key_size())) {
+            if(!kwid_match_nid(
+                ids_list,
+                kw_get_str(node, "id", 0, 0),
+                tranger_max_key_size())
+            ) {
                 continue;
             }
             JSON_INCREF(jn_filter);
@@ -6955,7 +6959,7 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
         "__snaps__",
         jn_tag,  // filter, owned
         0,  // options, "collapsed"
-        0   //match_fn
+        0   // match_fn
     );
     int size = json_array_size(snaps);
     if(size == 0) {
@@ -7015,7 +7019,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         "__snaps__",
         jn_tag,  // filter, owned
         0,  // options, "collapsed"
-        0   //match_fn
+        0   // match_fn
     );
     if(json_array_size(snaps)>0) {
         char temp[80];
@@ -7188,7 +7192,7 @@ PUBLIC int treedb_activate_snap( // Activate tag, return the snap tag
         "__snaps__",
         jn_tag,  // filter, owned
         0,  // options, "collapsed"
-        0   //match_fn
+        0   // match_fn
     );
     json_t *snap = json_array_get(snaps, 0);
     JSON_DECREF(snaps);
@@ -7271,7 +7275,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
         "__snaps__",
         filter,  // filter, owned
         0,  // options, "collapsed"
-        0   //match_fn
+        0   // match_fn
     );
 
     return snaps;
