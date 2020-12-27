@@ -4030,7 +4030,7 @@ PUBLIC BOOL kwid_compare_records(
                             json_object_del(expected, key);
 
                         } else {
-                            if(!kw_is_identical(value, value2)) {
+                            if(cmp_two_simple_json(value, value2)!=0) {
                                 ret = FALSE;
                                 break;
                             } else {

@@ -2722,7 +2722,15 @@ PRIVATE BOOL decode_string_fkey(
     char *hook_name, int hook_name_size
 )
 {
-    *topic_name = *id = *hook_name = 0;
+    if(topic_name) {
+        *topic_name = 0;
+    }
+    if(id) {
+        *id = 0;
+    }
+    if(hook_name) {
+        *hook_name = 0;
+    }
 
     if(!(pref && strchr(pref, '^'))) {
         return FALSE;
@@ -2742,9 +2750,15 @@ PRIVATE BOOL decode_string_fkey(
         return FALSE;
     }
 
-    snprintf(topic_name, topic_name_size, "%s", ss[0]);
-    snprintf(id, id_size, "%s", ss[1]);
-    snprintf(hook_name, hook_name_size, "%s", ss[2]);
+    if(topic_name) {
+        snprintf(topic_name, topic_name_size, "%s", ss[0]);
+    }
+    if(id) {
+        snprintf(id, id_size, "%s", ss[1]);
+    }
+    if(hook_name) {
+        snprintf(hook_name, hook_name_size, "%s", ss[2]);
+    }
 
     split_free2(ss);
     return TRUE;
@@ -6185,6 +6199,68 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE BOOL match_node_simple(
+    json_t *cols,       // NOT owned
+    json_t *node,       // NOT owned
+    json_t *jn_filter   // NOT owned
+)
+{
+    if(json_object_size(jn_filter)==0) {
+        // A empty object at first level evaluate as true.
+        return TRUE;
+    }
+
+    // Not Empty object evaluate as true, until a NOT match condition occurs.
+    BOOL matched = TRUE;
+
+    const char *col_name;
+    json_t *jn_filter_value;
+    json_object_foreach(jn_filter, col_name, jn_filter_value) {
+        json_t *col = kw_get_dict(cols, col_name, 0, KW_REQUIRED);
+        if(!col) {
+            continue; // Never must occur
+        }
+        json_t *jn_record_value = kw_get_dict_value(node, col_name, 0, KW_REQUIRED);
+        if(!jn_record_value) {
+            continue; // Never must occur
+        }
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        if(is_fkey) {
+            char parent_id[NAME_MAX];
+            const char *ref = json_string_value(jn_record_value);
+            decode_string_fkey(
+                ref,
+                0, 0,
+                parent_id, sizeof(parent_id),
+                0, 0
+            );
+            const char *id_ = json_string_value(jn_filter_value);
+            if(!id_ || strcmp(id_, parent_id)!=0) {
+                matched = FALSE;
+                break;
+            }
+        } else {
+            // Here hook fields and the others
+            if(!kwid_compare_records(
+                jn_record_value, // NOT owned
+                jn_filter_value, // NOT owned
+                FALSE, // without_metadata
+                FALSE, // without_private
+                FALSE  // verbose
+            )) {
+                matched = FALSE;
+                break;
+            }
+        }
+    }
+
+    return matched;
+}
+
+/***************************************************************************
     Return a list of matched nodes
     If collapsed:
         - the ref (fkeys to up) have 3 ^ fields
@@ -6203,8 +6279,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *jn_filter_,  // owned
     json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (
-        json_t *kw,         // not owned
-        json_t *jn_filter   // owned
+        json_t *topic_desc, // not owned
+        json_t *node,       // not owned
+        json_t *jn_filter   // not owned
     )
 )
 {
@@ -6242,7 +6319,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
      *      the ids and the fields of topic
      *--------------------------------------------*/
     if(!match_fn) {
-        match_fn = kw_match_simple;
+        match_fn = match_node_simple;
     }
 
     /*
@@ -6288,8 +6365,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             ) {
                 continue;
             }
-            JSON_INCREF(jn_filter);
-            if(match_fn(node, jn_filter)) {
+            if(match_fn(topic_desc, node, jn_filter)) {
                 if(!collapsed) {
                     // Full tree
                     json_array_append(list, node);
@@ -6311,8 +6387,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             if(!kwid_match_nid(ids_list, id, tranger_max_key_size())) {
                 continue;
             }
-            JSON_INCREF(jn_filter);
-            if(match_fn(node, jn_filter)) {
+            if(match_fn(topic_desc, node, jn_filter)) {
                 if(!collapsed) {
                     json_array_append(list, node);
                 } else {
@@ -6357,8 +6432,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     json_t *jn_filter_,  // owned
     json_t *jn_options, // owned, "collapsed"
     BOOL (*match_fn) (
-        json_t *kw,         // not owned
-        json_t *jn_filter   // owned
+        json_t *topic_desc, // not owned
+        json_t *node,       // not owned
+        json_t *jn_filter   // not owned
     )
 )
 {
@@ -6391,7 +6467,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
      *      the ids and the fields of topic
      *--------------------------------------------*/
     if(!match_fn) {
-        match_fn = kw_match_simple;
+        match_fn = match_node_simple;
     }
 
     /*
@@ -6473,8 +6549,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
                 }
                 const char *pkey2; json_t *node;
                 json_object_foreach(pkey2_dict, pkey2, node) {
-                    JSON_INCREF(jn_filter);
-                    if(match_fn(node, jn_filter)) {
+                    if(match_fn(topic_desc, node, jn_filter)) {
                         if(!collapsed) {
                             json_array_append(list, node);
                         } else {
