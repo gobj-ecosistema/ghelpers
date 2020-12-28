@@ -97,6 +97,10 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
     const char *treedb_name,
     uint32_t *user_flag
 );
+PRIVATE json_t *treedb_collapse_node( // Return MUST be decref
+    json_t *tranger,
+    json_t *node // not owned
+);
 
 /***************************************************************
  *              Data
@@ -2715,7 +2719,7 @@ PRIVATE int load_pkey2_callback(
 /***************************************************************************
  *  Decode fkey
  ***************************************************************************/
-PRIVATE BOOL decode_string_fkey(
+PRIVATE BOOL decode_parent_ref(
     const char *pref,
     char *topic_name, int topic_name_size,
     char *id, int id_size,
@@ -2837,7 +2841,7 @@ PRIVATE int link_child_to_parent(
     char parent_topic_name[NAME_MAX];
     char parent_id[NAME_MAX];
     char hook_name[NAME_MAX];
-    if(!decode_string_fkey(
+    if(!decode_parent_ref(
         pref,
         parent_topic_name, sizeof(parent_topic_name),
         parent_id, sizeof(parent_id),
@@ -3566,7 +3570,7 @@ PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
     switch(json_typeof(value)) { // json_typeof PROTECTED
     case JSON_STRING:
         {
-            if(decode_string_fkey(
+            if(decode_parent_ref(
                 json_string_value(value),
                 parent_topic_name, sizeof(parent_topic_name),
                 parent_id, sizeof(parent_id),
@@ -3581,7 +3585,7 @@ PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
             int idx; json_t *r;
             json_array_foreach(value, idx, r) {
                 if(json_typeof(r)==JSON_STRING) {
-                    if(decode_string_fkey(
+                    if(decode_parent_ref(
                         json_string_value(r),
                         parent_topic_name, sizeof(parent_topic_name),
                         parent_id, sizeof(parent_id),
@@ -3597,7 +3601,7 @@ PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
         {
             const char *key; json_t *v;
             json_object_foreach(value, key, v) {
-                if(decode_string_fkey(
+                if(decode_parent_ref(
                     key,
                     parent_topic_name, sizeof(parent_topic_name),
                     parent_id, sizeof(parent_id),
@@ -4287,7 +4291,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 /*
                  *  Get parent info
                  */
-                if(!decode_string_fkey(
+                if(!decode_parent_ref(
                     ref,
                     parent_topic_name, sizeof(parent_topic_name),
                     parent_id, sizeof(parent_id),
@@ -4353,7 +4357,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 /*
                  *  Get parent info
                  */
-                if(!decode_string_fkey(
+                if(!decode_parent_ref(
                     ref,
                     parent_topic_name, sizeof(parent_topic_name),
                     parent_id, sizeof(parent_id),
@@ -4423,7 +4427,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             /*
              *  Get parent info
              */
-            if(!decode_string_fkey(
+            if(!decode_parent_ref(
                 ref,
                 parent_topic_name, sizeof(parent_topic_name),
                 parent_id, sizeof(parent_id),
@@ -4688,7 +4692,7 @@ PUBLIC int treedb_delete_node(
                 char parent_topic_name[NAME_MAX];
                 char parent_id[NAME_MAX];
                 char hook_name[NAME_MAX];
-                if(!decode_string_fkey(
+                if(!decode_parent_ref(
                     ref,
                     parent_topic_name, sizeof(parent_topic_name),
                     parent_id, sizeof(parent_id),
@@ -5816,7 +5820,7 @@ PRIVATE int link_or_unlink_nodes2(
     char parent_topic_name[NAME_MAX];
     char parent_id[NAME_MAX];
     char hook_name[NAME_MAX];
-    if(!decode_string_fkey(
+    if(!decode_parent_ref(
         parent,
         parent_topic_name, sizeof(parent_topic_name),
         parent_id, sizeof(parent_id),
@@ -6231,7 +6235,7 @@ PRIVATE BOOL match_node_simple(
         if(is_fkey) {
             char parent_id[NAME_MAX];
             const char *ref = json_string_value(jn_record_value);
-            decode_string_fkey(
+            decode_parent_ref(
                 ref,
                 0, 0,
                 parent_id, sizeof(parent_id),
@@ -6269,11 +6273,40 @@ PRIVATE BOOL match_node_simple(
 
 /***************************************************************************
     Return a list of matched nodes
-    If collapsed:
-        - the ref (fkeys to up) have 3 ^ fields
-        - the ref (childs, to down) have 2 ^ fields
-    WARNING Returned list in "collapsed" mode have duplicate nodes,
-            otherwise it returns original nodes.
+
+    Meaning of parent and child 'references' (fkeys, hooks)
+    -----------------------------------------------------
+    'fkey ref'
+        The parent's references (link to up) have 3 ^ fields:
+
+            "topic_name^id^hook_name"
+
+        WARNING: Parents references are never return with full node,
+        to get parent data you must to access to the parent node.
+        It's a hierarchy structure: Full access to childs, not to parents.
+
+    'hook ref'
+        The child's references (link to down) have 2 ^ fields:
+
+            "topic_name^id"
+
+    Options
+    -------
+    "collapsed"
+        Yes:
+            return a hook list in 'fkey ref' mode
+            WARNING (always a **list**, not the original string/dict/list)
+        No:
+            Return hooks with full and original (string,dict,list) child's nodes.
+
+    "only-fkey-id"
+        Valid in collapsed and collapsed mode.
+        Return the 'fkey ref' with only the 'id' field
+
+    "only-hook-id"
+        WARNING: Implicit collapsed mode.
+        Return the 'hook ref' with only the 'id' field
+
 
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
@@ -6284,7 +6317,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned, "collapsed"
+    json_t *jn_options, // owned "collapsed" "only-fkey-id" "only-hook-id"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -6437,7 +6470,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned, "collapsed"
+    json_t *jn_options, // owned, "collapsed" "only-fkey-id" "only-hook-id"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -6598,8 +6631,9 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *id,
-    json_t *jn_options // owned, "collapsed"
+    const char *id,      // TODO habra que pasar el id limpio, no la fkey ref,
+                        // o que gobj_get_node sace el id, (uso options?)
+    json_t *jn_options // owned, "collapsed" "only-fkey-id" "only-hook-id"
 )
 {
     /*-----------------------------------*
@@ -6644,7 +6678,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
+PRIVATE json_t *treedb_collapse_node( // Return MUST be decref
     json_t *tranger,
     json_t *node // not owned
 )
@@ -6747,7 +6781,7 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
          *  Get parent info
          */
         const char *ref = json_string_value(jn_fkey);
-        if(!decode_string_fkey(
+        if(!decode_parent_ref(
             ref,
             parent_topic_name, sizeof(parent_topic_name),
             parent_id, sizeof(parent_id),

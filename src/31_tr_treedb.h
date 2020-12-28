@@ -339,11 +339,40 @@ PUBLIC int treedb_link_multiple_nodes(
 
 /**rst**
     Return a list of matched nodes
-    If collapsed:
-        - the ref (fkeys to up) have 3 ^ fields
-        - the ref (childs, to down) have 2 ^ fields
-    WARNING Returned list in "collapsed" mode have duplicated nodes,
-            otherwise it returns original nodes.
+
+    Meaning of parent and child 'references' (fkeys, hooks)
+    -----------------------------------------------------
+    'fkey ref'
+        The parent's references (link to up) have 3 ^ fields:
+
+            "topic_name^id^hook_name"
+
+        WARNING: Parents references are never return with full node,
+        to get parent data you must to access to the parent node.
+        It's a hierarchy structure: Full access to childs, not to parents.
+
+    'hook ref'
+        The child's references (link to down) have 2 ^ fields:
+
+            "topic_name^id"
+
+    Options
+    -------
+    "collapsed"
+        Yes:
+            return a hook list in 'fkey ref' mode
+            WARNING (always a **list**, not the original string/dict/list)
+        No:
+            Return hooks with full and original (string,dict,list) child's nodes.
+
+    "only-fkey-id"
+        Valid in collapsed and collapsed mode.
+        Return the 'fkey ref' with only the 'id' field
+
+    "only-hook-id"
+        WARNING: Implicit collapsed mode.
+        Return the 'hook ref' with only the 'id' field
+
 
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
@@ -354,7 +383,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned, "collapsed"
+    json_t *jn_options, // owned "collapsed" "only-fkey-id" "only-hook-id"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -367,7 +396,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned, "collapsed"
+    json_t *jn_options, // owned, "collapsed" "only-fkey-id" "only-hook-id"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -380,15 +409,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     const char *id,
-    json_t *jn_options // owned, "collapsed"
-);
-
-/*
- *  Devuelve una vista del node collapsed
- */
-PUBLIC json_t *treedb_collapse_node( // Return MUST be decref
-    json_t *tranger,
-    json_t *node // not owned
+    json_t *jn_options // owned, "collapsed" "only-fkey-id" "only-hook-id"
 );
 
 /*
