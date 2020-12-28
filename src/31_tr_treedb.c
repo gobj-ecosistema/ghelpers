@@ -4116,8 +4116,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw,    // owned (node)
-    json_t *jn_options // owned "create", "clean"
+    json_t *kw,    // owned
+    json_t *jn_options // owned, "create"
 )
 {
     /*-----------------------------------*

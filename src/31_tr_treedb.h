@@ -280,7 +280,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned
-    json_t *jn_options // "create", "clean"
+    json_t *jn_options // owned, "create"
 );
 
 /**rst**
