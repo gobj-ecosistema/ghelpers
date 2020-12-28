@@ -2349,7 +2349,7 @@ PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
     json_t *kw,  // not owned
-    json_t *jn_options, // not owned, "permissive"
+    json_t *jn_options, // not owned
     BOOL create // create or update
 )
 {
@@ -2389,9 +2389,6 @@ PRIVATE json_t *record2tranger(
         }
     }
 
-    if(kw_get_bool(jn_options, "permissive", 0, 0)) {
-        json_object_update_missing(new_record, kw);
-    }
     json_object_del(new_record, "__md_treedb__");
 
     JSON_DECREF(cols);
@@ -3758,7 +3755,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw, // owned
-    json_t *jn_options // bool "permissive"
+    json_t *jn_options
 )
 {
     /*-----------------------------------*
@@ -4120,7 +4117,7 @@ PUBLIC int treedb_save_node(
 
     WARNING This function DOES auto build links
 
-    "create" ["permissive"] create node if not exist
+    "create" create node if not exist
     "clean" clean wrong fkeys
  ***************************************************************************/
 PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
@@ -4128,7 +4125,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned (node)
-    json_t *jn_options // owned "create" ["permissive"], "clean"
+    json_t *jn_options // owned "create", "clean"
 )
 {
     /*-----------------------------------*
@@ -4487,10 +4484,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
 
         json_decref(old_fkeys);
         json_decref(new_fkeys);
-    }
-
-    if(kw_get_bool(jn_options, "permissive", 0, 0)) {
-        json_object_update_missing(node, kw);
     }
 
     JSON_DECREF(cols);
