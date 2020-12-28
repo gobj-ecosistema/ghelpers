@@ -99,7 +99,8 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
 );
 PRIVATE json_t *treedb_collapse_node( // Return MUST be decref
     json_t *tranger,
-    json_t *node // not owned
+    json_t *node, // not owned
+    json_t *options // not owned
 );
 
 /***************************************************************
@@ -3477,7 +3478,7 @@ PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
 /***************************************************************************
     Return refs of fkeys of col_name field
  ***************************************************************************/
-PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
+PRIVATE json_t *treedb_node_up_refs(  // Return MUST be decref
     json_t *tranger,
     json_t *node,    // not owned
     const char *topic_name,
@@ -3551,70 +3552,70 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
 /***************************************************************************
     Return array of `parent_id` of `value`  (refs: parent_topic_name^parent_id^hook_name)
  ***************************************************************************/
-PUBLIC json_t *treedb_beautiful_up_refs(  // Return MUST be decref
-    json_t *value // not owned
-)
-{
-    if(!value) {
-        return 0;
-    }
-    char parent_topic_name[NAME_MAX];
-    char parent_id[NAME_MAX];
-    char hook_name[NAME_MAX];
-
-    json_t *jn_beautiful_names = json_array();
-
-    switch(json_typeof(value)) { // json_typeof PROTECTED
-    case JSON_STRING:
-        {
-            if(decode_parent_ref(
-                json_string_value(value),
-                parent_topic_name, sizeof(parent_topic_name),
-                parent_id, sizeof(parent_id),
-                hook_name, sizeof(hook_name)
-            )) {
-                json_array_append_new(jn_beautiful_names, json_string(parent_id));
-            }
-        }
-        break;
-    case JSON_ARRAY:
-        {
-            int idx; json_t *r;
-            json_array_foreach(value, idx, r) {
-                if(json_typeof(r)==JSON_STRING) {
-                    if(decode_parent_ref(
-                        json_string_value(r),
-                        parent_topic_name, sizeof(parent_topic_name),
-                        parent_id, sizeof(parent_id),
-                        hook_name, sizeof(hook_name)
-                    )) {
-                        json_array_append_new(jn_beautiful_names, json_string(parent_id));
-                    }
-                }
-            }
-        }
-        break;
-    case JSON_OBJECT:
-        {
-            const char *key; json_t *v;
-            json_object_foreach(value, key, v) {
-                if(decode_parent_ref(
-                    key,
-                    parent_topic_name, sizeof(parent_topic_name),
-                    parent_id, sizeof(parent_id),
-                    hook_name, sizeof(hook_name)
-                )) {
-                    json_array_append_new(jn_beautiful_names, json_string(parent_id));
-                }
-            }
-        }
-        break;
-    default:
-        break;
-    }
-
-    return jn_beautiful_names;
-}
+// PRIVATE json_t *treedb_beautiful_up_refs(  // Return MUST be decref
+//     json_t *value // not owned
+// )
+// {
+//     if(!value) {
+//         return 0;
+//     }
+//     char parent_topic_name[NAME_MAX];
+//     char parent_id[NAME_MAX];
+//     char hook_name[NAME_MAX];
+//
+//     json_t *jn_beautiful_names = json_array();
+//
+//     switch(json_typeof(value)) { // json_typeof PROTECTED
+//     case JSON_STRING:
+//         {
+//             if(decode_parent_ref(
+//                 json_string_value(value),
+//                 parent_topic_name, sizeof(parent_topic_name),
+//                 parent_id, sizeof(parent_id),
+//                 hook_name, sizeof(hook_name)
+//             )) {
+//                 json_array_append_new(jn_beautiful_names, json_string(parent_id));
+//             }
+//         }
+//         break;
+//     case JSON_ARRAY:
+//         {
+//             int idx; json_t *r;
+//             json_array_foreach(value, idx, r) {
+//                 if(json_typeof(r)==JSON_STRING) {
+//                     if(decode_parent_ref(
+//                         json_string_value(r),
+//                         parent_topic_name, sizeof(parent_topic_name),
+//                         parent_id, sizeof(parent_id),
+//                         hook_name, sizeof(hook_name)
+//                     )) {
+//                         json_array_append_new(jn_beautiful_names, json_string(parent_id));
+//                     }
+//                 }
+//             }
+//         }
+//         break;
+//     case JSON_OBJECT:
+//         {
+//             const char *key; json_t *v;
+//             json_object_foreach(value, key, v) {
+//                 if(decode_parent_ref(
+//                     key,
+//                     parent_topic_name, sizeof(parent_topic_name),
+//                     parent_id, sizeof(parent_id),
+//                     hook_name, sizeof(hook_name)
+//                 )) {
+//                     json_array_append_new(jn_beautiful_names, json_string(parent_id));
+//                 }
+//             }
+//         }
+//         break;
+//     default:
+//         break;
+//     }
+//
+//     return jn_beautiful_names;
+// }
 
 /***************************************************************************
 
@@ -5682,52 +5683,14 @@ PRIVATE BOOL match_node_simple(
 }
 
 /***************************************************************************
-    Return a list of matched nodes
-
-    Meaning of parent and child 'references' (fkeys, hooks)
-    -----------------------------------------------------
-    'fkey ref'
-        The parent's references (link to up) have 3 ^ fields:
-
-            "topic_name^id^hook_name"
-
-        WARNING: Parents references are never return with full node,
-        to get parent data you must to access to the parent node.
-        It's a hierarchy structure: Full access to childs, not to parents.
-
-    'hook ref'
-        The child's references (link to down) have 2 ^ fields:
-
-            "topic_name^id"
-
-    Options
-    -------
-    "collapsed"
-        Yes:
-            return a hook list in 'fkey ref' mode
-            WARNING (always a **list**, not the original string/dict/list)
-        No:
-            Return hooks with full and original (string,dict,list) child's nodes.
-
-    "only-fkey-id"
-        Valid in collapsed and collapsed mode.
-        Return the 'fkey ref' with only the 'id' field
-
-    "only-hook-id"
-        WARNING: Implicit collapsed mode.
-        Return the 'hook ref' with only the 'id' field
-
-
-    HACK id is converted in ids (using kwid_get_ids())
-    HACK if __filter__ exists in jn_filter it will be used as filter
-
+ *
  ***************************************************************************/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned "collapsed" "only-fkey-id" "only-hook-id"
+    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -5880,7 +5843,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned, "collapsed" "only-fkey-id" "only-hook-id"
+    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -6041,9 +6004,8 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *id,      // TODO habra que pasar el id limpio, no la fkey ref,
-                        // o que gobj_get_node sace el id, (uso options?)
-    json_t *jn_options // owned, "collapsed" "only-fkey-id" "only-hook-id"
+    const char *id,
+    json_t *jn_options // owned, "collapsed" "fkey-ref-*", "hook-ref-*"
 )
 {
     /*-----------------------------------*
@@ -6078,7 +6040,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
         return 0;
     }
     if(collapsed) {
-        node = treedb_collapse_node(tranger, node);
+        node = treedb_collapse_node(tranger, node, jn_options);
     }
 
     JSON_DECREF(jn_options);
@@ -6090,7 +6052,8 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
  ***************************************************************************/
 PRIVATE json_t *treedb_collapse_node( // Return MUST be decref
     json_t *tranger,
-    json_t *node // not owned
+    json_t *node, // not owned
+    json_t *options // not owned
 )
 {
     const char *topic_name = json_string_value(
@@ -6106,13 +6069,13 @@ PRIVATE json_t *treedb_collapse_node( // Return MUST be decref
 }
 
 /***************************************************************************
- *  Return a list of parent nodes pointed by the link (fkey)
+ *  Return a list of parent **references** pointed by the link (fkey)
  ***************************************************************************/
 PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
     const char *link, // must be a fkey field
     json_t *node, // not owned
-    json_t *jn_options // owned, "collapsed"
+    json_t *jn_options // owned, "fkey-ref-*"
 )
 {
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
@@ -6257,13 +6220,13 @@ PUBLIC size_t treedb_parents_size(
 }
 
 /***************************************************************************
- *  Return a list of child nodes of the hook (WARNING ONLY first level)
+ *  Return a list of child **references** of the hook
  ***************************************************************************/
 PUBLIC json_t *treedb_list_childs(
     json_t *tranger,
     const char *hook,
     json_t *node, // not owned
-    json_t *jn_options // owned, "collapsed"
+    json_t *jn_options // owned, "hook-ref-*"
 )
 {
     BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
@@ -6316,7 +6279,7 @@ PUBLIC json_t *treedb_list_childs(
 }
 
 /***************************************************************************
- *  Return number of child nodes of the hook (WARNING ONLY first level)
+ *  Return number of child nodes of the hook
  ***************************************************************************/
 PUBLIC size_t treedb_childs_size(
     json_t *tranger,

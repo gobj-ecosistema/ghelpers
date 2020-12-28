@@ -226,24 +226,6 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
     const char *topic_name
 );
 
-/**rst**
-    Return refs of fkeys of col_name field
-**rst**/
-PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
-    json_t *tranger,
-    json_t *node,    // not owned
-    const char *topic_name,
-    const char *col_name,
-    BOOL verbose
-);
-
-/**rst**
-    Return array of `parent_id` of `value`  (refs: parent_topic_name^parent_id^hook_name)
-**rst**/
-PUBLIC json_t *treedb_beautiful_up_refs(  // Return MUST be decref
-    json_t *value
-);
-
 PUBLIC int treedb_set_trace(BOOL set);
 
 /*------------------------------------*
@@ -308,16 +290,7 @@ PUBLIC int treedb_unlink_nodes(
     json_t *child_node      // not owned
 );
 
-PUBLIC int treedb_link_multiple_nodes(
-    json_t *tranger,
-    const char *hook,
-    json_t *parent_nodes,   // not owned
-    json_t *child_nodes     // not owned
-);
-
 /**rst**
-    Return a list of matched nodes
-
     Meaning of parent and child 'references' (fkeys, hooks)
     -----------------------------------------------------
     'fkey ref'
@@ -338,30 +311,44 @@ PUBLIC int treedb_link_multiple_nodes(
     -------
     "collapsed"
         Yes:
-            return a hook list in 'fkey ref' mode
+            Return hooks with a list of child references
             WARNING (always a **list**, not the original string/dict/list)
         No:
             Return hooks with full and original (string,dict,list) child's nodes.
 
-    "only-fkey-id"
-        Valid in collapsed and collapsed mode.
-        Return the 'fkey ref' with only the 'id' field
+            TODO The "collapsed" option must not be used in high level
+            because return data not parsed with authz
+            but I cannot remove from treedb_get_node() until the tests are changed.
 
-    "only-hook-id"
+    "fkey-ref-only-id"
+        Return the 'fkey ref' with only the 'id' field
+            ["$id",...]
+
+    "fkey-ref-list-dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
+
+    "hook-ref-only-id"
         WARNING: Implicit collapsed mode.
         Return the 'hook ref' with only the 'id' field
+            ["$id",...]
 
+    "hook-ref-list-dict"
+        WARNING: Implicit collapsed mode.
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name"}, ...]
 
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
 
 **rst**/
+
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "collapsed" "only-fkey-id" "only-hook-id"
+    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -374,7 +361,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned, "collapsed" "only-fkey-id" "only-hook-id"
+    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -387,17 +374,17 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name,
     const char *id,
-    json_t *jn_options // owned, "collapsed" "only-fkey-id" "only-hook-id"
+    json_t *jn_options // owned, "collapsed" "fkey-ref-*", "hook-ref-*"
 );
 
 /*
- *  Return a list of parent nodes pointed by the link (fkey)
+ *  Return a list of parent **references** pointed by the link (fkey)
  */
 PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
     const char *link, // must be a fkey field
     json_t *node, // not owned
-    json_t *jn_options // owned, "collapsed"
+    json_t *jn_options // owned, "fkey-ref-*"
 );
 
 /*
@@ -410,17 +397,17 @@ PUBLIC size_t treedb_parents_size(
 );
 
 /*
- *  Return a list of child nodes of the hook (WARNING ONLY first level)
+ *  Return a list of child **references** of the hook
  */
 PUBLIC json_t *treedb_list_childs(
     json_t *tranger,
     const char *hook,
     json_t *node, // not owned
-    json_t *jn_options // owned, "collapsed"
+    json_t *jn_options // owned, "hook-ref-*"
 );
 
 /*
- *  Return number of child nodes of the hook (WARNING ONLY first level)
+ *  Return number of child nodes of the hook
  */
 PUBLIC size_t treedb_childs_size(
     json_t *tranger,
