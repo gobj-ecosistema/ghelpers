@@ -301,25 +301,11 @@ PUBLIC int treedb_link_nodes(
     json_t *child_node      // not owned
 );
 
-PUBLIC int treedb_link_nodes2(
-    json_t *tranger,
-    const char *treedb_name,
-    const char *parent_ref,     // parent_topic_name^parent_id^hook_name
-    const char *child_ref       // child_topic_name^child_id
-);
-
 PUBLIC int treedb_unlink_nodes(
     json_t *tranger,
     const char *hook,
     json_t *parent_node,    // not owned
     json_t *child_node      // not owned
-);
-
-PUBLIC int treedb_unlink_nodes2(
-    json_t *tranger,
-    const char *treedb_name,
-    const char *parent_ref,     // parent_topic_name^parent_id^hook_name
-    const char *child_ref       // child_topic_name^child_id
 );
 
 PUBLIC int treedb_link_multiple_nodes(
