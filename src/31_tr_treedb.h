@@ -240,7 +240,7 @@ PUBLIC json_t *treedb_node_up_refs(  // Return MUST be decref
 /**rst**
     Return array of `parent_id` of `value`  (refs: parent_topic_name^parent_id^hook_name)
 **rst**/
-PUBLIC json_t *treedb_beatiful_up_refs(  // Return MUST be decref
+PUBLIC json_t *treedb_beautiful_up_refs(  // Return MUST be decref
     json_t *value
 );
 
@@ -252,10 +252,6 @@ PUBLIC int treedb_set_trace(BOOL set);
 
 /**rst**
     Create a new node
-
-    WARNING This function does NOT auto build links
-    If you want to create node with auto build links
-    then you must use treedb_update_node() with "create"
 **rst**/
 PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_t *tranger,
@@ -277,11 +273,7 @@ PUBLIC int treedb_save_node(
 
 /**rst**
     Update the existing current node with fields of kw
-
-    WARNING This function DOES auto build links
-
     "create" create node if not exist
-    "clean" clean wrong fkeys
 **rst**/
 PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_t *tranger,
