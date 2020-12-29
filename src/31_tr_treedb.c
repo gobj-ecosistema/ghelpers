@@ -5553,6 +5553,7 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
             json_t *refs = get_hook_refs(field_data, original_node);
             json_t *childs = apply_child_ref_options(refs, jn_options);
             json_array_extend(list, childs);
+            json_decref(childs);
             json_decref(refs);
 
         } else if(is_fkey) {
@@ -5565,6 +5566,7 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
             json_t *refs = get_fkey_refs(field_data);
             json_t *parents = apply_parent_ref_options(refs, jn_options);
             json_array_extend(list, parents);
+            json_decref(parents);
             json_decref(refs);
 
         } else {
@@ -5732,7 +5734,7 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
         JSON_DECREF(jn_options);
         return 0;
     }
-    BOOL collapsed = json_empty(jn_options)?FALSE:TRUE; // Any option = collapse!
+    BOOL collapsed = json_empty(jn_options)?FALSE:TRUE; // Any option = collapse true!
     if(collapsed) {
         json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
         node = node_collapsed_view(
