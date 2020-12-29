@@ -5539,10 +5539,36 @@ PUBLIC int treedb_unlink_nodes(
 /***************************************************************************
     Return a view of node with hook fields being collapsed
     WARNING extra fields are ignored, only topic desc fields are used
+    Options
+    -------
+    "fkey-ref-only-id"
+        Return the 'fkey ref' with only the 'id' field
+            ["$id",...]
+
+    "fkey-ref-list-dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
+
+    "fkey-ref-size"
+        Return the kwid style:
+            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
+
+    "hook-ref-only-id"
+        Return the 'hook ref' with only the 'id' field
+            ["$id",...]
+
+    "hook-ref-list-dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name"}, ...]
+
+    "hook-ref-size"
+        Return the kwid style:
+            [{"topic_name":"$topic_name", "size": $size}, ...]
  ***************************************************************************/
 PRIVATE json_t *node_collapsed_view( // Return MUST be decref
     json_t *topic_desc, // not owned
-    json_t *node // not owned
+    json_t *node, // not owned
+    json_t *jn_options // not owned
 )
 {
     BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
@@ -5564,34 +5590,31 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
             );
             continue;
         }
-        if(is_hook || is_fkey) {
-            if(is_hook) {
-                json_t *list = kw_get_dict_value(
-                    node_view,
-                    col_name,
-                    json_array(),
-                    KW_CREATE
-                );
-                json_t *hook_refs = get_hook_refs(field_value, original_node);
-                json_array_extend(list, hook_refs);
-                json_decref(hook_refs);
-            }
-            if(is_fkey) {
-                json_t *list = kw_get_dict_value(
-                    node_view,
-                    col_name,
-                    json_array(),
-                    KW_CREATE
-                );
-                json_t *fkey_refs = get_fkey_refs(field_value);
-                json_array_extend(list, fkey_refs);
-                json_decref(fkey_refs);
-            }
-        } else {
-            json_object_set_new(
+        if(is_hook) {
+            json_t *list = kw_get_dict_value(
                 node_view,
                 col_name,
-                json_deep_copy(field_value)
+                json_array(),
+                KW_CREATE
+            );
+            json_t *hook_refs = get_hook_refs(field_value, original_node);
+            json_array_extend(list, hook_refs);
+            json_decref(hook_refs);
+        } else if(is_fkey) {
+            json_t *list = kw_get_dict_value(
+                node_view,
+                col_name,
+                json_array(),
+                KW_CREATE
+            );
+            json_t *fkey_refs = get_fkey_refs(field_value);
+            json_array_extend(list, fkey_refs);
+            json_decref(fkey_refs);
+        } else {
+            json_object_set(
+                node_view,
+                col_name,
+                field_value
             );
         }
     }
@@ -5714,6 +5737,62 @@ PRIVATE BOOL match_node_simple(
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *id,
+    json_t *jn_options // owned, "collapsed" "fkey-ref-*", "hook-ref-*"
+)
+{
+    /*-----------------------------------*
+     *      Check appropiate topic
+     *-----------------------------------*/
+    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic name not found in treedbs",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    /*-------------------------------*
+     *  Get indexx: to get node
+     *-------------------------------*/
+    json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
+
+    /*-------------------------------*
+     *      Get
+     *-------------------------------*/
+    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
+    json_t *node = exist_primary_node(indexx, id);
+    if(!node) {
+        // Silence
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+    if(collapsed) {
+        json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
+        node = node_collapsed_view(
+            topic_desc,
+            node,
+            jn_options
+        );
+        JSON_DECREF(topic_desc);
+    }
+
+    JSON_DECREF(jn_options);
+    return node;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
@@ -5817,7 +5896,8 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                         list,
                         node_collapsed_view(
                             topic_desc,
-                            node
+                            node,
+                            jn_options
                         )
                     );
                 }
@@ -5837,7 +5917,8 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                         list,
                         node_collapsed_view(
                             topic_desc,
-                            node
+                            node,
+                            jn_options
                         )
                     );
                 }
@@ -5999,7 +6080,8 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
                                 list,
                                 node_collapsed_view(
                                     topic_desc,
-                                    node
+                                    node,
+                                    jn_options
                                 )
                             );
                         }
@@ -6024,61 +6106,6 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     JSON_DECREF(jn_options);
 
     return list;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
-    json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    const char *id,
-    json_t *jn_options // owned, "collapsed" "fkey-ref-*", "hook-ref-*"
-)
-{
-    /*-----------------------------------*
-     *      Check appropiate topic
-     *-----------------------------------*/
-    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Topic name not found in treedbs",
-            "topic_name",   "%s", topic_name,
-            NULL
-        );
-        JSON_DECREF(jn_options);
-        return 0;
-    }
-
-    /*-------------------------------*
-     *  Get indexx: to get node
-     *-------------------------------*/
-    json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
-
-    /*-------------------------------*
-     *      Get
-     *-------------------------------*/
-    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
-    json_t *node = exist_primary_node(indexx, id);
-    if(!node) {
-        // Silence
-        JSON_DECREF(jn_options);
-        return 0;
-    }
-    if(collapsed) {
-        json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
-        node = node_collapsed_view(
-            topic_desc,
-            node
-        );
-        JSON_DECREF(topic_desc);
-    }
-
-    JSON_DECREF(jn_options);
-    return node;
 }
 
 /***************************************************************************
