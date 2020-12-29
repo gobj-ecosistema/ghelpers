@@ -256,6 +256,7 @@ PUBLIC int treedb_save_node(
 /**rst**
     Update the existing current node with fields of kw
     "create" create node if not exist
+    HACK fkeys and hook fields are not updated!
 **rst**/
 PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_t *tranger,

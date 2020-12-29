@@ -4065,6 +4065,7 @@ PUBLIC int treedb_save_node(
 /***************************************************************************
     Update the existing current node with fields of kw
     "create" create node if not exist
+    HACK fkeys and hook fields are not updated!
  ***************************************************************************/
 PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
     json_t *tranger,
@@ -4157,6 +4158,38 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
         }
     }
 
+    /*-------------------------------*
+     *  Update fields
+     *-------------------------------*/
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    if(!cols) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic without cols",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(kw);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    const char *col_name; json_t *col;
+    json_object_foreach(cols, col_name, col) {
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        if(!(is_fkey || is_hook)) {
+            json_t *new_value = kw_get_dict_value(kw, col_name, 0, 0);
+            if(new_value) {
+                json_object_set(node, col_name, new_value);
+            }
+        }
+    }
+
+    JSON_DECREF(cols);
     JSON_DECREF(kw);
     JSON_DECREF(jn_options);
 
