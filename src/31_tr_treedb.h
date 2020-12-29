@@ -328,6 +328,10 @@ PUBLIC int treedb_unlink_nodes(
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
 
+    "fkey-ref-size"
+        Return size of link (parents)
+            ["$size"]
+
     "hook-ref-only-id"
         WARNING: Implicit collapsed mode.
         Return the 'hook ref' with only the 'id' field
@@ -337,6 +341,10 @@ PUBLIC int treedb_unlink_nodes(
         WARNING: Implicit collapsed mode.
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
+
+    "hook-ref-size"
+        Return size of hook (childs)
+            ["$size"]
 
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
@@ -388,15 +396,6 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 );
 
 /*
- *  Return number of parent nodes pointed by the link (fkey)
- */
-PUBLIC size_t treedb_parents_size(
-    json_t *tranger,
-    const char *link, // must be a fkey field
-    json_t *node // not owned
-);
-
-/*
  *  Return a list of child **references** of the hook
  */
 PUBLIC json_t *treedb_list_childs(
@@ -404,15 +403,6 @@ PUBLIC json_t *treedb_list_childs(
     const char *hook,
     json_t *node, // not owned
     json_t *jn_options // owned, "hook-ref-*"
-);
-
-/*
- *  Return number of child nodes of the hook
- */
-PUBLIC size_t treedb_childs_size(
-    json_t *tranger,
-    const char *hook,
-    json_t *node // not owned
 );
 
 /*----------------------------*

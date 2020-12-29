@@ -2765,39 +2765,39 @@ PRIVATE BOOL decode_parent_ref(
 /***************************************************************************
  *  Decode child ref
  ***************************************************************************/
-// PRIVATE BOOL decode_child_ref(
-//     const char *pref,
-//     char *topic_name, int topic_name_size,
-//     char *id, int id_size
-// )
-// {
-//     *topic_name = *id = 0;
-//
-//     if(!(pref && strchr(pref, '^'))) {
-//         return FALSE;
-//     }
-//     int list_size;
-//     const char **ss = split2(pref, "^", &list_size);
-//     if(list_size!=2) {
-//         log_error(0,
-//             "gobj",         "%s", __FILE__,
-//             "function",     "%s", __FUNCTION__,
-//             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-//             "msg",          "%s", "Bad child ref",
-//             "pref",         "%s", pref,
-//             NULL
-//         );
-//         split_free2(ss);
-//         return FALSE;
-//     }
-//
-//     snprintf(topic_name, topic_name_size, "%s", ss[0]);
-//     snprintf(id, id_size, "%s", ss[1]);
-//
-//     split_free2(ss);
-//     return TRUE;
-//
-// }
+PRIVATE BOOL decode_child_ref(
+    const char *pref,
+    char *topic_name, int topic_name_size,
+    char *id, int id_size
+)
+{
+    *topic_name = *id = 0;
+
+    if(!(pref && strchr(pref, '^'))) {
+        return FALSE;
+    }
+    int list_size;
+    const char **ss = split2(pref, "^", &list_size);
+    if(list_size!=2) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Bad child ref",
+            "pref",         "%s", pref,
+            NULL
+        );
+        split_free2(ss);
+        return FALSE;
+    }
+
+    snprintf(topic_name, topic_name_size, "%s", ss[0]);
+    snprintf(id, id_size, "%s", ss[1]);
+
+    split_free2(ss);
+    return TRUE;
+
+}
 
 /***************************************************************************
  *
@@ -3371,7 +3371,7 @@ PRIVATE BOOL json_empty(json_t *value)
 }
 
 /***************************************************************************
- *
+ *  Used in delete_node to get all down refs
  ***************************************************************************/
 PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
     json_t *tranger,
@@ -3421,7 +3421,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
 }
 
 /***************************************************************************
- *
+ *  Used in delete_node to get all up refs
  ***************************************************************************/
 PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
     json_t *tranger,
@@ -6148,21 +6148,6 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 }
 
 /***************************************************************************
- *  Return number of parent nodes pointed by the link (fkey)
- ***************************************************************************/
-PUBLIC size_t treedb_parents_size(
-    json_t *tranger,
-    const char *link, // must be a fkey field
-    json_t *node // not owned
-)
-{
-    json_t *list = treedb_list_parents(tranger, link, node, 0);
-    size_t size = json_array_size(list);
-    JSON_DECREF(list);
-    return size;
-}
-
-/***************************************************************************
  *  Return a list of child **references** of the hook
  ***************************************************************************/
 PUBLIC json_t *treedb_list_childs(
@@ -6172,7 +6157,6 @@ PUBLIC json_t *treedb_list_childs(
     json_t *jn_options // owned, "hook-ref-*"
 )
 {
-    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
     BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
@@ -6210,30 +6194,69 @@ PUBLIC json_t *treedb_list_childs(
         JSON_DECREF(cols);
         return 0;
     }
-    JSON_DECREF(jn_options);
-    JSON_DECREF(cols);
 
-    if(!collapsed) {
-        return kwid_new_list("verbose", node, hook);
+    json_t *field_data = kw_get_dict_value(node, hook, 0, 0);
+    if(!field_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "hook not found in the node",
+            "topic_name",   "%s", topic_name,
+            "link",         "%s", link,
+            NULL
+        );
+        log_debug_json(0, node, "hook not found in the node");
     }
 
-    json_t *field_value = kw_get_dict_value(node, hook, 0, KW_REQUIRED);
-    return get_hook_refs(field_value, original_node);
-}
+    if(json_empty(field_data)) {
+        JSON_DECREF(jn_options);
+        JSON_DECREF(cols);
+        return json_array();
+    }
 
-/***************************************************************************
- *  Return number of child nodes of the hook
- ***************************************************************************/
-PUBLIC size_t treedb_childs_size(
-    json_t *tranger,
-    const char *hook,
-    json_t *node // not owned
-)
-{
-    json_t *list = treedb_list_childs(tranger, hook, node, 0);
-    size_t size = json_array_size(list);
-    JSON_DECREF(list);
-    return size;
+    json_t *refs = get_hook_refs(field_data, original_node);
+    if(json_empty(jn_options)) {
+        JSON_DECREF(jn_options);
+        JSON_DECREF(cols);
+        return refs;
+    }
+
+    json_t *childs = json_array();
+    int idx; json_t *jn_fkey;
+    json_array_foreach(refs, idx, jn_fkey) {
+        char child_topic_name[NAME_MAX];
+        char child_id[NAME_MAX];
+        /*
+         *  Get child info
+         */
+        const char *ref = json_string_value(jn_fkey);
+        if(!decode_child_ref(
+            ref,
+            child_topic_name, sizeof(child_topic_name),
+            child_id, sizeof(child_id)
+        )) {
+            // It's not a child ref
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "Wrong child reference: must be \"child_topic_name^child_id\"",
+                "ref",                  "%s", ref,
+                NULL
+            );
+            log_debug_json(0, node, "Wrong child reference:");
+            continue;
+        }
+
+        // TODO json_array_append(childs, child_node);
+    }
+
+    JSON_DECREF(jn_options);
+    JSON_DECREF(refs);
+    JSON_DECREF(cols);
+    return childs;
+
 }
 
 
