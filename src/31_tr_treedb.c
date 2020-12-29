@@ -5640,27 +5640,61 @@ PRIVATE BOOL match_node_simple(
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
         if(is_fkey) {
             char parent_id[NAME_MAX];
-            const char *ref = json_string_value(jn_record_value);
-            decode_parent_ref(
-                ref,
-                0, 0,
-                parent_id, sizeof(parent_id),
-                0, 0
-            );
-            const char *id_ = json_string_value(jn_filter_value);
-            if(!id_ || strcmp(id_, parent_id)!=0) {
-                matched = FALSE;
+            if(json_is_string(jn_record_value)) {
+                const char *ref = json_string_value(jn_record_value);
+                decode_parent_ref(
+                    ref,
+                    0, 0,
+                    parent_id, sizeof(parent_id),
+                    0, 0
+                );
+                const char *id_ = json_string_value(jn_filter_value);
+                if(!id_ || strcmp(id_, parent_id)!=0) {
+                    matched = FALSE;
+                    break;
+                }
+            } else if(json_is_array(jn_record_value)) {
+                int idx; json_t *jn_id;
+                json_array_foreach(jn_record_value, idx, jn_id) {
+                    const char *ref = json_string_value(jn_id);
+                    decode_parent_ref(
+                        ref,
+                        0, 0,
+                        parent_id, sizeof(parent_id),
+                        0, 0
+                    );
+                    const char *id_ = json_string_value(jn_filter_value);
+                    if(!id_ || strcmp(id_, parent_id)!=0) {
+                        matched = FALSE;
+                        break;
+                    }
+                }
+            } else if(json_is_object(jn_record_value)) {
+                const char *id_; json_t *jn_id;
+                json_object_foreach(jn_record_value, id_, jn_id) {
+                    const char *ref = id_;
+                    decode_parent_ref(
+                        ref,
+                        0, 0,
+                        parent_id, sizeof(parent_id),
+                        0, 0
+                    );
+                    const char *id_ = json_string_value(jn_filter_value);
+                    if(!id_ || strcmp(id_, parent_id)!=0) {
+                        matched = FALSE;
+                        break;
+                    }
+                }
+            }
+            if(!matched) {
                 break;
             }
         } else {
             // Here hook fields and the others
             if(json_is_object(jn_record_value)) {
-                if(!kwid_compare_records(
+                if(!kw_match_simple(
                     jn_record_value, // NOT owned
-                    jn_filter_value, // NOT owned
-                    FALSE, // without_metadata
-                    FALSE, // without_private
-                    FALSE  // verbose
+                    json_incref(jn_filter_value) // owned
                 )) {
                     matched = FALSE;
                     break;
