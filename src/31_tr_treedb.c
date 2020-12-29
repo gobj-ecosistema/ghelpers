@@ -100,6 +100,15 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
 
 PRIVATE json_int_t json_size(json_t *value);
 
+PRIVATE json_t *apply_parent_ref_options(
+    json_t *refs,  // not owed
+    json_t *jn_options // not owned
+);
+PRIVATE json_t *apply_child_ref_options(
+    json_t *refs,  // not owed
+    json_t *jn_options // not owned
+);
+
 /***************************************************************
  *              Data
  ***************************************************************/
@@ -5529,14 +5538,9 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
         BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
-        json_t *field_value = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
-        if(!field_value) {
-            // Something wrong
-            json_object_set_new(
-                node_view,
-                col_name,
-                json_null()
-            );
+        json_t *field_data = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
+        if(!field_data) {
+            // Something wrong?
             continue;
         }
         if(is_hook) {
@@ -5546,9 +5550,11 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
                 json_array(),
                 KW_CREATE
             );
-            json_t *hook_refs = get_hook_refs(field_value, original_node);
-            json_array_extend(list, hook_refs);
-            json_decref(hook_refs);
+            json_t *refs = get_hook_refs(field_data, original_node);
+            json_t *childs = apply_child_ref_options(refs, jn_options);
+            json_array_extend(list, childs);
+            json_decref(refs);
+
         } else if(is_fkey) {
             json_t *list = kw_get_dict_value(
                 node_view,
@@ -5556,14 +5562,16 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
                 json_array(),
                 KW_CREATE
             );
-            json_t *fkey_refs = get_fkey_refs(field_value);
-            json_array_extend(list, fkey_refs);
-            json_decref(fkey_refs);
+            json_t *refs = get_fkey_refs(field_data);
+            json_t *parents = apply_parent_ref_options(refs, jn_options);
+            json_array_extend(list, parents);
+            json_decref(refs);
+
         } else {
             json_object_set(
                 node_view,
                 col_name,
-                field_value
+                field_data
             );
         }
     }
@@ -5718,13 +5726,13 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
     /*-------------------------------*
      *      Get
      *-------------------------------*/
-    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
     json_t *node = exist_primary_node(indexx, id);
     if(!node) {
         // Silence
         JSON_DECREF(jn_options);
         return 0;
     }
+    BOOL collapsed = json_empty(jn_options)?FALSE:TRUE; // Any option = collapse!
     if(collapsed) {
         json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
         node = node_collapsed_view(
@@ -5821,10 +5829,16 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         FALSE
     );
 
-    BOOL collapsed = TRUE;
+    BOOL collapsed = TRUE; // HACK hardcoded
 
+    /*-------------------------------*
+     *      Create list
+     *-------------------------------*/
     json_t *list = json_array();
 
+    /*-------------------------------*
+     *      Get indexx's
+     *-------------------------------*/
     if(json_is_array(indexx)) {
         size_t idx; json_t *node;
         json_array_foreach(indexx, idx, node) {
@@ -5971,7 +5985,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
         FALSE
     );
 
-    BOOL collapsed = TRUE;
+    BOOL collapsed = TRUE; // HACK hardcoded
 
     /*-------------------------------*
      *      Create list
@@ -6202,11 +6216,10 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     }
 
     json_t *refs = get_fkey_refs(field_data);
-
     json_t *parents = apply_parent_ref_options(refs, jn_options);
+    JSON_DECREF(refs);
 
     JSON_DECREF(jn_options);
-    JSON_DECREF(refs);
     JSON_DECREF(cols);
     return parents;
 }
@@ -6355,11 +6368,10 @@ PUBLIC json_t *treedb_list_childs(
     }
 
     json_t *refs = get_hook_refs(field_data, original_node);
-
     json_t *childs = apply_child_ref_options(refs, jn_options);
+    JSON_DECREF(refs);
 
     JSON_DECREF(jn_options);
-    JSON_DECREF(refs);
     JSON_DECREF(cols);
     return childs;
 }
