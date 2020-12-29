@@ -277,6 +277,16 @@ PUBLIC int treedb_delete_node(
     json_t *jn_options // bool "force"
 );
 
+PUBLIC int treedb_clean_node( // remove all links (fkeys)
+    json_t *tranger,
+    json_t *node
+);
+PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
+    json_t *tranger,
+    json_t *node,
+    json_t *kw // owned
+);
+
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *hook,

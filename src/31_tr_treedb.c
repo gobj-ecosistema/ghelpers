@@ -2984,9 +2984,10 @@ PRIVATE int link_child_to_parent(
 /***************************************************************************
  *  Load links (child's fkeys to parent's hooks)
  ***************************************************************************/
-PRIVATE int load_links(
+PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
     json_t *tranger,
-    json_t *child_node
+    json_t *child_node,
+    json_t *kw // owned
 )
 {
     int ret = 0;
@@ -3027,10 +3028,10 @@ PRIVATE int load_links(
         }
 
         /*
-         *  Get fkeys from child_node fkey field
+         *  Get fkeys from kw fkey field
          */
         // **FKEY**
-        json_t *fkeys = kw_get_dict_value(child_node, col_name, 0, 0);
+        json_t *fkeys = kw_get_dict_value(kw, col_name, 0, 0);
         if(!fkeys) {
             continue;
         }
@@ -3090,6 +3091,7 @@ PRIVATE int load_links(
     }
 
     json_decref(cols);
+    json_decref(kw);
     return ret;
 }
 
@@ -3139,9 +3141,10 @@ PRIVATE int load_all_links(
             /*
              *  Loop desc cols searching fkey
              */
-            ret += load_links(
+            ret += treedb_auto_link(
                 tranger,
-                child_node
+                child_node,
+                json_incref(child_node)
             );
         }
     }
@@ -3931,7 +3934,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
      *  Build links to hooks
      *-------------------------------*/
     if(links_inherited) {
-        load_links(tranger, record);
+        treedb_auto_link(tranger, record, json_incref(record));
     }
 
     /*-------------------------------*
@@ -4611,6 +4614,95 @@ PUBLIC int treedb_delete_node(
 
     JSON_DECREF(kw);
     JSON_DECREF(jn_options);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_clean_node(
+    json_t *tranger,
+    json_t *node
+)
+{
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+
+    json_t *up_refs = get_node_up_refs(tranger, node);
+    if(json_array_size(up_refs)>0) {
+        int idx; json_t *old_fkey;
+        json_array_foreach(up_refs, idx, old_fkey) {
+            /*
+             *  Delete link
+             */
+            const char *ref = json_string_value(old_fkey);
+
+            /*
+             *  Get parent info
+             */
+            char parent_topic_name[NAME_MAX];
+            char parent_id[NAME_MAX];
+            char hook_name[NAME_MAX];
+            if(!decode_parent_ref(
+                ref,
+                parent_topic_name, sizeof(parent_topic_name),
+                parent_id, sizeof(parent_id),
+                hook_name, sizeof(hook_name)
+            )) {
+                // It's not a fkey
+                log_error(0,
+                    "gobj",                 "%s", __FILE__,
+                    "function",             "%s", __FUNCTION__,
+                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                    "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
+                    "ref",                  "%s", ref,
+                    NULL
+                );
+                continue;
+            }
+
+            json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+                tranger,
+                treedb_name,
+                parent_topic_name,
+                parent_id,
+                0
+            );
+            if(parent_node) {
+                _unlink_nodes(
+                    tranger,
+                    hook_name,
+                    parent_node,    // not owned
+                    node      // not owned
+                );
+            } else {
+                search_and_remove_wrong_up_ref(
+                    tranger,
+                    node,
+                    topic_name,
+                    ref
+                );
+            }
+        }
+
+        /*
+         *  Re-checks up links
+         */
+        json_t *up_refs_ = get_node_up_refs(tranger, node);
+        if(json_array_size(up_refs_)>0) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Cannot clean the links",
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+        }
+        JSON_DECREF(up_refs_);
+    }
+
+    JSON_DECREF(up_refs);
     return 0;
 }
 
