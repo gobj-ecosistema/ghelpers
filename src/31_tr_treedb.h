@@ -348,7 +348,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -361,7 +361,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned

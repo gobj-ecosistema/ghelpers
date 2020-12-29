@@ -97,11 +97,6 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
     const char *treedb_name,
     uint32_t *user_flag
 );
-PRIVATE json_t *treedb_collapse_node( // Return MUST be decref
-    json_t *tranger,
-    json_t *node, // not owned
-    json_t *options // not owned
-);
 
 /***************************************************************
  *              Data
@@ -5690,7 +5685,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -5764,7 +5759,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         FALSE
     );
 
-    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
+    BOOL collapsed = TRUE;
 
     json_t *list = json_array();
 
@@ -5843,7 +5838,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned "collapsed fixed TRUE", "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // not owned
         json_t *node,       // not owned
@@ -5912,7 +5907,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
         FALSE
     );
 
-    BOOL collapsed = kw_get_bool(jn_options, "collapsed", 0, KW_WILD_NUMBER);
+    BOOL collapsed = TRUE;
 
     /*-------------------------------*
      *      Create list
@@ -6040,32 +6035,16 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
         return 0;
     }
     if(collapsed) {
-        node = treedb_collapse_node(tranger, node, jn_options);
+        json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
+        node = node_collapsed_view(
+            topic_desc,
+            node
+        );
+        JSON_DECREF(topic_desc);
     }
 
     JSON_DECREF(jn_options);
     return node;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_t *treedb_collapse_node( // Return MUST be decref
-    json_t *tranger,
-    json_t *node, // not owned
-    json_t *options // not owned
-)
-{
-    const char *topic_name = json_string_value(
-        kwid_get("", node, "__md_treedb__`topic_name")
-    );
-    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
-    json_t *collapsed = node_collapsed_view(
-        topic_desc,
-        node
-    );
-    JSON_DECREF(topic_desc);
-    return collapsed;
 }
 
 /***************************************************************************
