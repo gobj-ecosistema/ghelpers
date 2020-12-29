@@ -5831,13 +5831,16 @@ PUBLIC int treedb_unlink_nodes(
         Return the kwid style:
             [{"topic_name":"$topic_name", "size": $size}, ...]
  ***************************************************************************/
-PRIVATE json_t *node_collapsed_view( // Return MUST be decref
-    json_t *topic_desc, // not owned
+PUBLIC json_t *node_collapsed_view( // Return MUST be decref
+    json_t *tranger, // not owned
     json_t *node, // not owned
-    json_t *jn_options // not owned
+    json_t *jn_options // owned
 )
 {
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
+    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
+
     json_t *node_view = json_object();
 
     const char *col_name; json_t *col;
@@ -5895,6 +5898,9 @@ PRIVATE json_t *node_collapsed_view( // Return MUST be decref
         "__original_node__",
         json_false()
     );
+
+    JSON_DECREF(topic_desc);
+    JSON_DECREF(jn_options);
     return node_view;
 }
 
@@ -6042,16 +6048,13 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
         JSON_DECREF(jn_options);
         return 0;
     }
-    BOOL collapsed = json_empty(jn_options)?FALSE:TRUE; // Any option = collapse true!
-    if(collapsed) {
-        json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
-        node = node_collapsed_view(
-            topic_desc,
-            node,
-            jn_options
-        );
-        JSON_DECREF(topic_desc);
-    }
+//     BOOL collapsed = json_empty(jn_options)?FALSE:TRUE; // Any option = collapse true!
+//     if(collapsed) {
+//         node = node_collapsed_view(
+//             node,
+//             jn_options
+//         );
+//     }
 
     JSON_DECREF(jn_options);
     return node;
@@ -6168,9 +6171,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                     json_array_append_new(
                         list,
                         node_collapsed_view(
-                            topic_desc,
+                            tranger,
                             node,
-                            jn_options
+                            json_incref(jn_options)
                         )
                     );
                 }
@@ -6189,9 +6192,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                     json_array_append_new(
                         list,
                         node_collapsed_view(
-                            topic_desc,
+                            tranger,
                             node,
-                            jn_options
+                            json_incref(jn_options)
                         )
                     );
                 }
@@ -6352,9 +6355,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
                             json_array_append_new(
                                 list,
                                 node_collapsed_view(
-                                    topic_desc,
+                                    tranger,
                                     node,
-                                    jn_options
+                                    json_incref(jn_options)
                                 )
                             );
                         }
@@ -6390,7 +6393,7 @@ PRIVATE json_t *apply_parent_ref_options(
 )
 {
     if(json_empty(jn_options)) {
-        return refs;
+        return json_incref(refs);
     }
 
     json_t *parents = json_array();
@@ -6427,14 +6430,14 @@ PRIVATE json_t *apply_parent_ref_options(
              *  Return the 'fkey ref' with only the 'id' field
              *  ["$id",...]
              */
-            json_array_append(parents, json_string(parent_id));
+            json_array_append_new(parents, json_string(parent_id));
 
         } else if(kw_get_bool(jn_options, "fkey-ref-list-dict", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the kwid style:
              * [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
              */
-            json_array_append(
+            json_array_append_new(
                 parents,
                 json_pack("{s:s, s:s, s:s}",
                     "id", parent_id,
@@ -6444,7 +6447,7 @@ PRIVATE json_t *apply_parent_ref_options(
             );
 
         } else {
-            json_array_append(parents, json_string(ref));
+            json_array_append_new(parents, json_string(ref));
         }
     }
 
@@ -6543,7 +6546,7 @@ PRIVATE json_t *apply_child_ref_options(
 )
 {
     if(json_empty(jn_options)) {
-        return refs;
+        return json_incref(refs);
     }
 
     json_t *childs = json_array();
@@ -6578,14 +6581,14 @@ PRIVATE json_t *apply_child_ref_options(
              *  Return the 'hook ref' with only the 'id' field
              *  ["$id",...]
              */
-            json_array_append(childs, json_string(child_id));
+            json_array_append_new(childs, json_string(child_id));
 
         } else if(kw_get_bool(jn_options, "hook-ref-list-dict", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the kwid style:
              *  [{"id": "$id", "topic_name":"$topic_name"}, ...]
              */
-            json_array_append(
+            json_array_append_new(
                 childs,
                 json_pack("{s:s, s:s}",
                     "id", child_id,
@@ -6594,7 +6597,7 @@ PRIVATE json_t *apply_child_ref_options(
             );
 
         } else {
-            json_array_append(childs, json_string(ref));
+            json_array_append_new(childs, json_string(ref));
         }
     }
 

@@ -289,6 +289,12 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
     BOOL save
 );
 
+PUBLIC json_t *node_collapsed_view( // Return MUST be decref
+    json_t *tranger, // not owned
+    json_t *node, // not owned
+    json_t *jn_options // owned
+);
+
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *hook,
