@@ -2424,7 +2424,7 @@ PRIVATE json_t *_md2json(
     json_object_set_new(jn_md, "__t__", json_integer(md_record->__t__));
     json_object_set_new(jn_md, "__tm__", json_integer(md_record->__tm__));
     json_object_set_new(jn_md, "__tag__", json_integer(md_record->__user_flag__));
-    json_object_set_new(jn_md, "__original_node__", json_true());
+    json_object_set_new(jn_md, "__pure_node__", json_true());
 
     return jn_md;
 }
@@ -3411,7 +3411,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
-    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
+    BOOL original_node = kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0);
 
     const char *col_name; json_t *col;
     json_object_foreach(cols, col_name, col) {
@@ -4001,7 +4001,7 @@ PUBLIC int treedb_save_node(
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -4621,7 +4621,7 @@ PUBLIC int treedb_clean_node(
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -4872,7 +4872,7 @@ PRIVATE int _link_nodes(
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(parent_node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -4887,7 +4887,7 @@ PRIVATE int _link_nodes(
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(child_node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -5203,7 +5203,7 @@ PRIVATE int _unlink_nodes(
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(parent_node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -5218,7 +5218,7 @@ PRIVATE int _unlink_nodes(
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(child_node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -5605,7 +5605,7 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -6032,7 +6032,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     /*------------------------------*
      *      Check original node
      *------------------------------*/
-    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -6050,7 +6050,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
      *-------------------------------*/
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
-    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
+    BOOL original_node = kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0);
     json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
 
     json_t *node_view = json_object();
@@ -6107,7 +6107,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     );
     json_object_set_new(
         json_object_get(node_view, "__md_treedb__"),
-        "__original_node__",
+        "__pure_node__",
         json_false()
     );
 
@@ -6655,7 +6655,7 @@ PUBLIC json_t *treedb_list_childs(
 {
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
-    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
+    BOOL original_node = kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0);
 
     json_t *col = kw_get_dict_value(cols, hook, 0, 0);
     if(!col) {

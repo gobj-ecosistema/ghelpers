@@ -836,7 +836,7 @@ PRIVATE json_t *_md2json(
     json_object_set_new(jn_md, "__t__", json_integer(md_record->__t__));
     json_object_set_new(jn_md, "__tm__", json_integer(md_record->__tm__));
     json_object_set_new(jn_md, "__tag__", json_integer(md_record->__user_flag__));
-    json_object_set_new(jn_md, "__original_node__", json_true());
+    json_object_set_new(jn_md, "__pure_node__", json_true());
 
     return jn_md;
 }
