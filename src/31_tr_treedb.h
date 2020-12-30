@@ -309,10 +309,6 @@ PUBLIC int treedb_unlink_nodes(
 
             "topic_name^id^hook_name"
 
-        WARNING: Parents references are never return with full node,
-        to get parent data you must to access to the parent node.
-        It's a hierarchy structure: Full access to childs, not to parents.
-
     'hook ref'
         The child's references (link to down) have 2 ^ fields:
 
@@ -320,6 +316,10 @@ PUBLIC int treedb_unlink_nodes(
 
     Options
     -------
+    ""
+        Return 'fkey ref'
+            ["topic_name^id^hook_name"]
+
     "fkey-ref-only-id"
         Return the 'fkey ref' with only the 'id' field
             ["$id",...]
@@ -331,6 +331,11 @@ PUBLIC int treedb_unlink_nodes(
     "fkey-ref-size"
         Return size of link (parents)
             ["$size"]
+
+
+    ""
+        Return 'hook ref'
+            ["topic_name^id"]
 
     "hook-ref-only-id"
         WARNING: Implicit collapsed mode.

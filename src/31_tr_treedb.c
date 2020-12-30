@@ -4877,7 +4877,7 @@ PRIVATE int _link_nodes(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Not a pure node",
+            "msg",          "%s", "Cannot link nodes, Not a pure node",
             NULL
         );
         log_debug_json(0, parent_node, "Not a pure node");
@@ -4892,7 +4892,7 @@ PRIVATE int _link_nodes(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Not a pure node",
+            "msg",          "%s", "Cannot link nodes, Not a pure node",
             NULL
         );
         log_debug_json(0, child_node, "Not a pure node");
@@ -5208,7 +5208,7 @@ PRIVATE int _unlink_nodes(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Not a pure node",
+            "msg",          "%s", "Cannot unlink nodes, Not a pure node",
             NULL
         );
         log_debug_json(0, parent_node, "Not a pure node");
@@ -5223,7 +5223,7 @@ PRIVATE int _unlink_nodes(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Not a pure node",
+            "msg",          "%s", "Cannot unlink nodes, Not a pure node",
             NULL
         );
         log_debug_json(0, child_node, "Not a pure node");
@@ -5990,6 +5990,10 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     WARNING extra fields are ignored, only topic desc fields are used
     Options
     -------
+    ""
+        Return 'fkey ref'
+            ["topic_name^id^hook_name"]
+
     "fkey-ref-only-id"
         Return the 'fkey ref' with only the 'id' field
             ["$id",...]
@@ -6001,6 +6005,11 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     "fkey-ref-size"
         Return the kwid style:
             [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
+
+
+    ""
+        Return 'hook ref'
+            ["topic_name^id"]
 
     "hook-ref-only-id"
         Return the 'hook ref' with only the 'id' field
@@ -6115,7 +6124,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned , "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -6189,8 +6198,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         FALSE
     );
 
-    BOOL collapsed = TRUE; // HACK hardcoded
-
     /*-------------------------------*
      *      Create list
      *-------------------------------*/
@@ -6210,20 +6217,15 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                 continue;
             }
             if(match_fn(topic_desc, node, jn_filter)) {
-                if(!collapsed) {
-                    // Full tree
-                    json_array_append(list, node);
-                } else {
-                    // Collapse records (hook fields)
-                    json_array_append_new(
-                        list,
-                        node_collapsed_view(
-                            tranger,
-                            node,
-                            json_incref(jn_options)
-                        )
-                    );
-                }
+                // Collapse records (hook fields)
+                json_array_append_new(
+                    list,
+                    node_collapsed_view(
+                        tranger,
+                        node,
+                        json_incref(jn_options)
+                    )
+                );
             }
         }
     } else if(json_is_object(indexx)) {
@@ -6233,18 +6235,14 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                 continue;
             }
             if(match_fn(topic_desc, node, jn_filter)) {
-                if(!collapsed) {
-                    json_array_append(list, node);
-                } else {
-                    json_array_append_new(
-                        list,
-                        node_collapsed_view(
-                            tranger,
-                            node,
-                            json_incref(jn_options)
-                        )
-                    );
-                }
+                json_array_append_new(
+                    list,
+                    node_collapsed_view(
+                        tranger,
+                        node,
+                        json_incref(jn_options)
+                    )
+                );
             }
         }
 
@@ -6276,7 +6274,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned ", "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -6345,8 +6343,6 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
         FALSE
     );
 
-    BOOL collapsed = TRUE; // HACK hardcoded
-
     /*-------------------------------*
      *      Create list
      *-------------------------------*/
@@ -6396,18 +6392,14 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
                 const char *pkey2; json_t *node;
                 json_object_foreach(pkey2_dict, pkey2, node) {
                     if(match_fn(topic_desc, node, jn_filter)) {
-                        if(!collapsed) {
-                            json_array_append(list, node);
-                        } else {
-                            json_array_append_new(
-                                list,
-                                node_collapsed_view(
-                                    tranger,
-                                    node,
-                                    json_incref(jn_options)
-                                )
-                            );
-                        }
+                        json_array_append_new(
+                            list,
+                            node_collapsed_view(
+                                tranger,
+                                node,
+                                json_incref(jn_options)
+                            )
+                        );
                     }
                 }
             }
@@ -6890,7 +6882,7 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
         treedb_name,
         "__snaps__",
         jn_tag,  // filter, owned
-        0,  // options, "collapsed"
+        0,  // options
         0   // match_fn
     );
     int size = json_array_size(snaps);
@@ -6950,7 +6942,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         treedb_name,
         "__snaps__",
         jn_tag,  // filter, owned
-        0,  // options, "collapsed"
+        0,  // options
         0   // match_fn
     );
     if(json_array_size(snaps)>0) {
@@ -7122,7 +7114,7 @@ PUBLIC int treedb_activate_snap( // Activate tag, return the snap tag
         treedb_name,
         "__snaps__",
         jn_tag,  // filter, owned
-        0,  // options, "collapsed"
+        0,  // options
         0   // match_fn
     );
     json_t *snap = json_array_get(snaps, 0);
@@ -7205,7 +7197,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
         treedb_name,
         "__snaps__",
         filter,  // filter, owned
-        0,  // options, "collapsed"
+        0,  // options
         0   // match_fn
     );
 
@@ -7629,7 +7621,7 @@ PRIVATE int link_or_unlink_nodes2(
                     treedb_name,
                     child_topic_name,
                     jn_param,  // owned
-                    0,  // options, "collapsed"
+                    0,  // options
                     0   // match_fn
                 );
                 if(json_array_size(nodes)!=1) {
