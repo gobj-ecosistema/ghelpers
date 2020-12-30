@@ -3848,7 +3848,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
         return 0;
     }
     BOOL links_inherited = FALSE;
-    if(save_pkey) {
+    if(save_pkey && prev_record) {
         /*
          *  Si es un nodo secundario, copia los links del primario.
          */
