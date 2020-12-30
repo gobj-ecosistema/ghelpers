@@ -30,7 +30,6 @@ PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
     json_t *kw,  // not owned
-    json_t *options,
     BOOL create // create or update
 );
 PRIVATE json_t *_md2json(
@@ -883,7 +882,7 @@ PUBLIC int treedb_close_db(
                         string: one simple key, same as 1)
                         list of strings: combined key
  ***************************************************************************/
-PUBLIC json_t *treedb_create_topic(
+PUBLIC json_t *treedb_create_topic(  // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -2356,7 +2355,6 @@ PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
     json_t *kw,  // not owned
-    json_t *jn_options, // not owned
     BOOL create // create or update
 )
 {
@@ -2869,7 +2867,7 @@ PRIVATE int link_child_to_parent(
     /*
      *  Find the parent node
      */
-    json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+    json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
         tranger,
         treedb_name,
         parent_topic_name,
@@ -3700,12 +3698,11 @@ PRIVATE BOOL inherit_links(
 /***************************************************************************
     Create a new node
  ***************************************************************************/
-PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
+PUBLIC json_t *treedb_create_node( // Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw, // owned
-    json_t *jn_options
+    json_t *kw // owned
 )
 {
     /*-----------------------------------*
@@ -3721,7 +3718,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             NULL
         );
         JSON_DECREF(kw);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -3758,7 +3754,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
             );
             log_debug_json(0, kw, "Field 'id' required");
             JSON_DECREF(kw);
-            JSON_DECREF(jn_options);
             return 0;
         }
     }
@@ -3840,19 +3835,17 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         );
         JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
     /*----------------------------------------*
      *  Create the tranger record to create
      *----------------------------------------*/
-    json_t *record = record2tranger(tranger, topic_name, kw, jn_options, TRUE);
+    json_t *record = record2tranger(tranger, topic_name, kw, TRUE);
     if(!record) {
         // Error already logged
         JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
-        JSON_DECREF(jn_options);
         return 0;
     }
     BOOL links_inherited = FALSE;
@@ -3886,7 +3879,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
         JSON_DECREF(pkey2_list);
         JSON_DECREF(kw);
         JSON_DECREF(record);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -3995,7 +3987,6 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
     json_decref(record);
     JSON_DECREF(pkey2_list);
     JSON_DECREF(kw);
-    JSON_DECREF(jn_options);
     return record;
 }
 
@@ -4019,7 +4010,7 @@ PUBLIC int treedb_save_node(
     /*---------------------------------------*
      *  Create the tranger record to update
      *---------------------------------------*/
-    json_t *record = record2tranger(tranger, topic_name, node, 0, FALSE);
+    json_t *record = record2tranger(tranger, topic_name, node, FALSE);
     if(!record) {
         // Error already logged
         return -1;
@@ -4067,12 +4058,12 @@ PUBLIC int treedb_save_node(
     "create" create node if not exist
     HACK fkeys and hook fields are not updated!
  ***************************************************************************/
-PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
+PUBLIC json_t *treedb_update_node( // Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned
-    json_t *jn_options // owned, "create"
+    BOOL create
 )
 {
     /*-----------------------------------*
@@ -4088,11 +4079,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             NULL
         );
         JSON_DECREF(kw);
-        JSON_DECREF(jn_options);
         return 0;
     }
-
-    BOOL create = kw_get_bool(jn_options, "create", 0, 0);
 
     /*-------------------------------*
      *  Get id to update node
@@ -4108,7 +4096,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 NULL
             );
             JSON_DECREF(kw);
-            JSON_DECREF(jn_options);
             return 0;
         }
     }
@@ -4124,7 +4111,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
      *-------------------------------*/
     json_t *node = 0;
     if(!empty_string(id)) {
-        node = treedb_get_node( // Return is NOT YOURS
+        node = treedb_get_node( // Return is NOT YOURS, pure node
             tranger,
             treedb_name,
             topic_name,
@@ -4138,8 +4125,7 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 tranger,
                 treedb_name,
                 topic_name,
-                kw, // owned
-                jn_options // owned
+                kw // owned
             );
         } else {
             log_error(0,
@@ -4153,7 +4139,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
                 NULL
             );
             JSON_DECREF(kw);
-            JSON_DECREF(jn_options);
             return 0;
         }
     }
@@ -4172,7 +4157,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
             NULL
         );
         JSON_DECREF(kw);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -4191,7 +4175,6 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
 
     JSON_DECREF(cols);
     JSON_DECREF(kw);
-    JSON_DECREF(jn_options);
 
     /*-------------------------------*
      *  Write to tranger
@@ -4264,7 +4247,7 @@ PUBLIC int treedb_delete_node(
     /*-------------------------------*
      *  Recover node
      *-------------------------------*/
-    json_t *node = treedb_get_node( // Return is NOT YOURS
+    json_t *node = treedb_get_node( // Return is NOT YOURS, pure node
         tranger,
         treedb_name,
         topic_name,
@@ -4406,7 +4389,7 @@ PUBLIC int treedb_delete_node(
                     continue;
                 }
 
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
                     tranger,
                     treedb_name,
                     parent_topic_name,
@@ -4660,7 +4643,7 @@ PUBLIC int treedb_clean_node(
                 continue;
             }
 
-            json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+            json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
                 tranger,
                 treedb_name,
                 parent_topic_name,
@@ -5649,7 +5632,7 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                     break;
                 }
 
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
                     tranger,
                     treedb_name,
                     parent_topic_name,
@@ -5705,7 +5688,7 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                     continue;
                 }
 
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
                     tranger,
                     treedb_name,
                     parent_topic_name,
@@ -6010,7 +5993,7 @@ PRIVATE BOOL match_node_simple(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
+PUBLIC json_t *treedb_get_node( // Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -6937,12 +6920,11 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         "active", 0
     );
 
-    json_t *snap = treedb_create_node( // Return is NOT YOURS
+    json_t *snap = treedb_create_node( // Return is NOT YOURS, pure node
         tranger,
         treedb_name,
         "__snaps__",
-        jn_new_snap, // owned
-        0
+        jn_new_snap // owned
     );
 
     if(!snap) {
@@ -7270,7 +7252,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                     break;
                 }
 
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
                     tranger,
                     treedb_name,
                     parent_topic_name,
@@ -7336,7 +7318,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                     continue;
                 }
 
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
                     tranger,
                     treedb_name,
                     parent_topic_name,
@@ -7396,7 +7378,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                 continue;
             }
 
-            json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+            json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
                 tranger,
                 treedb_name,
                 parent_topic_name,
@@ -7504,7 +7486,7 @@ PRIVATE int link_or_unlink_nodes2(
         return -1;
     }
 
-    json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+    json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
         tranger,
         treedb_name,
         parent_topic_name,
@@ -7624,7 +7606,7 @@ PRIVATE int link_or_unlink_nodes2(
                 break;
         } SWITCHS_END;
     } else {
-        child_node = treedb_get_node( // Return is NOT YOURS
+        child_node = treedb_get_node( // Return is NOT YOURS, pure node
             tranger,
             treedb_name,
             child_topic_name,

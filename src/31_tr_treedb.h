@@ -153,7 +153,7 @@ PUBLIC int treedb_set_callback(
         "url"
 
  ***************************************************************************/
-PUBLIC json_t *treedb_create_topic(
+PUBLIC json_t *treedb_create_topic( // Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -199,7 +199,7 @@ PUBLIC size_t treedb_topic_size(
  *------------------------------------*/
 PUBLIC json_t *_treedb_create_topic_cols_desc(void);
 PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
-    json_t *cols_desc,  // not owned
+    json_t *cols_desc,  // NOT owned
     json_t *data        // owned
 );
 PUBLIC int parse_hooks(
@@ -235,12 +235,11 @@ PUBLIC int treedb_set_trace(BOOL set);
 /**rst**
     Create a new node
 **rst**/
-PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
+PUBLIC json_t *treedb_create_node( // Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw, // owned
-    json_t *jn_options
+    json_t *kw // owned
 );
 
 /**rst**
@@ -250,7 +249,7 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS
 **rst**/
 PUBLIC int treedb_save_node(
     json_t *tranger,
-    json_t *node    // not owned
+    json_t *node    // NOT owned
 );
 
 /**rst**
@@ -258,12 +257,12 @@ PUBLIC int treedb_save_node(
     "create" create node if not exist
     HACK fkeys and hook fields are not updated!
 **rst**/
-PUBLIC json_t *treedb_update_node( // Return is NOT YOURS
+PUBLIC json_t *treedb_update_node( // Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
     json_t *kw,    // owned
-    json_t *jn_options // owned, "create"
+    BOOL create
 );
 
 /**rst**
@@ -290,23 +289,23 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
 );
 
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
-    json_t *tranger, // not owned
-    json_t *node, // not owned
+    json_t *tranger, // NOT owned
+    json_t *node, // NOT owned
     json_t *jn_options // owned
 );
 
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *hook,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned
+    json_t *child_node      // NOT owned
 );
 
 PUBLIC int treedb_unlink_nodes(
     json_t *tranger,
     const char *hook,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned
+    json_t *child_node      // NOT owned
 );
 
 /**rst**
@@ -370,7 +369,7 @@ PUBLIC int treedb_unlink_nodes(
 
 **rst**/
 
-PUBLIC json_t *treedb_get_node( // Return is NOT YOURS
+PUBLIC json_t *treedb_get_node( // Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -385,9 +384,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *jn_filter,  // owned
     json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
-        json_t *topic_desc, // not owned
-        json_t *node,       // not owned
-        json_t *jn_filter   // not owned
+        json_t *topic_desc, // NOT owned
+        json_t *node,       // NOT owned
+        json_t *jn_filter   // NOT owned
     )
 );
 PUBLIC json_t *treedb_node_instances( // Return MUST be decref
@@ -398,9 +397,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     json_t *jn_filter,  // owned
     json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
-        json_t *topic_desc, // not owned
-        json_t *node,       // not owned
-        json_t *jn_filter   // not owned
+        json_t *topic_desc, // NOT owned
+        json_t *node,       // NOT owned
+        json_t *jn_filter   // NOT owned
     )
 );
 
@@ -410,7 +409,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
 PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
     const char *link, // must be a fkey field
-    json_t *node, // not owned
+    json_t *node, // NOT owned
     json_t *jn_options // owned, "fkey-ref-*"
 );
 
@@ -420,7 +419,7 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 PUBLIC json_t *treedb_list_childs(
     json_t *tranger,
     const char *hook,
-    json_t *node, // not owned
+    json_t *node, // NOT owned
     json_t *jn_options // owned, "hook-ref-*"
 );
 
