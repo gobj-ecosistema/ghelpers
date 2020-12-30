@@ -65,7 +65,7 @@ extern "C"{
     Return a dict inside of tranger with path "treedbs`{treedb_name}" DO NOT use it directly
 
 **rst**/
-PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
+PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name,
     json_t *jn_schema,  // owned
@@ -153,7 +153,7 @@ PUBLIC int treedb_set_callback(
         "url"
 
  ***************************************************************************/
-PUBLIC json_t *treedb_create_topic( // Return is NOT YOURS
+PUBLIC json_t *treedb_create_topic( // WARNING Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -216,7 +216,7 @@ PUBLIC BOOL treedb_is_treedbs_topic(
     const char *treedb_name,
     const char *topic_name
 );
-PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
+PUBLIC json_t *treedb_get_id_index( // WARNING Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name
@@ -235,7 +235,7 @@ PUBLIC int treedb_set_trace(BOOL set);
 /**rst**
     Create a new node
 **rst**/
-PUBLIC json_t *treedb_create_node( // Return is NOT YOURS, pure node
+PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -244,12 +244,11 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS, pure node
 
 /**rst**
     Direct saving to tranger.
-    WARNING be care, must be a pure node.
     Tag __tag__ (user_flag) is inherited.
 **rst**/
 PUBLIC int treedb_save_node(
     json_t *tranger,
-    json_t *node    // NOT owned
+    json_t *node    // NOT owned, WARNING be care, must be a pure node.
 );
 
 /**rst**
@@ -257,7 +256,7 @@ PUBLIC int treedb_save_node(
     "create" create node if not exist
     HACK fkeys and hook fields are not updated!
 **rst**/
-PUBLIC json_t *treedb_update_node( // Return is NOT YOURS, pure node
+PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -286,12 +285,6 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
     json_t *node,
     json_t *kw, // owned
     BOOL save
-);
-
-PUBLIC json_t *node_collapsed_view( // Return MUST be decref
-    json_t *tranger, // NOT owned
-    json_t *node, // NOT owned
-    json_t *jn_options // owned
 );
 
 PUBLIC int treedb_link_nodes(
@@ -369,12 +362,17 @@ PUBLIC int treedb_unlink_nodes(
 
 **rst**/
 
-PUBLIC json_t *treedb_get_node( // Return is NOT YOURS, pure node
+PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *id,
-    json_t *jn_options // owned, "collapsed" "fkey-ref-*", "hook-ref-*"
+    const char *id
+);
+
+PUBLIC json_t *node_collapsed_view( // Return MUST be decref
+    json_t *tranger, // NOT owned
+    json_t *node, // NOT owned
+    json_t *jn_options // owned "fkey-ref-*", "hook-ref-*"
 );
 
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref

@@ -193,7 +193,7 @@ PUBLIC BOOL treedb_is_treedbs_topic(
 /***************************************************************************
  * PUBLIC to use in tests
  ***************************************************************************/
-PUBLIC json_t *treedb_get_id_index( // Return is NOT YOURS
+PUBLIC json_t *treedb_get_id_index( // WARNING Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name
@@ -424,7 +424,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     Return a dict inside of tranger with path "treedbs`{treedb_name}" DO NOT use it directly
 
  ***************************************************************************/
-PUBLIC json_t *treedb_open_db( // Return IS NOT YOURS!
+PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_t *tranger,
     const char *treedb_name_,
     json_t *jn_schema,  // owned
@@ -882,7 +882,7 @@ PUBLIC int treedb_close_db(
                         string: one simple key, same as 1)
                         list of strings: combined key
  ***************************************************************************/
-PUBLIC json_t *treedb_create_topic(  // Return is NOT YOURS
+PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -2871,8 +2871,7 @@ PRIVATE int link_child_to_parent(
         tranger,
         treedb_name,
         parent_topic_name,
-        parent_id,
-        0
+        parent_id
     );
     if(!parent_node) {
         log_error(0,
@@ -3698,7 +3697,7 @@ PRIVATE BOOL inherit_links(
 /***************************************************************************
     Create a new node
  ***************************************************************************/
-PUBLIC json_t *treedb_create_node( // Return is NOT YOURS, pure node
+PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -3992,20 +3991,31 @@ PUBLIC json_t *treedb_create_node( // Return is NOT YOURS, pure node
 
 /***************************************************************************
  *  Direct saving to tranger.
-    WARNING be care, must be a pure node.
     Tag __tag__ (user_flag) is inherited.
  ***************************************************************************/
 PUBLIC int treedb_save_node(
     json_t *tranger,
-    json_t *node    // not owned
+    json_t *node    // NOT owned, WARNING be care, must be a pure node.
 )
 {
     /*-------------------------------*
      *      Get record info
      *-------------------------------*/
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
     uint32_t tag = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
+
+    if(!treedb_name || !topic_name) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        return -1;
+    }
 
     /*---------------------------------------*
      *  Create the tranger record to update
@@ -4058,7 +4068,7 @@ PUBLIC int treedb_save_node(
     "create" create node if not exist
     HACK fkeys and hook fields are not updated!
  ***************************************************************************/
-PUBLIC json_t *treedb_update_node( // Return is NOT YOURS, pure node
+PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
@@ -4115,8 +4125,8 @@ PUBLIC json_t *treedb_update_node( // Return is NOT YOURS, pure node
             tranger,
             treedb_name,
             topic_name,
-            id,
-            0
+            id
+
         );
     }
     if(!node) {
@@ -4251,8 +4261,7 @@ PUBLIC int treedb_delete_node(
         tranger,
         treedb_name,
         topic_name,
-        id,
-        0
+        id
     );
     if(!node) {
         log_error(0,
@@ -4393,8 +4402,7 @@ PUBLIC int treedb_delete_node(
                     tranger,
                     treedb_name,
                     parent_topic_name,
-                    parent_id,
-                    0
+                    parent_id
                 );
                 if(parent_node) {
                     _unlink_nodes(
@@ -4647,8 +4655,7 @@ PUBLIC int treedb_clean_node(
                 tranger,
                 treedb_name,
                 parent_topic_name,
-                parent_id,
-                0
+                parent_id
             );
             if(parent_node) {
                 _unlink_nodes(
@@ -5636,8 +5643,7 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                     tranger,
                     treedb_name,
                     parent_topic_name,
-                    parent_id,
-                    0
+                    parent_id
                 );
                 if(!parent_node) {
                     log_error(0,
@@ -5692,8 +5698,7 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                     tranger,
                     treedb_name,
                     parent_topic_name,
-                    parent_id,
-                    0
+                    parent_id
                 );
                 if(!parent_node) {
                     log_error(0,
@@ -5783,108 +5788,6 @@ PUBLIC int treedb_unlink_nodes(
      *  Only childs are saved
      *----------------------------*/
     return treedb_save_node(tranger, child_node);
-}
-
-/***************************************************************************
-    Return a view of node with hook fields being collapsed
-    WARNING extra fields are ignored, only topic desc fields are used
-    Options
-    -------
-    "fkey-ref-only-id"
-        Return the 'fkey ref' with only the 'id' field
-            ["$id",...]
-
-    "fkey-ref-list-dict"
-        Return the kwid style:
-            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
-
-    "fkey-ref-size"
-        Return the kwid style:
-            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
-
-    "hook-ref-only-id"
-        Return the 'hook ref' with only the 'id' field
-            ["$id",...]
-
-    "hook-ref-list-dict"
-        Return the kwid style:
-            [{"id": "$id", "topic_name":"$topic_name"}, ...]
-
-    "hook-ref-size"
-        Return the kwid style:
-            [{"topic_name":"$topic_name", "size": $size}, ...]
- ***************************************************************************/
-PUBLIC json_t *node_collapsed_view( // Return MUST be decref
-    json_t *tranger, // not owned
-    json_t *node, // not owned
-    json_t *jn_options // owned
-)
-{
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
-    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
-    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
-
-    json_t *node_view = json_object();
-
-    const char *col_name; json_t *col;
-    json_object_foreach(topic_desc, col_name, col) {
-        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
-        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
-        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
-        json_t *field_data = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
-        if(!field_data) {
-            // Something wrong?
-            continue;
-        }
-        if(is_hook) {
-            json_t *list = kw_get_dict_value(
-                node_view,
-                col_name,
-                json_array(),
-                KW_CREATE
-            );
-            json_t *refs = get_hook_refs(field_data, original_node);
-            json_t *childs = apply_child_ref_options(refs, jn_options);
-            json_array_extend(list, childs);
-            json_decref(childs);
-            json_decref(refs);
-
-        } else if(is_fkey) {
-            json_t *list = kw_get_dict_value(
-                node_view,
-                col_name,
-                json_array(),
-                KW_CREATE
-            );
-            json_t *refs = get_fkey_refs(field_data);
-            json_t *parents = apply_parent_ref_options(refs, jn_options);
-            json_array_extend(list, parents);
-            json_decref(parents);
-            json_decref(refs);
-
-        } else {
-            json_object_set(
-                node_view,
-                col_name,
-                field_data
-            );
-        }
-    }
-    json_object_set_new(
-        node_view,
-        "__md_treedb__",
-        kw_duplicate(json_object_get(node, "__md_treedb__"))
-    );
-    json_object_set_new(
-        json_object_get(node_view, "__md_treedb__"),
-        "__original_node__",
-        json_false()
-    );
-
-    JSON_DECREF(topic_desc);
-    JSON_DECREF(jn_options);
-    return node_view;
 }
 
 /***************************************************************************
@@ -5993,12 +5896,11 @@ PRIVATE BOOL match_node_simple(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *treedb_get_node( // Return is NOT YOURS, pure node
+PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *id,
-    json_t *jn_options // owned, "collapsed" "fkey-ref-*", "hook-ref-*"
+    const char *id
 )
 {
     /*-----------------------------------*
@@ -6013,7 +5915,6 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS, pure node
             "topic_name",   "%s", topic_name,
             NULL
         );
-        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -6028,19 +5929,111 @@ PUBLIC json_t *treedb_get_node( // Return is NOT YOURS, pure node
     json_t *node = exist_primary_node(indexx, id);
     if(!node) {
         // Silence
-        JSON_DECREF(jn_options);
         return 0;
     }
-//     BOOL collapsed = json_empty(jn_options)?FALSE:TRUE; // Any option = collapse true!
-//     if(collapsed) {
-//         node = node_collapsed_view(
-//             node,
-//             jn_options
-//         );
-//     }
-
-    JSON_DECREF(jn_options);
     return node;
+}
+
+/***************************************************************************
+    Return a view of node with hook fields being collapsed
+    WARNING extra fields are ignored, only topic desc fields are used
+    Options
+    -------
+    "fkey-ref-only-id"
+        Return the 'fkey ref' with only the 'id' field
+            ["$id",...]
+
+    "fkey-ref-list-dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
+
+    "fkey-ref-size"
+        Return the kwid style:
+            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
+
+    "hook-ref-only-id"
+        Return the 'hook ref' with only the 'id' field
+            ["$id",...]
+
+    "hook-ref-list-dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name"}, ...]
+
+    "hook-ref-size"
+        Return the kwid style:
+            [{"topic_name":"$topic_name", "size": $size}, ...]
+ ***************************************************************************/
+PUBLIC json_t *node_collapsed_view( // Return MUST be decref
+    json_t *tranger, // not owned
+    json_t *node, // not owned
+    json_t *jn_options // owned "fkey-ref-*", "hook-ref-*"
+)
+{
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
+    json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
+
+    json_t *node_view = json_object();
+
+    const char *col_name; json_t *col;
+    json_object_foreach(topic_desc, col_name, col) {
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
+        json_t *field_data = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
+        if(!field_data) {
+            // Something wrong?
+            continue;
+        }
+        if(is_hook) {
+            json_t *list = kw_get_dict_value(
+                node_view,
+                col_name,
+                json_array(),
+                KW_CREATE
+            );
+            json_t *refs = get_hook_refs(field_data, original_node);
+            json_t *childs = apply_child_ref_options(refs, jn_options);
+            json_array_extend(list, childs);
+            json_decref(childs);
+            json_decref(refs);
+
+        } else if(is_fkey) {
+            json_t *list = kw_get_dict_value(
+                node_view,
+                col_name,
+                json_array(),
+                KW_CREATE
+            );
+            json_t *refs = get_fkey_refs(field_data);
+            json_t *parents = apply_parent_ref_options(refs, jn_options);
+            json_array_extend(list, parents);
+            json_decref(parents);
+            json_decref(refs);
+
+        } else {
+            json_object_set(
+                node_view,
+                col_name,
+                field_data
+            );
+        }
+    }
+    json_object_set_new(
+        node_view,
+        "__md_treedb__",
+        kw_duplicate(json_object_get(node, "__md_treedb__"))
+    );
+    json_object_set_new(
+        json_object_get(node_view, "__md_treedb__"),
+        "__original_node__",
+        json_false()
+    );
+
+    JSON_DECREF(topic_desc);
+    JSON_DECREF(jn_options);
+    return node_view;
 }
 
 /***************************************************************************
@@ -7256,8 +7249,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                     tranger,
                     treedb_name,
                     parent_topic_name,
-                    parent_id,
-                    0
+                    parent_id
                 );
                 if(!parent_node) {
                     log_error(0,
@@ -7322,8 +7314,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                     tranger,
                     treedb_name,
                     parent_topic_name,
-                    parent_id,
-                    0
+                    parent_i
                 );
                 if(!parent_node) {
                     log_error(0,
@@ -7382,8 +7373,7 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                 tranger,
                 treedb_name,
                 parent_topic_name,
-                parent_id,
-                0
+                parent_id
             );
             if(!parent_node) {
                 log_error(0,
@@ -7490,8 +7480,7 @@ PRIVATE int link_or_unlink_nodes2(
         tranger,
         treedb_name,
         parent_topic_name,
-        parent_id,
-        0
+        parent_id
     );
     if(!parent_node) {
         log_error(0,
@@ -7610,8 +7599,7 @@ PRIVATE int link_or_unlink_nodes2(
             tranger,
             treedb_name,
             child_topic_name,
-            child_id,
-            0
+            child_id
         );
     }
 
