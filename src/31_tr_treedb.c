@@ -29,7 +29,7 @@
 PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
-    json_t *kw,  // not owned
+    json_t *kw,  // NOT owned
     BOOL create // create or update
 );
 PRIVATE json_t *_md2json(
@@ -72,23 +72,23 @@ PRIVATE int search_and_remove_wrong_up_ref(
 );
 
 PRIVATE json_t *get_hook_refs(
-    json_t *hook_data, // not owned
+    json_t *hook_data, // NOT owned
     BOOL original_node
 );
 PRIVATE json_t *get_fkey_refs(
-    json_t *field_data // not owned
+    json_t *field_data // NOT owned
 );
 PRIVATE int _link_nodes(
     json_t *tranger,
     const char *hook_name,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned
+    json_t *child_node      // NOT owned
 );
 PRIVATE int _unlink_nodes(
     json_t *tranger,
     const char *hook_name,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned
+    json_t *child_node      // NOT owned
 );
 
 PRIVATE json_t * treedb_get_activated_snap_tag(
@@ -100,12 +100,12 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
 PRIVATE json_int_t json_size(json_t *value);
 
 PRIVATE json_t *apply_parent_ref_options(
-    json_t *refs,  // not owed
-    json_t *jn_options // not owned
+    json_t *refs,  // NOT owned
+    json_t *jn_options // NOT owned
 );
 PRIVATE json_t *apply_child_ref_options(
-    json_t *refs,  // not owed
-    json_t *jn_options // not owned
+    json_t *refs,  // NOT owned
+    json_t *jn_options // NOT owned
 );
 
 /***************************************************************
@@ -1563,7 +1563,7 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
  *  Return 0 if ok or # of errors in negative
  ***************************************************************************/
 PUBLIC int parse_schema_cols(
-    json_t *cols_desc,  // not owned
+    json_t *cols_desc,  // NOT owned
     json_t *dato  // owned
 )
 {
@@ -1915,9 +1915,9 @@ PRIVATE json_t *filtra_fkeys(json_t *value)
  ***************************************************************************/
 PRIVATE int set_tranger_field_value(
     const char *topic_name,
-    json_t *col,    // not owned
-    json_t *record, // not owned
-    json_t *value,  // not owned
+    json_t *col,    // NOT owned
+    json_t *record, // NOT owned
+    json_t *value,  // NOT owned
     BOOL create
 )
 {
@@ -2212,8 +2212,8 @@ PRIVATE int set_tranger_field_value(
 PRIVATE int set_volatil_field_value(
     const char *type,
     const char *field,
-    json_t *record, // not owned
-    json_t *value   // not owned
+    json_t *record, // NOT owned
+    json_t *value   // NOT owned
 )
 {
     SWITCHS(type) {
@@ -2299,8 +2299,8 @@ PRIVATE int set_volatil_field_value(
 PRIVATE int set_volatil_values(
     json_t *tranger,
     const char *topic_name,
-    json_t *record,  // not owned
-    json_t *kw // not owned
+    json_t *record,  // NOT owned
+    json_t *kw // NOT owned
 )
 {
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
@@ -2339,8 +2339,8 @@ PRIVATE int set_volatil_values(
         set_volatil_field_value(
             type,
             field,
-            record, // not owned
-            value   // not owned
+            record, // NOT owned
+            value   // NOT owned
         );
     }
 
@@ -2354,7 +2354,7 @@ PRIVATE int set_volatil_values(
 PRIVATE json_t *record2tranger(
     json_t *tranger,
     const char *topic_name,
-    json_t *kw,  // not owned
+    json_t *kw,  // NOT owned
     BOOL create // create or update
 )
 {
@@ -2515,8 +2515,8 @@ PRIVATE int load_id_callback(
                     set_volatil_values( // crea campos vacios
                         tranger,
                         topic_name,
-                        jn_record,  // not owned
-                        jn_record // not owned
+                        jn_record,  // NOT owned
+                        jn_record // NOT owned
                     );
 
                     /*-------------------------------*
@@ -2687,8 +2687,8 @@ PRIVATE int load_pkey2_callback(
                     set_volatil_values( // crea campos vacios
                         tranger,
                         topic_name,
-                        jn_record,  // not owned
-                        jn_record // not owned
+                        jn_record,  // NOT owned
+                        jn_record // NOT owned
                     );
 
                     /*-------------------------------*
@@ -3169,7 +3169,7 @@ PRIVATE int load_all_links(
     return a new list of all node's mix_id
  ***************************************************************************/
 PRIVATE json_t *get_hook_refs(
-    json_t *hook_data, // not owned
+    json_t *hook_data, // NOT owned
     BOOL original_node
 )
 {
@@ -3316,7 +3316,7 @@ PRIVATE json_t *get_hook_refs(
  *
  ***************************************************************************/
 PRIVATE json_t *get_fkey_refs(
-    json_t *field_data // not owned
+    json_t *field_data // NOT owned
 )
 {
     json_t *refs = json_array();
@@ -3403,7 +3403,7 @@ PRIVATE json_int_t json_size(json_t *value)
  ***************************************************************************/
 PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
     json_t *tranger,
-    json_t *node    // not owned
+    json_t *node    // NOT owned
 )
 {
     json_t *refs = json_array();
@@ -3453,7 +3453,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
  ***************************************************************************/
 PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
     json_t *tranger,
-    json_t *node    // not owned
+    json_t *node    // NOT owned
 )
 {
     json_t *refs = json_array();
@@ -3502,7 +3502,7 @@ PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
     Return array of `parent_id` of `value`  (refs: parent_topic_name^parent_id^hook_name)
  ***************************************************************************/
 // PRIVATE json_t *treedb_beautiful_up_refs(  // Return MUST be decref
-//     json_t *value // not owned
+//     json_t *value // NOT owned
 // )
 // {
 //     if(!value) {
@@ -3592,8 +3592,8 @@ PUBLIC int treedb_set_trace(BOOL set)
 PRIVATE BOOL copy_inherit_fields(
     json_t *tranger,
     const char *topic_name,
-    json_t *secondary_node, // not owned
-    json_t *primary_node  // not owned
+    json_t *secondary_node, // NOT owned
+    json_t *primary_node  // NOT owned
 )
 {
     BOOL ret = FALSE;
@@ -3639,8 +3639,8 @@ PRIVATE BOOL copy_inherit_fields(
 PRIVATE BOOL inherit_links(
     json_t *tranger,
     const char *topic_name,
-    json_t *secondary_node, // not owned
-    json_t *primary_node  // not owned
+    json_t *secondary_node, // NOT owned
+    json_t *primary_node  // NOT owned
 )
 {
     BOOL ret = FALSE;
@@ -3889,8 +3889,8 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
     set_volatil_values( // crea campos vacios o con los valores de kw
         tranger,
         topic_name,
-        record,  // not owned
-        kw // not owned
+        record,  // NOT owned
+        kw // NOT owned
     );
 
     /*--------------------------------------------*
@@ -3999,23 +3999,25 @@ PUBLIC int treedb_save_node(
 )
 {
     /*-------------------------------*
-     *      Get record info
+     *      Check if original node
      *-------------------------------*/
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
-    uint32_t tag = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
-
-    if(!treedb_name || !topic_name) {
+    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Not a pure node",
+            "node",         "%j", node,
             NULL
         );
-        log_debug_json(0, node, "Not a pure node");
         return -1;
     }
+
+    /*-------------------------------*
+     *      Get node info
+     *-------------------------------*/
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
     /*---------------------------------------*
      *  Create the tranger record to update
@@ -4029,6 +4031,8 @@ PUBLIC int treedb_save_node(
     /*-------------------------------------*
      *  Write to tranger (save, updating)
      *-------------------------------------*/
+    uint32_t tag = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
+
     md_record_t md_record;
     int ret = tranger_append_record(
         tranger,
@@ -4408,8 +4412,8 @@ PUBLIC int treedb_delete_node(
                     _unlink_nodes(
                         tranger,
                         hook_name,
-                        parent_node,    // not owned
-                        node      // not owned
+                        parent_node,    // NOT owned
+                        node      // NOT owned
                     );
                 } else {
                     search_and_remove_wrong_up_ref(
@@ -4614,8 +4618,26 @@ PUBLIC int treedb_clean_node(
     BOOL save
 )
 {
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    /*-------------------------------*
+     *      Check if original node
+     *-------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        return -1;
+    }
+
+    /*-------------------------------*
+     *      Get node info
+     *-------------------------------*/
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
     BOOL to_save = FALSE;
     json_t *up_refs = get_node_up_refs(tranger, node);
@@ -4661,8 +4683,8 @@ PUBLIC int treedb_clean_node(
                 _unlink_nodes(
                     tranger,
                     hook_name,
-                    parent_node,    // not owned
-                    node      // not owned
+                    parent_node,    // NOT owned
+                    node      // NOT owned
                 );
             } else {
                 search_and_remove_wrong_up_ref(
@@ -4843,8 +4865,8 @@ PRIVATE int search_and_remove_wrong_up_ref(
 PRIVATE int _link_nodes(
     json_t *tranger,
     const char *hook_name,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned
+    json_t *child_node      // NOT owned
 )
 {
     /*---------------------------------------*
@@ -5170,8 +5192,8 @@ PRIVATE int _link_nodes(
 PRIVATE int _unlink_nodes(
     json_t *tranger,
     const char *hook_name,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned
+    json_t *child_node      // NOT owned
 )
 {
     /*---------------------------------------*
@@ -5572,8 +5594,26 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
     BOOL save
 )
 {
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    /*-------------------------------*
+     *      Check if original node
+     *-------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        return -1;
+    }
+
+    /*-------------------------------*
+     *      Get node info
+     *-------------------------------*/
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
     if(!cols) {
@@ -5660,8 +5700,8 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                 _link_nodes(
                     tranger,
                     hook_name,
-                    parent_node,    // not owned
-                    node      // not owned
+                    parent_node,    // NOT owned
+                    node      // NOT owned
                 );
                 to_save = TRUE;
 
@@ -5715,8 +5755,8 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                 _link_nodes(
                     tranger,
                     hook_name,
-                    parent_node,    // not owned
-                    node      // not owned
+                    parent_node,    // NOT owned
+                    node      // NOT owned
                 );
                 to_save = TRUE;
             }
@@ -5742,15 +5782,15 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *hook_name,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned, pure node
+    json_t *child_node      // NOT owned, pure node
 )
 {
     if(_link_nodes(
         tranger,
         hook_name,
-        parent_node,    // not owned
-        child_node      // not owned
+        parent_node,    // NOT owned
+        child_node      // NOT owned
     ) < 0) {
         // Error already logged
         return -1;
@@ -5769,15 +5809,15 @@ PUBLIC int treedb_link_nodes(
 PUBLIC int treedb_unlink_nodes(
     json_t *tranger,
     const char *hook_name,
-    json_t *parent_node,    // not owned
-    json_t *child_node      // not owned
+    json_t *parent_node,    // NOT owned, pure node
+    json_t *child_node      // NOT owned, pure node
 )
 {
     if(_unlink_nodes(
         tranger,
         hook_name,
-        parent_node,    // not owned
-        child_node      // not owned
+        parent_node,    // NOT owned
+        child_node      // NOT owned
     ) < 0) {
         // Error already logged
         return -1;
@@ -5964,12 +6004,32 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
             [{"topic_name":"$topic_name", "size": $size}, ...]
  ***************************************************************************/
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
-    json_t *tranger, // not owned
-    json_t *node, // not owned
+    json_t *tranger, // NOT owned
+    json_t *node, // NOT owned
     json_t *jn_options // owned "fkey-ref-*", "hook-ref-*"
 )
 {
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
+    /*-------------------------------*
+     *      Check if original node
+     *-------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    /*-------------------------------*
+     *      Get node info
+     *-------------------------------*/
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
+
     BOOL original_node = kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0);
     json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
 
@@ -6046,9 +6106,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     json_t *jn_filter_,  // owned
     json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
-        json_t *topic_desc, // not owned
-        json_t *node,       // not owned
-        json_t *jn_filter   // not owned
+        json_t *topic_desc, // NOT owned
+        json_t *node,       // NOT owned
+        json_t *jn_filter   // NOT owned
     )
 )
 {
@@ -6207,9 +6267,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     json_t *jn_filter_,  // owned
     json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
-        json_t *topic_desc, // not owned
-        json_t *node,       // not owned
-        json_t *jn_filter   // not owned
+        json_t *topic_desc, // NOT owned
+        json_t *node,       // NOT owned
+        json_t *jn_filter   // NOT owned
     )
 )
 {
@@ -6364,8 +6424,8 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
  *
  ***************************************************************************/
 PRIVATE json_t *apply_parent_ref_options(
-    json_t *refs,  // not owed
-    json_t *jn_options // not owned
+    json_t *refs,  // NOT owned
+    json_t *jn_options // NOT owned
 )
 {
     if(json_empty(jn_options)) {
@@ -6436,7 +6496,7 @@ PRIVATE json_t *apply_parent_ref_options(
 PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
     const char *link, // must be a fkey field
-    json_t *node, // not owned
+    json_t *node, // NOT owned
     json_t *jn_options // owned, "fkey-ref-*"
 )
 {
@@ -6517,8 +6577,8 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
  *
  ***************************************************************************/
 PRIVATE json_t *apply_child_ref_options(
-    json_t *refs,  // not owed
-    json_t *jn_options // not owned
+    json_t *refs,  // NOT owned
+    json_t *jn_options // NOT owned
 )
 {
     if(json_empty(jn_options)) {
@@ -6586,7 +6646,7 @@ PRIVATE json_t *apply_child_ref_options(
 PUBLIC json_t *treedb_list_childs(
     json_t *tranger,
     const char *hook,
-    json_t *node, // not owned
+    json_t *node, // NOT owned
     json_t *jn_options // owned, "hook-ref-*"
 )
 {
@@ -7267,8 +7327,8 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                 _link_nodes(
                     tranger,
                     hook_name,
-                    parent_node,    // not owned
-                    node      // not owned
+                    parent_node,    // NOT owned
+                    node      // NOT owned
                 );
 
             } while(0);
@@ -7332,8 +7392,8 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
                 _link_nodes(
                     tranger,
                     hook_name,
-                    parent_node,    // not owned
-                    node      // not owned
+                    parent_node,    // NOT owned
+                    node      // NOT owned
                 );
             }
         }
@@ -7403,8 +7463,8 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
             _unlink_nodes(
                 tranger,
                 hook_name,
-                parent_node,    // not owned
-                node      // not owned
+                parent_node,    // NOT owned
+                node      // NOT owned
             );
         }
 
@@ -7425,8 +7485,8 @@ PRIVATE int link_or_unlink_nodes2(
     int (*link_or_unlink_fn)(
         json_t *tranger,
         const char *hook,
-        json_t *parent_node,    // not owned
-        json_t *child_node      // not owned
+        json_t *parent_node,    // NOT owned
+        json_t *child_node      // NOT owned
     )
 )
 {
@@ -7619,8 +7679,8 @@ PRIVATE int link_or_unlink_nodes2(
     int result = link_or_unlink_fn(
         tranger,
         hook_name,
-        parent_node,    // not owned
-        child_node      // not owned
+        parent_node,    // NOT owned
+        child_node      // NOT owned
     );
 
     return result;

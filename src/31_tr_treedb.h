@@ -290,15 +290,15 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
 PUBLIC int treedb_link_nodes(
     json_t *tranger,
     const char *hook,
-    json_t *parent_node,    // NOT owned
-    json_t *child_node      // NOT owned
+    json_t *parent_node,    // NOT owned, pure node
+    json_t *child_node      // NOT owned, pure node
 );
 
 PUBLIC int treedb_unlink_nodes(
     json_t *tranger,
     const char *hook,
-    json_t *parent_node,    // NOT owned
-    json_t *child_node      // NOT owned
+    json_t *parent_node,    // NOT owned, pure node
+    json_t *child_node      // NOT owned, pure node
 );
 
 /**rst**
@@ -320,17 +320,6 @@ PUBLIC int treedb_unlink_nodes(
 
     Options
     -------
-    "collapsed"
-        Yes:
-            Return hooks with a list of child references
-            WARNING (always a **list**, not the original string/dict/list)
-        No:
-            Return hooks with full and original (string,dict,list) child's nodes.
-
-            TODO The "collapsed" option must not be used in high level
-            because return data not parsed with authz
-            but I cannot remove from treedb_get_node() until the tests are changed.
-
     "fkey-ref-only-id"
         Return the 'fkey ref' with only the 'id' field
             ["$id",...]
