@@ -338,12 +338,10 @@ PUBLIC int treedb_unlink_nodes(
             ["topic_name^id"]
 
     "hook-ref-only-id"
-        WARNING: Implicit collapsed mode.
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
     "hook-ref-list-dict"
-        WARNING: Implicit collapsed mode.
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
 
@@ -374,7 +372,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -387,7 +385,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned "collapsed" fixed TRUE, "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned, "fkey-ref-*", "hook-ref-*"
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
