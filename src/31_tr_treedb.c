@@ -3998,18 +3998,18 @@ PUBLIC int treedb_save_node(
     json_t *node    // NOT owned, WARNING be care, must be a pure node.
 )
 {
-    /*-------------------------------*
-     *      Check if original node
-     *-------------------------------*/
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Not a pure node",
-            "node",         "%j", node,
             NULL
         );
+        log_debug_json(0, node, "Not a pure node");
         return -1;
     }
 
@@ -4618,9 +4618,9 @@ PUBLIC int treedb_clean_node(
     BOOL save
 )
 {
-    /*-------------------------------*
-     *      Check if original node
-     *-------------------------------*/
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -4869,29 +4869,33 @@ PRIVATE int _link_nodes(
     json_t *child_node      // NOT owned
 )
 {
-    /*---------------------------------------*
-     *  Check if original nodes
-     *---------------------------------------*/
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Cannot link not original parent node",
-            "parent_node",  "%j", parent_node,
+            "msg",          "%s", "Not a pure node",
             NULL
         );
+        log_debug_json(0, parent_node, "Not a pure node");
         return -1;
     }
+
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Cannot link not original child node",
-            "parent_node",  "%j", parent_node,
+            "msg",          "%s", "Not a pure node",
             NULL
         );
+        log_debug_json(0, child_node, "Not a pure node");
         return -1;
     }
 
@@ -5196,29 +5200,33 @@ PRIVATE int _unlink_nodes(
     json_t *child_node      // NOT owned
 )
 {
-    /*---------------------------------------*
-     *  Check if original nodes
-     *---------------------------------------*/
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(parent_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Cannot link not original parent node",
-            "parent_node",  "%j", parent_node,
+            "msg",          "%s", "Not a pure node",
             NULL
         );
+        log_debug_json(0, parent_node, "Not a pure node");
         return -1;
     }
+
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(child_node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Cannot unlink not original child node",
-            "parent_node",  "%j", parent_node,
+            "msg",          "%s", "Not a pure node",
             NULL
         );
+        log_debug_json(0, child_node, "Not a pure node");
         return -1;
     }
 
@@ -5594,9 +5602,9 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
     BOOL save
 )
 {
-    /*-------------------------------*
-     *      Check if original node
-     *-------------------------------*/
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -5606,6 +5614,7 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
             NULL
         );
         log_debug_json(0, node, "Not a pure node");
+        JSON_DECREF(kw);
         return -1;
     }
 
@@ -5697,13 +5706,14 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                     break;
                 }
 
-                _link_nodes(
+                if(_link_nodes(
                     tranger,
                     hook_name,
                     parent_node,    // NOT owned
                     node      // NOT owned
-                );
-                to_save = TRUE;
+                )==0) {
+                    to_save = TRUE;
+                }
 
             } while(0);
 
@@ -5752,13 +5762,14 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                     continue;
                 }
 
-                _link_nodes(
+                if(_link_nodes(
                     tranger,
                     hook_name,
                     parent_node,    // NOT owned
                     node      // NOT owned
-                );
-                to_save = TRUE;
+                )==0) {
+                    to_save = TRUE;
+                }
             }
         }
 
@@ -6009,9 +6020,9 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *jn_options // owned "fkey-ref-*", "hook-ref-*"
 )
 {
-    /*-------------------------------*
-     *      Check if original node
-     *-------------------------------*/
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
     if(!kw_get_bool(node, "__md_treedb__`__original_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
