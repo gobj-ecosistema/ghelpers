@@ -472,7 +472,7 @@ PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose)
 
         } else {
             // Array
-            int idx = atoi(p);
+            int idx = atoi(path);
             json_t *value = json_array_get(kw, idx);
             if(!value && verbose) {
                 log_error(LOG_OPT_TRACE_STACK,

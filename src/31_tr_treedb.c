@@ -4315,6 +4315,9 @@ PUBLIC int treedb_delete_node(
      *-------------------------------*/
     BOOL to_delete = TRUE;
 
+    /*-------------------------------*
+     *      Childs
+     *-------------------------------*/
     json_t *down_refs = get_node_down_refs(tranger, node);
     if(json_array_size(down_refs)>0) {
         if(kw_get_bool(jn_options, "force", 0, 0)) {
@@ -4326,10 +4329,23 @@ PUBLIC int treedb_delete_node(
             int idx; json_t *jn_hook;
             json_array_foreach(jn_hooks, idx, jn_hook) {
                 const char *hook = json_string_value(jn_hook);
-                json_t *childs = treedb_list_childs(tranger, hook, node, 0);
-                int idx; json_t *child;
-                json_array_foreach(childs, idx, child) {
-                    treedb_unlink_nodes(tranger, hook, node, child);
+                json_t *childs = treedb_list_childs(
+                    tranger,
+                    hook,
+                    node,
+                    json_pack("{s:b}", "hook-ref-list-dict", 1)
+                );
+                int idx; json_t *jn_child;
+                json_array_foreach(childs, idx, jn_child) {
+                    json_t *child = treedb_get_node(
+                        tranger,
+                        treedb_name,
+                        kw_get_str(jn_child, "topic_name", "", KW_REQUIRED),
+                        kw_get_str(jn_child, "id", "", KW_REQUIRED)
+                    );
+                    if(child) {
+                        _unlink_nodes(tranger, hook, node, child);
+                    }
                 }
                 JSON_DECREF(childs);
             }
@@ -4368,81 +4384,15 @@ PUBLIC int treedb_delete_node(
     }
     JSON_DECREF(down_refs);
 
+    /*-------------------------------*
+     *      Parents
+     *-------------------------------*/
     json_t *up_refs = get_node_up_refs(tranger, node);
     if(json_array_size(up_refs)>0) {
         if(kw_get_bool(jn_options, "force", 0, 0)) {
-            int idx; json_t *old_fkey;
-            json_array_foreach(up_refs, idx, old_fkey) {
-                /*
-                 *  Delete link
-                 */
-                const char *ref = json_string_value(old_fkey);
-
-                /*
-                 *  Get parent info
-                 */
-                char parent_topic_name[NAME_MAX];
-                char parent_id[NAME_MAX];
-                char hook_name[NAME_MAX];
-                if(!decode_parent_ref(
-                    ref,
-                    parent_topic_name, sizeof(parent_topic_name),
-                    parent_id, sizeof(parent_id),
-                    hook_name, sizeof(hook_name)
-                )) {
-                    // It's not a fkey
-                    log_error(0,
-                        "gobj",                 "%s", __FILE__,
-                        "function",             "%s", __FUNCTION__,
-                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                        "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
-                        "ref",                  "%s", ref,
-                        NULL
-                    );
-                    continue;
-                }
-
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
-                    tranger,
-                    treedb_name,
-                    parent_topic_name,
-                    parent_id
-                );
-                if(parent_node) {
-                    _unlink_nodes(
-                        tranger,
-                        hook_name,
-                        parent_node,    // NOT owned
-                        node      // NOT owned
-                    );
-                } else {
-                    search_and_remove_wrong_up_ref(
-                        tranger,
-                        node,
-                        topic_name,
-                        ref
-                    );
-                }
-            }
-
-            /*
-             *  Re-checks up links
-             */
-            json_t *up_refs_ = get_node_up_refs(tranger, node);
-            if(json_array_size(up_refs_)>0) {
+            if(treedb_clean_node(tranger, node, FALSE)<0) {
                 to_delete = FALSE;
-                log_error(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "Cannot delete node: still has up links",
-                    "topic_name",   "%s", topic_name,
-                    "id",           "%s", id,
-                    NULL
-                );
             }
-            JSON_DECREF(up_refs_);
-
         } else {
             to_delete = FALSE;
             log_warning(0,
@@ -4639,6 +4589,7 @@ PUBLIC int treedb_clean_node(
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
+    int ret = 0;
     BOOL to_save = FALSE;
     json_t *up_refs = get_node_up_refs(tranger, node);
     if(json_array_size(up_refs)>0) {
@@ -4680,7 +4631,7 @@ PUBLIC int treedb_clean_node(
                 parent_id
             );
             if(parent_node) {
-                _unlink_nodes(
+                ret += _unlink_nodes(
                     tranger,
                     hook_name,
                     parent_node,    // NOT owned
@@ -4701,6 +4652,7 @@ PUBLIC int treedb_clean_node(
          */
         json_t *up_refs_ = get_node_up_refs(tranger, node);
         if(json_array_size(up_refs_)>0) {
+            ret += -1;
             log_error(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
@@ -4722,7 +4674,7 @@ PUBLIC int treedb_clean_node(
     }
 
     JSON_DECREF(up_refs);
-    return 0;
+    return ret;
 }
 
 /***************************************************************************
