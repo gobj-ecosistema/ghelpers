@@ -5839,6 +5839,7 @@ PRIVATE BOOL match_node_simple(
                     break;
                 }
             } else if(json_is_array(jn_record_value)) {
+                BOOL matched_ = FALSE;
                 int idx; json_t *jn_id;
                 json_array_foreach(jn_record_value, idx, jn_id) {
                     const char *ref = json_string_value(jn_id);
@@ -5849,12 +5850,17 @@ PRIVATE BOOL match_node_simple(
                         0, 0
                     );
                     const char *id_ = json_string_value(jn_filter_value);
-                    if(!id_ || strcmp(id_, parent_id)!=0) {
-                        matched = FALSE;
+                    if(id_ && strcmp(id_, parent_id)==0) {
+                        matched_ = TRUE;
                         break;
                     }
                 }
+                if(!matched_) {
+                    matched = FALSE;
+                    break;
+                }
             } else if(json_is_object(jn_record_value)) {
+                BOOL matched_ = TRUE;
                 const char *id_; json_t *jn_id;
                 json_object_foreach(jn_record_value, id_, jn_id) {
                     const char *ref = id_;
@@ -5866,9 +5872,13 @@ PRIVATE BOOL match_node_simple(
                     );
                     const char *id_ = json_string_value(jn_filter_value);
                     if(!id_ || strcmp(id_, parent_id)!=0) {
-                        matched = FALSE;
+                        matched_ = FALSE;
                         break;
                     }
+                }
+                if(!matched_) {
+                    matched = FALSE;
+                    break;
                 }
             }
             if(!matched) {

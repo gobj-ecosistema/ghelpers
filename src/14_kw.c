@@ -378,12 +378,12 @@ PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose)
         }
         return 0;
     }
-    if(empty_string(path)) {
+    if(!path) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path EMPTY",
+            "msg",          "%s", "path NULL",
             NULL
         );
         return 0;
