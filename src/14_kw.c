@@ -43,8 +43,8 @@ PRIVATE int _walk_object(
     json_t *kw,
     int (*callback)(json_t *kw, const char *key, json_t *value)
 );
-PRIVATE json_t *_kw_search_path(json_t *kw, const char *path);
 PRIVATE json_t *_kw_search_dict(json_t *kw, const char *path, kw_flag_t flag);
+PRIVATE json_t *_kw_find_path(json_t *kw, const char *path, BOOL verbose);
 
 
 /***************************************************************************
@@ -309,59 +309,6 @@ PRIVATE char *search_delimiter(const char *s, char delimiter_)
 }
 
 /***************************************************************************
- *  Return the dict's value searched by path
- *  Last item in path is the key (of previous dict)!
- ***************************************************************************/
-PRIVATE json_t *_kw_search_path(json_t *kw, const char *path)
-{
-    if(!json_is_object(kw)) {
-        // silence
-        return 0;
-    }
-    if(!path) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path NULL",
-            NULL
-        );
-        return 0;
-    }
-    if(kw->refcount <=0) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "json refcount 0",
-            "path",         "%s", path,
-            NULL
-        );
-        return 0;
-    }
-
-    char *p = search_delimiter(path, delimiter[0]);
-    if(!p) {
-        return json_object_get(kw, path);
-    }
-
-    char segment[256];
-    if(snprintf(segment, sizeof(segment), "%.*s", (int)(size_t)(p-path), path)>=sizeof(segment)) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "buffer too small",
-            "path",         "%s", path,
-            NULL
-        );
-    }
-
-    json_t *deep_dict = json_object_get(kw, segment);
-    return _kw_search_path(deep_dict, p+1);
-}
-
-/***************************************************************************
  *  Return the dict searched by path
  *  All in path must be dict!
  ***************************************************************************/
@@ -601,7 +548,7 @@ PUBLIC char kw_set_path_delimiter(char delimiter_)
  ***************************************************************************/
 PUBLIC BOOL kw_has_path(json_t *kw, const char *path)
 {
-    if(_kw_search_path(kw, path)) {
+    if(_kw_find_path(kw, path, FALSE)) {
         return TRUE;
     }
     return FALSE;
@@ -711,7 +658,7 @@ PUBLIC json_t *kw_get_dict(
     json_t *default_value,
     kw_flag_t flag)
 {
-    json_t *jn_dict = _kw_search_path(kw, path);
+    json_t *jn_dict = _kw_find_path(kw, path, FALSE);
     if(!jn_dict) {
         if((flag & KW_CREATE) && default_value && kw) {
             kw_set_dict_value(kw, path, default_value);
@@ -765,7 +712,7 @@ PUBLIC json_t *kw_get_list(
     json_t *default_value,
     kw_flag_t flag)
 {
-    json_t *jn_list = _kw_search_path(kw, path);
+    json_t *jn_list = _kw_find_path(kw, path, FALSE);
     if(!jn_list) {
         if((flag & KW_CREATE) && default_value && kw) {
             kw_set_dict_value(kw, path, default_value);
@@ -818,7 +765,7 @@ PUBLIC json_int_t kw_get_int(
     json_int_t default_value,
     kw_flag_t flag)
 {
-    json_t *jn_int = _kw_search_path(kw, path);
+    json_t *jn_int = _kw_find_path(kw, path, FALSE);
     if(!jn_int) {
         if((flag & KW_CREATE) && kw) {
             json_t *jn_new = json_integer(default_value);
@@ -904,7 +851,7 @@ PUBLIC double kw_get_real(
     double default_value,
     kw_flag_t flag)
 {
-    json_t *jn_real = _kw_search_path(kw, path);
+    json_t *jn_real = _kw_find_path(kw, path, FALSE);
     if(!jn_real) {
         if((flag & KW_CREATE) && kw) {
             json_t *jn_new = json_real(default_value);
@@ -983,7 +930,7 @@ PUBLIC BOOL kw_get_bool(
     BOOL default_value,
     kw_flag_t flag)
 {
-    json_t *jn_bool = _kw_search_path(kw, path);
+    json_t *jn_bool = _kw_find_path(kw, path, FALSE);
     if(!jn_bool) {
         if((flag & KW_CREATE) && kw) {
             json_t *jn_new = json_boolean(default_value);
@@ -1069,7 +1016,7 @@ PUBLIC const char *kw_get_str(
     const char *default_value,
     kw_flag_t flag)
 {
-    json_t *jn_str = _kw_search_path(kw, path);
+    json_t *jn_str = _kw_find_path(kw, path, FALSE);
     if(!jn_str) {
         if((flag & KW_CREATE) && kw) {
             json_t *jn_new;
@@ -1136,7 +1083,7 @@ PUBLIC json_t *kw_get_dict_value(
     json_t *default_value,  // owned
     kw_flag_t flag)
 {
-    json_t *jn_value = _kw_search_path(kw, path);
+    json_t *jn_value = _kw_find_path(kw, path, FALSE);
     if(!jn_value) {
         if((flag & KW_CREATE) && default_value && kw) {
             kw_set_dict_value(kw, path, default_value);
