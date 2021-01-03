@@ -314,40 +314,31 @@ PUBLIC int treedb_unlink_nodes(
 
             "topic_name^id"
 
-    Options
-    -------
+    fkey,hook options
+    -----------------
     ""
         Return 'fkey ref'
             ["topic_name^id^hook_name"]
-
-    "fkey-ref-only-id"
-        Return the 'fkey ref' with only the 'id' field
-            ["$id",...]
-
-    "fkey-ref-list-dict"
-        Return the kwid style:
-            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
-
-    "fkey-ref-size"
-        Return size of link (parents)
-            ["$size"]
-
-
-    ""
         Return 'hook ref'
             ["topic_name^id"]
 
-    "hook-ref-only-id"
+    "only-id"
+        Return the 'fkey ref' with only the 'id' field
+            ["$id",...]
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
-    "hook-ref-list-dict"
+    "list-dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
 
-    "hook-ref-size"
-        Return size of hook (childs)
-            ["$size"]
+    "size"
+        Return the kwid style:
+            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
+        Return the kwid style:
+            [{"topic_name":"$topic_name", "size": $size}, ...]
 
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
@@ -364,7 +355,7 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *tranger, // NOT owned
     json_t *node, // NOT owned
-    json_t *jn_options // owned "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options // owned fkey,hook options
 );
 
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
@@ -372,7 +363,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned, "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned, fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -385,7 +376,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned, "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned, fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned

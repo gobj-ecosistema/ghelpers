@@ -3499,74 +3499,6 @@ PRIVATE json_t *get_node_up_refs(  // Return MUST be decref
 }
 
 /***************************************************************************
-    Return array of `parent_id` of `value`  (refs: parent_topic_name^parent_id^hook_name)
- ***************************************************************************/
-// PRIVATE json_t *treedb_beautiful_up_refs(  // Return MUST be decref
-//     json_t *value // NOT owned
-// )
-// {
-//     if(!value) {
-//         return 0;
-//     }
-//     char parent_topic_name[NAME_MAX];
-//     char parent_id[NAME_MAX];
-//     char hook_name[NAME_MAX];
-//
-//     json_t *jn_beautiful_names = json_array();
-//
-//     switch(json_typeof(value)) { // json_typeof PROTECTED
-//     case JSON_STRING:
-//         {
-//             if(decode_parent_ref(
-//                 json_string_value(value),
-//                 parent_topic_name, sizeof(parent_topic_name),
-//                 parent_id, sizeof(parent_id),
-//                 hook_name, sizeof(hook_name)
-//             )) {
-//                 json_array_append_new(jn_beautiful_names, json_string(parent_id));
-//             }
-//         }
-//         break;
-//     case JSON_ARRAY:
-//         {
-//             int idx; json_t *r;
-//             json_array_foreach(value, idx, r) {
-//                 if(json_typeof(r)==JSON_STRING) {
-//                     if(decode_parent_ref(
-//                         json_string_value(r),
-//                         parent_topic_name, sizeof(parent_topic_name),
-//                         parent_id, sizeof(parent_id),
-//                         hook_name, sizeof(hook_name)
-//                     )) {
-//                         json_array_append_new(jn_beautiful_names, json_string(parent_id));
-//                     }
-//                 }
-//             }
-//         }
-//         break;
-//     case JSON_OBJECT:
-//         {
-//             const char *key; json_t *v;
-//             json_object_foreach(value, key, v) {
-//                 if(decode_parent_ref(
-//                     key,
-//                     parent_topic_name, sizeof(parent_topic_name),
-//                     parent_id, sizeof(parent_id),
-//                     hook_name, sizeof(hook_name)
-//                 )) {
-//                     json_array_append_new(jn_beautiful_names, json_string(parent_id));
-//                 }
-//             }
-//         }
-//         break;
-//     default:
-//         break;
-//     }
-//
-//     return jn_beautiful_names;
-// }
-
-/***************************************************************************
 
  ***************************************************************************/
 PUBLIC int treedb_set_trace(BOOL set)
@@ -4333,7 +4265,7 @@ PUBLIC int treedb_delete_node(
                     tranger,
                     hook,
                     node,
-                    json_pack("{s:b}", "hook-ref-list-dict", 1)
+                    json_pack("{s:b}", "list-dict", 1)
                 );
                 int idx; json_t *jn_child;
                 json_array_foreach(childs, idx, jn_child) {
@@ -5955,40 +5887,33 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     ""
         Return 'fkey ref'
             ["topic_name^id^hook_name"]
-
-    "fkey-ref-only-id"
-        Return the 'fkey ref' with only the 'id' field
-            ["$id",...]
-
-    "fkey-ref-list-dict"
-        Return the kwid style:
-            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
-
-    "fkey-ref-size"
-        Return the kwid style:
-            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
-
-
-    ""
         Return 'hook ref'
             ["topic_name^id"]
 
-    "hook-ref-only-id"
+    "only-id"
+        Return the 'fkey ref' with only the 'id' field
+            ["$id",...]
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
-    "hook-ref-list-dict"
+    "list-dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
 
-    "hook-ref-size"
+    "size"
+        Return the kwid style:
+            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
         Return the kwid style:
             [{"topic_name":"$topic_name", "size": $size}, ...]
+
+
  ***************************************************************************/
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *tranger, // NOT owned
     json_t *node, // NOT owned
-    json_t *jn_options // owned "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options // owned fkey,hook options
 )
 {
     /*------------------------------*
@@ -6086,7 +6011,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned , "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned , fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -6236,7 +6161,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned ", "fkey-ref-*", "hook-ref-*"
+    json_t *jn_options, // owned ", fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -6426,14 +6351,14 @@ PRIVATE json_t *apply_parent_ref_options(
             continue;
         }
 
-        if(kw_get_bool(jn_options, "fkey-ref-only-id", 0, KW_WILD_NUMBER)) {
+        if(kw_get_bool(jn_options, "only-id", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the 'fkey ref' with only the 'id' field
              *  ["$id",...]
              */
             json_array_append_new(parents, json_string(parent_id));
 
-        } else if(kw_get_bool(jn_options, "fkey-ref-list-dict", 0, KW_WILD_NUMBER)) {
+        } else if(kw_get_bool(jn_options, "list-dict", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the kwid style:
              * [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
@@ -6515,7 +6440,7 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
         log_debug_json(0, node, "link not found in the node");
     }
 
-    if(kw_get_bool(jn_options, "fkey-ref-size", 0, KW_WILD_NUMBER)) {
+    if(kw_get_bool(jn_options, "size", 0, KW_WILD_NUMBER)) {
         json_t *jn_size = json_array();
         json_array_append_new(jn_size, json_integer(json_size(field_data)));
         JSON_DECREF(jn_options);
@@ -6577,14 +6502,14 @@ PRIVATE json_t *apply_child_ref_options(
             continue;
         }
 
-        if(kw_get_bool(jn_options, "hook-ref-only-id", 0, KW_WILD_NUMBER)) {
+        if(kw_get_bool(jn_options, "only-id", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the 'hook ref' with only the 'id' field
              *  ["$id",...]
              */
             json_array_append_new(childs, json_string(child_id));
 
-        } else if(kw_get_bool(jn_options, "hook-ref-list-dict", 0, KW_WILD_NUMBER)) {
+        } else if(kw_get_bool(jn_options, "list-dict", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the kwid style:
              *  [{"id": "$id", "topic_name":"$topic_name"}, ...]
@@ -6667,7 +6592,7 @@ PUBLIC json_t *treedb_list_childs(
         log_debug_json(0, node, "hook not found in the node");
     }
 
-    if(kw_get_bool(jn_options, "hook-ref-size", 0, KW_WILD_NUMBER)) {
+    if(kw_get_bool(jn_options, "size", 0, KW_WILD_NUMBER)) {
         json_t *jn_size = json_array();
         json_array_append_new(jn_size, json_integer(json_size(field_data)));
         JSON_DECREF(jn_options);
