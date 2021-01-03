@@ -391,7 +391,7 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
     const char *link, // must be a fkey field
     json_t *node, // NOT owned
-    json_t *jn_options // owned, "fkey-ref-*"
+    json_t *jn_options // owned, fkey options
 );
 
 /*
@@ -401,7 +401,7 @@ PUBLIC json_t *treedb_list_childs(
     json_t *tranger,
     const char *hook,
     json_t *node, // NOT owned
-    json_t *jn_options // owned, "hook-ref-*"
+    json_t *jn_options // owned, hook options
 );
 
 /*----------------------------*
