@@ -711,7 +711,7 @@ PRIVATE int set_volatil_field_value(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int set_volatil_values(
+PRIVATE int _set_volatil_values(
     json_t *tranger,
     const char *topic_name,
     json_t *record,  // not owned
@@ -733,7 +733,12 @@ PRIVATE int set_volatil_values(
 
     const char *field; json_t *col;
     json_object_foreach(cols, field, col) {
-        json_t *value = kw_get_dict_value(kw, field, 0, 0);
+        json_t *value = kw_get_dict_value(
+            kw,
+            field,
+            kw_get_dict_value(col, "default", 0, 0),
+            0
+        );
 
         const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
         if(!field) {
@@ -920,7 +925,7 @@ PRIVATE int load_record_callback(
         /*--------------------------------------------*
          *  Set volatil data
         *--------------------------------------------*/
-        set_volatil_values(
+        _set_volatil_values(
             tranger,
             topic_name,
             jn_record,  // not owned
@@ -1071,7 +1076,7 @@ PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
     /*--------------------------------------------*
      *  Set volatil data
      *--------------------------------------------*/
-    set_volatil_values(
+    _set_volatil_values(
         tranger,
         topic_name,
         record,  // not owned

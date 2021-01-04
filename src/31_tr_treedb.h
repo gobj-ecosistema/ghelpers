@@ -265,6 +265,17 @@ PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
 );
 
 /**rst**
+    Set volatil values (not fkey, not hook, not persistent)
+    (using default if not available)
+**rst**/
+PUBLIC int set_volatil_values(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *record,  // NOT owned
+    json_t *kw // NOT owned
+);
+
+/**rst**
     "force" delete links. If there are links are not force then delete_node will fail
 **rst**/
 PUBLIC int treedb_delete_node(

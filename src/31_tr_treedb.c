@@ -2296,7 +2296,7 @@ PRIVATE int set_volatil_field_value(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int set_volatil_values(
+PUBLIC int set_volatil_values(
     json_t *tranger,
     const char *topic_name,
     json_t *record,  // NOT owned
@@ -2318,7 +2318,12 @@ PRIVATE int set_volatil_values(
 
     const char *field; json_t *col;
     json_object_foreach(cols, field, col) {
-        json_t *value = kw_get_dict_value(kw, field, 0, 0);
+        json_t *value = kw_get_dict_value(
+            kw,
+            field,
+            kw_get_dict_value(col, "default", 0, 0),
+            0
+        );
 
         const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
         if(!field) {
