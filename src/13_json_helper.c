@@ -185,7 +185,7 @@ PUBLIC int print_json2(const char *label, json_t *jn)
         label = "";
     }
 
-    size_t flags = JSON_INDENT(4); //JSON_SORT_KEYS |
+    size_t flags = JSON_INDENT(4)|JSON_ENCODE_ANY;
     fprintf(stdout, "%s (refcount: %d) ==>\n", label, (int)jn->refcount);
     json_dumpf(jn, stdout, flags);
     fprintf(stdout, "\n");

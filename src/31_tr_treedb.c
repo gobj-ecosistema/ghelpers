@@ -2321,9 +2321,12 @@ PUBLIC int set_volatil_values(
         json_t *value = kw_get_dict_value(
             kw,
             field,
-            kw_get_dict_value(col, "default", 0, 0),
+            0,
             0
         );
+        if(!value) {
+            value = kw_get_dict_value(col, "default", 0, 0);
+        }
 
         const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
         if(!field) {
