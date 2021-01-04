@@ -253,15 +253,13 @@ PUBLIC int treedb_save_node(
 
 /**rst**
     Update the existing current node with fields of kw
-    "create" create node if not exist
     HACK fkeys and hook fields are not updated!
 **rst**/
 PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    json_t *kw,    // owned
-    BOOL create
+    json_t *node,   // NOT owned, WARNING be care, must be a pure node.
+    json_t *kw,     // owned
+    BOOL save
 );
 
 /**rst**
@@ -374,7 +372,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned, fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -387,7 +384,6 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter,  // owned
-    json_t *jn_options, // owned, fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned

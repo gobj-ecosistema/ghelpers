@@ -4006,87 +4006,35 @@ PUBLIC int treedb_save_node(
 
 /***************************************************************************
     Update the existing current node with fields of kw
-    "create" create node if not exist
     HACK fkeys and hook fields are not updated!
  ***************************************************************************/
 PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    json_t *kw,    // owned
-    BOOL create
+    json_t *node,   // NOT owned, WARNING be care, must be a pure node.
+    json_t *kw,     // owned
+    BOOL save
 )
 {
-    /*-----------------------------------*
-     *      Check appropiate topic
-     *-----------------------------------*/
-    if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Topic name not found in treedbs",
-            "topic_name",   "%s", topic_name,
+            "msg",          "%s", "Not a pure node",
             NULL
         );
-        JSON_DECREF(kw);
+        log_debug_json(0, node, "Not a pure node");
+        KW_DECREF(kw);
         return 0;
     }
 
     /*-------------------------------*
-     *  Get id to update node
+     *      Get node info
      *-------------------------------*/
-    const char *id = kw_get_str(kw, "id", "", 0);
-    if(empty_string(id)) {
-        if(!create) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "kw without id",
-                NULL
-            );
-            JSON_DECREF(kw);
-            return 0;
-        }
-    }
-
-    /*-------------------------------*
-     *  Recover node
-     *-------------------------------*/
-    json_t *node = 0;
-    if(!empty_string(id)) {
-        node = treedb_get_node( // Return is NOT YOURS, pure node
-            tranger,
-            treedb_name,
-            topic_name,
-            id
-
-        );
-    }
-    if(!node) {
-        if(create) {
-            return treedb_create_node(
-                tranger,
-                treedb_name,
-                topic_name,
-                kw // owned
-            );
-        } else {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "node not found",
-                "treedb_name",  "%s", treedb_name,
-                "topic_name",   "%s", topic_name,
-                "id",           "%s", id,
-                NULL
-            );
-            JSON_DECREF(kw);
-            return 0;
-        }
-    }
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
     /*-------------------------------*
      *  Update fields
@@ -4119,15 +4067,15 @@ PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
     }
 
     JSON_DECREF(cols);
-    JSON_DECREF(kw);
 
     /*-------------------------------*
      *  Write to tranger
      *-------------------------------*/
-    if(treedb_save_node(tranger, node)<0) {
-        // Error already logged
-        return 0;
+    if(save) {
+        treedb_save_node(tranger, node);
     }
+
+    KW_DECREF(kw);
     return node;
 }
 
@@ -6159,7 +6107,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     const char *treedb_name,
     const char *topic_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned , fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -6180,7 +6127,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             NULL
         );
         JSON_DECREF(jn_filter_);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -6253,13 +6199,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             }
             if(match_fn(topic_desc, node, jn_filter)) {
                 // Collapse records (hook fields)
-                json_array_append_new(
+                json_array_append(
                     list,
-                    node_collapsed_view(
-                        tranger,
-                        node,
-                        json_incref(jn_options)
-                    )
+                    node
                 );
             }
         }
@@ -6270,13 +6212,9 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
                 continue;
             }
             if(match_fn(topic_desc, node, jn_filter)) {
-                json_array_append_new(
+                json_array_append(
                     list,
-                    node_collapsed_view(
-                        tranger,
-                        node,
-                        json_incref(jn_options)
-                    )
+                    node
                 );
             }
         }
@@ -6295,7 +6233,6 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     JSON_DECREF(topic_desc);
     JSON_DECREF(jn_filter);
     JSON_DECREF(ids_list);
-    JSON_DECREF(jn_options);
 
     return list;
 }
@@ -6309,7 +6246,6 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     const char *topic_name,
     const char *pkey2_name,
     json_t *jn_filter_,  // owned
-    json_t *jn_options, // owned ", fkey,hook options
     BOOL (*match_fn) (
         json_t *topic_desc, // NOT owned
         json_t *node,       // NOT owned
@@ -6330,7 +6266,6 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
             NULL
         );
         JSON_DECREF(jn_filter_);
-        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -6426,13 +6361,9 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
                 const char *pkey2; json_t *node;
                 json_object_foreach(pkey2_dict, pkey2, node) {
                     if(match_fn(topic_desc, node, jn_filter)) {
-                        json_array_append_new(
+                        json_array_append(
                             list,
-                            node_collapsed_view(
-                                tranger,
-                                node,
-                                json_incref(jn_options)
-                            )
+                            node
                         );
                     }
                 }
@@ -6452,7 +6383,6 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     JSON_DECREF(topic_desc);
     JSON_DECREF(ids_list);
     JSON_DECREF(jn_filter);
-    JSON_DECREF(jn_options);
 
     return list;
 }
@@ -6916,7 +6846,6 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
         treedb_name,
         "__snaps__",
         jn_tag,  // filter, owned
-        0,  // options
         0   // match_fn
     );
     int size = json_array_size(snaps);
@@ -6976,7 +6905,6 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         treedb_name,
         "__snaps__",
         jn_tag,  // filter, owned
-        0,  // options
         0   // match_fn
     );
     if(json_array_size(snaps)>0) {
@@ -7148,7 +7076,6 @@ PUBLIC int treedb_activate_snap( // Activate tag, return the snap tag
         treedb_name,
         "__snaps__",
         jn_tag,  // filter, owned
-        0,  // options
         0   // match_fn
     );
     json_t *snap = json_array_get(snaps, 0);
@@ -7231,7 +7158,6 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
         treedb_name,
         "__snaps__",
         filter,  // filter, owned
-        0,  // options
         0   // match_fn
     );
 
