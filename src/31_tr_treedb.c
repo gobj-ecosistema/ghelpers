@@ -5728,6 +5728,191 @@ PUBLIC int treedb_unlink_nodes(
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE BOOL id_in_fkeys(const char *id, json_t *jn_fkey_value)
+{
+    char parent_id[NAME_MAX];
+
+    if(json_is_string(jn_fkey_value)) {
+        /*---------------*
+            *  fkey: s
+            *---------------*/
+        const char *ref = json_string_value(jn_fkey_value);
+        decode_parent_ref(
+            ref,
+            0, 0,
+            parent_id, sizeof(parent_id),
+            0, 0
+        );
+        if(strcmp(id, parent_id)==0) {
+            return TRUE;
+        } else {
+            return FALSE;
+        }
+
+    } else if(json_is_array(jn_fkey_value)) {
+        /*---------------*
+         *  fkey: list
+         *---------------*/
+        int idx; json_t *jn_ref;
+        json_array_foreach(jn_fkey_value, idx, jn_ref) {
+            const char *ref = json_string_value(jn_ref);
+            decode_parent_ref(
+                ref,
+                0, 0,
+                parent_id, sizeof(parent_id),
+                0, 0
+            );
+            if(strcmp(id, parent_id)==0) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+
+    } else if(json_is_object(jn_fkey_value)) {
+        /*---------------*
+         *  fkey: dict
+         *---------------*/
+        const char *ref; json_t *jn_ref;
+        json_object_foreach(jn_fkey_value, ref, jn_ref) {
+            decode_parent_ref(
+                ref,
+                0, 0,
+                parent_id, sizeof(parent_id),
+                0, 0
+            );
+            if(strcmp(id, parent_id)==0) {
+                return TRUE;
+            }
+        }
+        return FALSE;
+
+    } else {
+        // What fuck?
+        return FALSE;
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE BOOL match_fkey(json_t *jn_filter_value, json_t *jn_fkey_value)
+{
+    if(json_is_string(jn_filter_value)) {
+        /*---------------------------*
+         *  Filter: string
+         *  Operation ==
+         *---------------------------*/
+        const char *id = json_string_value(jn_filter_value);
+        BOOL match = id_in_fkeys(id, jn_fkey_value);
+        return match;
+
+    } else if(json_is_array(jn_filter_value)) {
+        /*---------------------------*
+         *  Filter: list
+         *  Operation OR
+         *---------------------------*/
+        if(json_array_size(jn_filter_value)==0) {
+            // Empty pass all
+            return TRUE;
+        }
+        BOOL match = FALSE;
+        int x; json_t *jn_filter_v;
+        json_array_foreach(jn_filter_value, x, jn_filter_v) {
+            const char *id = json_string_value(jn_filter_v);
+            if(id_in_fkeys(id, jn_fkey_value)) {
+                match = TRUE;
+                break;
+            }
+        }
+        return match;
+
+    } else if(json_is_object(jn_filter_value)) {
+        /*---------------------------*
+         *  Filter: dict
+         *  Operation AND
+         *---------------------------*/
+        if(json_object_size(jn_filter_value)==0) {
+            // Empty pass all
+            return TRUE;
+        }
+        BOOL match = TRUE;
+        const char *id; json_t *jn_filter_v;
+        json_object_foreach(jn_filter_value, id, jn_filter_v) {
+            if(!id_in_fkeys(id, jn_fkey_value)) {
+                match = FALSE;
+                break;
+            }
+        }
+        return match;
+
+    } else {
+        // What fuck?
+        return FALSE;
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE BOOL match_hook(json_t *jn_filter_value, json_t *jn_hook_value)
+{
+    if(json_is_string(jn_filter_value)) {
+        /*---------------------------*
+         *  Filter: string
+         *  Operation ==
+         *---------------------------*/
+        const char *id = json_string_value(jn_filter_value);
+        BOOL match = kwid_match_id(jn_hook_value, id);
+        return match;
+
+    } else if(json_is_array(jn_filter_value)) {
+        /*---------------------------*
+         *  Filter: list
+         *  Operation OR
+         *---------------------------*/
+        if(json_array_size(jn_filter_value)==0) {
+            // Empty pass all
+            return TRUE;
+        }
+        BOOL match = FALSE;
+        int x; json_t *jn_filter_v;
+        json_array_foreach(jn_filter_value, x, jn_filter_v) {
+            const char *id = json_string_value(jn_filter_v);
+            if(kwid_match_id(jn_hook_value, id)) {
+                match = TRUE;
+                break;
+            }
+        }
+        return match;
+
+    } else if(json_is_object(jn_filter_value)) {
+        /*---------------------------*
+         *  Filter: dict
+         *  Operation AND
+         *---------------------------*/
+        if(json_object_size(jn_filter_value)==0) {
+            // Empty pass all
+            return TRUE;
+        }
+        BOOL match = TRUE;
+        const char *id; json_t *jn_filter_v;
+        json_object_foreach(jn_filter_value, id, jn_filter_v) {
+            if(!kwid_match_id(jn_hook_value, id)) {
+                match = FALSE;
+                break;
+            }
+        }
+        return match;
+
+    } else {
+        // What fuck?
+        return FALSE;
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE BOOL match_node_simple(
     json_t *cols,       // NOT owned
     json_t *node,       // NOT owned
@@ -5747,72 +5932,42 @@ PRIVATE BOOL match_node_simple(
     json_object_foreach(jn_filter, col_name, jn_filter_value) {
         json_t *col = kw_get_dict(cols, col_name, 0, KW_REQUIRED);
         if(!col) {
+            const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Topic col not found",
+                "topic_name",   "%s", topic_name,
+                "col_name",     "%s", col_name,
+                NULL
+            );
             continue; // Never must occur
         }
         json_t *jn_record_value = kw_get_dict_value(node, col_name, 0, KW_REQUIRED);
         if(!jn_record_value) {
+            const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Topic col without value",
+                "topic_name",   "%s", topic_name,
+                "col_name",     "%s", col_name,
+                NULL
+            );
             continue; // Never must occur
         }
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         if(is_fkey) {
-            char parent_id[NAME_MAX];
-            if(json_is_string(jn_record_value)) {
-                const char *ref = json_string_value(jn_record_value);
-                decode_parent_ref(
-                    ref,
-                    0, 0,
-                    parent_id, sizeof(parent_id),
-                    0, 0
-                );
-                const char *id_ = json_string_value(jn_filter_value);
-                if(!id_ || strcmp(id_, parent_id)!=0) {
-                    matched = FALSE;
-                    break;
-                }
-            } else if(json_is_array(jn_record_value)) {
-                BOOL matched_ = FALSE;
-                int idx; json_t *jn_id;
-                json_array_foreach(jn_record_value, idx, jn_id) {
-                    const char *ref = json_string_value(jn_id);
-                    decode_parent_ref(
-                        ref,
-                        0, 0,
-                        parent_id, sizeof(parent_id),
-                        0, 0
-                    );
-                    const char *id_ = json_string_value(jn_filter_value);
-                    if(id_ && strcmp(id_, parent_id)==0) {
-                        matched_ = TRUE;
-                        break;
-                    }
-                }
-                if(!matched_) {
-                    matched = FALSE;
-                    break;
-                }
-            } else if(json_is_object(jn_record_value)) {
-                BOOL matched_ = TRUE;
-                const char *id_; json_t *jn_id;
-                json_object_foreach(jn_record_value, id_, jn_id) {
-                    const char *ref = id_;
-                    decode_parent_ref(
-                        ref,
-                        0, 0,
-                        parent_id, sizeof(parent_id),
-                        0, 0
-                    );
-                    const char *id_ = json_string_value(jn_filter_value);
-                    if(!id_ || strcmp(id_, parent_id)!=0) {
-                        matched_ = FALSE;
-                        break;
-                    }
-                }
-                if(!matched_) {
-                    matched = FALSE;
-                    break;
-                }
+            matched = match_fkey(jn_filter_value, jn_record_value);
+            if(!matched) {
+                break;
             }
+        } else if(is_hook) {
+            matched = match_hook(jn_filter_value, jn_record_value);
             if(!matched) {
                 break;
             }
@@ -5990,7 +6145,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_object_set_new(
         node_view,
         "__md_treedb__",
-        kw_duplicate(json_object_get(node, "__md_treedb__"))
+        json_deep_copy(json_object_get(node, "__md_treedb__"))
     );
     json_object_set_new(
         json_object_get(node_view, "__md_treedb__"),
@@ -6039,7 +6194,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
     /*-----------------------------------*
      *  Use duplicate, will be modified
      *-----------------------------------*/
-    json_t *jn_filter = jn_filter_?kw_duplicate(jn_filter_):0;
+    json_t *jn_filter = jn_filter_?json_deep_copy(jn_filter_):0;
     JSON_DECREF(jn_filter_);
 
     /*-------------------------------*
@@ -6189,7 +6344,7 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     /*-----------------------------------*
      *  Use duplicate, will be modified
      *-----------------------------------*/
-    json_t *jn_filter = jn_filter_?kw_duplicate(jn_filter_):0;
+    json_t *jn_filter = jn_filter_?json_deep_copy(jn_filter_):0;
     JSON_DECREF(jn_filter_);
 
     /*--------------------------------------------*
@@ -6269,7 +6424,6 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
             );
             continue;
         }
-
         if(json_is_object(indexy)) {
             const char *id; json_t *pkey2_dict;
             json_object_foreach(indexy, id, pkey2_dict) {

@@ -3192,9 +3192,16 @@ PUBLIC BOOL kwid_match_id(json_t *ids, const char *id)
         {
             int idx; json_t *jn_value;
             json_array_foreach(ids, idx, jn_value) {
-                const char *value = json_string_value(jn_value);
-                if(value && strcmp(id, value)==0)  {
-                    return TRUE;
+                if(json_is_string(jn_value)) {
+                    const char *value = json_string_value(jn_value);
+                    if(value && strcmp(id, value)==0)  {
+                        return TRUE;
+                    }
+                } else if(json_is_object(jn_value)) {
+                    const char *value = kw_get_str(jn_value, "id", 0, 0);
+                    if(value && strcmp(id, value)==0)  {
+                        return TRUE;
+                    }
                 }
             }
         }
@@ -3246,9 +3253,16 @@ PUBLIC BOOL kwid_match_nid(json_t *ids, const char *id, int max_id_size)
         {
             int idx; json_t *jn_value;
             json_array_foreach(ids, idx, jn_value) {
-                const char *value = json_string_value(jn_value);
-                if(value && strncmp(id, value, max_id_size)==0)  {
-                    return TRUE;
+                if(json_is_string(jn_value)) {
+                    const char *value = json_string_value(jn_value);
+                    if(value && strncmp(id, value, max_id_size)==0)  {
+                        return TRUE;
+                    }
+                } else if(json_is_object(jn_value)) {
+                    const char *value = kw_get_str(jn_value, "id", 0, 0);
+                    if(value && strncmp(id, value, max_id_size)==0)  {
+                        return TRUE;
+                    }
                 }
             }
         }
