@@ -4190,12 +4190,6 @@ PUBLIC int treedb_delete_node(
     }
 
     /*-------------------------------*
-     *  Set node name
-     *-------------------------------*/
-    char node_name[NAME_MAX];
-    snprintf(node_name, sizeof(node_name), "%s^%s", topic_name, id);
-
-    /*-------------------------------*
      *  Recover node
      *-------------------------------*/
     json_t *node = treedb_get_node( // Return is NOT YOURS, pure node
