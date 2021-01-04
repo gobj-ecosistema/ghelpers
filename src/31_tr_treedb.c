@@ -4052,12 +4052,6 @@ PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
     }
 
     /*-------------------------------*
-     *  Set node name
-     *-------------------------------*/
-    char node_name[NAME_MAX]; // ONLY to log
-    snprintf(node_name, sizeof(node_name), "%s^%s", topic_name, id?id:"");
-
-    /*-------------------------------*
      *  Recover node
      *-------------------------------*/
     json_t *node = 0;
