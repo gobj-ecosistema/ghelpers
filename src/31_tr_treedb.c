@@ -227,7 +227,7 @@ PRIVATE json_t *treedb_get_pkey2_index( // Return is NOT YOURS
         tranger,
         path,
         0,
-        KW_REQUIRED|KW_DONT_LOG
+        0
     );
     return indexy;
 }
@@ -288,6 +288,78 @@ PRIVATE int delete_primary_node(
     char key_[RECORD_KEY_VALUE_MAX];
     snprintf(key_, sizeof(key_), "%s", key);
     return json_object_del(indexx, key_);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *exist_secondary_node(
+    json_t *indexy,
+    const char *key,
+    const char *key2
+)
+{
+    // HACK tranger keys have a maximum length
+    char key_[RECORD_KEY_VALUE_MAX];
+    snprintf(key_, sizeof(key_), "%s", key);
+
+    return kw_get_subdict_value(
+        indexy,
+        key_,
+        key2,
+        0,
+        KW_EMPTY_VALID
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int add_secondary_node(
+    json_t *indexy,
+    const char *key,
+    const char *key2,
+    json_t *node // incref
+)
+{
+    // HACK tranger keys have a maximum length
+    char key_[RECORD_KEY_VALUE_MAX];
+    snprintf(key_, sizeof(key_), "%s", key);
+
+    JSON_INCREF(node);
+    return kw_set_subdict_value(
+        indexy,
+        key_,
+        key2,
+        node
+    );
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int delete_secondary_node(
+    json_t *indexy,
+    const char *key,
+    const char *key2
+)
+{
+    // HACK tranger keys have a maximum length
+    char key_[RECORD_KEY_VALUE_MAX];
+    snprintf(key_, sizeof(key_), "%s", key);
+
+    json_t *node = kw_get_subdict_value(
+        indexy,
+        key_,
+        key2,
+        0,
+        KW_EXTRACT
+    );
+    if(!node) {
+        return -1;
+    }
+    json_decref(node);
+    return 0;
 }
 
 /***************************************************************************
@@ -1097,6 +1169,9 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
             continue;
         }
 
+        /*------------------------------*
+         *  Open pkey2 list
+         *------------------------------*/
         build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2_name);
         kw_get_dict_value(tranger, path, json_object(), KW_CREATE);
 
@@ -2654,23 +2729,16 @@ PRIVATE int load_pkey2_callback(
              *  If not deleted record append node
              *-------------------------------------*/
             if(!json_object_get(deleted_records, md_record->key.s)) {
+                /*-------------------------------*
+                 *  Exists already the node?
+                 *-------------------------------*/
                 const char *pkey2_value = get_key2_value(
                     tranger,
                     topic_name,
                     pkey2_name,
                     jn_record
                 );
-
-                /*-------------------------------*
-                 *  Exists already the node?
-                 *-------------------------------*/
-                if(kw_get_subdict_value(
-                        indexy,
-                        md_record->key.s,
-                        pkey2_value,
-                        0,
-                        KW_EMPTY_VALID
-                    )!=0) {
+                if(exist_secondary_node(indexy, md_record->key.s, pkey2_value)) {
                     // Ignore
                     // The node with this key already exists
                     // HACK using backward, the first record is the last record
@@ -2702,8 +2770,7 @@ PRIVATE int load_pkey2_callback(
                     /*-------------------------------*
                      *  Write node in memory: pkey2
                      *-------------------------------*/
-                    JSON_INCREF(jn_record);
-                    kw_set_subdict_value(
+                    add_secondary_node(
                         indexy,
                         md_record->key.s,
                         pkey2_value,
@@ -3719,9 +3786,9 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
     json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
     const char *pkey2_name; json_t *jn_pkey2_fields;
     json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
-        /*---------------------------------*
-         *  Get indexy: to create node
-         *---------------------------------*/
+        /*--------------------------------------------*
+         *  Get indexy: check exists to create node
+         *--------------------------------------------*/
         json_t *indexy = treedb_get_pkey2_index(
             tranger,
             treedb_name,
@@ -3879,7 +3946,6 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
         int idx; json_t *jn_pkey2;
         json_array_foreach(pkey2_list, idx, jn_pkey2) {
             const char *pkey2_name = json_string_value(jn_pkey2);
-
             /*---------------------------------*
              *  Get indexy: to create node
              *---------------------------------*/
@@ -3907,12 +3973,11 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
                 pkey2_name,
                 kw
             );
-            kw_set_subdict_value(
-                indexy,
-                id,
-                pkey2_value,
-                json_incref(record)
-            );
+
+            /*-------------------------------*
+             *  Write node in memory: pkey2
+             *-------------------------------*/
+            add_secondary_node(indexy, id, pkey2_value, record);
         }
     }
 
@@ -4095,8 +4160,8 @@ PUBLIC int treedb_delete_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw,    // owned (WARNING only 'id' field is used to find the node to delete)
-    json_t *jn_options // bool "force"
+    json_t *kw,         // owned, 'id' and topic_pkey2s fields are used to find the node
+    json_t *jn_options  // bool "force"
 )
 {
     /*-----------------------------------*
@@ -4318,7 +4383,7 @@ PUBLIC int treedb_delete_node(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "json_object_del() FAILED",
+                "msg",          "%s", "delete_primary_node() FAILED",
                 "topic_name",   "%s", topic_name,
                 "id",           "%s", id,
                 NULL
@@ -4333,6 +4398,7 @@ PUBLIC int treedb_delete_node(
         json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
             /*---------------------------------*
              *  Get indexy: to delete node
+             *  TODO los estoy borrando todos!!!
              *---------------------------------*/
             json_t *indexy = treedb_get_pkey2_index(
                 tranger,
@@ -4352,24 +4418,22 @@ PUBLIC int treedb_delete_node(
                 );
                 continue;
             }
-
-            json_t * key2v = kw_get_dict_value(
-                indexy,
-                id,
-                0,
-                KW_EXTRACT
+            const char *pkey2_value = get_key2_value(
+                tranger,
+                topic_name,
+                pkey2_name,
+                kw
             );
-            if(key2v) {
-                json_decref(key2v);
-            } else {
+            if(delete_secondary_node(indexy, id, pkey2_value)<0) { // node owned
                 log_error(0,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "delete pkey2 FAILED",
+                    "msg",          "%s", "delete_secondary_node() FAILED",
                     "topic_name",   "%s", topic_name,
-                    "id",           "%s", id,
                     "pkey2_name",   "%s", pkey2_name,
+                    "id",           "%s", id,
+                    "key2",         "%s", pkey2_value,
                     NULL
                 );
             }
@@ -5944,7 +6008,7 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *id
+    const char *id  // using the primary key
 )
 {
     /*-----------------------------------*

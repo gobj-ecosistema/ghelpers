@@ -248,7 +248,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
 **rst**/
 PUBLIC int treedb_save_node(
     json_t *tranger,
-    json_t *node    // NOT owned, WARNING be care, must be a pure node.
+    json_t *node    // NOT owned, pure node.
 );
 
 /**rst**
@@ -257,7 +257,7 @@ PUBLIC int treedb_save_node(
 **rst**/
 PUBLIC json_t *treedb_update_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
-    json_t *node,   // NOT owned, WARNING be care, must be a pure node.
+    json_t *node,   // NOT owned, pure node.
     json_t *kw,     // owned
     BOOL save
 );
@@ -280,8 +280,8 @@ PUBLIC int treedb_delete_node(
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    json_t *kw,    // owned (WARNING only 'id' field is used to find the node to delete)
-    json_t *jn_options // bool "force"
+    json_t *kw,         // owned, 'id' and topic_pkey2s fields are used to find the node
+    json_t *jn_options  // bool "force"
 );
 
 PUBLIC int treedb_clean_node( // remove all links (fkeys)
@@ -358,7 +358,7 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *id
+    const char *id  // using the primary key
 );
 
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
