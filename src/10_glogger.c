@@ -65,9 +65,7 @@ PRIVATE uint32_t __warning_count__ = 0;
 PRIVATE uint32_t __info_count__ = 0;
 PRIVATE uint32_t __debug_count__ = 0;
 
-#ifdef USE_MUTEX
-PRIVATE uv_mutex_t mutex_log;
-#endif
+PRIVATE volatile char __inside__ = 0;
 
 PRIVATE hgen_t hgen;
 PRIVATE int atexit_registered = 0; /* Register atexit just 1 time. */
@@ -109,15 +107,6 @@ PUBLIC int log_startup(
         strncpy(__executable__ , executable, sizeof(__executable__)-1);
     }
 
-#ifdef USE_MUTEX
-    if (uv_mutex_init(&mutex_log)) {
-        print_error(
-            PEF_ABORT,
-            "ERROR YUNETA",
-            "uv_mutex_init() FAILED"
-        );
-    }
-#endif
     if (!atexit_registered) {
         atexit(log_end);
         atexit_registered = 1;
@@ -176,9 +165,6 @@ PUBLIC void log_end(void)
         log_del_handler(lh->handler_name);
     }
     max_hregister = 0;
-#ifdef USE_MUTEX
-    uv_mutex_destroy(&mutex_log);
-#endif
     __initialized__ = FALSE;
 }
 
@@ -603,9 +589,12 @@ PUBLIC void trace_hex_msg(
     }
 
     int priority = LOG_DEBUG;
-#ifdef USE_MUTEX
-    uv_mutex_lock(&mutex_log);
-#endif
+
+    if(__inside__) {
+        return;
+    }
+    __inside__ = 1;
+
     log_handler_t *lh = dl_first(&dl_clients);
     while(lh) {
         if(must_ignore(lh, priority)) {
@@ -624,9 +613,9 @@ PUBLIC void trace_hex_msg(
          */
         lh = dl_next(lh);
     }
-#ifdef USE_MUTEX
-    uv_mutex_unlock(&mutex_log);
-#endif
+
+    __inside__ = 0;
+
     if(__inform_cb__) {
         __inform_cb__(priority, __debug_count__, __inform_cb_user_data__);
     }
@@ -799,9 +788,11 @@ PUBLIC void log_debug_dump(
         temp[0] = 0;
     }
 
-#ifdef USE_MUTEX
-    uv_mutex_lock(&mutex_log);
-#endif
+    if(__inside__) {
+        return;
+    }
+    __inside__ = 1;
+
     log_handler_t *lh = dl_first(&dl_clients);
     while(lh) {
         if(must_ignore(lh, priority)) {
@@ -824,9 +815,9 @@ PUBLIC void log_debug_dump(
          */
         lh = dl_next(lh);
     }
-#ifdef USE_MUTEX
-    uv_mutex_unlock(&mutex_log);
-#endif
+
+    __inside__ = 0;
+
     if(__inform_cb__) {
         __inform_cb__(priority, __debug_count__, __inform_cb_user_data__);
     }
@@ -903,9 +894,11 @@ PUBLIC void log_debug_json(
         temp[0] = 0;
     }
 
-#ifdef USE_MUTEX
-    uv_mutex_lock(&mutex_log);
-#endif
+    if(__inside__) {
+        return;
+    }
+    __inside__ = 1;
+
     log_handler_t *lh = dl_first(&dl_clients);
     if(s) {
         while(lh) {
@@ -935,9 +928,8 @@ PUBLIC void log_debug_json(
             jsonp_free(s);
         }
     }
-#ifdef USE_MUTEX
-    uv_mutex_unlock(&mutex_log);
-#endif
+
+    __inside__ = 0;
 
     if(__inform_cb__) {
         __inform_cb__(priority, __debug_count__, __inform_cb_user_data__);
@@ -1015,9 +1007,12 @@ PRIVATE void _log_jnbf(int priority, log_opt_t opt, va_list ap)
     if(!__initialized__) {
         return;
     }
-#ifdef USE_MUTEX
-    uv_mutex_lock(&mutex_log);
-#endif
+
+    if(__inside__) {
+        return;
+    }
+    __inside__ = 1;
+
     log_handler_t *lh = dl_first(&dl_clients);
     while(lh) {
         if(must_ignore(lh, priority)) {
@@ -1066,9 +1061,9 @@ PRIVATE void _log_jnbf(int priority, log_opt_t opt, va_list ap)
          */
         lh = dl_next(lh);
     }
-#ifdef USE_MUTEX
-    uv_mutex_unlock(&mutex_log);
-#endif
+
+    __inside__ = 0;
+
     if(opt & LOG_OPT_EXIT_NEGATIVE) {
         exit(-1);
     }
@@ -1091,9 +1086,12 @@ PUBLIC void _log_bf(int priority, log_opt_t opt, const char *bf, int len)
     if(len <= 0) {
         return;
     }
-#ifdef USE_MUTEX
-    uv_mutex_lock(&mutex_log);
-#endif
+
+    if(__inside__) {
+        return;
+    }
+    __inside__ = 1;
+
     log_handler_t *lh = dl_first(&dl_clients);
     while(lh) {
         if(must_ignore(lh, priority)) {
@@ -1120,9 +1118,9 @@ PUBLIC void _log_bf(int priority, log_opt_t opt, const char *bf, int len)
          */
         lh = dl_next(lh);
     }
-#ifdef USE_MUTEX
-    uv_mutex_unlock(&mutex_log);
-#endif
+
+    __inside__ = 0;
+
     if(opt & LOG_OPT_EXIT_NEGATIVE) {
         exit(-1);
     }

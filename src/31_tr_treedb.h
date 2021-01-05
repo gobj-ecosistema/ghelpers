@@ -97,13 +97,6 @@ PUBLIC int treedb_set_callback(
     WARNING This function don't load hook links.
     HACK IDEMPOTENT function
 
-    pkey2s: 1) string -> only one simple key (name of pkey2 is the name of topic field
-      TODO  2) dict   -> several types of keys -> { name of pkey2: pkey2 type and his fields}
-                values of dict:
-                        string: one simple key, same as 1)
-                        list of strings: combined key
-
-
     Schema (jn_cols)
     ================
 
@@ -221,7 +214,7 @@ PUBLIC json_t *treedb_get_id_index( // WARNING Return is NOT YOURS
     const char *treedb_name,
     const char *topic_name
 );
-PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
+PUBLIC json_t *treedb_topic_pkey2s( // Return list with pkey2s
     json_t *tranger,
     const char *topic_name
 );
@@ -278,9 +271,7 @@ PUBLIC int set_volatil_values(
 **rst**/
 PUBLIC int treedb_delete_node(
     json_t *tranger,
-    const char *treedb_name,
-    const char *topic_name,
-    json_t *kw,         // owned, 'id' and topic_pkey2s fields are used to find the node
+    json_t *node,       // owned, pure node
     json_t *jn_options  // bool "force"
 );
 
@@ -361,6 +352,15 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
     const char *id  // using the primary key
 );
 
+PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
+    json_t *tranger,
+    const char *treedb_name,
+    const char *topic_name,
+    const char *pkey2_name,
+    const char *id,     // primary key
+    const char *key2    // secondary key
+);
+
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *tranger, // NOT owned
     json_t *node, // NOT owned
@@ -407,8 +407,7 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 PUBLIC json_t *treedb_list_childs(
     json_t *tranger,
     const char *hook,
-    json_t *node, // NOT owned
-    json_t *jn_options // owned, hook options
+    json_t *node // NOT owned
 );
 
 /*----------------------------*
