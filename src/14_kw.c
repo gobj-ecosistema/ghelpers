@@ -1189,19 +1189,17 @@ PUBLIC json_t *kw_get_subdict_value(
         return jn_default_value;
     }
     if(empty_string(key)) {
-        if(!(flag & KW_EMPTY_VALID)) {
-            if(flag & KW_REQUIRED) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                    "msg",          "%s", "key NULL",
-                    "path",         "%s", path,
-                    NULL
-                );
-            }
-            return jn_default_value;
+        if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "key NULL",
+                "path",         "%s", path,
+                NULL
+            );
         }
+        return jn_default_value;
     }
     return kw_get_dict_value(jn_subdict, key, jn_default_value, flag);
 }

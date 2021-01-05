@@ -39,7 +39,6 @@ typedef enum {
     KW_WILD_NUMBER      = 0x0004,   // For numbers work indistinctly with real/int/bool/string without error logging
     KW_EXTRACT          = 0x0008,   // Extract (delete) the key on read from dictionary.
     KW_DONT_LOG         = 0x0010,   // Don't log errors when types are wrong and returning default
-    KW_EMPTY_VALID      = 0x0020,   // Empty strings are valid.
 } kw_flag_t;
 
 typedef void (*incref_fn_t)(void *);

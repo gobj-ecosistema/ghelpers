@@ -134,16 +134,12 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return MUST be decref, a dict with pkey2s
 )
 {
     json_t *topic_desc = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
-    if(!topic_desc) {
+    json_t *list = kw_get_list(topic_desc, "topic_pkey2s", 0, 0);
+    if(!list) {
         // Silence
-        return json_object();
+        return json_array();
     }
-    json_t *dict = kw_get_dict(topic_desc, "topic_pkey2s", 0, 0);
-    if(!dict) {
-        // Silence
-        return json_object();
-    }
-    return json_incref(dict);
+    return json_incref(list);
 }
 
 /***************************************************************************
@@ -308,7 +304,7 @@ PRIVATE json_t *exist_secondary_node(
         key_,
         key2,
         0,
-        KW_EMPTY_VALID
+        0
     );
 }
 
@@ -491,7 +487,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
         File has precedence.
         Once saved,
             if you want to change the schema
-            then you must change the schema version and topic_version
+            then you must change the schema_version and topic_version
 
     Return a dict inside of tranger with path "treedbs`{treedb_name}" DO NOT use it directly
 
@@ -1029,32 +1025,15 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
 
     // Topic pkey2s
     if(topic_pkey2s) {
-        if(json_is_string(topic_pkey2s)) {
-            json_t *dict = json_object();
-            json_object_set(dict, json_string_value(topic_pkey2s), topic_pkey2s);
-            json_object_set_new(jn_topic_var, "topic_pkey2s", dict);
-        } else if(json_is_object(topic_pkey2s)) {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "combined pkey2s NOT IMPLEMENTED",
-                "treedb_name",  "%s", treedb_name,
-                "topic_name",   "%s", topic_name,
-                NULL
-            );
-        } else {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "pkey2s INVALID TYPE",
-                "treedb_name",  "%s", treedb_name,
-                "topic_name",   "%s", topic_name,
-                NULL
-            );
-            log_debug_json(0, topic_pkey2s, "pkey2s INVALID TYPE");
-        }
+        /*--------------------------------*
+         *  Save pkey2s in jn_topic_var
+         *--------------------------------*/
+        json_t *pkey2s_list = kwid_get_ids(topic_pkey2s);
+        json_object_set_new(
+            jn_topic_var,
+            "topic_pkey2s",
+            pkey2s_list
+        );
         JSON_DECREF(topic_pkey2s);
     }
 
@@ -1152,20 +1131,11 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
     /*----------------------*
      *   Secondary indexes
      *----------------------*/
-    json_t *iter_pkey2 = kw_get_dict(jn_topic_var, "topic_pkey2s", 0, 0);
-    const char *pkey2_name; json_t *jn_pkey2_fields;
-    json_object_foreach(iter_pkey2, pkey2_name, jn_pkey2_fields) {
-        const char *pkey2_fields = json_string_value(jn_pkey2_fields);
-        if(!pkey2_fields) {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "combined pkey2s NOT IMPLEMENTED",
-                "treedb_name",  "%s", treedb_name,
-                "topic_name",   "%s", topic_name,
-                NULL
-            );
+    json_t *iter_pkey2s = kw_get_list(jn_topic_var, "topic_pkey2s", 0, 0);
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        if(empty_string(pkey2_name)) {
             continue;
         }
 
@@ -1244,10 +1214,10 @@ PUBLIC int treedb_close_topic(
      *  Close pkey2 lists
      *------------------------------*/
     json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
-    const char *pkey2_name; json_t *jn_pkey2_fields;
-    json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
-        const char *pkey2_fields = json_string_value(jn_pkey2_fields);
-        if(!pkey2_fields) {
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        if(empty_string(pkey2_name)) {
             continue;
         }
         build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2_name);
@@ -3784,8 +3754,12 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
      *  Look for a secondary key change
      *-----------------------------------*/
     json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
-    const char *pkey2_name; json_t *jn_pkey2_fields;
-    json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        if(empty_string(pkey2_name)) {
+            continue;
+        }
         /*--------------------------------------------*
          *  Get indexy: check exists to create node
          *--------------------------------------------*/
@@ -3795,33 +3769,13 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
             topic_name,
             pkey2_name
         );
-        if(!indexy) {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "TreeDb Topic indexy NOT FOUND",
-                "topic_name",   "%s", topic_name,
-                "pkey2_name",   "%s", pkey2_name,
-                NULL
-            );
-            continue;
-        }
-
         const char *pkey2_value = get_key2_value(
             tranger,
             topic_name,
             pkey2_name,
             kw
         );
-
-        if(!kw_get_subdict_value(
-                indexy,
-                id,
-                pkey2_value,
-                0,
-                KW_EMPTY_VALID
-            )) {
+        if(!exist_secondary_node(indexy, id, pkey2_value)) {
             // Not exist
             save_pkey = TRUE;
             json_array_append_new(pkey2_list, json_string(pkey2_name));
@@ -4394,8 +4348,12 @@ PUBLIC int treedb_delete_node(
          *      Borra indexy data
          *-------------------------------*/
         json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
-        const char *pkey2_name; json_t *jn_pkey2_fields;
-        json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
+        int idx; json_t *jn_pkey2_name;
+        json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+            const char *pkey2_name = json_string_value(jn_pkey2_name);
+            if(empty_string(pkey2_name)) {
+                continue;
+            }
             /*---------------------------------*
              *  Get indexy: to delete node
              *  TODO los estoy borrando todos!!!
@@ -6392,12 +6350,16 @@ PUBLIC json_t *treedb_node_instances( // Return MUST be decref
     if(empty_string(pkey2_name)) {
         iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
     } else {
-        iter_pkey2s = json_object();
-        json_object_set_new(iter_pkey2s, pkey2_name, json_string(pkey2_name));
+        iter_pkey2s = json_array();
+        json_array_append_new(iter_pkey2s, json_string(pkey2_name));
     }
 
-    json_t *pkey2_fields;
-    json_object_foreach(iter_pkey2s, pkey2_name, pkey2_fields) {
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        if(empty_string(pkey2_name)) {
+            continue;
+        }
         /*---------------------------------*
          *  Get indexy: to list instances
          *---------------------------------*/
