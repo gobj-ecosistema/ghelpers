@@ -216,7 +216,7 @@ PRIVATE json_t *treedb_get_pkey2_index( // Return is NOT YOURS
     const char *pkey2_name
 )
 {
-    // TODO de momento sin claves combinadas, el nombre de la pkey es el nombre del field
+    // De momento sin claves combinadas, el nombre de la pkey es el nombre del field
     char path[NAME_MAX];
     build_pkey_index_path(path, sizeof(path), treedb_name, topic_name, pkey2_name);
     json_t *indexy = kw_get_dict(
@@ -238,7 +238,7 @@ PRIVATE const char *get_key2_value(
     json_t *kw
 )
 {
-    // TODO combined no, de momento solo claves simples
+    // combined no, de momento solo claves simples
     const char *pkey2_value = kw_get_str(kw, pkey2_name, "", 0);
     return pkey2_value;
 }
@@ -943,12 +943,6 @@ PUBLIC int treedb_close_db(
     Return is NOT YOURS, pkey MUST be "id"
     WARNING This function don't load hook links.
     HACK IDEMPOTENT function
-
-    pkey2s: 1) string -> only one simple key (name of pkey2 is the name of topic field
-      TODO  2) dict   -> several types of keys -> { name of pkey2: pkey2 type and his fields}
-                values of dict:
-                        string: one simple key, same as 1)
-                        list of strings: combined key
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
     json_t *tranger,
@@ -6831,7 +6825,7 @@ PUBLIC int treedb_begin_transaction(
     const char *options
 )
 {
-    // TODO
+    // FUTURE?
     return 0;
 }
 
@@ -6842,7 +6836,7 @@ PUBLIC int treedb_end_transaction(
     const char *options
 )
 {
-    // TODO
+    // FUTURE?
     return 0;
 }
 
