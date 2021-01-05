@@ -281,6 +281,7 @@ PUBLIC int treedb_delete_node(
 PUBLIC int treedb_delete_instance(
     json_t *tranger,
     json_t *node,       // owned, pure node
+    const char *pkey2_name,
     json_t *jn_options  // bool "force"
 );
 

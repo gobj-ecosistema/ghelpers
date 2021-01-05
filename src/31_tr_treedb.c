@@ -2715,7 +2715,6 @@ PRIVATE int load_pkey2_callback(
                         md_record
                     );
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
-                    json_object_set_new(jn_record_md, "pkey2_name", json_string(pkey2_name));
 
                     /*--------------------------------------------*
                      *  Set volatil data
@@ -4404,6 +4403,7 @@ PUBLIC int treedb_delete_node(
 PUBLIC int treedb_delete_instance(
     json_t *tranger,
     json_t *node,       // owned, pure node
+    const char *pkey2_name,
     json_t *jn_options  // bool "force"
 )
 {
@@ -4430,7 +4430,6 @@ PUBLIC int treedb_delete_instance(
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
     const char *id = kw_get_str(node, "id", "", 0);
-    const char *pkey2_name = kw_get_str(node, "__md_treedb__`pkey2_name", 0, 0);
 
     /*-------------------------------*
      *      Get record info
@@ -4561,7 +4560,7 @@ PUBLIC int treedb_delete_instance(
          *  Trace
          *-------------------------------*/
         if(treedb_trace) {
-            trace_msg("delete node, topic %s, id %s", topic_name, id);
+            trace_msg("delete instance node, topic %s, id %s", topic_name, id);
         }
 
         /*-------------------------------*
@@ -4569,51 +4568,33 @@ PUBLIC int treedb_delete_instance(
          *-------------------------------*/
         JSON_INCREF(node);
 
-        if(!pkey2_name) {
-            /*-------------------------------*
-             *  Get indexx: to delete node
-             *-------------------------------*/
-            json_t *indexx = treedb_get_id_index(tranger, treedb_name, topic_name);
-            if(delete_primary_node(indexx, id)<0) { // node owned
-                log_error(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "delete_primary_node() FAILED",
-                    "topic_name",   "%s", topic_name,
-                    "id",           "%s", id,
-                    NULL
-                );
-            }
-        } else {
-            /*---------------------------------*
-             *  Get indexy: to delete node
-             *---------------------------------*/
-            json_t *indexy = treedb_get_pkey2_index(
-                tranger,
-                treedb_name,
-                topic_name,
-                pkey2_name
+        /*---------------------------------*
+            *  Get indexy: to delete node
+            *---------------------------------*/
+        json_t *indexy = treedb_get_pkey2_index(
+            tranger,
+            treedb_name,
+            topic_name,
+            pkey2_name
+        );
+        const char *pkey2_value = get_key2_value(
+            tranger,
+            topic_name,
+            pkey2_name,
+            node
+        );
+        if(delete_secondary_node(indexy, id, pkey2_value)<0) { // node owned
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "delete_secondary_node() FAILED",
+                "topic_name",   "%s", topic_name,
+                "pkey2_name",   "%s", pkey2_name,
+                "id",           "%s", id,
+                "key2",         "%s", pkey2_value,
+                NULL
             );
-            const char *pkey2_value = get_key2_value(
-                tranger,
-                topic_name,
-                pkey2_name,
-                node
-            );
-            if(delete_secondary_node(indexy, id, pkey2_value)<0) { // node owned
-                log_error(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                    "msg",          "%s", "delete_secondary_node() FAILED",
-                    "topic_name",   "%s", topic_name,
-                    "pkey2_name",   "%s", pkey2_name,
-                    "id",           "%s", id,
-                    "key2",         "%s", pkey2_value,
-                    NULL
-                );
-            }
         }
 
         /*
