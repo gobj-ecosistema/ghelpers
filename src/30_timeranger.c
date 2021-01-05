@@ -3242,7 +3242,7 @@ PUBLIC BOOL tranger_match_record(
                 break;
             default:
                 {
-                    const char *key = kw_get_str(match_cond, "key", 0, KW_REQUIRED|KW_DONT_LOG);
+                    const char *key = kw_get_str(match_cond, "key", 0, 0);
                     if(!key) {
                         return FALSE;
                     }
@@ -3259,7 +3259,7 @@ PUBLIC BOOL tranger_match_record(
 
     if(kw_has_key(match_cond, "rkey")) {
         if(md_record->__system_flag__ & sf_string_key) {
-            const char *rkey = kw_get_str(match_cond, "rkey", 0, KW_REQUIRED|KW_DONT_LOG);
+            const char *rkey = kw_get_str(match_cond, "rkey", 0, 0);
             if(!rkey) {
                 return FALSE;
             }
@@ -3501,7 +3501,7 @@ PUBLIC BOOL tranger_match_record(
                 return FALSE;
             }
         } else if(md_record->__system_flag__ & sf_string_key) {
-            const char *notkey = kw_get_str(match_cond, "key", 0, KW_REQUIRED|KW_DONT_LOG);
+            const char *notkey = kw_get_str(match_cond, "key", 0, 0);
             if(!notkey) {
                 return FALSE;
             }

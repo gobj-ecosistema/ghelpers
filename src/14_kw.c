@@ -673,24 +673,20 @@ PUBLIC json_t *kw_get_dict(
                 "path",         "%s", path,
                 NULL
             );
-            if(!(flag & KW_DONT_LOG)) {
-                log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
-            }
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
     if(!json_is_object(jn_dict)) {
-        if(!(flag & KW_DONT_LOG)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json dict, default value returned",
-                "path",         "%s", path,
-                NULL
-            );
-            log_debug_json(0, kw, "path '%s' MUST BE a json dict, default value returned", path);
-        }
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "path MUST BE a json dict, default value returned",
+            "path",         "%s", path,
+            NULL
+        );
+        log_debug_json(0, kw, "path '%s' MUST BE a json dict, default value returned", path);
         return default_value;
     }
     JSON_DECREF(default_value);
@@ -727,23 +723,19 @@ PUBLIC json_t *kw_get_list(
                 "path",         "%s", path,
                 NULL
             );
-            if(!(flag & KW_DONT_LOG)) {
-                log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
-            }
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
     if(!json_is_array(jn_list)) {
-        if(!(flag & KW_DONT_LOG)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json list",
-                "path",         "%s", path,
-                NULL
-            );
-        }
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "path MUST BE a json list",
+            "path",         "%s", path,
+            NULL
+        );
         return default_value;
     }
     JSON_DECREF(default_value);
@@ -781,24 +773,20 @@ PUBLIC json_int_t kw_get_int(
                 "path",         "%s", path,
                 NULL
             );
-            if(!(flag & KW_DONT_LOG)) {
-                log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
-            }
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
     if(!json_is_integer(jn_int)) {
         if(!(flag & KW_WILD_NUMBER)) {
-            if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path MUST BE a json integer",
-                    "path",         "%s", path,
-                    NULL
-                );
-            }
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json integer",
+                "path",         "%s", path,
+                NULL
+            );
             if(!json_is_number(jn_int) && !json_is_boolean(jn_int)) {
                 return default_value;
             }
@@ -824,16 +812,14 @@ PUBLIC json_int_t kw_get_int(
     } else if(json_is_null(jn_int)) {
         value = 0;
     } else {
-        if(!(flag & KW_DONT_LOG)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a simple json element",
-                "path",         "%s", path,
-                NULL
-            );
-        }
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "path MUST BE a simple json element",
+            "path",         "%s", path,
+            NULL
+        );
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -867,24 +853,20 @@ PUBLIC double kw_get_real(
                 "path",         "%s", path,
                 NULL
             );
-            if(!(flag & KW_DONT_LOG)) {
-                log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
-            }
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
     if(!json_is_real(jn_real)) {
         if(!(flag & KW_WILD_NUMBER)) {
-            if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path MUST BE a json real",
-                    "path",         "%s", path,
-                    NULL
-                );
-            }
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json real",
+                "path",         "%s", path,
+                NULL
+            );
             if(!json_is_number(jn_real) && !json_is_boolean(jn_real)) {
                 return default_value;
             }
@@ -903,16 +885,14 @@ PUBLIC double kw_get_real(
     } else if(json_is_null(jn_real)) {
         value = 0;
     } else {
-        if(!(flag & KW_DONT_LOG)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a simple json element",
-                "path",         "%s", path,
-                NULL
-            );
-        }
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "path MUST BE a simple json element",
+            "path",         "%s", path,
+            NULL
+        );
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -946,24 +926,20 @@ PUBLIC BOOL kw_get_bool(
                 "path",         "%s", path,
                 NULL
             );
-            if(!(flag & KW_DONT_LOG)) {
-                log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
-            }
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
     if(!json_is_boolean(jn_bool)) {
         if(!(flag & KW_WILD_NUMBER)) {
-            if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path MUST BE a json bool",
-                    "path",         "%s", path,
-                    NULL
-                );
-            }
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json bool",
+                "path",         "%s", path,
+                NULL
+            );
             if(!json_is_number(jn_bool) && !json_is_boolean(jn_bool)) {
                 return default_value;
             }
@@ -989,16 +965,14 @@ PUBLIC BOOL kw_get_bool(
     } else if(json_is_null(jn_bool)) {
         value = 0;
     } else {
-        if(!(flag & KW_DONT_LOG)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a simple json element",
-                "path",         "%s", path,
-                NULL
-            );
-        }
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "path MUST BE a simple json element",
+            "path",         "%s", path,
+            NULL
+        );
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -1037,24 +1011,20 @@ PUBLIC const char *kw_get_str(
                 "path",         "%s", path,
                 NULL
             );
-            if(!(flag & KW_DONT_LOG)) {
-                log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
-            }
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
     if(!json_is_string(jn_str)) {
         if(!json_is_null(jn_str)) {
-            if(!(flag & KW_DONT_LOG)) {
-                log_error(LOG_OPT_TRACE_STACK,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "path MUST BE a json str",
-                    "path",         "%s", path,
-                    NULL
-                );
-            }
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json str",
+                "path",         "%s", path,
+                NULL
+            );
         }
         return default_value;
     }
@@ -1098,9 +1068,7 @@ PUBLIC json_t *kw_get_dict_value(
                 "path",         "%s", path,
                 NULL
                 );
-            if(!(flag & KW_DONT_LOG)) {
-                log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
-            }
+            log_debug_json(0, kw, "path NOT FOUND, default value returned '%s'", path);
         }
         return default_value;
     }
@@ -1243,15 +1211,13 @@ PUBLIC json_t *kw_get_list_value(
     kw_flag_t flag)
 {
     if(!json_is_array(kw)) {
-        if(!(flag & KW_DONT_LOG)) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "kw MUST BE a json array",
-                NULL
-            );
-        }
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw MUST BE a json array",
+            NULL
+        );
         return 0;
     }
     if(idx >= json_array_size(kw)) {

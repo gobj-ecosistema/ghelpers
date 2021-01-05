@@ -122,7 +122,7 @@ PUBLIC int current_snap_tag(json_t *tranger, const char *treedb_name)
     char path[NAME_MAX];
     snprintf(path, sizeof(path), "treedbs_snaps`%s`activated_snap_tag", treedb_name);
 
-    return kw_get_int(tranger, path, 0, KW_REQUIRED|KW_DONT_LOG);
+    return kw_get_int(tranger, path, 0, KW_REQUIRED);
 }
 
 /***************************************************************************
@@ -502,7 +502,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     char treedb_name[NAME_MAX];
     snprintf(treedb_name, sizeof(treedb_name), "%s", treedb_name_);
 
-    BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED|KW_DONT_LOG);
+    BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
 
     if(empty_string(treedb_name)) {
         log_error(0,
@@ -529,7 +529,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
 
     char schema_full_path[NAME_MAX*2];
     snprintf(schema_full_path, sizeof(schema_full_path), "%s/%s",
-        kw_get_str(tranger, "directory", "", KW_REQUIRED|KW_DONT_LOG),
+        kw_get_str(tranger, "directory", "", KW_REQUIRED),
         schema_filename
     );
 
@@ -543,7 +543,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
                 json_t *old_jn_schema = load_json_from_file(
                     schema_full_path,
                     "",
-                    kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG)
+                    kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
                 );
                 if(!master) {
                     JSON_DECREF(jn_schema);
@@ -579,11 +579,11 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             );
             JSON_INCREF(jn_schema);
             save_json_to_file(
-                kw_get_str(tranger, "directory", 0, KW_REQUIRED|KW_DONT_LOG),
+                kw_get_str(tranger, "directory", 0, KW_REQUIRED),
                 schema_filename,
-                kw_get_int(tranger, "xpermission", 0, KW_REQUIRED|KW_DONT_LOG),
-                kw_get_int(tranger, "rpermission", 0, KW_REQUIRED|KW_DONT_LOG),
-                kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
+                kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+                kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+                kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                 TRUE, // Create file if not exists or overwrite.
                 FALSE, // only_read
                 jn_schema     // owned
@@ -710,7 +710,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
                 "persistent", "required"
     );
     if(!tag_schema) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -733,7 +733,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
         topic_cols_desc,
         kwid_new_list("verbose", snaps_topic, "cols")
     )<0) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1079,11 +1079,11 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
         );
 
         save_json_to_file(
-            kw_get_str(tranger, "directory", 0, KW_REQUIRED|KW_DONT_LOG),
+            kw_get_str(tranger, "directory", 0, KW_REQUIRED),
             schema_filename,
-            kw_get_int(tranger, "xpermission", 0, KW_REQUIRED|KW_DONT_LOG),
-            kw_get_int(tranger, "rpermission", 0, KW_REQUIRED|KW_DONT_LOG),
-            kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
+            kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+            kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+            kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             TRUE, // Create file if not exists or overwrite.
             FALSE, // only_read
             jn_schema     // owned
@@ -1247,7 +1247,7 @@ PUBLIC int treedb_close_topic(
         tranger,
         path,
         0,
-        KW_REQUIRED|KW_EXTRACT|KW_DONT_LOG
+        KW_REQUIRED|KW_EXTRACT
     );
     json_decref(data);
 
@@ -2495,14 +2495,14 @@ PRIVATE int load_id_callback(
 )
 {
     json_t *deleted_records = kw_get_dict(
-        list, "deleted_records", 0, KW_REQUIRED|KW_DONT_LOG
+        list, "deleted_records", 0, KW_REQUIRED
     );
 
     const char *treedb_name = kw_get_str(
-        list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
+        list, "treedb_name", 0, KW_REQUIRED
     );
     const char *topic_name = kw_get_str(
-        list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
+        list, "topic_name", 0, KW_REQUIRED
     );
 
     /*----------------------------------*
@@ -2645,17 +2645,17 @@ PRIVATE int load_pkey2_callback(
 )
 {
     const char *pkey2_name = kw_get_str(
-        list, "pkey2_name", "", KW_REQUIRED|KW_DONT_LOG
+        list, "pkey2_name", "", KW_REQUIRED
     );
     json_t *deleted_records = kw_get_dict(
-        list, "deleted_records", 0, KW_REQUIRED|KW_DONT_LOG
+        list, "deleted_records", 0, KW_REQUIRED
     );
 
     const char *treedb_name = kw_get_str(
-        list, "treedb_name", 0, KW_REQUIRED|KW_DONT_LOG
+        list, "treedb_name", 0, KW_REQUIRED
     );
     const char *topic_name = kw_get_str(
-        list, "topic_name", 0, KW_REQUIRED|KW_DONT_LOG
+        list, "topic_name", 0, KW_REQUIRED
     );
 
     /*---------------------------------*
@@ -6975,7 +6975,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
     );
 
     if(!snap) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -6988,7 +6988,7 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
 
     uint32_t user_flag = kw_get_int(snap, "id", 0, KW_REQUIRED|KW_WILD_NUMBER);
     if(user_flag==0 || user_flag >= 0xFFFFFFFF) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED|KW_DONT_LOG),
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
