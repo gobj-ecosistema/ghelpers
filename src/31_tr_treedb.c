@@ -135,7 +135,33 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return list with pkey2s
 {
     json_t *topic_desc = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
     json_t *list = kw_get_list(topic_desc, "topic_pkey2s", 0, 0);
-    return json_deep_copy(list);
+    return json_incref(list);
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *treedb_topic_pkey2s_filter(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *node, // NO owned
+    const char *id
+)
+{
+    json_t *jn_filter = json_object();
+    json_object_set_new(jn_filter, "id", json_string(id));
+
+    json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
+    int idx; json_t *jn_pkey2_name;
+    json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+        const char *pkey2_name = json_string_value(jn_pkey2_name);
+        if(empty_string(pkey2_name)) {
+            continue;
+        }
+        json_object_set(jn_filter, pkey2_name, kw_get_dict_value(node, pkey2_name, 0, 0));
+    }
+
+    return jn_filter;
 }
 
 /***************************************************************************
@@ -6205,7 +6231,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *pkey2_name,
+    const char *pkey2_name, // required
     const char *id,     // primary key
     const char *key2    // secondary key
 )
@@ -6518,7 +6544,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC json_t *treedb_node_instances( // Return MUST be decref
+PUBLIC json_t *treedb_list_instances( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,

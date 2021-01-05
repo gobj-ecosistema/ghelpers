@@ -218,6 +218,12 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return list with pkey2s
     json_t *tranger,
     const char *topic_name
 );
+PUBLIC json_t *treedb_topic_pkey2s_filter(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *node, // NO owned
+    const char *id
+);
 
 PUBLIC int treedb_set_trace(BOOL set);
 
@@ -366,7 +372,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *pkey2_name,
+    const char *pkey2_name, // required
     const char *id,     // primary key
     const char *key2    // secondary key
 );
@@ -388,7 +394,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
         json_t *jn_filter   // NOT owned
     )
 );
-PUBLIC json_t *treedb_node_instances( // Return MUST be decref
+PUBLIC json_t *treedb_list_instances( // Return MUST be decref
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
