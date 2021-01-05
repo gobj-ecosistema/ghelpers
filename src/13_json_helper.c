@@ -341,6 +341,20 @@ PUBLIC int debug_json(json_t *jn)
 }
 
 /***************************************************************************
+ *      Check if a json is in `list` array:
+ ***************************************************************************/
+PUBLIC BOOL json_in_list(json_t *jn_list, json_t *jn)
+{
+    int idx; json_t *jn_;
+    json_array_foreach(jn_list, idx, jn_) {
+        if(jn_ == jn) {
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/***************************************************************************
  *  Check if a item are in `list` array:
  ***************************************************************************/
 PUBLIC BOOL json_str_in_list(json_t *jn_list, const char *str, BOOL ignore_case)

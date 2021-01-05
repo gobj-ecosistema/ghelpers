@@ -118,6 +118,11 @@ PUBLIC const char *json_type_name(json_t *jn);
 PUBLIC int debug_json(json_t *jn);
 
 /**rst**
+    Check if a json is in `list` array:
+**rst**/
+PUBLIC BOOL json_in_list(json_t *jn_list, json_t *jn);
+
+/**rst**
     Check if a string item are in `list` array:
 **rst**/
 PUBLIC BOOL json_str_in_list(json_t *jn_list, const char *str, BOOL ignore_case);

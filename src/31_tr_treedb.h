@@ -275,6 +275,15 @@ PUBLIC int treedb_delete_node(
     json_t *jn_options  // bool "force"
 );
 
+/**rst**
+    "force" delete links. If there are links are not force then delete_node will fail
+**rst**/
+PUBLIC int treedb_delete_instance(
+    json_t *tranger,
+    json_t *node,       // owned, pure node
+    json_t *jn_options  // bool "force"
+);
+
 PUBLIC int treedb_clean_node( // remove all links (fkeys)
     json_t *tranger,
     json_t *node,           // NOT owned, pure node
