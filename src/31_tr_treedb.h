@@ -227,6 +227,20 @@ PUBLIC json_t *treedb_topic_pkey2s_filter(
 
 PUBLIC int treedb_set_trace(BOOL set);
 
+PUBLIC BOOL decode_parent_ref( // parent_topic_name^parent_id^hook_name
+    const char *pref,
+    char *topic_name, int topic_name_size,
+    char *id, int id_size,
+    char *hook_name, int hook_name_size
+);
+
+PUBLIC BOOL decode_child_ref( // child_topic_name^child_id
+    const char *pref,
+    char *topic_name, int topic_name_size,
+    char *id, int id_size
+);
+
+
 /*------------------------------------*
  *      Manage the tree's nodes
  *------------------------------------*/

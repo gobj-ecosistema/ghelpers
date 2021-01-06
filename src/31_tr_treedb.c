@@ -160,6 +160,7 @@ PUBLIC json_t *treedb_topic_pkey2s_filter(
         }
         json_object_set(jn_filter, pkey2_name, kw_get_dict_value(node, pkey2_name, 0, 0));
     }
+    json_decref(iter_pkey2s);
 
     return jn_filter;
 }
@@ -2781,7 +2782,7 @@ PRIVATE int load_pkey2_callback(
 /***************************************************************************
  *  Decode fkey
  ***************************************************************************/
-PRIVATE BOOL decode_parent_ref(
+PUBLIC BOOL decode_parent_ref(
     const char *pref,
     char *topic_name, int topic_name_size,
     char *id, int id_size,
@@ -2808,7 +2809,7 @@ PRIVATE BOOL decode_parent_ref(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Bad fkey ref",
+            "msg",          "%s", "Wrong fkey (parent) reference: must be \"parent_topic_name^parent_id^hook_name\"",
             "pref",         "%s", pref,
             NULL
         );
@@ -2834,7 +2835,7 @@ PRIVATE BOOL decode_parent_ref(
 /***************************************************************************
  *  Decode child ref
  ***************************************************************************/
-PRIVATE BOOL decode_child_ref(
+PUBLIC BOOL decode_child_ref(
     const char *pref,
     char *topic_name, int topic_name_size,
     char *id, int id_size
@@ -2852,7 +2853,7 @@ PRIVATE BOOL decode_child_ref(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Bad child ref",
+            "msg",          "%s", "Wrong hook (child) reference: must be \"child_topic_name^child_id\"",
             "pref",         "%s", pref,
             NULL
         );
@@ -4336,6 +4337,7 @@ PUBLIC int treedb_delete_node(
                 continue;
             }
 
+            // TODO estoy borrando todas las instancias. Y si tienen links?
             json_t * key2v = kw_get_dict_value(
                 indexy,
                 id,
@@ -4424,6 +4426,8 @@ PUBLIC int treedb_delete_node(
 
     HACK: delete will be delete the record forever, for that reason,
           a node with snap tag cannot be delete!
+
+TODO sin uso, a la espera de depurar bien los delete de instancias
 
  ***************************************************************************/
 PUBLIC int treedb_delete_instance(
