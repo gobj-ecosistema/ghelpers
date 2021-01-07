@@ -701,7 +701,8 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
-            "s:{s:s, s:s, s:i, s:s, s:[s,s]}}",
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
+            "s:{s:s, s:s, s:i, s:s, s:[s]}}",
         "id",
             "id", "id",
             "header", "Id",
@@ -713,14 +714,14 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
         "name",
             "id", "name",
             "header", "Name",
-            "fillspace", 30,
+            "fillspace", 28,
             "type", "string",
             "flag",
                 "persistent", "required",
         "date",
             "id", "date",
             "header", "Date",
-            "fillspace", 30,
+            "fillspace", 28,
             "type", "string",
             "flag",
                 "persistent", "required",
@@ -730,7 +731,14 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "fillspace", 8,
             "type", "boolean",
             "flag",
-                "persistent", "required"
+                "persistent", "required",
+        "description",
+            "id", "date",
+            "header", "Description",
+            "fillspace", 30,
+            "type", "string",
+            "flag",
+                "persistent"
     );
     if(!tag_schema) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
@@ -7160,7 +7168,8 @@ PRIVATE json_t * treedb_get_activated_snap_tag(
 PUBLIC int treedb_shoot_snap( // tag the current tree db
     json_t *tranger,
     const char *treedb_name,
-    const char *snap_name
+    const char *snap_name,
+    const char *description
 )
 {
     /*-----------------------------------*
@@ -7201,9 +7210,10 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
     gmtime_r(&t, &tm);
     char date[80];
     strftime(date, sizeof(date), "%d %b %Y %T %z", &tm);
-    json_t *jn_new_snap = json_pack("{s:s, s:s, s:b}",
+    json_t *jn_new_snap = json_pack("{s:s, s:s, s:s, s:b}",
         "name", snap_name,
         "date", date,
+        "description", description,
         "active", 0
     );
 

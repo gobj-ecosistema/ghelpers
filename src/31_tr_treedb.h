@@ -467,7 +467,8 @@ PUBLIC json_t *treedb_get_topic_hooks(
 PUBLIC int treedb_shoot_snap( // tag the current tree db
     json_t *tranger,
     const char *treedb_name,
-    const char *snap_name
+    const char *snap_name,
+    const char *description
 );
 PUBLIC int treedb_activate_snap( // Activate tag, return the snap tag
     json_t *tranger,
