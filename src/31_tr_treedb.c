@@ -524,6 +524,10 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
 {
     char treedb_name[NAME_MAX];
     snprintf(treedb_name, sizeof(treedb_name), "%s", treedb_name_);
+    char *p = strstr(treedb_name, ".treedb_schema.json");
+    if(p) {
+        *p = 0;
+    }
 
     BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
 
@@ -540,15 +544,9 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     }
 
     char schema_filename[NAME_MAX + sizeof(".treedb_schema.json")];
-    if(strstr(treedb_name, ".treedb_schema.json")) {
-        snprintf(schema_filename, sizeof(schema_filename), "%s",
-            treedb_name
-        );
-    } else {
-        snprintf(schema_filename, sizeof(schema_filename), "%s.treedb_schema.json",
-            treedb_name
-        );
-    }
+    snprintf(schema_filename, sizeof(schema_filename), "%s.treedb_schema.json",
+        treedb_name
+    );
 
     char schema_full_path[NAME_MAX*2];
     snprintf(schema_full_path, sizeof(schema_full_path), "%s/%s",
@@ -568,18 +566,13 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
                     "",
                     kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED)
                 );
-                if(!master) {
-                    JSON_DECREF(jn_schema);
-                    jn_schema = old_jn_schema;
-                    break; // Nothing to do
-                }
                 json_int_t schema_old_version = kw_get_int(
                     old_jn_schema,
                     "schema_version",
                     -1,
                     KW_WILD_NUMBER
                 );
-                if(schema_new_version <= schema_old_version) {
+                if(!master || schema_new_version <= schema_old_version) {
                     JSON_DECREF(jn_schema);
                     jn_schema = old_jn_schema;
                     schema_version = schema_old_version;
@@ -918,7 +911,7 @@ PUBLIC int treedb_set_callback(
      *------------------------------*/
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1017,7 +1010,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
      *------------------------------*/
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1207,7 +1200,7 @@ PUBLIC int treedb_close_topic(
      *------------------------------*/
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -1297,6 +1290,7 @@ PUBLIC int treedb_delete_topic(
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -1350,7 +1344,7 @@ PUBLIC json_t *treedb_topics(
 {
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -3714,6 +3708,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -6214,6 +6209,7 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -6257,6 +6253,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -6439,6 +6436,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             NULL
         );
@@ -6578,6 +6576,7 @@ PUBLIC json_t *treedb_list_instances( // Return MUST be decref
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Topic name not found in treedbs",
+            "treedb_name",  "%s", treedb_name,
             "topic_name",   "%s", topic_name,
             NULL
         );
