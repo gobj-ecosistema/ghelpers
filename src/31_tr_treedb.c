@@ -2611,6 +2611,16 @@ PRIVATE int load_id_callback(
             json_object_del(deleted_records, md_record->key.s);
         }
 
+        /*----------------------------------*
+        *  Build metadata, updating node
+        *----------------------------------*/
+        json_t *jn_record_md = _md2json(
+            treedb_name,
+            topic_name,
+            md_record
+        );
+        json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
+
         /*
          *  Call Callback
          */
@@ -3994,7 +4004,6 @@ PUBLIC int treedb_save_node(
     /*-------------------------------*
      *      Get node info
      *-------------------------------*/
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
     /*---------------------------------------*
@@ -4024,16 +4033,6 @@ PUBLIC int treedb_save_node(
         // Error already logged
         return -1;
     }
-
-    /*----------------------------------*
-     *  Build metadata, updating node
-     *----------------------------------*/
-    json_t *jn_record_md = _md2json(
-        treedb_name,
-        topic_name,
-        &md_record
-    );
-    json_object_set_new(node, "__md_treedb__", jn_record_md);
 
     /*-------------------------------*
      *  Trace
