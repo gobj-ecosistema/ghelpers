@@ -762,15 +762,6 @@ PUBLIC json_t *kwid_get_id_records(
 );
 
 /**rst**
-    Check all refcounts
-**rst**/
-PUBLIC int kw_check_refcounts(
-    json_t *kw, // not owned
-    int max_refcount,
-    int *result // firstly initalize to 0
-);
-
-/**rst**
     Utility for databases.
     Being field `kw` a list of id record [{id...},...] return the record idx with `id`
     Return -1 if not found

@@ -1379,6 +1379,258 @@ PUBLIC int save_json_to_file(
     return 0;
 }
 
+/***************************************************************************
+ *  Check deeply the refcount of kw
+ ***************************************************************************/
+PUBLIC int json_check_refcounts(
+    json_t *jn, // not owned
+    int max_refcount,
+    int *result // firstly initalize to 0
+)
+{
+    if(!jn) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "jn NULL",
+            NULL
+        );
+        if(result) {
+            (*result)--;
+        }
+    }
+
+    switch(json_typeof(jn)) {
+    case JSON_ARRAY:
+        {
+            if(jn->refcount <= 0) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount <= 0",
+                    "refcount",     "%d", (int)jn->refcount,
+                    NULL
+                );
+                if(result) {
+                    (*result)--;
+                }
+            }
+
+            if(max_refcount > 0 && jn->refcount > max_refcount) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount > max_refcount",
+                    "refcount",     "%d", (int)jn->refcount,
+                    "max_refcount", "%d", (int)max_refcount,
+                    NULL
+                );
+                log_debug_json(0, jn, "refcount > max_refcount");
+                if(result) {
+                    (*result)--;
+                }
+            }
+
+            int idx; json_t *jn_value;
+            json_array_foreach(jn, idx, jn_value) {
+                json_check_refcounts(jn_value, max_refcount, result);
+            }
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            if(jn->refcount <= 0) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount <= 0",
+                    "refcount",     "%d", (int)jn->refcount,
+                    NULL
+                );
+                if(result) {
+                    (*result)--;
+                }
+            }
+
+            if(max_refcount > 0 && jn->refcount > max_refcount) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "refcount > max_refcount",
+                    "refcount",     "%d", (int)jn->refcount,
+                    "max_refcount", "%d", (int)max_refcount,
+                    NULL
+                );
+                log_debug_json(0, jn, "refcount > max_refcount");
+                if(result) {
+                    (*result)--;
+                }
+            }
+
+            const char *key; json_t *jn_value;
+            json_object_foreach(jn, key, jn_value) {
+                json_check_refcounts(jn_value, max_refcount, result);
+            }
+        }
+        break;
+
+    case JSON_INTEGER:
+    case JSON_REAL:
+    case JSON_STRING:
+        if(jn->refcount <= 0) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "refcount <= 0",
+                "refcount",     "%d", (int)jn->refcount,
+                NULL
+            );
+            if(result) {
+                (*result)--;
+            }
+        }
+        if(max_refcount > 0 && jn->refcount > max_refcount) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "refcount > max_refcount",
+                "refcount",     "%d", (int)jn->refcount,
+                "max_refcount", "%d", (int)max_refcount,
+                NULL
+            );
+            if(result) {
+                (*result)--;
+            }
+        }
+        break;
+    case JSON_TRUE:
+    case JSON_FALSE:
+    case JSON_NULL:
+        // These have -1 refcount
+        break;
+    default:
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "json corrupted",
+            "refcount",     "%d", (int)jn->refcount,
+            "max_refcount", "%d", (int)max_refcount,
+            NULL
+        );
+        if(result) {
+            (*result)--;
+        }
+    }
+
+    if(result) {
+        return *result;
+    } else {
+        return 0;
+    }
+}
+
+/***************************************************************************
+ *  Print deeply the refcount of kw
+ ***************************************************************************/
+PUBLIC int json_print_refcounts(
+    json_t *jn, // not owned
+    int level
+)
+{
+    size_t flags = JSON_COMPACT|JSON_ENCODE_ANY;
+
+    if(!jn) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "jn NULL",
+            NULL
+        );
+    }
+
+    int i = level*4;
+    while(i>0) {
+        fprintf(stdout, " ");
+        i--;
+    }
+
+    switch(json_typeof(jn)) {
+    case JSON_ARRAY:
+        {
+            fprintf(stdout, "list: %d ==>", (int)jn->refcount);
+            json_dumpf(jn, stdout, flags);
+            fprintf(stdout, "\n");
+
+            level++;
+
+            int idx; json_t *jn_value;
+            json_array_foreach(jn, idx, jn_value) {
+                json_print_refcounts(jn_value, level);
+            }
+            level--;
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            fprintf(stdout, "dict: %d ==>", (int)jn->refcount);
+            json_dumpf(jn, stdout, flags);
+            fprintf(stdout, "\n");
+
+            level++;
+
+            const char *key; json_t *jn_value;
+            json_object_foreach(jn, key, jn_value) {
+                json_print_refcounts(jn_value, level);
+            }
+            level--;
+        }
+        break;
+
+    case JSON_INTEGER:
+        fprintf(stdout, "   i: %d ==>", (int)jn->refcount);
+        json_dumpf(jn, stdout, flags);
+        fprintf(stdout, "\n");
+        break;
+    case JSON_REAL:
+        fprintf(stdout, "   r: %d ==>", (int)jn->refcount);
+        json_dumpf(jn, stdout, flags);
+        fprintf(stdout, "\n");
+        break;
+    case JSON_STRING:
+        fprintf(stdout, "   s: %d ==>", (int)jn->refcount);
+        json_dumpf(jn, stdout, flags);
+        fprintf(stdout, "\n");
+        break;
+
+    case JSON_TRUE:
+    case JSON_FALSE:
+    case JSON_NULL:
+        // These have -1 refcount
+        break;
+    default:
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "json corrupted",
+            NULL
+        );
+    }
+
+    fprintf(stdout, "\n");
+
+    return 0;
+}
+
 
 
 
