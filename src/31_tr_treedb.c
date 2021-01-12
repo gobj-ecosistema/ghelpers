@@ -2612,8 +2612,8 @@ PRIVATE int load_id_callback(
         }
 
         /*----------------------------------*
-        *  Build metadata, updating node
-        *----------------------------------*/
+         *  Build metadata, callback node
+         *----------------------------------*/
         json_t *jn_record_md = _md2json(
             treedb_name,
             topic_name,
@@ -5735,7 +5735,7 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
          *  HERE only fkeys
          *  link fkeys
          */
-        json_t *new_fkeys = kw_get_dict_value(kw, col_name, 0, 0);
+        json_t *new_fkeys = kw_get_dict_value(kw, col_name, 0, 0); // Not yours GILIPOLLAS
 
         int idx;
 
@@ -5852,8 +5852,6 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
                 }
             }
         }
-
-        json_decref(new_fkeys);
     }
 
     if(save) {
