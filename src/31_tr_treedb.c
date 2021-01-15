@@ -6290,7 +6290,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
     WARNING extra fields are ignored, only topic desc fields are used
     Options
     -------
-    ""
+    "refs" (WARNING Default)
         Return 'fkey ref'
             ["topic_name^id^hook_name"]
         Return 'hook ref'

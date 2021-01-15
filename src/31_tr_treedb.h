@@ -346,7 +346,7 @@ PUBLIC int treedb_unlink_nodes(
 
     fkey,hook options
     -----------------
-    ""
+    "refs" (WARNING Default)
         Return 'fkey ref'
             ["topic_name^id^hook_name"]
         Return 'hook ref'
