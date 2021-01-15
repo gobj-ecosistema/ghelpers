@@ -370,6 +370,9 @@ PUBLIC int treedb_unlink_nodes(
         Return the kwid style:
             [{"topic_name":"$topic_name", "size": $size}, ...]
 
+    "no-metadata"
+        Return with no metadata
+
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
 

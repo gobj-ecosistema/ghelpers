@@ -6314,6 +6314,9 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
         Return the kwid style:
             [{"topic_name":"$topic_name", "size": $size}, ...]
 
+    "no-metadata"
+        Return with no metadata
+
 
  ***************************************************************************/
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
@@ -6393,16 +6396,19 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
             );
         }
     }
-    json_object_set_new(
-        node_view,
-        "__md_treedb__",
-        json_deep_copy(json_object_get(node, "__md_treedb__"))
-    );
-    json_object_set_new(
-        json_object_get(node_view, "__md_treedb__"),
-        "__pure_node__",
-        json_false()
-    );
+
+    if(!kw_get_bool(jn_options, "no-metadata", 0, KW_WILD_NUMBER)) {
+        json_object_set_new(
+            node_view,
+            "__md_treedb__",
+            json_deep_copy(json_object_get(node, "__md_treedb__"))
+        );
+        json_object_set_new(
+            json_object_get(node_view, "__md_treedb__"),
+            "__pure_node__",
+            json_false()
+        );
+    }
 
     JSON_DECREF(topic_desc);
     JSON_DECREF(jn_options);
