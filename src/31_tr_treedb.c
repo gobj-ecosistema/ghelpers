@@ -4176,7 +4176,6 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(jn_options);
-        JSON_DECREF(node);
         return -1;
     }
 
@@ -4272,7 +4271,6 @@ PUBLIC int treedb_delete_node(
     if(!to_delete) {
         // Error already logged
         JSON_DECREF(jn_options);
-        JSON_DECREF(node);
         return -1;
     }
 
@@ -4413,7 +4411,6 @@ PUBLIC int treedb_delete_node(
             NULL
         );
         JSON_DECREF(jn_options);
-        JSON_DECREF(node);
         return -1;
     }
 
