@@ -501,7 +501,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
                 "writable"
         )
     );
-print_json(topic_cols_desc);
+
     return topic_cols_desc;
 }
 
