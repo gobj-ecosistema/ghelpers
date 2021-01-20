@@ -2338,7 +2338,11 @@ PRIVATE int set_volatil_field_value(
             break;
 
         CASES("blob")
-            json_object_set(record, field, value);
+            if(!value) {
+                json_object_set_new(record, field, json_object());
+            } else {
+                json_object_set(record, field, value);
+            }
             break;
 
         DEFAULTS
@@ -2379,7 +2383,6 @@ PUBLIC int set_volatil_values(
         );
         return 0;
     }
-
     const char *field; json_t *col;
     json_object_foreach(cols, field, col) {
         json_t *value = kw_get_dict_value(
@@ -2388,9 +2391,6 @@ PUBLIC int set_volatil_values(
             0,
             0
         );
-        if(!value) {
-            value = kw_get_dict_value(col, "default", 0, 0);
-        }
 
         const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
         if(!field) {
@@ -2404,8 +2404,16 @@ PUBLIC int set_volatil_values(
         BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-        if((is_persistent || is_hook || is_fkey)) {
+        if((is_hook || is_fkey)) {
             continue;
+        }
+
+        if(is_persistent && value) {
+            continue;
+        }
+
+        if(!value) {
+            value = kw_get_dict_value(col, "default", 0, 0);
         }
 
         set_volatil_field_value(
