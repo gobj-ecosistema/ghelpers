@@ -2379,7 +2379,7 @@ PRIVATE int set_volatil_field_value(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int set_volatil_values(
+PUBLIC int set_volatil_or_missing_values(
     json_t *tranger,
     const char *topic_name,
     json_t *record,  // NOT owned
@@ -2409,7 +2409,6 @@ PUBLIC int set_volatil_values(
             continue;
         }
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
-        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
         if((is_hook || is_fkey)) {
@@ -2423,7 +2422,7 @@ PUBLIC int set_volatil_values(
             0
         );
 
-        if(is_persistent && record_value) {
+        if(record_value) {
             continue;
         }
 
@@ -2613,7 +2612,7 @@ PRIVATE int load_id_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_values( // crea campos vacios
+                    set_volatil_or_missing_values( // crea campos vacios
                         tranger,
                         topic_name,
                         jn_record,  // NOT owned
@@ -2787,7 +2786,7 @@ PRIVATE int load_pkey2_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_values( // crea campos vacios
+                    set_volatil_or_missing_values( // crea campos vacios
                         tranger,
                         topic_name,
                         jn_record,  // NOT owned
@@ -3905,7 +3904,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
      *  HACK set volatil after append record:
      *      Volatil data must not be save in file!
      *--------------------------------------------------*/
-    set_volatil_values( // crea campos vacios o con los valores de kw
+    set_volatil_or_missing_values( // crea campos vacios o con los valores de kw
         tranger,
         topic_name,
         record,  // NOT owned
