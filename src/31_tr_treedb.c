@@ -2652,7 +2652,7 @@ PRIVATE int load_id_callback(
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
 
                     /*--------------------------------------------*
-                     *  Set volatil data
+                     *  Set missing data
                      *--------------------------------------------*/
                     set_missing_values( // crea campos vacios
                         tranger,
@@ -2825,7 +2825,7 @@ PRIVATE int load_pkey2_callback(
                     json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
 
                     /*--------------------------------------------*
-                     *  Set volatil data
+                     *  Set missing data
                      *--------------------------------------------*/
                     set_missing_values( // crea campos vacios
                         tranger,
