@@ -2155,19 +2155,6 @@ PRIVATE int set_tranger_field_value(
             break;
 
         CASES("enum")
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "enum NOT IMPLEMENTED",
-                "topic_name",   "%s", topic_name,
-                "col",          "%j", col,
-                "field",        "%s", field,
-                "value",        "%j", value,
-                NULL
-            );
-            break;
-
         CASES("list")
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
@@ -2296,6 +2283,7 @@ PRIVATE int set_volatil_field_value(
 )
 {
     SWITCHS(type) {
+        CASES("enum")
         CASES("list")
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
@@ -2377,13 +2365,75 @@ PRIVATE int set_volatil_field_value(
 }
 
 /***************************************************************************
- *  Set missing values
+ *
  ***************************************************************************/
 PUBLIC int set_volatil_values(
     json_t *tranger,
     const char *topic_name,
     json_t *record,  // NOT owned
     json_t *kw // NOT owned
+)
+{
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    if(!cols) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Topic without cols",
+            "topic_name",   "%s", topic_name,
+            NULL
+        );
+        return 0;
+    }
+
+    const char *field; json_t *col;
+    json_object_foreach(cols, field, col) {
+        json_t *value = kw_get_dict_value(
+            kw,
+            field,
+            0,
+            0
+        );
+        if(!value) {
+            value = kw_get_dict_value(col, "default", 0, 0);
+        }
+
+        const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
+        if(!field) {
+            continue;
+        }
+        const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
+        if(!type) {
+            continue;
+        }
+        json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+        BOOL is_persistent = kw_has_word(desc_flag, "persistent", 0)?TRUE:FALSE;
+        BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+        BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        if((is_persistent || is_hook || is_fkey)) {
+            continue;
+        }
+
+        set_volatil_field_value(
+            type,
+            field,
+            record, // NOT owned
+            value   // NOT owned
+        );
+    }
+
+    JSON_DECREF(cols);
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int set_missing_values(
+    json_t *tranger,
+    const char *topic_name,
+    json_t *record  // NOT owned
 )
 {
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
@@ -2415,32 +2465,24 @@ PUBLIC int set_volatil_values(
             continue;
         }
 
-        json_t *record_value = kw_get_dict_value(
+        json_t *value = kw_get_dict_value(
             record,
             field,
             0,
             0
         );
 
-        if(record_value) {
+        if(value) {
             continue;
         }
 
-        json_t *kw_value = kw_get_dict_value(
-            kw,
-            field,
-            0,
-            0
-        );
-        if(!kw_value) {
-            kw_value = kw_get_dict_value(col, "default", 0, 0);
-        }
+        value = kw_get_dict_value(col, "default", 0, 0);
 
         set_volatil_field_value(
             type,
             field,
             record, // NOT owned
-            kw_value   // NOT owned
+            value   // NOT owned
         );
     }
 
@@ -2612,11 +2654,10 @@ PRIVATE int load_id_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_values( // crea campos vacios
+                    set_missing_values( // crea campos vacios
                         tranger,
                         topic_name,
-                        jn_record,  // NOT owned
-                        jn_record // NOT owned
+                        jn_record  // NOT owned
                     );
 
                     /*-------------------------------*
@@ -2786,10 +2827,9 @@ PRIVATE int load_pkey2_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_values( // crea campos vacios
+                    set_missing_values( // crea campos vacios
                         tranger,
                         topic_name,
-                        jn_record,  // NOT owned
                         jn_record // NOT owned
                     );
 
