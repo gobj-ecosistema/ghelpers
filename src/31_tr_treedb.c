@@ -1357,6 +1357,7 @@ PUBLIC json_t *treedb_topics(
 {
     json_t *treedb = kw_get_subdict_value(tranger, "treedbs", treedb_name, 0, 0);
     if(!treedb) {
+        JSON_DECREF(jn_options);
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -1387,6 +1388,7 @@ PUBLIC json_t *treedb_topics(
         }
     }
 
+    JSON_DECREF(jn_options);
     return topic_list;
 }
 
