@@ -2400,13 +2400,6 @@ PUBLIC int set_volatil_values(
     }
     const char *field; json_t *col;
     json_object_foreach(cols, field, col) {
-        json_t *value = kw_get_dict_value(
-            kw,
-            field,
-            0,
-            0
-        );
-
         const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
         if(!field) {
             continue;
@@ -2423,19 +2416,32 @@ PUBLIC int set_volatil_values(
             continue;
         }
 
-        if(is_persistent && value) {
+        json_t *record_value = kw_get_dict_value(
+            record,
+            field,
+            0,
+            0
+        );
+
+        if(is_persistent && record_value) {
             continue;
         }
 
-        if(!value) {
-            value = kw_get_dict_value(col, "default", 0, 0);
+        json_t *kw_value = kw_get_dict_value(
+            kw,
+            field,
+            0,
+            0
+        );
+        if(!kw_value) {
+            kw_value = kw_get_dict_value(col, "default", 0, 0);
         }
 
         set_volatil_field_value(
             type,
             field,
             record, // NOT owned
-            value   // NOT owned
+            kw_value   // NOT owned
         );
     }
 
