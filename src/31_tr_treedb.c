@@ -2377,9 +2377,9 @@ PRIVATE int set_volatil_field_value(
 }
 
 /***************************************************************************
- *
+ *  Set missing values
  ***************************************************************************/
-PUBLIC int set_volatil_or_missing_values(
+PUBLIC int set_volatil_values(
     json_t *tranger,
     const char *topic_name,
     json_t *record,  // NOT owned
@@ -2612,7 +2612,7 @@ PRIVATE int load_id_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_or_missing_values( // crea campos vacios
+                    set_volatil_values( // crea campos vacios
                         tranger,
                         topic_name,
                         jn_record,  // NOT owned
@@ -2786,7 +2786,7 @@ PRIVATE int load_pkey2_callback(
                     /*--------------------------------------------*
                      *  Set volatil data
                      *--------------------------------------------*/
-                    set_volatil_or_missing_values( // crea campos vacios
+                    set_volatil_values( // crea campos vacios
                         tranger,
                         topic_name,
                         jn_record,  // NOT owned
@@ -3904,7 +3904,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
      *  HACK set volatil after append record:
      *      Volatil data must not be save in file!
      *--------------------------------------------------*/
-    set_volatil_or_missing_values( // crea campos vacios o con los valores de kw
+    set_volatil_values( // crea campos vacios o con los valores de kw
         tranger,
         topic_name,
         record,  // NOT owned
