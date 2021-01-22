@@ -2679,51 +2679,6 @@ PRIVATE int load_id_callback(
             // This key is operative again
             json_object_del(deleted_records, md_record->key.s);
         }
-
-        /*----------------------------------*
-         *  Build metadata, callback node
-         *----------------------------------*/
-        json_t *jn_record_md = _md2json(
-            treedb_name,
-            topic_name,
-            md_record
-        );
-        json_object_set_new(jn_record, "__md_treedb__", jn_record_md);
-
-        /*
-         *  Call Callback
-         */
-        json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
-
-        treedb_callback_t treedb_callback =
-            (treedb_callback_t)(size_t)kw_get_int(
-            treedb,
-            "__treedb_callback__",
-            0,
-            0
-        );
-        if(treedb_callback) {
-            /*
-             *  Inform user in real time
-             */
-            void *user_data =
-                (void *)(size_t)kw_get_int(
-                treedb,
-                "__treedb_callback_user_data__",
-                0,
-                0
-            );
-
-            JSON_INCREF(jn_record);
-            treedb_callback(
-                user_data,
-                tranger,
-                treedb_name,
-                topic_name,
-                "EV_TREEDB_NODE_UPDATED",
-                jn_record
-            );
-        }
     }
 
     JSON_DECREF(jn_record);
@@ -3984,10 +3939,48 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
     }
 
     /*-------------------------------*
+     *  Get callback
+     *-------------------------------*/
+    json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
+    treedb_callback_t treedb_callback =
+        (treedb_callback_t)(size_t)kw_get_int(
+        treedb,
+        "__treedb_callback__",
+        0,
+        0
+    );
+    void *user_data =
+        (void *)(size_t)kw_get_int(
+        treedb,
+        "__treedb_callback_user_data__",
+        0,
+        0
+    );
+
+    /*-------------------------------*
      *  Write node in memory: id
      *-------------------------------*/
     if(save_id) {
         add_primary_node(indexx, id, record);
+
+        /*----------------------------------*
+         *  Call Callback
+         *----------------------------------*/
+        if(treedb_callback) {
+            /*
+             *  Inform user in real time
+             */
+            JSON_INCREF(record);
+            treedb_callback(
+                user_data,
+                tranger,
+                treedb_name,
+                topic_name,
+                "EV_TREEDB_NODE_UPDATED",
+                record
+            );
+            treedb_callback = 0; // Not inform more
+        }
     }
 
     /*-------------------------------*
@@ -4029,6 +4022,24 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
              *  Write node in memory: pkey2
              *-------------------------------*/
             add_secondary_node(indexy, id, pkey2_value, record);
+
+            /*----------------------------------*
+             *  Call Callback
+             *----------------------------------*/
+            if(treedb_callback) {
+                /*
+                 *  Inform user in real time
+                 */
+                JSON_INCREF(record);
+                treedb_callback(
+                    user_data,
+                    tranger,
+                    treedb_name,
+                    topic_name,
+                    "EV_TREEDB_NODE_UPDATED",
+                    record
+                );
+            }
         }
     }
 
