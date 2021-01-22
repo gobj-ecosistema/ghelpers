@@ -3976,7 +3976,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
                 tranger,
                 treedb_name,
                 topic_name,
-                "EV_TREEDB_NODE_UPDATED",
+                "EV_TREEDB_NODE_CREATED",
                 record
             );
             treedb_callback = 0; // Not inform more
@@ -4036,7 +4036,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
                     tranger,
                     treedb_name,
                     topic_name,
-                    "EV_TREEDB_NODE_UPDATED",
+                    "EV_TREEDB_NODE_CREATED",
                     record
                 );
             }
@@ -4083,6 +4083,7 @@ PUBLIC int treedb_save_node(
     /*-------------------------------*
      *      Get node info
      *-------------------------------*/
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
     /*---------------------------------------*
@@ -4099,6 +4100,7 @@ PUBLIC int treedb_save_node(
      *-------------------------------------*/
     uint32_t tag = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
 
+    JSON_INCREF(record);
     md_record_t md_record;
     int ret = tranger_append_record(
         tranger,
@@ -4114,11 +4116,51 @@ PUBLIC int treedb_save_node(
     }
 
     /*-------------------------------*
+     *  Get callback
+     *-------------------------------*/
+    json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
+    treedb_callback_t treedb_callback =
+        (treedb_callback_t)(size_t)kw_get_int(
+        treedb,
+        "__treedb_callback__",
+        0,
+        0
+    );
+    void *user_data =
+        (void *)(size_t)kw_get_int(
+        treedb,
+        "__treedb_callback_user_data__",
+        0,
+        0
+    );
+
+    /*----------------------------------*
+     *  Call Callback
+     *----------------------------------*/
+    if(treedb_callback) {
+        /*
+         *  Inform user in real time
+         */
+        JSON_INCREF(node);
+        treedb_callback(
+            user_data,
+            tranger,
+            treedb_name,
+            topic_name,
+            "EV_TREEDB_NODE_UPDATED",
+            node
+        );
+        treedb_callback = 0; // Not inform more
+    }
+
+    /*-------------------------------*
      *  Trace
      *-------------------------------*/
     if(treedb_trace) {
         log_debug_json(0, node, "treedb_save_node: Ok");
     }
+
+    JSON_DECREF(record);
 
     return 0;
 }
