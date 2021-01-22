@@ -2159,6 +2159,15 @@ PRIVATE int set_tranger_field_value(
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
                 json_object_set(record, field, value);
+
+            } else if(JSON_TYPEOF(value, JSON_STRING)) {
+                json_t *v = legalstring2json(json_string_value(value), FALSE);
+                if(json_is_array(v)) {
+                    json_object_set_new(record, field, v);
+                } else {
+                    json_decref(v);
+                    json_object_set_new(record, field, json_array());
+                }
             } else {
                 json_object_set_new(record, field, json_array());
             }
@@ -2168,9 +2177,40 @@ PRIVATE int set_tranger_field_value(
         CASES("object")
             if(JSON_TYPEOF(value, JSON_OBJECT)) {
                 json_object_set(record, field, value);
+
+            } else if(JSON_TYPEOF(value, JSON_STRING)) {
+                json_t *v = legalstring2json(json_string_value(value), FALSE);
+                if(json_is_object(v)) {
+                    json_object_set_new(record, field, v);
+                } else {
+                    json_decref(v);
+                    json_object_set_new(record, field, json_object());
+                }
             } else {
                 json_object_set_new(record, field, json_object());
             }
+            break;
+
+        CASES("blob")
+            if(JSON_TYPEOF(value, JSON_OBJECT)) {
+                json_object_set(record, field, value);
+            } else if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                json_object_set(record, field, value);
+
+            } else if(JSON_TYPEOF(value, JSON_STRING)) {
+                json_t *v = legalstring2json(json_string_value(value), FALSE);
+                if(json_is_object(v)) {
+                    json_object_set_new(record, field, v);
+                } else if(json_is_array(v)) {
+                    json_object_set_new(record, field, v);
+                } else {
+                    json_decref(v);
+                    json_object_set_new(record, field, json_object());
+                }
+            } else {
+                json_object_set_new(record, field, json_object());
+            }
+
             break;
 
         CASES("string")
@@ -2248,10 +2288,6 @@ PRIVATE int set_tranger_field_value(
         CASES("boolean")
             BOOL v = jn2bool(value);
             json_object_set_new(record, field, v?json_true():json_false());
-            break;
-
-        CASES("blob")
-            json_object_set(record, field, value);
             break;
 
         DEFAULTS
