@@ -491,8 +491,8 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     json_array_append_new(
         topic_cols_desc,
         json_pack("{s:s, s:s, s:i, s:s, s:[s,s]}",
-            "id", "user_data",
-            "header", "User Data",
+            "id", "properties",
+            "header", "Properties",
             "fillspace", 8,
             "type",
                 "blob",
@@ -741,7 +741,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
         "description",
             "id", "date",
             "header", "Description",
-            "fillspace", 30,
+            "fillspace", 40,
             "type", "string",
             "flag",
                 "persistent"
@@ -4150,6 +4150,16 @@ PUBLIC int treedb_save_node(
         // Error already logged
         return -1;
     }
+
+    /*--------------------------------------------*
+     *  Build metadata, update node in memory
+     *--------------------------------------------*/
+    json_t *jn_record_md = _md2json(
+        treedb_name,
+        topic_name,
+        &md_record
+    );
+    json_object_set_new(node, "__md_treedb__", jn_record_md);
 
     /*-------------------------------*
      *  Get callback
