@@ -4153,13 +4153,21 @@ PUBLIC int treedb_save_node(
 
     /*--------------------------------------------*
      *  Build metadata, update node in memory
+     *  HACK only numeric fields! strings cannot
      *--------------------------------------------*/
-    json_t *jn_record_md = _md2json(
-        treedb_name,
-        topic_name,
-        &md_record
+    json_t *__md_treedb__ = json_object_get(node, "__md_treedb__");
+    json_object_set_new(__md_treedb__,
+        "__rowid__",
+        json_integer(md_record.__rowid__)
     );
-    json_object_set_new(node, "__md_treedb__", jn_record_md);
+    json_object_set_new(__md_treedb__,
+        "__t__",
+        json_integer(md_record.__t__)
+    );
+    json_object_set_new(__md_treedb__,
+        "__tm__",
+        json_integer(md_record.__tm__)
+    );
 
     /*-------------------------------*
      *  Get callback
