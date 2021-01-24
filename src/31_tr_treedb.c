@@ -5918,6 +5918,9 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
             do {
                 // **FKEY**
                 const char *ref = json_string_value(new_fkeys);
+                if(empty_string(ref)) {
+                    break;
+                }
 
                 /*
                  *  Get parent info
@@ -5974,6 +5977,9 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
             json_array_foreach(new_fkeys, idx, new_fkey) {
                 // **FKEY**
                 const char *ref = json_string_value(new_fkey);
+                if(empty_string(ref)) {
+                    continue;
+                }
 
                 /*
                  *  Get parent info
