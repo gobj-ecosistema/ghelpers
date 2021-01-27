@@ -6492,8 +6492,8 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
         Return the kwid style:
             [{"topic_name":"$topic_name", "size": $size}, ...]
 
-    "no-metadata"
-        Return with no metadata
+    "with-metadata"
+        Return with metadata
 
 
  ***************************************************************************/
@@ -6540,6 +6540,10 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
             // Something wrong?
             continue;
         }
+        if(strncmp(col_name, "__", 2)==0) {
+            // Ignore metadata
+            continue;
+        }
         if(is_hook) {
             json_t *list = kw_get_dict_value(
                 node_view,
@@ -6575,7 +6579,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
         }
     }
 
-    if(!kw_get_bool(jn_options, "no-metadata", 0, KW_WILD_NUMBER)) {
+    if(kw_get_bool(jn_options, "with-metadata", 0, KW_WILD_NUMBER)) {
         json_object_set_new(
             node_view,
             "__md_treedb__",
