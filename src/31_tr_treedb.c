@@ -6527,6 +6527,8 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     BOOL original_node = kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0);
     json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
 
+    BOOL with_metadata = kw_get_bool(jn_options, "with-metadata", 0, KW_WILD_NUMBER);
+
     json_t *node_view = json_object();
 
     const char *col_name; json_t *col;
@@ -6541,8 +6543,10 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
             continue;
         }
         if(strncmp(col_name, "__", 2)==0) {
-            // Ignore metadata
-            continue;
+            if(!with_metadata) {
+                // Ignore metadata
+                continue;
+            }
         }
         if(is_hook) {
             json_t *list = kw_get_dict_value(
@@ -6579,7 +6583,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
         }
     }
 
-    if(kw_get_bool(jn_options, "with-metadata", 0, KW_WILD_NUMBER)) {
+    if(with_metadata) {
         json_object_set_new(
             node_view,
             "__md_treedb__",
