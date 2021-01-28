@@ -354,13 +354,13 @@ PUBLIC int treedb_unlink_nodes(
         Return 'hook ref'
             ["topic_name^id"]
 
-    "only-id"
+    "only_id"
         Return the 'fkey ref' with only the 'id' field
             ["$id",...]
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
-    "list-dict"
+    "list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
         Return the kwid style:

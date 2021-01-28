@@ -6474,13 +6474,13 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
         Return 'hook ref'
             ["topic_name^id"]
 
-    "only-id"
+    "only_id"
         Return the 'fkey ref' with only the 'id' field
             ["$id",...]
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
-    "list-dict"
+    "list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
         Return the kwid style:
@@ -6936,14 +6936,14 @@ PRIVATE json_t *apply_parent_ref_options(
             continue;
         }
 
-        if(kw_get_bool(jn_options, "only-id", 0, KW_WILD_NUMBER)) {
+        if(kw_get_bool(jn_options, "only_id", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the 'fkey ref' with only the 'id' field
              *  ["$id",...]
              */
             json_array_append_new(parents, json_string(parent_id));
 
-        } else if(kw_get_bool(jn_options, "list-dict", 0, KW_WILD_NUMBER)) {
+        } else if(kw_get_bool(jn_options, "list_dict", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the kwid style:
              * [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
@@ -7087,14 +7087,14 @@ PRIVATE json_t *apply_child_ref_options(
             continue;
         }
 
-        if(kw_get_bool(jn_options, "only-id", 0, KW_WILD_NUMBER)) {
+        if(kw_get_bool(jn_options, "only_id", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the 'hook ref' with only the 'id' field
              *  ["$id",...]
              */
             json_array_append_new(childs, json_string(child_id));
 
-        } else if(kw_get_bool(jn_options, "list-dict", 0, KW_WILD_NUMBER)) {
+        } else if(kw_get_bool(jn_options, "list_dict", 0, KW_WILD_NUMBER)) {
             /*
              *  Return the kwid style:
              *  [{"id": "$id", "topic_name":"$topic_name"}, ...]
