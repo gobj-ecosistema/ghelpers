@@ -6943,7 +6943,7 @@ PRIVATE json_int_t json_size(json_t *value)
  *
     fkey options
     -------------
-    "refs" (default)
+    "refs"
     "fkey_refs"
         Return 'fkey ref'
             ["topic_name^id^hook_name", ...]
@@ -6955,7 +6955,7 @@ PRIVATE json_int_t json_size(json_t *value)
             ["$id",...]
 
 
-    "list_dict"
+    "list_dict" (default)
     "fkey_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
@@ -6966,10 +6966,6 @@ PRIVATE json_t *apply_parent_ref_options(
     json_t *jn_options // NOT owned
 )
 {
-    if(json_empty(jn_options)) {
-        return json_incref(refs);
-    }
-
     json_t *parents = json_array();
     char parent_topic_name[NAME_MAX];
     char parent_id[NAME_MAX];
@@ -7024,13 +7020,31 @@ PRIVATE json_t *apply_parent_ref_options(
                 )
             );
 
-        } else {
+        } else if(kw_get_bool(jn_options, "refs", 0, KW_WILD_NUMBER) ||
+            kw_get_bool(jn_options, "fkey_refs", 0, KW_WILD_NUMBER)
+        ) {
             /*
-                "fkey_refs", "refs"
                 Return 'fkey ref'
                     ["topic_name^id^hook_name", ...]
             */
             json_array_append_new(parents, json_string(ref));
+
+        } else {
+            /*
+             *  DEFAULT
+             *
+                Return the kwid style:
+                    [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
+             */
+            json_array_append_new(
+                parents,
+                json_pack("{s:s, s:s, s:s}",
+                    "id", parent_id,
+                    "topic_name", parent_topic_name,
+                    "hook_name", hook_name
+                )
+            );
+
         }
     }
 
@@ -7041,7 +7055,7 @@ PRIVATE json_t *apply_parent_ref_options(
  *
     hook options
     ------------
-    "refs" (default)
+    "refs"
     "hook_refs"
         Return 'hook ref'
             ["topic_name^id", ...]
@@ -7051,7 +7065,7 @@ PRIVATE json_t *apply_parent_ref_options(
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
-    "list_dict"
+    "list_dict" (default)
     "hook_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
@@ -7067,10 +7081,6 @@ PRIVATE json_t *apply_child_list_options(
     json_t *jn_options // NOT owned
 )
 {
-    if(json_empty(jn_options)) {
-        return json_incref(child_list);
-    }
-
     json_t *childs = json_array();
 
     if(kw_get_bool(jn_options, "size", 0, KW_WILD_NUMBER) ||
@@ -7110,7 +7120,6 @@ PRIVATE json_t *apply_child_list_options(
              */
             const char *id = kw_get_str(child, "id", 0, KW_REQUIRED);
             const char *topic_name = kw_get_str(child, "__md_treedb__`topic_name", 0, 0);
-            json_array_append_new(childs, json_string(id));
 
             json_array_append_new(
                 childs,
@@ -7120,10 +7129,10 @@ PRIVATE json_t *apply_child_list_options(
                 )
             );
 
-        } else {
+        } else if(kw_get_bool(jn_options, "refs", 0, KW_WILD_NUMBER) ||
+            kw_get_bool(jn_options, "hook_refs", 0, KW_WILD_NUMBER)
+        ) {
             /*
-                "refs" (default)
-                "hook_refs"
                     Return 'hook ref'
                         ["topic_name^id", ...]
 
@@ -7133,6 +7142,25 @@ PRIVATE json_t *apply_child_list_options(
             char ref[NAME_MAX];
             snprintf(ref, sizeof(ref), "%s^%s", topic_name, id);
             json_array_append_new(childs, json_string(ref));
+
+        } else {
+            /*
+             *  DEFAULT
+             *
+                Return the kwid style:
+                    [{"id": "$id", "topic_name":"$topic_name"}, ...]
+             */
+            const char *id = kw_get_str(child, "id", 0, KW_REQUIRED);
+            const char *topic_name = kw_get_str(child, "__md_treedb__`topic_name", 0, 0);
+
+            json_array_append_new(
+                childs,
+                json_pack("{s:s, s:s}",
+                    "id", id,
+                    "topic_name", topic_name
+                )
+            );
+
         }
     }
 

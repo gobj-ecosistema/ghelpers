@@ -348,7 +348,7 @@ PUBLIC int treedb_unlink_nodes(
 
     fkey options
     -------------
-    "refs" (default)
+    "refs"
     "fkey_refs"
         Return 'fkey ref'
             ["topic_name^id^hook_name", ...]
@@ -360,7 +360,7 @@ PUBLIC int treedb_unlink_nodes(
             ["$id",...]
 
 
-    "list_dict"
+    "list_dict" (default)
     "fkey_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
@@ -368,7 +368,7 @@ PUBLIC int treedb_unlink_nodes(
 
     hook options
     ------------
-    "refs" (default)
+    "refs"
     "hook_refs"
         Return 'hook ref'
             ["topic_name^id", ...]
@@ -378,7 +378,7 @@ PUBLIC int treedb_unlink_nodes(
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
-    "list_dict"
+    "list_dict" (default)
     "hook_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
