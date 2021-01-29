@@ -74,6 +74,9 @@ PRIVATE int search_and_remove_wrong_up_ref(
 PRIVATE json_t *get_hook_list(
     json_t *hook_data // NOT owned
 );
+PRIVATE json_t *get_hook_refs(
+    json_t *hook_data // NOT owned
+);
 PRIVATE json_t *get_fkey_refs(
     json_t *field_data // NOT owned
 );
@@ -102,8 +105,8 @@ PRIVATE json_t *apply_parent_ref_options(
     json_t *refs,  // NOT owned
     json_t *jn_options // NOT owned
 );
-PRIVATE json_t *apply_child_ref_options(
-    json_t *refs,  // NOT owned
+PRIVATE json_t *apply_child_list_options(
+    json_t *child_list,  // NOT owned
     json_t *jn_options // NOT owned
 );
 
@@ -3299,7 +3302,7 @@ PRIVATE int load_all_links(
 
     return a new list of all node's mix_id
  ***************************************************************************/
-PRIVATE json_t *get_hook_list(
+PRIVATE json_t *get_hook_refs(
     json_t *hook_data // NOT owned
 )
 {
@@ -3544,7 +3547,7 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
             continue;
         }
 
-        json_t *child_list = get_hook_list(field_data);
+        json_t *child_list = get_hook_refs(field_data);
         json_array_extend(refs, child_list);
         json_decref(child_list);
     }
@@ -3611,6 +3614,45 @@ PUBLIC int treedb_set_trace(BOOL set)
     BOOL old = treedb_trace;
     treedb_trace = set?1:0;
     return old;
+}
+
+/***************************************************************************
+    If path is empty then use kw
+ ***************************************************************************/
+PUBLIC json_t *get_hook_list(
+    json_t *hook_data // NOT owned
+)
+{
+    json_t *new_list = 0;
+
+    switch(json_typeof(hook_data)) {
+    case JSON_ARRAY:
+        {
+            new_list = hook_data;
+            json_incref(new_list);
+        }
+        break;
+    case JSON_OBJECT:
+        {
+            new_list = json_array();
+            const char *key; json_t *v;
+            json_object_foreach(hook_data, key, v) {
+                json_array_append(new_list, v);
+            }
+        }
+        break;
+    default:
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "wrong type for hook list",
+            NULL
+        );
+        break;
+    }
+
+    return new_list;
 }
 
 
@@ -6538,7 +6580,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
                 KW_CREATE
             );
             json_t *child_list = get_hook_list(field_data);
-            json_t *childs = apply_child_ref_options(child_list, jn_options);
+            json_t *childs = apply_child_list_options(child_list, jn_options);
             json_array_extend(list, childs);
             json_decref(childs);
             json_decref(child_list);
@@ -6899,6 +6941,25 @@ PRIVATE json_int_t json_size(json_t *value)
 
 /***************************************************************************
  *
+    fkey options
+    -------------
+    "refs" (default)
+    "fkey_refs"
+        Return 'fkey ref'
+            ["topic_name^id^hook_name", ...]
+
+
+    "only_id"
+    "fkey_only_id"
+        Return the 'fkey ref' with only the 'id' field
+            ["$id",...]
+
+
+    "list_dict"
+    "fkey_list_dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
+
  ***************************************************************************/
 PRIVATE json_t *apply_parent_ref_options(
     json_t *refs,  // NOT owned
@@ -6938,17 +6999,21 @@ PRIVATE json_t *apply_parent_ref_options(
             continue;
         }
 
-        if(kw_get_bool(jn_options, "only_id", 0, KW_WILD_NUMBER)) {
+        if(kw_get_bool(jn_options, "only_id", 0, KW_WILD_NUMBER) ||
+            kw_get_bool(jn_options, "fkey_only_id", 0, KW_WILD_NUMBER)
+        ) {
             /*
-             *  Return the 'fkey ref' with only the 'id' field
-             *  ["$id",...]
+                Return the 'fkey ref' with only the 'id' field
+                    ["$id",...]
              */
             json_array_append_new(parents, json_string(parent_id));
 
-        } else if(kw_get_bool(jn_options, "list_dict", 0, KW_WILD_NUMBER)) {
+        } else if(kw_get_bool(jn_options, "list_dict", 0, KW_WILD_NUMBER) ||
+            kw_get_bool(jn_options, "fkey_list_dict", 0, KW_WILD_NUMBER)
+        ) {
             /*
-             *  Return the kwid style:
-             * [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
+                Return the kwid style:
+                    [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
              */
             json_array_append_new(
                 parents,
@@ -6960,6 +7025,11 @@ PRIVATE json_t *apply_parent_ref_options(
             );
 
         } else {
+            /*
+                "fkey_refs", "refs"
+                Return 'fkey ref'
+                    ["topic_name^id^hook_name", ...]
+            */
             json_array_append_new(parents, json_string(ref));
         }
     }
@@ -6969,54 +7039,73 @@ PRIVATE json_t *apply_parent_ref_options(
 
 /***************************************************************************
  *
+    hook options
+    ------------
+    "refs" (default)
+    "hook_refs"
+        Return 'hook ref'
+            ["topic_name^id", ...]
+
+    "only_id"
+    "hook_only_id"
+        Return the 'hook ref' with only the 'id' field
+            ["$id",...]
+
+    "list_dict"
+    "hook_list_dict"
+        Return the kwid style:
+            [{"id": "$id", "topic_name":"$topic_name"}, ...]
+
+    "size"
+    "hook_size"
+        Return:
+            [{"size": size}]
+
  ***************************************************************************/
-PRIVATE json_t *apply_child_ref_options(
-    json_t *refs,  // NOT owned
+PRIVATE json_t *apply_child_list_options(
+    json_t *child_list,  // NOT owned
     json_t *jn_options // NOT owned
 )
 {
     if(json_empty(jn_options)) {
-        return json_incref(refs);
+        return json_incref(child_list);
     }
 
     json_t *childs = json_array();
-    char child_topic_name[NAME_MAX];
-    char child_id[NAME_MAX];
+
+    if(kw_get_bool(jn_options, "size", 0, KW_WILD_NUMBER) ||
+        kw_get_bool(jn_options, "hook_size", 0, KW_WILD_NUMBER)
+    ) {
+        /*
+            Return:
+                [{"size": size}]
+         */
+        json_array_append_new(
+            childs,
+            json_pack("{s:I}",
+                "size", json_size(child_list)
+            )
+        );
+        return childs;
+    }
 
     int idx; json_t *jn_fkey;
-    json_array_foreach(refs, idx, jn_fkey) {
-        /*
-         *  Get child info
-         */
-        const char *ref = json_string_value(jn_fkey);
-        if(!decode_child_ref(
-            ref,
-            child_topic_name, sizeof(child_topic_name),
-            child_id, sizeof(child_id)
-        )) {
-            // It's not a child ref
-            log_error(0,
-                "gobj",                 "%s", __FILE__,
-                "function",             "%s", __FUNCTION__,
-                "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                "msg",                  "%s", "Wrong child reference: must be \"child_topic_name^child_id\"",
-                "ref",                  "%s", ref,
-                NULL
-            );
-            continue;
-        }
-
-        if(kw_get_bool(jn_options, "only_id", 0, KW_WILD_NUMBER)) {
+    json_array_foreach(child_list, idx, jn_fkey) {
+        if(kw_get_bool(jn_options, "only_id", 0, KW_WILD_NUMBER) ||
+            kw_get_bool(jn_options, "hook_only_id", 0, KW_WILD_NUMBER)
+        ) {
             /*
-             *  Return the 'hook ref' with only the 'id' field
-             *  ["$id",...]
+                Return the 'hook ref' with only the 'id' field
+                    ["$id",...]
              */
             json_array_append_new(childs, json_string(child_id));
 
-        } else if(kw_get_bool(jn_options, "list_dict", 0, KW_WILD_NUMBER)) {
+        } else if(kw_get_bool(jn_options, "list_dict", 0, KW_WILD_NUMBER) ||
+            kw_get_bool(jn_options, "hook_list_dict", 0, KW_WILD_NUMBER)
+        ) {
             /*
-             *  Return the kwid style:
-             *  [{"id": "$id", "topic_name":"$topic_name"}, ...]
+                Return the kwid style:
+                    [{"id": "$id", "topic_name":"$topic_name"}, ...]
              */
             json_array_append_new(
                 childs,
@@ -7027,6 +7116,13 @@ PRIVATE json_t *apply_child_ref_options(
             );
 
         } else {
+            /*
+                "refs" (default)
+                "hook_refs"
+                    Return 'hook ref'
+                        ["topic_name^id", ...]
+
+            */
             json_array_append_new(childs, json_string(ref));
         }
     }
@@ -7210,7 +7306,7 @@ PUBLIC json_t *treedb_list_childs(
     }
 
     json_t *child_list = get_hook_list(field_data);
-    json_t *childs = apply_parent_ref_options(child_list, jn_options);
+    json_t *childs = apply_child_list_options(child_list, jn_options);
     json_decref(child_list);
 
     JSON_DECREF(jn_options);

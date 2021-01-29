@@ -346,39 +346,51 @@ PUBLIC int treedb_unlink_nodes(
 
             "topic_name^id"
 
-    fkey,hook options
-    -----------------
-    "refs" (default) "hook_refs"
+    fkey options
+    -------------
+    "refs" (default)
+    "fkey_refs"
         Return 'fkey ref'
             ["topic_name^id^hook_name", ...]
 
-    "refs" (default) "fkey_refs"
-        Return 'hook ref'
-            ["topic_name^id", ...]
 
-
-    "only_id" "hook_only_id"
-        Return the 'hook ref' with only the 'id' field
-            ["$id",...]
-
-    "only_id" "fkey_only_id"
+    "only_id"
+    "fkey_only_id"
         Return the 'fkey ref' with only the 'id' field
             ["$id",...]
 
 
-    "list_dict" "hook_list_dict"
+    "list_dict"
+    "fkey_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
 
-    "list_dict" "fkey_list_dict"
+
+    hook options
+    ------------
+    "refs" (default)
+    "hook_refs"
+        Return 'hook ref'
+            ["topic_name^id", ...]
+
+    "only_id"
+    "hook_only_id"
+        Return the 'hook ref' with only the 'id' field
+            ["$id",...]
+
+    "list_dict"
+    "hook_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
 
-
-    "size" "hook_size"
+    "size"
+    "hook_size"
         Return the kwid style:
-            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}]
+            [{"size": size}]
 
+
+    Other options
+    -------------
 
     "with-metadata"
         Return with metadata
