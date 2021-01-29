@@ -7089,8 +7089,8 @@ PRIVATE json_t *apply_child_list_options(
         return childs;
     }
 
-    int idx; json_t *jn_fkey;
-    json_array_foreach(child_list, idx, jn_fkey) {
+    int idx; json_t *child;
+    json_array_foreach(child_list, idx, child) {
         if(kw_get_bool(jn_options, "only_id", 0, KW_WILD_NUMBER) ||
             kw_get_bool(jn_options, "hook_only_id", 0, KW_WILD_NUMBER)
         ) {
@@ -7098,7 +7098,8 @@ PRIVATE json_t *apply_child_list_options(
                 Return the 'hook ref' with only the 'id' field
                     ["$id",...]
              */
-            json_array_append_new(childs, json_string(child_id));
+            const char *id = kw_get_str(child, "id", 0, KW_REQUIRED);
+            json_array_append_new(childs, json_string(id));
 
         } else if(kw_get_bool(jn_options, "list_dict", 0, KW_WILD_NUMBER) ||
             kw_get_bool(jn_options, "hook_list_dict", 0, KW_WILD_NUMBER)
@@ -7107,11 +7108,15 @@ PRIVATE json_t *apply_child_list_options(
                 Return the kwid style:
                     [{"id": "$id", "topic_name":"$topic_name"}, ...]
              */
+            const char *id = kw_get_str(child, "id", 0, KW_REQUIRED);
+            const char *topic_name = kw_get_str(child, "__md_treedb__`topic_name", 0, 0);
+            json_array_append_new(childs, json_string(id));
+
             json_array_append_new(
                 childs,
                 json_pack("{s:s, s:s}",
-                    "id", child_id,
-                    "topic_name", child_topic_name
+                    "id", id,
+                    "topic_name", topic_name
                 )
             );
 
@@ -7123,6 +7128,10 @@ PRIVATE json_t *apply_child_list_options(
                         ["topic_name^id", ...]
 
             */
+            const char *id = kw_get_str(child, "id", 0, KW_REQUIRED);
+            const char *topic_name = kw_get_str(child, "__md_treedb__`topic_name", 0, 0);
+            char ref[NAME_MAX];
+            snprintf(ref, sizeof(ref), "%s^%s", topic_name, id);
             json_array_append_new(childs, json_string(ref));
         }
     }

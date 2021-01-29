@@ -3035,7 +3035,7 @@ PUBLIC json_t *kwid_new_list(
             const char *key; json_t *v;
             json_object_foreach(jn, key, v) {
                 if(!kw_has_key(v, "id")) {
-                    json_object_set_new(v, "id", json_string(key)); // WARNING id hardcorded
+                    json_object_set_new(v, "id", json_string(key)); // WARNING id added
                 }
                 json_array_append(new_list, v);
             }
