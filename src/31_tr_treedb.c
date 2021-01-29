@@ -71,9 +71,8 @@ PRIVATE int search_and_remove_wrong_up_ref(
     const char *ref
 );
 
-PRIVATE json_t *get_hook_refs(
-    json_t *hook_data, // NOT owned
-    BOOL original_node
+PRIVATE json_t *get_hook_list(
+    json_t *hook_data // NOT owned
 );
 PRIVATE json_t *get_fkey_refs(
     json_t *field_data // NOT owned
@@ -3300,9 +3299,8 @@ PRIVATE int load_all_links(
 
     return a new list of all node's mix_id
  ***************************************************************************/
-PRIVATE json_t *get_hook_refs(
-    json_t *hook_data, // NOT owned
-    BOOL original_node
+PRIVATE json_t *get_hook_list(
+    json_t *hook_data // NOT owned
 )
 {
     char mix_id[NAME_MAX];
@@ -3407,10 +3405,6 @@ PRIVATE json_t *get_hook_refs(
                             break;
                         } else if(ampersands == 2) {
                             break;
-                        } else if(ampersands == 1 && !original_node) {
-                            // Can be a collapsed node
-                            json_array_append(refs, jn_value);
-                            break;
                         }
                     }
                 default:
@@ -3511,26 +3505,6 @@ PRIVATE BOOL json_empty(json_t *value)
 }
 
 /***************************************************************************
- *
- ***************************************************************************/
-PRIVATE json_int_t json_size(json_t *value)
-{
-    if(!value) {
-        return 0;
-    }
-    switch(json_typeof(value)) {
-    case JSON_ARRAY:
-        return json_array_size(value);
-    case JSON_OBJECT:
-        return json_object_size(value);
-    case JSON_STRING:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-/***************************************************************************
  *  Used in delete_node to get all down refs
  ***************************************************************************/
 PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
@@ -3543,7 +3517,6 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
     json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
-    BOOL original_node = kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0);
 
     const char *col_name; json_t *col;
     json_object_foreach(cols, col_name, col) {
@@ -3571,12 +3544,12 @@ PRIVATE json_t *get_node_down_refs(  // Return MUST be decref
             continue;
         }
 
-        json_t *ref = get_hook_refs(field_data, original_node);
-        json_array_extend(refs, ref);
-        JSON_DECREF(ref);
+        json_t *child_list = get_hook_list(field_data);
+        json_array_extend(refs, child_list);
+        json_decref(child_list);
     }
 
-    JSON_DECREF(cols);
+    json_decref(cols);
     return refs;
 }
 
@@ -4376,7 +4349,8 @@ PUBLIC int treedb_delete_node(
                 json_t *childs = treedb_list_childs(
                     tranger,
                     hook,
-                    node
+                    node,
+                    0
                 );
                 int idx; json_t *child;
                 json_array_foreach(childs, idx, child) {
@@ -4679,7 +4653,8 @@ PUBLIC int treedb_delete_instance(
                 json_t *childs = treedb_list_childs(
                     tranger,
                     hook,
-                    node
+                    node,
+                    0
                 );
                 int idx; json_t *child;
                 json_array_foreach(childs, idx, child) {
@@ -6466,35 +6441,43 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
 /***************************************************************************
     Return a view of node with hook fields being collapsed
     WARNING extra fields are ignored, only topic desc fields are used
-    Options
-    -------
-    "refs" (WARNING Default)
-        Return 'fkey ref'
-            ["topic_name^id^hook_name"]
-        Return 'hook ref'
-            ["topic_name^id"]
 
-    "only_id"
-        Return the 'fkey ref' with only the 'id' field
-            ["$id",...]
+    fkey,hook options
+    -----------------
+    "refs" (default) "hook_refs"
+        Return 'fkey ref'
+            ["topic_name^id^hook_name", ...]
+
+    "refs" (default) "fkey_refs"
+        Return 'hook ref'
+            ["topic_name^id", ...]
+
+
+    "only_id" "hook_only_id"
         Return the 'hook ref' with only the 'id' field
             ["$id",...]
 
-    "list_dict"
+    "only_id" "fkey_only_id"
+        Return the 'fkey ref' with only the 'id' field
+            ["$id",...]
+
+
+    "list_dict" "hook_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
+
+    "list_dict" "fkey_list_dict"
         Return the kwid style:
             [{"id": "$id", "topic_name":"$topic_name"}, ...]
 
-    "size"
+
+    "size" "hook_size"
         Return the kwid style:
-            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}, ...]
-        Return the kwid style:
-            [{"topic_name":"$topic_name", "size": $size}, ...]
+            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}]
+
 
     "with-metadata"
         Return with metadata
-
 
  ***************************************************************************/
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
@@ -6524,7 +6507,6 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
      *-------------------------------*/
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
-    BOOL original_node = kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0);
     json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
 
     BOOL with_metadata = kw_get_bool(jn_options, "with-metadata", 0, KW_WILD_NUMBER);
@@ -6555,11 +6537,11 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
                 json_array(),
                 KW_CREATE
             );
-            json_t *refs = get_hook_refs(field_data, original_node);
-            json_t *childs = apply_child_ref_options(refs, jn_options);
+            json_t *child_list = get_hook_list(field_data);
+            json_t *childs = apply_child_ref_options(child_list, jn_options);
             json_array_extend(list, childs);
             json_decref(childs);
-            json_decref(refs);
+            json_decref(child_list);
 
         } else if(is_fkey) {
             json_t *list = kw_get_dict_value(
@@ -6898,6 +6880,26 @@ PUBLIC json_t *treedb_list_instances( // Return MUST be decref
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE json_int_t json_size(json_t *value)
+{
+    if(!value) {
+        return 0;
+    }
+    switch(json_typeof(value)) {
+    case JSON_ARRAY:
+        return json_array_size(value);
+    case JSON_OBJECT:
+        return json_object_size(value);
+    case JSON_STRING:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE json_t *apply_parent_ref_options(
     json_t *refs,  // NOT owned
     json_t *jn_options // NOT owned
@@ -6962,89 +6964,6 @@ PRIVATE json_t *apply_parent_ref_options(
         }
     }
 
-    return parents;
-}
-
-/***************************************************************************
- *  Return a list of parent **references** pointed by the link (fkey)
- ***************************************************************************/
-PUBLIC json_t *treedb_list_parents( // Return MUST be decref
-    json_t *tranger,
-    const char *link, // must be a fkey field
-    json_t *node, // NOT owned
-    json_t *jn_options // owned, fkey options
-)
-{
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, KW_REQUIRED);
-    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
-    json_t *col = kw_get_dict_value(cols, link, 0, 0);
-    if(!col) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "link not found in the desc",
-            "topic_name",   "%s", topic_name,
-            "link",         "%s", link,
-            NULL
-        );
-        log_debug_json(0, node, "link not found in the desc");
-        JSON_DECREF(jn_options);
-        JSON_DECREF(cols);
-        return 0;
-    }
-    json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
-    BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
-    if(!is_fkey) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "link is not a fkey in the node",
-            "topic_name",   "%s", topic_name,
-            "link",         "%s", link,
-            NULL
-        );
-        log_debug_json(0, node, "link is not a fkey in the node");
-        JSON_DECREF(jn_options);
-        JSON_DECREF(cols);
-        return 0;
-    }
-
-    json_t *field_data = kw_get_dict_value(node, link, 0, 0);
-    if(!field_data) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "link not found in the node",
-            "topic_name",   "%s", topic_name,
-            "link",         "%s", link,
-            NULL
-        );
-        log_debug_json(0, node, "link not found in the node");
-    }
-
-    if(kw_get_bool(jn_options, "size", 0, KW_WILD_NUMBER)) {
-        json_t *jn_size = json_array();
-        json_array_append_new(jn_size, json_integer(json_size(field_data)));
-        JSON_DECREF(jn_options);
-        JSON_DECREF(cols);
-        return jn_size;
-    }
-
-    if(json_empty(field_data)) {
-        JSON_DECREF(jn_options);
-        JSON_DECREF(cols);
-        return json_array();
-    }
-
-    json_t *refs = get_fkey_refs(field_data);
-    json_t *parents = apply_parent_ref_options(refs, jn_options);
-    JSON_DECREF(refs);
-
-    JSON_DECREF(jn_options);
-    JSON_DECREF(cols);
     return parents;
 }
 
@@ -7116,12 +7035,13 @@ PRIVATE json_t *apply_child_ref_options(
 }
 
 /***************************************************************************
- *  Return a list of childs of the hook
+ *  Return a list of parent **references** pointed by the link (fkey)
  ***************************************************************************/
-PUBLIC json_t *treedb_list_childs(
+PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
-    const char *hook,
-    json_t *node // NOT owned
+    const char *fkey,
+    json_t *node,       // NOT owned, pure node
+    json_t *jn_options  // owned, fkey options
 )
 {
     /*------------------------------*
@@ -7136,24 +7056,165 @@ PUBLIC json_t *treedb_list_childs(
             NULL
         );
         log_debug_json(0, node, "Not a pure node");
+        JSON_DECREF(jn_options);
         return 0;
     }
 
-    json_t *childs = json_array();
-    json_t *hook_data = kw_get_dict_value(node, hook, 0, 0);
+    /*-------------------------------*
+     *      Get node info
+     *-------------------------------*/
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
-    if(json_is_array(hook_data)) {
-        int idx; json_t *child;
-        json_array_foreach(hook_data, idx, child) {
-            json_array_append(childs, child);
-        }
-    } else if(json_is_object(hook_data)) {
-        const char *id; json_t *child;
-        json_object_foreach(hook_data, id, child) {
-            json_array_append(childs, child);
-        }
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    json_t *col = kw_get_dict_value(cols, fkey, 0, 0);
+    if(!col) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "fkey not found in the desc",
+            "topic_name",   "%s", topic_name,
+            "fkey",         "%s", fkey,
+            NULL
+        );
+        log_debug_json(0, cols, "fkey not found in the desc");
+        JSON_DECREF(jn_options);
+        json_decref(cols);
+        return 0;
+    }
+    json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+    BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+    if(!is_fkey) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "not a fkey",
+            "topic_name",   "%s", topic_name,
+            "fkey",         "%s", fkey,
+            NULL
+        );
+        log_debug_json(0, cols, "not a fkey");
+        JSON_DECREF(jn_options);
+        json_decref(cols);
+        return 0;
     }
 
+    json_t *field_data = kw_get_dict_value(node, fkey, 0, 0);
+    if(!field_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "fkey data not found in the node",
+            "topic_name",   "%s", topic_name,
+            "fkey",         "%s", fkey,
+            NULL
+        );
+        log_debug_json(0, node, "fkey data not found in the node");
+        JSON_DECREF(jn_options);
+        json_decref(cols);
+        return 0;
+    }
+
+    json_t *refs = get_fkey_refs(field_data);
+    json_t *parents = apply_parent_ref_options(refs, jn_options);
+    json_decref(refs);
+
+    JSON_DECREF(jn_options);
+    json_decref(cols);
+    return parents;
+}
+
+/***************************************************************************
+ *  Return a list of childs of the hook
+ ***************************************************************************/
+PUBLIC json_t *treedb_list_childs(
+    json_t *tranger,
+    const char *hook,
+    json_t *node,       // NOT owned, pure node
+    json_t *jn_options  // owned, fkey options
+)
+{
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    /*-------------------------------*
+     *      Get node info
+     *-------------------------------*/
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
+
+    json_t *cols = tranger_dict_topic_desc(tranger, topic_name);
+    json_t *col = kw_get_dict_value(cols, hook, 0, 0);
+    if(!col) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "hook not found in the desc",
+            "topic_name",   "%s", topic_name,
+            "hook",         "%s", hook,
+            NULL
+        );
+        log_debug_json(0, cols, "hook not found in the desc");
+        JSON_DECREF(jn_options);
+        json_decref(cols);
+        return 0;
+    }
+    json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
+    BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
+    if(!is_hook) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "not a hook",
+            "topic_name",   "%s", topic_name,
+            "hook",         "%s", hook,
+            NULL
+        );
+        log_debug_json(0, cols, "not a hook");
+        JSON_DECREF(jn_options);
+        json_decref(cols);
+        return 0;
+    }
+
+    json_t *field_data = kw_get_dict_value(node, hook, 0, 0);
+    if(!field_data) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "hook data not found in the node",
+            "topic_name",   "%s", topic_name,
+            "hook",         "%s", hook,
+            NULL
+        );
+        log_debug_json(0, node, "hook data not found in the node");
+        JSON_DECREF(jn_options);
+        json_decref(cols);
+        return 0;
+    }
+
+    json_t *child_list = get_hook_list(field_data);
+    json_t *childs = apply_parent_ref_options(child_list, jn_options);
+    json_decref(child_list);
+
+    JSON_DECREF(jn_options);
+    json_decref(cols);
     return childs;
 }
 
