@@ -1924,10 +1924,14 @@ PUBLIC json_t *topic_desc_fkey_names(
 
 /***************************************************************************
  *  Usado en set_tranger_field_value(), to write the fkey in tranger file
+ *  type: "list", "dict", "string"
  ***************************************************************************/
-PRIVATE json_t *filtra_fkeys(json_t *value)
+PRIVATE json_t *filtra_fkeys(
+    const char *type,
+    json_t *value  // not owned
+)
 {
-    json_t *mix_ids = 0;
+    json_t *jn_list = json_array();
 
     switch(json_typeof(value)) {
     case JSON_ARRAY:
@@ -1938,19 +1942,42 @@ PRIVATE json_t *filtra_fkeys(json_t *value)
                     // String format
                     const char *id = json_string_value(v);
                     if(count_char(id, '^')==2) {
-                        if(!mix_ids) {
-                            mix_ids = json_array();
-                        }
-                        json_array_append_new(mix_ids, json_string(id));
+                        json_array_append_new(jn_list, json_string(id));
+                    } else {
+                        log_error(0,
+                            "gobj",         "%s", __FILE__,
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                            "msg",          "%s", "Wrong fkey reference: must be \"topic_name^id^hook_name\"",
+                            "ref",          "%s", id,
+                            NULL
+                        );
+                        json_decref(jn_list);
+                        return 0;
                     }
                 } else if(json_typeof(v)==JSON_OBJECT) {
-                    // Message format **FKEY**
-                    if(kw_has_key(v, "__md_fkey__")) {
-                        if(!mix_ids) {
-                            mix_ids = json_array();
-                        }
-                        json_array_append(mix_ids, v);
+                    char temp[NAME_MAX];
+                    const char *id = kw_get_str(v, "id", 0, 0);
+                    const char *topic_name = kw_get_str(v, "topic_name", 0, 0);
+                    const char *hook_name = kw_get_str(v, "hook_name", 0, 0);
+                    if(!id || !topic_name || !hook_name) {
+                        log_error(0,
+                            "gobj",         "%s", __FILE__,
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                            "msg",          "%s", "Wrong fkey reference: must be {topic_name,id,hook_name}",
+                            "ref",          "%j", v,
+                            NULL
+                        );
+                        json_decref(jn_list);
+                        return 0;
                     }
+                    snprintf(temp, sizeof(temp), "%s^%s^%s",
+                        topic_name,
+                        id,
+                        hook_name
+                    );
+                    json_array_append_new(jn_list, json_string(temp));
                 }
             }
         }
@@ -1960,33 +1987,96 @@ PRIVATE json_t *filtra_fkeys(json_t *value)
             const char *id; json_t *v;
             json_object_foreach(value, id, v) {
                 if(count_char(id, '^')==2) {
-                    if(!mix_ids) {
-                        mix_ids = json_object();
-                    }
-                    json_object_set_new(mix_ids, id, json_true());
-                } else if(json_typeof(v)==JSON_OBJECT) {
-                    // Message format **FKEY**
-                    if(kw_has_key(v, "__md_fkey__")) {
-                        if(!mix_ids) {
-                            mix_ids = json_array();
-                        }
-                        json_object_set(mix_ids, id, v);
-                    }
+                    json_array_append_new(jn_list, json_string(id));
+                } else {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "Wrong fkey reference: must be \"topic_name^id^hook_name\"",
+                        "ref",          "%s", id,
+                        "v",            "%j", v,
+                        NULL
+                    );
+                    json_decref(jn_list);
+                    return 0;
                 }
             }
         }
         break;
     case JSON_STRING:
         {
-            const char *v = json_string_value(value);
-            if(count_char(v, '^')==2) {
-                mix_ids = json_string(v);
+            const char *id = json_string_value(value);
+            if(count_char(id, '^')==2) {
+                json_array_append_new(jn_list, json_string(id));
+            } else {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "Wrong fkey reference: must be \"topic_name^id^hook_name\"",
+                    "ref",          "%s", id,
+                    NULL
+                );
+                json_decref(jn_list);
+                return 0;
             }
         }
         break;
     default:
-        break;
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "Wrong fkey reference: type unknown",
+            "v",            "%j", value,
+            NULL
+        );
+        json_decref(jn_list);
+        return 0;
     }
+
+    json_t *mix_ids = 0;
+
+    SWITCHS(type) {
+        CASES("list")
+            mix_ids = json_incref(jn_list);
+            break;
+
+        CASES("dict")
+            mix_ids = json_object();
+            int idx; json_t *v;
+            json_array_foreach(jn_list, idx, v) {
+                json_object_set_new(mix_ids, json_string_value(v), json_true());
+            }
+            break;
+
+        CASES("string")
+            if(json_array_size(jn_list) > 1) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "Wrong fkey reference: must be one string",
+                    "list",         "%j", jn_list,
+                    NULL
+                );
+                json_decref(jn_list);
+                return 0;
+
+            } else if(json_array_size(jn_list) == 1) {
+                mix_ids = json_string(json_string_value(json_array_get(jn_list, 0)));
+
+            } else {
+                mix_ids = json_string("");
+            }
+            break;
+
+        DEFAULTS
+            break;
+    } SWITCHS_END;
+
+    json_decref(jn_list);
 
     return mix_ids;
 }
@@ -2095,6 +2185,37 @@ PRIVATE int set_tranger_field_value(
 
     SWITCHS(type) {
         CASES("hook")
+            SWITCHS(real_type) {
+                CASES("list")
+                CASES("array")
+                    json_object_set_new(record, field, json_array());
+                    break;
+
+                CASES("dict")
+                CASES("object")
+                    json_object_set_new(record, field, json_object());
+                    break;
+
+                CASES("string")
+                    json_object_set_new(record, field, json_string(""));
+                    break;
+
+                DEFAULTS
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Bad hook col type ",
+                        "topic_name",   "%s", topic_name,
+                        "col",          "%j", col,
+                        "field",        "%s", field,
+                        "type",         "%s", type,
+                        NULL
+                    );
+                    return -1;
+            } SWITCHS_END;
+            break;
+
         CASES("fkey")
             SWITCHS(real_type) {
                 CASES("list")
@@ -2102,12 +2223,12 @@ PRIVATE int set_tranger_field_value(
                     if(create) {
                         json_object_set_new(record, field, json_array());
                     } else {
-                        json_t *mix_ids = 0;
-                        if(is_fkey && (mix_ids=filtra_fkeys(value))) {
-                            json_object_set_new(record, field, mix_ids);
-                        } else {
-                            json_object_set_new(record, field, json_array());
+                        json_t *mix_ids = filtra_fkeys("list", value);
+                        if(!mix_ids) {
+                            // Error already logged
+                            return -1;
                         }
+                        json_object_set_new(record, field, mix_ids);
                     }
                     break;
 
@@ -2117,12 +2238,12 @@ PRIVATE int set_tranger_field_value(
                         // No dejes poner datos en la creación.
                         json_object_set_new(record, field, json_object());
                     } else {
-                        json_t *mix_ids = 0;
-                        if(is_fkey && (mix_ids=filtra_fkeys(value))) {
-                            json_object_set_new(record, field, mix_ids);
-                        } else {
-                            json_object_set_new(record, field, json_object());
+                        json_t *mix_ids = filtra_fkeys("dict", value);
+                        if(!mix_ids) {
+                            // Error already logged
+                            return -1;
                         }
+                        json_object_set_new(record, field, mix_ids);
                     }
                     break;
 
@@ -2131,12 +2252,12 @@ PRIVATE int set_tranger_field_value(
                         // No dejes poner datos en la creación.
                         json_object_set_new(record, field, json_string(""));
                     } else {
-                        json_t *mix_ids = 0;
-                        if(is_fkey && (mix_ids=filtra_fkeys(value))) {
-                            json_object_set_new(record, field, mix_ids);
-                        } else {
-                            json_object_set_new(record, field, json_string(""));
+                        json_t *mix_ids = filtra_fkeys("string", value);
+                        if(!mix_ids) {
+                            // Error already logged
+                            return -1;
                         }
+                        json_object_set_new(record, field, mix_ids);
                     }
                     break;
 
@@ -2145,7 +2266,7 @@ PRIVATE int set_tranger_field_value(
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "Bad hook/fkey col type ",
+                        "msg",          "%s", "Bad fkey col type ",
                         "topic_name",   "%s", topic_name,
                         "col",          "%j", col,
                         "field",        "%s", field,
@@ -5864,7 +5985,7 @@ PRIVATE int _unlink_nodes(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
+PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
     json_t *tranger,
     json_t *node,           // NOT owned, pure node
     json_t *kw, // owned
@@ -5924,129 +6045,98 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
          *  HERE only fkeys
          *  link fkeys
          */
-        json_t *new_fkeys = kw_get_dict_value(kw, col_name, 0, 0); // Not yours GILIPOLLAS
-
-        int idx;
+        json_t *fv = kw_get_dict_value(kw, col_name, 0, 0); // Not yours GILIPOLLAS
+        if(!fv) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "fkey empty",
+                "col",          "%s", col_name,
+                NULL
+            );
+            JSON_DECREF(cols);
+            JSON_DECREF(kw);
+            return -1;
+        }
+        json_t *jn_fkeys = filtra_fkeys("list", fv);
+        if(!jn_fkeys) {
+            // Error already logged
+            JSON_DECREF(cols);
+            JSON_DECREF(kw);
+            return -1;
+        }
 
         /*-------------------------------*
          *      Add new links
          *-------------------------------*/
-        if(json_is_string(new_fkeys)) {
-            do {
-                // **FKEY**
-                const char *ref = json_string_value(new_fkeys);
-                if(empty_string(ref)) {
-                    break;
-                }
+        int idx;
+        json_t *new_fkey;
+        json_array_foreach(jn_fkeys, idx, new_fkey) {
+            // **FKEY**
+            const char *ref = json_string_value(new_fkey);
 
-                /*
-                 *  Get parent info
-                 */
-                if(!decode_parent_ref(
-                    ref,
-                    parent_topic_name, sizeof(parent_topic_name),
-                    parent_id, sizeof(parent_id),
-                    hook_name, sizeof(hook_name)
-                )) {
-                    // It's not a fkey
-                    log_error(0,
-                        "gobj",                 "%s", __FILE__,
-                        "function",             "%s", __FUNCTION__,
-                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                        "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
-                        "ref",                  "%s", ref,
-                        NULL
-                    );
-                    break;
-                }
-
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
-                    tranger,
-                    treedb_name,
-                    parent_topic_name,
-                    parent_id
+            /*
+             *  Get parent info
+             */
+            if(!decode_parent_ref(
+                ref,
+                parent_topic_name, sizeof(parent_topic_name),
+                parent_id, sizeof(parent_id),
+                hook_name, sizeof(hook_name)
+            )) {
+                // It's not a fkey
+                log_error(0,
+                    "gobj",                 "%s", __FILE__,
+                    "function",             "%s", __FUNCTION__,
+                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                    "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
+                    "ref",                  "%s", ref,
+                    NULL
                 );
-                if(!parent_node) {
-                    log_error(0,
-                        "gobj",                 "%s", __FILE__,
-                        "function",             "%s", __FUNCTION__,
-                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                        "msg",                  "%s", "update_node, new link: parent node not found",
-                        "parent",               "%s", ref,
-                        NULL
-                    );
-                    break;
-                }
+                json_decref(jn_fkeys);
+                json_decref(cols);
+                JSON_DECREF(kw);
+                return -1;
+            }
 
-                if(_link_nodes(
-                    tranger,
-                    hook_name,
-                    parent_node,    // NOT owned
-                    node      // NOT owned
-                )==0) {
-                    to_save = TRUE;
-                }
-
-            } while(0);
-
-        } else {
-            json_t *new_fkey;
-            json_array_foreach(new_fkeys, idx, new_fkey) {
-                // **FKEY**
-                const char *ref = json_string_value(new_fkey);
-                if(empty_string(ref)) {
-                    continue;
-                }
-
-                /*
-                 *  Get parent info
-                 */
-                if(!decode_parent_ref(
-                    ref,
-                    parent_topic_name, sizeof(parent_topic_name),
-                    parent_id, sizeof(parent_id),
-                    hook_name, sizeof(hook_name)
-                )) {
-                    // It's not a fkey
-                    log_error(0,
-                        "gobj",                 "%s", __FILE__,
-                        "function",             "%s", __FUNCTION__,
-                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                        "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
-                        "ref",                  "%s", ref,
-                        NULL
-                    );
-                    continue;
-                }
-
-                json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
-                    tranger,
-                    treedb_name,
-                    parent_topic_name,
-                    parent_id
+            json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
+                tranger,
+                treedb_name,
+                parent_topic_name,
+                parent_id
+            );
+            if(!parent_node) {
+                log_error(0,
+                    "gobj",                 "%s", __FILE__,
+                    "function",             "%s", __FUNCTION__,
+                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                    "msg",                  "%s", "update_node, new link: parent node not found",
+                    "parent",               "%s", ref,
+                    NULL
                 );
-                if(!parent_node) {
-                    log_error(0,
-                        "gobj",                 "%s", __FILE__,
-                        "function",             "%s", __FUNCTION__,
-                        "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                        "msg",                  "%s", "update_node, new link: parent node not found",
-                        "parent",               "%s", ref,
-                        NULL
-                    );
-                    continue;
-                }
+                json_decref(jn_fkeys);
+                json_decref(cols);
+                JSON_DECREF(kw);
+                return -1;
+            }
 
-                if(_link_nodes(
-                    tranger,
-                    hook_name,
-                    parent_node,    // NOT owned
-                    node      // NOT owned
-                )==0) {
-                    to_save = TRUE;
-                }
+            if(_link_nodes(
+                tranger,
+                hook_name,
+                parent_node,    // NOT owned
+                node      // NOT owned
+            )==0) {
+                to_save = TRUE;
+            } else {
+                // Error already logged
+                json_decref(jn_fkeys);
+                json_decref(cols);
+                JSON_DECREF(kw);
+                return -1;
             }
         }
+        json_decref(jn_fkeys);
     }
 
     if(save) {
@@ -6055,8 +6145,8 @@ PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
         }
     }
 
-    JSON_DECREF(kw);
     JSON_DECREF(cols);
+    JSON_DECREF(kw);
     return 0;
 }
 

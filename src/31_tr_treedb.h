@@ -312,7 +312,7 @@ PUBLIC int treedb_clean_node( // remove all links (fkeys)
     json_t *node,           // NOT owned, pure node
     BOOL save
 );
-PUBLIC int treedb_auto_link( // use fkeys fields of kw to auto-link
+PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
     json_t *tranger,
     json_t *node,           // NOT owned, pure node
     json_t *kw, // owned
