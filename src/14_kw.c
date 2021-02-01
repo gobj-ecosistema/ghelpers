@@ -2987,7 +2987,7 @@ PUBLIC json_t *kwid_get( // Return is NOT YOURS
 /***************************************************************************
     Utility for databases.
     Return a new list from a "dict of records" or "list of records"
-    WARNING the "id" of a dict's record is hardcorded to his key if not exist.
+    WARNING the "id" of a dict's record is hardcorded to his key.
     Convention:
         - all arrays are list of records (dicts) with "id" field as primary key
         - delimiter is '`' and '.'
@@ -3034,9 +3034,7 @@ PUBLIC json_t *kwid_new_list(
             new_list = json_array();
             const char *key; json_t *v;
             json_object_foreach(jn, key, v) {
-                if(!kw_has_key(v, "id")) {
-                    json_object_set_new(v, "id", json_string(key)); // WARNING id added
-                }
+                json_object_set_new(v, "id", json_string(key)); // WARNING id hardcorded
                 json_array_append(new_list, v);
             }
         }

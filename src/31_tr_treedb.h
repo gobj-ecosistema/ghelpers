@@ -392,7 +392,7 @@ PUBLIC int treedb_unlink_nodes(
     Other options
     -------------
 
-    "with-metadata"
+    "with_metadata"
         Return with metadata
 
     HACK id is converted in ids (using kwid_get_ids())

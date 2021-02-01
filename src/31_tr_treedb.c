@@ -109,6 +109,11 @@ PRIVATE json_t *apply_child_list_options(
     json_t *child_list,  // NOT owned
     json_t *jn_options // NOT owned
 );
+PRIVATE json_t *_list_childs(
+    json_t *tranger,
+    const char *hook,
+    json_t *node       // NOT owned, pure node
+);
 
 /***************************************************************
  *              Data
@@ -741,7 +746,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "flag",
                 "persistent", "required",
         "description",
-            "id", "date",
+            "id", "description",
             "header", "Description",
             "fillspace", 40,
             "type", "string",
@@ -1927,6 +1932,8 @@ PUBLIC json_t *topic_desc_fkey_names(
  *  type: "list", "dict", "string"
  ***************************************************************************/
 PRIVATE json_t *filtra_fkeys(
+    const char *topic_name,
+    const char *col_name,
     const char *type,
     json_t *value  // not owned
 )
@@ -1941,6 +1948,9 @@ PRIVATE json_t *filtra_fkeys(
                 if(json_typeof(v)==JSON_STRING) {
                     // String format
                     const char *id = json_string_value(v);
+                    if(empty_string(id)) {
+                        continue;
+                    }
                     if(count_char(id, '^')==2) {
                         json_array_append_new(jn_list, json_string(id));
                     } else {
@@ -1949,6 +1959,8 @@ PRIVATE json_t *filtra_fkeys(
                             "function",     "%s", __FUNCTION__,
                             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                             "msg",          "%s", "Wrong fkey reference: must be \"topic_name^id^hook_name\"",
+                            "topic_name",   "%s", topic_name,
+                            "col_name",     "%s", col_name,
                             "ref",          "%s", id,
                             NULL
                         );
@@ -1966,6 +1978,8 @@ PRIVATE json_t *filtra_fkeys(
                             "function",     "%s", __FUNCTION__,
                             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                             "msg",          "%s", "Wrong fkey reference: must be {topic_name,id,hook_name}",
+                            "topic_name",   "%s", topic_name,
+                            "col_name",     "%s", col_name,
                             "ref",          "%j", v,
                             NULL
                         );
@@ -1994,6 +2008,8 @@ PRIVATE json_t *filtra_fkeys(
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                         "msg",          "%s", "Wrong fkey reference: must be \"topic_name^id^hook_name\"",
+                        "topic_name",   "%s", topic_name,
+                        "col_name",     "%s", col_name,
                         "ref",          "%s", id,
                         "v",            "%j", v,
                         NULL
@@ -2007,6 +2023,9 @@ PRIVATE json_t *filtra_fkeys(
     case JSON_STRING:
         {
             const char *id = json_string_value(value);
+            if(empty_string(id)) {
+                break;
+            }
             if(count_char(id, '^')==2) {
                 json_array_append_new(jn_list, json_string(id));
             } else {
@@ -2015,6 +2034,8 @@ PRIVATE json_t *filtra_fkeys(
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "Wrong fkey reference: must be \"topic_name^id^hook_name\"",
+                    "topic_name",   "%s", topic_name,
+                    "col_name",     "%s", col_name,
                     "ref",          "%s", id,
                     NULL
                 );
@@ -2029,6 +2050,8 @@ PRIVATE json_t *filtra_fkeys(
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Wrong fkey reference: type unknown",
+            "topic_name",   "%s", topic_name,
+            "col_name",     "%s", col_name,
             "v",            "%j", value,
             NULL
         );
@@ -2058,6 +2081,8 @@ PRIVATE json_t *filtra_fkeys(
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "Wrong fkey reference: must be one string",
+                    "topic_name",   "%s", topic_name,
+                    "col_name",     "%s", col_name,
                     "list",         "%j", jn_list,
                     NULL
                 );
@@ -2223,7 +2248,12 @@ PRIVATE int set_tranger_field_value(
                     if(create) {
                         json_object_set_new(record, field, json_array());
                     } else {
-                        json_t *mix_ids = filtra_fkeys("list", value);
+                        json_t *mix_ids = filtra_fkeys(
+                            topic_name,
+                            field,
+                            "list",
+                            value
+                        );
                         if(!mix_ids) {
                             // Error already logged
                             return -1;
@@ -2238,7 +2268,12 @@ PRIVATE int set_tranger_field_value(
                         // No dejes poner datos en la creación.
                         json_object_set_new(record, field, json_object());
                     } else {
-                        json_t *mix_ids = filtra_fkeys("dict", value);
+                        json_t *mix_ids = filtra_fkeys(
+                            topic_name,
+                            field,
+                            "dict",
+                            value
+                        );
                         if(!mix_ids) {
                             // Error already logged
                             return -1;
@@ -2252,7 +2287,12 @@ PRIVATE int set_tranger_field_value(
                         // No dejes poner datos en la creación.
                         json_object_set_new(record, field, json_string(""));
                     } else {
-                        json_t *mix_ids = filtra_fkeys("string", value);
+                        json_t *mix_ids = filtra_fkeys(
+                            topic_name,
+                            field,
+                            "string",
+                            value
+                        );
                         if(!mix_ids) {
                             // Error already logged
                             return -1;
@@ -3870,7 +3910,12 @@ PRIVATE BOOL inherit_links(
          *  Copy fkeys
          */
         //json_t *fkeys = treedb_node_up_refs(tranger, primary_node, topic_name, col_name, FALSE);
-        json_t *fkeys = treedb_list_parents(tranger, col_name, primary_node, 0);
+        json_t *fkeys = treedb_list_parents(
+            tranger,
+            col_name,
+            primary_node,
+            json_pack("{s:b}", "refs", 1)
+        );
         json_t *cell = kw_get_dict_value(secondary_node, col_name, 0, KW_REQUIRED);
         if(cell) {
             int idx; json_t *fkey;
@@ -4468,13 +4513,14 @@ PUBLIC int treedb_delete_node(
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
     const char *id = kw_get_str(node, "id", "", 0);
+    BOOL force = kw_get_bool(jn_options, "force", 0, 0);
 
     /*-------------------------------*
      *      Get record info
      *-------------------------------*/
     json_int_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
     json_int_t __tag__ = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
-    if(__tag__) {
+    if(__tag__ && !force) {
         // añade opción de borrar un snap que desmarque los nodos?
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -4500,7 +4546,7 @@ PUBLIC int treedb_delete_node(
      *-------------------------------*/
     json_t *down_refs = get_node_down_refs(tranger, node);
     if(json_array_size(down_refs)>0) {
-        if(kw_get_bool(jn_options, "force", 0, 0)) {
+        if(force) {
             json_t *jn_hooks = treedb_get_topic_hooks(
                 tranger,
                 treedb_name,
@@ -4509,11 +4555,10 @@ PUBLIC int treedb_delete_node(
             int idx; json_t *jn_hook;
             json_array_foreach(jn_hooks, idx, jn_hook) {
                 const char *hook = json_string_value(jn_hook);
-                json_t *childs = treedb_list_childs(
+                json_t *childs = _list_childs(
                     tranger,
                     hook,
-                    node,
-                    0
+                    node
                 );
                 int idx; json_t *child;
                 json_array_foreach(childs, idx, child) {
@@ -4561,7 +4606,7 @@ PUBLIC int treedb_delete_node(
      *-------------------------------*/
     json_t *up_refs = get_node_up_refs(tranger, node);
     if(json_array_size(up_refs)>0) {
-        if(kw_get_bool(jn_options, "force", 0, 0)) {
+        if(force) {
             if(treedb_clean_node(tranger, node, FALSE)<0) {
                 to_delete = FALSE;
             }
@@ -4771,13 +4816,14 @@ PUBLIC int treedb_delete_instance(
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
     const char *id = kw_get_str(node, "id", "", 0);
+    BOOL force = kw_get_bool(jn_options, "force", 0, 0);
 
     /*-------------------------------*
      *      Get record info
      *-------------------------------*/
     json_int_t __rowid__ = kw_get_int(node, "__md_treedb__`__rowid__", 0, KW_REQUIRED);
     json_int_t __tag__ = kw_get_int(node, "__md_treedb__`__tag__", 0, KW_REQUIRED);
-    if(__tag__) {
+    if(__tag__ && !force) {
         // añade opción de borrar un snap que desmarque los nodos?
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -4804,7 +4850,7 @@ PUBLIC int treedb_delete_instance(
      *-------------------------------*/
     json_t *down_refs = get_node_down_refs(tranger, node);
     if(json_array_size(down_refs)>0) {
-        if(kw_get_bool(jn_options, "force", 0, 0)) {
+        if(force) {
             json_t *jn_hooks = treedb_get_topic_hooks(
                 tranger,
                 treedb_name,
@@ -4813,11 +4859,10 @@ PUBLIC int treedb_delete_instance(
             int idx; json_t *jn_hook;
             json_array_foreach(jn_hooks, idx, jn_hook) {
                 const char *hook = json_string_value(jn_hook);
-                json_t *childs = treedb_list_childs(
+                json_t *childs = _list_childs(
                     tranger,
                     hook,
-                    node,
-                    0
+                    node
                 );
                 int idx; json_t *child;
                 json_array_foreach(childs, idx, child) {
@@ -4865,7 +4910,7 @@ PUBLIC int treedb_delete_instance(
      *-------------------------------*/
     json_t *up_refs = get_node_up_refs(tranger, node);
     if(json_array_size(up_refs)>0) {
-        if(kw_get_bool(jn_options, "force", 0, 0)) {
+        if(force) {
             if(treedb_clean_node(tranger, node, FALSE)<0) {
                 to_delete = FALSE;
             }
@@ -6059,7 +6104,12 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
             JSON_DECREF(kw);
             return -1;
         }
-        json_t *jn_fkeys = filtra_fkeys("list", fv);
+        json_t *jn_fkeys = filtra_fkeys(
+            topic_name,
+            col_name,
+            "list",
+            fv
+        );
         if(!jn_fkeys) {
             // Error already logged
             JSON_DECREF(cols);
@@ -6608,7 +6658,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
             [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}]
 
 
-    "with-metadata"
+    "with_metadata"
         Return with metadata
 
  ***************************************************************************/
@@ -6641,7 +6691,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
 
     json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
 
-    BOOL with_metadata = kw_get_bool(jn_options, "with-metadata", 0, KW_WILD_NUMBER);
+    BOOL with_metadata = kw_get_bool(jn_options, "with_metadata", 0, KW_WILD_NUMBER);
 
     json_t *node_view = json_object();
 
@@ -7352,11 +7402,10 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 /***************************************************************************
  *  Return a list of childs of the hook
  ***************************************************************************/
-PUBLIC json_t *treedb_list_childs(
+PRIVATE json_t *_list_childs(
     json_t *tranger,
     const char *hook,
-    json_t *node,       // NOT owned, pure node
-    json_t *jn_options  // owned, fkey options
+    json_t *node       // NOT owned, pure node
 )
 {
     /*------------------------------*
@@ -7371,7 +7420,6 @@ PUBLIC json_t *treedb_list_childs(
             NULL
         );
         log_debug_json(0, node, "Not a pure node");
-        JSON_DECREF(jn_options);
         return 0;
     }
 
@@ -7393,7 +7441,6 @@ PUBLIC json_t *treedb_list_childs(
             NULL
         );
         log_debug_json(0, cols, "hook not found in the desc");
-        JSON_DECREF(jn_options);
         json_decref(cols);
         return 0;
     }
@@ -7410,7 +7457,6 @@ PUBLIC json_t *treedb_list_childs(
             NULL
         );
         log_debug_json(0, cols, "not a hook");
-        JSON_DECREF(jn_options);
         json_decref(cols);
         return 0;
     }
@@ -7427,17 +7473,38 @@ PUBLIC json_t *treedb_list_childs(
             NULL
         );
         log_debug_json(0, node, "hook data not found in the node");
-        JSON_DECREF(jn_options);
         json_decref(cols);
         return 0;
     }
 
     json_t *child_list = get_hook_list(field_data);
+
+    json_decref(cols);
+    return child_list;
+}
+
+/***************************************************************************
+ *  Return a list of childs of the hook
+ ***************************************************************************/
+PUBLIC json_t *treedb_list_childs(
+    json_t *tranger,
+    const char *hook,
+    json_t *node,       // NOT owned, pure node
+    json_t *jn_options  // owned, fkey options
+)
+{
+
+    json_t *child_list = _list_childs(tranger, hook, node);
+    if(!child_list) {
+        // Error already logged
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
     json_t *childs = apply_child_list_options(child_list, jn_options);
     json_decref(child_list);
 
     JSON_DECREF(jn_options);
-    json_decref(cols);
     return childs;
 }
 
@@ -7688,7 +7755,6 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
         "description", description,
         "active", 0
     );
-
     json_t *snap = treedb_create_node( // Return is NOT YOURS, pure node
         tranger,
         treedb_name,
