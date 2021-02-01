@@ -2211,11 +2211,6 @@ PRIVATE int set_tranger_field_value(
     SWITCHS(type) {
         CASES("hook")
             SWITCHS(real_type) {
-                CASES("list")
-                CASES("array")
-                    json_object_set_new(record, field, json_array());
-                    break;
-
                 CASES("dict")
                 CASES("object")
                     json_object_set_new(record, field, json_object());
@@ -2225,6 +2220,8 @@ PRIVATE int set_tranger_field_value(
                     json_object_set_new(record, field, json_string(""));
                     break;
 
+                CASES("list")  // HACK disable lists for hooks
+                CASES("array")
                 DEFAULTS
                     log_error(0,
                         "gobj",         "%s", __FILE__,
