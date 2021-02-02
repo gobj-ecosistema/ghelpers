@@ -678,15 +678,17 @@ PUBLIC json_t *kw_get_dict(
         return default_value;
     }
     if(!json_is_object(jn_dict)) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path MUST BE a json dict, default value returned",
-            "path",         "%s", path,
-            NULL
-        );
-        log_debug_json(0, kw, "path '%s' MUST BE a json dict, default value returned", path);
+        if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json dict, default value returned",
+                "path",         "%s", path,
+                NULL
+            );
+            log_debug_json(0, kw, "path '%s' MUST BE a json dict, default value returned", path);
+        }
         return default_value;
     }
     JSON_DECREF(default_value);
@@ -728,14 +730,16 @@ PUBLIC json_t *kw_get_list(
         return default_value;
     }
     if(!json_is_array(jn_list)) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "path MUST BE a json list",
-            "path",         "%s", path,
-            NULL
-        );
+        if(flag & KW_REQUIRED) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "path MUST BE a json list",
+                "path",         "%s", path,
+                NULL
+            );
+        }
         return default_value;
     }
     JSON_DECREF(default_value);
@@ -936,7 +940,7 @@ PUBLIC BOOL kw_get_bool(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json bool",
+                "msg",          "%s", "x",
                 "path",         "%s", path,
                 NULL
             );
