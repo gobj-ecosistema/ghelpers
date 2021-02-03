@@ -1261,7 +1261,9 @@ PUBLIC const char *kw_get_list_str(json_t *list, size_t idx)
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "list MUST BE a json array",
-            NULL);
+            NULL
+        );
+        log_debug_json(0, list, "list MUST BE a json array");
         return 0;
     }
 
@@ -1272,7 +1274,8 @@ PUBLIC const char *kw_get_list_str(json_t *list, size_t idx)
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "value MUST BE a json string",
-            NULL);
+            NULL
+        );
         return 0;
     }
 

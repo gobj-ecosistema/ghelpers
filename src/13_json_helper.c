@@ -29,9 +29,6 @@ PUBLIC json_t * nonlegalstring2json(const char *str, BOOL verbose)
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "json_loads(1) FAILED",
                 "str",          "%s", str,
@@ -61,9 +58,6 @@ PUBLIC json_t * nonlegalbuffer2json(const char *bf, size_t len, BOOL verbose)
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "json_loads(2) FAILED",
                 "error",        "%s", error.text,
@@ -92,9 +86,6 @@ PUBLIC json_t * nonlegalfile2json(const char *path, BOOL verbose)
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "json_load_file() FAILED",
                 "path",         "%s", path,
@@ -124,9 +115,6 @@ PUBLIC json_t * legalstring2json(const char* str, BOOL verbose)
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "json_loads(3) FAILED",
                 "str",          "%s", str,
@@ -370,6 +358,7 @@ PUBLIC BOOL json_str_in_list(json_t *jn_list, const char *str, BOOL ignore_case)
             "msg",          "%s", "list MUST BE a json array",
             NULL
         );
+        log_debug_json(0, jn_list, "list MUST BE a json array");
         return FALSE;
     }
     if(!str) {
@@ -412,13 +401,11 @@ PUBLIC const char *json_list_str(json_t *jn_list, size_t idx)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "list MUST BE a json array",
             NULL
         );
+        log_debug_json(0, jn_list, "list MUST BE a json array");
         return 0;
     }
 
@@ -427,9 +414,6 @@ PUBLIC const char *json_list_str(json_t *jn_list, size_t idx)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "value MUST BE a json string",
             NULL);
@@ -449,13 +433,11 @@ PUBLIC size_t json_list_str_index(json_t *jn_list, const char *str, BOOL ignore_
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "list MUST BE a json array",
             NULL
         );
+        log_debug_json(0, jn_list, "list MUST BE a json array");
         return 0;
     }
 
@@ -491,13 +473,11 @@ PUBLIC json_int_t json_list_int(json_t *jn_list, size_t idx)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "list MUST BE a json array",
             NULL
         );
+        log_debug_json(0, jn_list, "list MUST BE a json array");
         return 0;
     }
 
@@ -506,9 +486,6 @@ PUBLIC json_int_t json_list_int(json_t *jn_list, size_t idx)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "value MUST BE a json integer",
             NULL);
@@ -528,13 +505,11 @@ PUBLIC size_t json_list_int_index(json_t *jn_list, json_int_t value)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "list MUST BE a json array",
             NULL
         );
+        log_debug_json(0, jn_list, "list MUST BE a json array");
         return 0;
     }
 
@@ -787,9 +762,6 @@ PRIVATE int json_list_update(json_t *list, json_t *other, BOOL as_set)
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "parameters must be lists",
             NULL
@@ -825,9 +797,6 @@ PUBLIC json_t *json_listsrange2set(json_t *listsrange) // not owned
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "parameters must be lists",
             NULL
@@ -1040,9 +1009,6 @@ PUBLIC json_t *create_json_record(
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "DESC null",
             NULL
@@ -1056,9 +1022,6 @@ PUBLIC json_t *create_json_record(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "DESC without key field",
                 NULL
@@ -1069,9 +1032,6 @@ PUBLIC json_t *create_json_record(
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "DESC without type field",
                 NULL
@@ -1133,9 +1093,6 @@ PUBLIC json_t *create_json_record(
                 log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                     "msg",          "%s", "Type UNKNOWN",
                     "type",         "%s", json_desc->type,
@@ -1254,9 +1211,6 @@ PUBLIC json_t *load_json_from_file(
         log_critical(on_critical_error,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
             "msg",          "%s", "Cannot open json file",
             "path",         "%s", full_path,
@@ -1271,9 +1225,6 @@ PUBLIC json_t *load_json_from_file(
         log_critical(on_critical_error,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_JSON_ERROR,
             "msg",          "%s", "Cannot load json file, bad json",
             NULL
@@ -1309,9 +1260,6 @@ PUBLIC int save_json_to_file(
             log_critical(on_critical_error,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
-                "process",      "%s", get_process_name(),
-                "hostname",     "%s", get_host_name(),
-                "pid",          "%d", get_pid(),
                 "msgset",       "%s", MSGSET_SYSTEM_ERROR,
                 "msg",          "%s", "Cannot create directory",
                 "directory",    "%s", directory,
@@ -1341,9 +1289,6 @@ PUBLIC int save_json_to_file(
         log_critical(on_critical_error,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
             "msg",          "%s", "Cannot create json file",
             "filename",     "%s", full_path,
@@ -1359,9 +1304,6 @@ PUBLIC int save_json_to_file(
         log_critical(on_critical_error,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
-            "process",      "%s", get_process_name(),
-            "hostname",     "%s", get_host_name(),
-            "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_JSON_ERROR,
             "msg",          "%s", "Cannot write in json file",
             "errno",        "%s", strerror(errno),
