@@ -6089,17 +6089,17 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
          */
         json_t *fv = kw_get_dict_value(kw, col_name, 0, 0); // Not yours GILIPOLLAS
         if(!fv) {
-            log_error(0,
+            log_warning(0,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "fkey empty",
+                "topic_name",   "%s", topic_name,
                 "col",          "%s", col_name,
+                "record",       "%j", kw,
                 NULL
             );
-            JSON_DECREF(cols);
-            JSON_DECREF(kw);
-            return -1;
+            continue;
         }
         json_t *jn_fkeys = filtra_fkeys(
             topic_name,
@@ -6138,6 +6138,7 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
                     "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
+                    "topic_name",           "%s", topic_name,
                     "ref",                  "%s", ref,
                     NULL
                 );
@@ -6159,6 +6160,7 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
                     "msg",                  "%s", "update_node, new link: parent node not found",
+                    "topic_name",           "%s", topic_name,
                     "parent",               "%s", ref,
                     NULL
                 );
