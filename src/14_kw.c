@@ -791,9 +791,8 @@ PUBLIC json_int_t kw_get_int(
                 "path",         "%s", path,
                 NULL
             );
-            if(!json_is_number(jn_int) && !json_is_boolean(jn_int)) {
-                return default_value;
-            }
+            log_debug_json(0, kw, "path MUST BE a json integer '%s'", path);
+            return default_value;
         }
     }
 
@@ -871,9 +870,8 @@ PUBLIC double kw_get_real(
                 "path",         "%s", path,
                 NULL
             );
-            if(!json_is_number(jn_real) && !json_is_boolean(jn_real)) {
-                return default_value;
-            }
+            log_debug_json(0, kw, "path MUST BE a json real '%s'", path);
+            return default_value;
         }
     }
 
@@ -940,13 +938,12 @@ PUBLIC BOOL kw_get_bool(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "x",
+                "msg",          "%s", "path MUST BE a json boolean",
                 "path",         "%s", path,
                 NULL
             );
-            if(!json_is_number(jn_bool) && !json_is_boolean(jn_bool)) {
-                return default_value;
-            }
+            log_debug_json(0, kw, "path MUST BE a json boolean '%s'", path);
+            return default_value;
         }
     }
 
