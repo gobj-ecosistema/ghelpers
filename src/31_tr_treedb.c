@@ -7397,12 +7397,12 @@ PRIVATE json_t *_list_childs(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "hook not found in the desc",
+            "msg",          "%s", "hook not found",
             "topic_name",   "%s", topic_name,
             "hook",         "%s", hook,
             NULL
         );
-        log_debug_json(0, cols, "hook not found in the desc");
+        log_debug_json(0, cols, "hook not found");
         json_decref(cols);
         return 0;
     }
@@ -7501,6 +7501,21 @@ PUBLIC json_t *treedb_node_childs(
             NULL
         );
         log_debug_json(0, node, "Not a pure node");
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    if(!kw_get_dict_value(node, hook, 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "hook not found",
+            "topic_name",   "%s", kw_get_str(node, "__md_treedb__`treedb_name", 0, 0),
+            "hook",         "%s", hook,
+            NULL
+        );
         JSON_DECREF(jn_filter);
         JSON_DECREF(jn_options);
         return 0;
