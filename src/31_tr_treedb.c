@@ -1385,7 +1385,7 @@ PUBLIC json_t *treedb_topics(
             continue;
         }
         build_id_index_path(list_id, sizeof(list_id), treedb_name, topic_name);
-        if(kw_get_bool(jn_options, "dict", 0, 0)) {
+        if(kw_get_bool(jn_options, "dict", 0, KW_WILD_NUMBER)) {
             json_t *dict = json_object();
             json_object_set_new(dict, "id", json_string(list_id));
             json_object_set_new(dict, "value", json_string(topic_name));
@@ -3906,8 +3906,7 @@ PRIVATE BOOL inherit_links(
         /*
          *  Copy fkeys
          */
-        //json_t *fkeys = treedb_node_up_refs(tranger, primary_node, topic_name, col_name, FALSE);
-        json_t *fkeys = treedb_list_parents(
+        json_t *fkeys = treedb_parent_refs(
             tranger,
             col_name,
             primary_node,
@@ -4510,7 +4509,7 @@ PUBLIC int treedb_delete_node(
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
     const char *id = kw_get_str(node, "id", "", 0);
-    BOOL force = kw_get_bool(jn_options, "force", 0, 0);
+    BOOL force = kw_get_bool(jn_options, "force", 0, KW_WILD_NUMBER);
 
     /*-------------------------------*
      *      Get record info
@@ -4813,7 +4812,7 @@ PUBLIC int treedb_delete_instance(
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
     const char *id = kw_get_str(node, "id", "", 0);
-    BOOL force = kw_get_bool(jn_options, "force", 0, 0);
+    BOOL force = kw_get_bool(jn_options, "force", 0, KW_WILD_NUMBER);
 
     /*-------------------------------*
      *      Get record info
@@ -6623,43 +6622,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
     Return a view of node with hook fields being collapsed
     WARNING extra fields are ignored, only topic desc fields are used
 
-    fkey,hook options
-    -----------------
-    "refs" (default) "hook_refs"
-        Return 'fkey ref'
-            ["topic_name^id^hook_name", ...]
-
-    "refs" (default) "fkey_refs"
-        Return 'hook ref'
-            ["topic_name^id", ...]
-
-
-    "only_id" "hook_only_id"
-        Return the 'hook ref' with only the 'id' field
-            ["$id",...]
-
-    "only_id" "fkey_only_id"
-        Return the 'fkey ref' with only the 'id' field
-            ["$id",...]
-
-
-    "list_dict" "hook_list_dict"
-        Return the kwid style:
-            [{"id": "$id", "topic_name":"$topic_name", "hook_name":"$hook_name"}, ...]
-
-    "list_dict" "fkey_list_dict"
-        Return the kwid style:
-            [{"id": "$id", "topic_name":"$topic_name"}, ...]
-
-
-    "size" "hook_size"
-        Return the kwid style:
-            [{"topic_name":"$topic_name", "hook_name":"$hook_name", "size": $size}]
-
-
-    "with_metadata"
-        Return with metadata
-
+    See 31_tr_treedb for options
  ***************************************************************************/
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *tranger, // NOT owned
@@ -7309,7 +7272,7 @@ PRIVATE json_t *apply_child_list_options(
 /***************************************************************************
  *  Return a list of parent **references** pointed by the link (fkey)
  ***************************************************************************/
-PUBLIC json_t *treedb_list_parents( // Return MUST be decref
+PUBLIC json_t *treedb_parent_refs( // Return MUST be decref
     json_t *tranger,
     const char *fkey,
     json_t *node,       // NOT owned, pure node
@@ -7483,28 +7446,73 @@ PRIVATE json_t *_list_childs(
 }
 
 /***************************************************************************
- *  Return a list of childs of the hook
+ *  Return a list of childs of the hook in the tree
  ***************************************************************************/
-PUBLIC json_t *treedb_list_childs(
+PRIVATE json_t *add_tree_childs(
     json_t *tranger,
+    json_t *list,       // not owned
     const char *hook,
-    json_t *node,       // NOT owned, pure node
-    json_t *jn_options  // owned, fkey options
+    json_t *node,       // not owned
+    BOOL recursive,
+    json_t *jn_filter   // not owned
 )
 {
-
     json_t *child_list = _list_childs(tranger, hook, node);
     if(!child_list) {
         // Error already logged
+        return 0;
+    }
+
+    int idx; json_t *child;
+    json_array_foreach(child_list, idx, child) {
+        if(kw_match_simple(
+            child, // NOT owned
+            json_incref(jn_filter) // owned
+        )){
+            json_array_append(list, child);
+            add_tree_childs(tranger, list, hook, child, recursive, jn_filter);
+        }
+    }
+    json_decref(child_list);
+
+    return list;
+}
+
+/***************************************************************************
+ *  Return a list of childs of the hook
+ ***************************************************************************/
+PUBLIC json_t *treedb_node_childs(
+    json_t *tranger,
+    const char *hook,
+    json_t *node,       // NOT owned, pure node
+    json_t *jn_filter,  // filter to childs tree
+    json_t *jn_options  // owned, hook options, "recursive"
+)
+{
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        JSON_DECREF(jn_filter);
         JSON_DECREF(jn_options);
         return 0;
     }
 
-    json_t *childs = apply_child_list_options(child_list, jn_options);
-    json_decref(child_list);
+    BOOL recursive = kw_get_bool(jn_options, "recursive", 0, KW_WILD_NUMBER);
+    json_t *list = json_array();
+    add_tree_childs(tranger, list, hook, node, recursive, jn_filter);
 
+    JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
-    return childs;
+    return list;
 }
 
 

@@ -449,7 +449,7 @@ PUBLIC json_t *treedb_list_instances( // Return MUST be decref
 /*
  *  Return a list of parent **references** pointed by the link (fkey)
  */
-PUBLIC json_t *treedb_list_parents( // Return MUST be decref
+PUBLIC json_t *treedb_parent_refs( // Return MUST be decref
     json_t *tranger,
     const char *fkey,
     json_t *node,       // NOT owned, pure node
@@ -457,13 +457,14 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
 );
 
 /*
- *  Return a list of child **references** of the hook
+ *  Return a list of childs of the hook
  */
-PUBLIC json_t *treedb_list_childs(
+PUBLIC json_t *treedb_node_childs(
     json_t *tranger,
     const char *hook,
     json_t *node,       // NOT owned, pure node
-    json_t *jn_options  // owned, fkey options
+    json_t *jn_filter,  // filter to childs tree
+    json_t *jn_options  // owned, hook options, "recursive"
 );
 
 /*----------------------------*
