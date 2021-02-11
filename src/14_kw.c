@@ -3741,11 +3741,29 @@ PUBLIC BOOL kwid_compare_records(
     json_t *record = json_deep_copy(record_);
     json_t *expected = json_deep_copy(expected_);
     if(!record) {
+        if(verbose) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "record NULL",
+                NULL
+            );
+        }
         JSON_DECREF(record);
         JSON_DECREF(expected);
         return FALSE;
     }
     if(!expected) {
+        if(verbose) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "expected NULL",
+                NULL
+            );
+        }
         JSON_DECREF(record);
         JSON_DECREF(expected);
         return FALSE;
@@ -3753,6 +3771,17 @@ PUBLIC BOOL kwid_compare_records(
 
     if(json_typeof(record) != json_typeof(expected)) { // json_typeof CONTROLADO
         ret = FALSE;
+        if(verbose) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "different json type",
+                "record",       "%j", record,
+                "expected",     "%j", expected,
+                NULL
+            );
+        }
     } else {
         switch(json_typeof(record)) {
             case JSON_ARRAY:
@@ -3764,6 +3793,17 @@ PUBLIC BOOL kwid_compare_records(
                             without_private,
                             verbose)) {
                         ret = FALSE;
+                        if(verbose) {
+                            log_error(0,
+                                "gobj",         "%s", __FILE__,
+                                "function",     "%s", __FUNCTION__,
+                                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                "msg",          "%s", "list not match",
+                                "record",       "%j", record,
+                                "expected",     "%j", expected,
+                                NULL
+                            );
+                        }
                     }
                 }
                 break;
@@ -3783,6 +3823,17 @@ PUBLIC BOOL kwid_compare_records(
                     json_object_foreach_safe(record, n, key, value) {
                         if(!kw_has_key(expected, key)) {
                             ret = FALSE;
+                            if(verbose) {
+                                log_error(0,
+                                    "gobj",         "%s", __FILE__,
+                                    "function",     "%s", __FUNCTION__,
+                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msg",          "%s", "key not found",
+                                    "key",          "%s", key,
+                                    "expected",     "%j", expected,
+                                    NULL
+                                );
+                            }
                             break;
                         }
                         json_t *value2 = json_object_get(expected, key);
@@ -3792,9 +3843,20 @@ PUBLIC BOOL kwid_compare_records(
                                     value2,
                                     without_metadata,
                                     without_private,
-                                    FALSE
+                                    verbose
                                 )) {
                                 ret = FALSE;
+                                if(verbose) {
+                                    log_error(0,
+                                        "gobj",         "%s", __FILE__,
+                                        "function",     "%s", __FUNCTION__,
+                                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                        "msg",          "%s", "record not match",
+                                        "record",       "%j", record,
+                                        "expected",     "%j", expected,
+                                        NULL
+                                    );
+                                }
                             }
                             if(ret == FALSE) {
                                 break;
@@ -3812,6 +3874,17 @@ PUBLIC BOOL kwid_compare_records(
                                     verbose
                                 )) {
                                 ret = FALSE;
+                                if(verbose) {
+                                    log_error(0,
+                                        "gobj",         "%s", __FILE__,
+                                        "function",     "%s", __FUNCTION__,
+                                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                        "msg",          "%s", "list not match",
+                                        "record",       "%j", record,
+                                        "expected",     "%j", expected,
+                                        NULL
+                                    );
+                                }
                             }
                             if(ret == FALSE) {
                                 break;
@@ -3823,6 +3896,17 @@ PUBLIC BOOL kwid_compare_records(
                         } else {
                             if(cmp_two_simple_json(value, value2)!=0) {
                                 ret = FALSE;
+                                if(verbose) {
+                                    log_error(0,
+                                        "gobj",         "%s", __FILE__,
+                                        "function",     "%s", __FUNCTION__,
+                                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                        "msg",          "%s", "items not match",
+                                        "value",        "%j", value,
+                                        "value2",       "%j", value2,
+                                        NULL
+                                    );
+                                }
                                 break;
                             } else {
                                 json_object_del(record, key);
@@ -3834,15 +3918,45 @@ PUBLIC BOOL kwid_compare_records(
                     if(ret == TRUE) {
                         if(json_object_size(record)>0) {
                             ret = FALSE;
+                            if(verbose) {
+                                log_error(0,
+                                    "gobj",         "%s", __FILE__,
+                                    "function",     "%s", __FUNCTION__,
+                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msg",          "%s", "remain record items",
+                                    "record",       "%j", record,
+                                    NULL
+                                );
+                            }
                         }
                         if(json_object_size(expected)>0) {
                             ret = FALSE;
+                            if(verbose) {
+                                log_error(0,
+                                    "gobj",         "%s", __FILE__,
+                                    "function",     "%s", __FUNCTION__,
+                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msg",          "%s", "remain expected items",
+                                    "expected",     "%j", expected,
+                                    NULL
+                                );
+                            }
                         }
                     }
                 }
                 break;
             default:
                 ret = FALSE;
+                if(verbose) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "No list or not object",
+                        "record",       "%j", record,
+                        NULL
+                    );
+                }
                 break;
         }
     }
@@ -3869,16 +3983,45 @@ PUBLIC BOOL kwid_compare_lists(
     if(!list) {
         JSON_DECREF(list);
         JSON_DECREF(expected);
+        if(verbose) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "record NULL",
+                NULL
+            );
+        }
         return FALSE;
     }
     if(!expected) {
         JSON_DECREF(list);
         JSON_DECREF(expected);
+        if(verbose) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "expected NULL",
+                NULL
+            );
+        }
         return FALSE;
     }
 
     if(json_typeof(list) != json_typeof(expected)) { // json_typeof CONTROLADO
         ret = FALSE;
+        if(verbose) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "different json type",
+                "list",         "%j", list,
+                "expected",     "%j", expected,
+                NULL
+            );
+        }
     } else {
         switch(json_typeof(list)) {
         case JSON_ARRAY:
@@ -3893,12 +4036,40 @@ PUBLIC BOOL kwid_compare_lists(
                         size_t idx2 = kwid_find_record_in_list("", expected, id1);
                         if(idx2 < 0) {
                             ret = FALSE;
+                            if(verbose) {
+                                log_error(0,
+                                    "gobj",         "%s", __FILE__,
+                                    "function",     "%s", __FUNCTION__,
+                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msg",          "%s", "record not found in expected list",
+                                    "record",       "%j", r1,
+                                    "expected",     "%j", expected,
+                                    NULL
+                                );
+                            }
                             continue;
                         }
                         json_t *r2 = json_array_get(expected, idx2);
 
-                        if(!kwid_compare_records(r1, r2, without_metadata, without_private, FALSE)) {
+                        if(!kwid_compare_records(
+                            r1,
+                            r2,
+                            without_metadata,
+                            without_private,
+                            verbose)
+                        ) {
                             ret = FALSE;
+                            if(verbose) {
+                                log_error(0,
+                                    "gobj",         "%s", __FILE__,
+                                    "function",     "%s", __FUNCTION__,
+                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msg",          "%s", "record not match",
+                                    "r1",           "%j", r1,
+                                    "r2",           "%j", r2,
+                                    NULL
+                                );
+                            }
                         }
                         if(ret == FALSE) {
                             break;
@@ -3915,6 +4086,17 @@ PUBLIC BOOL kwid_compare_lists(
                         int idx2 = kw_find_json_in_list("", expected, r1);
                         if(idx2 < 0) {
                             ret = FALSE;
+                            if(verbose) {
+                                log_error(0,
+                                    "gobj",         "%s", __FILE__,
+                                    "function",     "%s", __FUNCTION__,
+                                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                    "msg",          "%s", "record not found in expected list",
+                                    "record",       "%j", r1,
+                                    "expected",     "%j", expected,
+                                    NULL
+                                );
+                            }
                             break;
                         }
                         if(json_array_remove(list, idx1)==0) {
@@ -3926,9 +4108,29 @@ PUBLIC BOOL kwid_compare_lists(
 
                 if(ret == TRUE) {
                     if(json_array_size(list)>0) {
+                        if(verbose) {
+                            log_error(0,
+                                "gobj",         "%s", __FILE__,
+                                "function",     "%s", __FUNCTION__,
+                                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                "msg",          "%s", "remain list items",
+                                "list",         "%j", list,
+                                NULL
+                            );
+                        }
                         ret = FALSE;
                     }
                     if(json_array_size(expected)>0) {
+                        if(verbose) {
+                            log_error(0,
+                                "gobj",         "%s", __FILE__,
+                                "function",     "%s", __FUNCTION__,
+                                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                                "msg",          "%s", "remain expected items",
+                                "expected",     "%j", expected,
+                                NULL
+                            );
+                        }
                         ret = FALSE;
                     }
                 }
@@ -3937,14 +4139,33 @@ PUBLIC BOOL kwid_compare_lists(
 
         case JSON_OBJECT:
             {
-                if(!kwid_compare_records(list, expected, without_metadata, without_private, FALSE)) {
+                if(!kwid_compare_records(
+                    list,
+                    expected,
+                    without_metadata,
+                    without_private,
+                    verbose)
+                ) {
                     ret = FALSE;
+                    if(verbose) {
+                        trace_msg("ERROR: object not match");
+                    }
                 }
             }
             break;
         default:
             {
                 ret = FALSE;
+                if(verbose) {
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "No list or not object",
+                        "list",         "%j", list,
+                        NULL
+                    );
+                }
             }
             break;
         }
