@@ -2242,7 +2242,7 @@ PRIVATE int set_tranger_field_value(
             SWITCHS(real_type) {
                 CASES("list")
                 CASES("array")
-                    if(create) {
+                    if(create || !value) {
                         json_object_set_new(record, field, json_array());
                     } else {
                         json_t *mix_ids = filtra_fkeys(
@@ -2261,7 +2261,7 @@ PRIVATE int set_tranger_field_value(
 
                 CASES("dict")
                 CASES("object")
-                    if(create) {
+                    if(create || !value) {
                         // No dejes poner datos en la creación.
                         json_object_set_new(record, field, json_object());
                     } else {
@@ -2280,7 +2280,7 @@ PRIVATE int set_tranger_field_value(
                     break;
 
                 CASES("string")
-                    if(create) {
+                    if(create || !value) {
                         // No dejes poner datos en la creación.
                         json_object_set_new(record, field, json_string(""));
                     } else {
