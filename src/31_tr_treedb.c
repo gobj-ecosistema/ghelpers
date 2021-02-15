@@ -3799,6 +3799,12 @@ PUBLIC json_t *get_hook_list(
             }
         }
         break;
+    case JSON_STRING:
+        {
+            new_list = json_array();
+            json_array_append_new(new_list, json_string(json_string_value(hook_data)));
+        }
+        break;
     default:
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
