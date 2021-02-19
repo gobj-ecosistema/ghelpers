@@ -7540,16 +7540,71 @@ PUBLIC json_t *treedb_node_childs(
 }
 
 /***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int add_jtree_path(json_t *parent, json_t *child)
+{
+    const char *parent_path = parent?kw_get_str(parent, "__path__", "", 0):0;
+    const char *child_id = kw_get_str(child, "id", "", 0);
+
+    if(parent_path) {
+        char *path = str_concat3(parent_path, "`", child_id);
+        if(path) {
+            json_object_set_new(child, "__path__", json_string(path));
+            str_concat_free(path);
+        }
+    } else {
+        json_object_set_new(child, "__path__", json_string(child_id));
+    }
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE json_t *create_jchild(
+    json_t *tranger,
+    const char *hook,   // hook to build the hierarchical tree
+    const char *rename_hook, // change the hook name in the tree response
+    json_t *node,       // NOT owned, pure node
+    BOOL webix,
+    json_t *jn_options  // fkey,hook options, "webix"
+)
+{
+    json_t *jchild_ = node_collapsed_view(
+        tranger,
+        node,
+        json_incref(jn_options)
+    );
+    json_t *jchild = json_deep_copy(jchild_);
+    json_decref(jchild_);
+
+    if(webix || !empty_string(rename_hook)) {
+        json_t *jn_hook = kw_get_dict_value(jchild, hook, 0, KW_REQUIRED|KW_EXTRACT);
+        json_decref(jn_hook);
+        if(!empty_string(rename_hook)) {
+            json_object_set_new(jchild, rename_hook, json_array());
+        } else {
+            json_object_set_new(jchild, hook, json_array());
+        }
+    }
+    return jchild;
+}
+
+/***************************************************************************
  *  Return a list of hierarchical childs of the hook in the tree
  ***************************************************************************/
 PRIVATE json_t *add_jtree_childs(
     json_t *tranger,
-    json_t *list,       // not owned
+    json_t *tree,       // not owned
     const char *hook,
     const char *rename_hook, // change the hook name in the tree response
-    json_t *node,       // not owned
+    json_t *node,     // not owned
+    json_t *parent,     // not owned
     BOOL webix,
-    json_t *jn_filter   // not owned
+    json_t *jn_filter,  // not owned
+    json_t *jn_options  // not owned
 )
 {
     json_t *child_list = _list_childs(tranger, hook, node);
@@ -7560,17 +7615,39 @@ PRIVATE json_t *add_jtree_childs(
 
     int idx; json_t *child;
     json_array_foreach(child_list, idx, child) {
-        if(kw_match_simple(
+        if(!kw_match_simple(
             child, // NOT owned
             json_incref(jn_filter) // owned
         )){
-            json_array_append(list, child);
-            add_tree_childs(tranger, list, hook, child, webix, jn_filter);
+            continue;
         }
+
+        json_t *_child = create_jchild(tranger, hook, rename_hook, child, webix, jn_options);
+        add_jtree_path(parent, _child);
+
+        if(webix) {
+            json_t *list = kw_get_list(parent, rename_hook?rename_hook:hook, 0, KW_REQUIRED);
+            json_array_append_new(list, _child);
+        } else {
+            json_array_append_new(tree, _child);
+        }
+
+        // recursive
+        add_jtree_childs(
+            tranger,
+            tree,
+            hook,
+            rename_hook,
+            child,
+            _child,
+            webix,
+            jn_filter,
+            jn_options
+        );
     }
     json_decref(child_list);
 
-    return list;
+    return tree;
 }
 
 /***************************************************************************
@@ -7618,12 +7695,27 @@ PUBLIC json_t *treedb_node_jtree(
     }
 
     BOOL webix = kw_get_bool(jn_options, "webix", 0, KW_WILD_NUMBER);
-    json_t *list = json_array();
-    add_jtree_childs(tranger, list, hook, rename_hook, node, webix, jn_filter);
+    if(!webix || empty_string(rename_hook)) {
+        rename_hook = 0; // rename only in webix option
+    }
+
+    json_t *tree = 0;
+    json_t *root = create_jchild(tranger, hook, rename_hook, node, webix, jn_options);
+    add_jtree_path(0, root);
+
+    if(webix) {
+        tree = root;
+    } else {
+        tree = json_array();
+        json_array_append_new(tree, root);
+    }
+
+    // recursive
+    add_jtree_childs(tranger, tree, hook, rename_hook, node, root, webix, jn_filter, jn_options);
 
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
-    return list;
+    return tree;
 }
 
 
