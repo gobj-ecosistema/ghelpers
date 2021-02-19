@@ -7495,7 +7495,7 @@ PUBLIC json_t *treedb_node_childs(
     const char *hook,
     json_t *node,       // NOT owned, pure node
     json_t *jn_filter,  // filter to childs
-    json_t *jn_options  // fkey,hook options
+    json_t *jn_options  // fkey,hook options, "recursive"
 )
 {
     /*------------------------------*
@@ -7530,8 +7530,9 @@ PUBLIC json_t *treedb_node_childs(
         return 0;
     }
 
+    BOOL recursive = kw_get_bool(jn_options, "recursive", 0, KW_WILD_NUMBER);
     json_t *list = json_array();
-    add_tree_childs(tranger, list, hook, node, FALSE, jn_filter);
+    add_tree_childs(tranger, list, hook, node, recursive, jn_filter);
 
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
