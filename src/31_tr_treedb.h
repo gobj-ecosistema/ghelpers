@@ -459,14 +459,26 @@ PUBLIC json_t *treedb_parent_refs( // Return MUST be decref
 );
 
 /*
- *  Return a list of childs of the hook
+ *  Return a list of childs through the hook
  */
 PUBLIC json_t *treedb_node_childs(
     json_t *tranger,
     const char *hook,
     json_t *node,       // NOT owned, pure node
     json_t *jn_filter,  // filter to childs tree
-    json_t *jn_options  // owned, hook options, "recursive"
+    json_t *jn_options  // fkey,hook options, "recursive"
+);
+
+/*
+ *  Return a tree of childs through the hook
+ */
+PUBLIC json_t *treedb_node_jtree(
+    json_t *tranger,
+    const char *hook,   // hook to build the hierarchical tree
+    const char *rename_hook, // change the hook name in the tree response
+    json_t *node,       // NOT owned, pure node
+    json_t *jn_filter,  // filter to childs tree
+    json_t *jn_options  // fkey,hook options, "webix"
 );
 
 /*----------------------------*

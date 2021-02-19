@@ -7539,6 +7539,93 @@ PUBLIC json_t *treedb_node_childs(
     return list;
 }
 
+/***************************************************************************
+ *  Return a list of hierarchical childs of the hook in the tree
+ ***************************************************************************/
+PRIVATE json_t *add_jtree_childs(
+    json_t *tranger,
+    json_t *list,       // not owned
+    const char *hook,
+    const char *rename_hook, // change the hook name in the tree response
+    json_t *node,       // not owned
+    BOOL webix,
+    json_t *jn_filter   // not owned
+)
+{
+    json_t *child_list = _list_childs(tranger, hook, node);
+    if(!child_list) {
+        // Error already logged
+        return 0;
+    }
+
+    int idx; json_t *child;
+    json_array_foreach(child_list, idx, child) {
+        if(kw_match_simple(
+            child, // NOT owned
+            json_incref(jn_filter) // owned
+        )){
+            json_array_append(list, child);
+            add_tree_childs(tranger, list, hook, child, webix, jn_filter);
+        }
+    }
+    json_decref(child_list);
+
+    return list;
+}
+
+/***************************************************************************
+ *  Return a list of childs of the hook
+ ***************************************************************************/
+PUBLIC json_t *treedb_node_jtree(
+    json_t *tranger,
+    const char *hook,   // hook to build the hierarchical tree
+    const char *rename_hook, // change the hook name in the tree response
+    json_t *node,       // NOT owned, pure node
+    json_t *jn_filter,  // filter to childs tree
+    json_t *jn_options  // fkey,hook options, "webix"
+)
+{
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    if(!kw_get_dict_value(node, hook, 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "hook not found",
+            "topic_name",   "%s", kw_get_str(node, "__md_treedb__`treedb_name", 0, 0),
+            "hook",         "%s", hook,
+            NULL
+        );
+        JSON_DECREF(jn_filter);
+        JSON_DECREF(jn_options);
+        return 0;
+    }
+
+    BOOL webix = kw_get_bool(jn_options, "webix", 0, KW_WILD_NUMBER);
+    json_t *list = json_array();
+    add_jtree_childs(tranger, list, hook, rename_hook, node, webix, jn_filter);
+
+    JSON_DECREF(jn_filter);
+    JSON_DECREF(jn_options);
+    return list;
+}
+
 
 
 
