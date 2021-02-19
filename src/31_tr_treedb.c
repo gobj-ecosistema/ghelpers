@@ -7477,7 +7477,9 @@ PRIVATE json_t *add_tree_childs(
             json_incref(jn_filter) // owned
         )){
             json_array_append(list, child);
-            add_tree_childs(tranger, list, hook, child, recursive, jn_filter);
+            if(recursive) {
+                add_tree_childs(tranger, list, hook, child, recursive, jn_filter);
+            }
         }
     }
     json_decref(child_list);
@@ -7492,8 +7494,8 @@ PUBLIC json_t *treedb_node_childs(
     json_t *tranger,
     const char *hook,
     json_t *node,       // NOT owned, pure node
-    json_t *jn_filter,  // filter to childs tree
-    json_t *jn_options  // owned, hook options, "recursive"
+    json_t *jn_filter,  // filter to childs
+    json_t *jn_options  // fkey,hook options
 )
 {
     /*------------------------------*
@@ -7528,9 +7530,8 @@ PUBLIC json_t *treedb_node_childs(
         return 0;
     }
 
-    BOOL recursive = kw_get_bool(jn_options, "recursive", 0, KW_WILD_NUMBER);
     json_t *list = json_array();
-    add_tree_childs(tranger, list, hook, node, recursive, jn_filter);
+    add_tree_childs(tranger, list, hook, node, FALSE, jn_filter);
 
     JSON_DECREF(jn_filter);
     JSON_DECREF(jn_options);
