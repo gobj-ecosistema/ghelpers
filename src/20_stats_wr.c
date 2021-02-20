@@ -689,7 +689,8 @@ PUBLIC void wstats_add_value(
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Metric not configured",
             "directory",    "%s", kw_get_str(stats, "directory", "", KW_REQUIRED),
-            "variable",       "%s", variable_name,
+            "group",        "%s", group?group:"",
+            "variable",     "%s", variable_name?variable_name:"",
             NULL
         );
         log_debug_json(0, stats, "Metric not configured");
@@ -708,6 +709,8 @@ PUBLIC void wstats_add_value(
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
             "msg",          "%s", "Time lower than last t",
             "directory",    "%s", kw_get_str(stats, "directory", "", KW_REQUIRED),
+            "group",        "%s", group?group:"",
+            "variable",     "%s", variable_name?variable_name:"",
             "last_t",       "%ld", (unsigned long)last_t,
             "t",            "%ld", (unsigned long)t,
             NULL
