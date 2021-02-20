@@ -2650,9 +2650,11 @@ PUBLIC int kw_set_key_value(
             if(node_dict) {
                 return kw_set_key_value(node_dict, pkey, p+1, value);
             } else {
-                node_dict = json_object();
-                json_object_set_new(kw, segment, node_dict);
-                return kw_set_key_value(node_dict, pkey, p+1, value);
+                // Must exist the path
+                return 0;
+                //node_dict = json_object();
+                //json_object_set_new(kw, segment, node_dict);
+                //return kw_set_key_value(node_dict, pkey, p+1, value);
             }
         }
     }

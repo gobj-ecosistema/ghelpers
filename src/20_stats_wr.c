@@ -24,6 +24,9 @@
 /***************************************************************
  *              Prototypes
  ***************************************************************/
+PRIVATE int wstats_restore(
+    json_t *variable
+);
 
 /***************************************************************
  *              Data
@@ -183,7 +186,7 @@ PUBLIC json_t *wstats_add_variable(
 {
     const char *variable_name = kw_get_str(jn_variable, "variable_name", "", KW_REQUIRED);
     const char *group = kw_get_str(jn_variable, "group", "", 0);
-    json_int_t version = kw_get_int(jn_variable, "version", -1, KW_WILD_NUMBER);
+    json_int_t version = kw_get_int(jn_variable, "version", -1, KW_WILD_NUMBER|KW_REQUIRED);
     if(empty_string(variable_name)) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -206,69 +209,21 @@ PUBLIC json_t *wstats_add_variable(
     int xpermission = kw_get_int(stats, "xpermission", 0660, KW_REQUIRED);
     int rpermission = kw_get_int(stats, "rpermission", 0660, KW_REQUIRED);
     json_int_t on_critical_error = kw_get_int(stats, "on_critical_error", 0, 0);
-    json_t *variables = kw_get_dict(stats, "variables", 0, KW_REQUIRED);
-    json_t *variable = 0;
 
+    char full_variable_name[NAME_MAX];
     if(empty_string(group)) {
-        if(kw_has_key(variables, variable_name)) {
-            variable = kw_get_dict(variables, variable_name, 0, 0);
-            json_int_t old_version = kw_get_int(
-                variable,
-                "version",
-                -1,
-                KW_WILD_NUMBER
-            );
-
-            if(version <= old_version) {
-                log_error(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "variable ALREADY exits",
-                    "variable_name","%s", variable_name,
-                    NULL
-                );
-                JSON_DECREF(jn_variable);
-                return 0;
-            }
-            kw_delete(variables, variable_name);
-        }
-        variable = kw_get_dict(variables, variable_name, json_object(), KW_CREATE);
-
+        snprintf(full_variable_name, sizeof(full_variable_name), "%s", variable_name);
     } else {
-        kw_get_dict(variables, group, json_object(), KW_CREATE);
-        if(kw_has_subkey(variables, group, variable_name)) {
-            variable = kw_get_subdict_value(variables, group, variable_name, 0, 0);
-            json_int_t old_version = kw_get_int(
-                variable,
-                "version",
-                -1,
-                KW_WILD_NUMBER
-            );
-
-            if(version <= old_version) {
-                log_error(0,
-                    "gobj",         "%s", __FILE__,
-                    "function",     "%s", __FUNCTION__,
-                    "process",      "%s", get_process_name(),
-                    "hostname",     "%s", get_host_name(),
-                    "pid",          "%d", get_pid(),
-                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "variable of group ALREADY exits",
-                    "variable_name","%s", variable_name,
-                    "group",        "%s", group,
-                    NULL
-                );
-                JSON_DECREF(jn_variable);
-                return 0;
-            }
-            kw_delete_subkey(variables, group, variable_name);
-        }
-        variable = kw_get_subdict_value(variables, group, variable_name, json_object(), KW_CREATE);
+        snprintf(full_variable_name, sizeof(full_variable_name), "%s-%s", group, variable_name);
     }
+
+    json_t *variables = kw_get_dict(stats, "variables", 0, KW_REQUIRED);
+    json_t *variable = kw_get_dict(variables, full_variable_name, 0, 0);
+    if(variable) {
+        JSON_DECREF(jn_variable);
+        return variable;
+    }
+    variable = kw_get_dict(variables, full_variable_name, json_object(), KW_CREATE);
 
     /*
      *  Check if __variable__.json already exists or create it
@@ -368,6 +323,8 @@ PUBLIC json_t *wstats_add_variable(
         }
         json_array_append_new(metrics, metric);
     }
+
+    wstats_restore(variable);
 
     JSON_DECREF(jn_variable);
     return variable;
@@ -657,27 +614,15 @@ PUBLIC void wstats_add_value(
         return;
     }
 
-    json_t *variable = 0;
+    char full_variable_name[NAME_MAX];
     if(empty_string(group)) {
-        variable = json_object_get(
-            json_object_get(
-                stats,
-                "variables"
-            ),
-            variable_name
-        );
+        snprintf(full_variable_name, sizeof(full_variable_name), "%s", variable_name);
     } else {
-        variable = json_object_get(
-            json_object_get(
-                json_object_get(
-                    stats,
-                    "variables"
-                ),
-                group
-            ),
-            variable_name
-        );
+        snprintf(full_variable_name, sizeof(full_variable_name), "%s-%s", group, variable_name);
     }
+
+    json_t *variables = kw_get_dict(stats, "variables", 0, KW_REQUIRED);
+    json_t *variable = kw_get_dict(variables, full_variable_name, 0, 0);
 
     if(!variable) {
         log_error(0,
@@ -815,14 +760,21 @@ PUBLIC int wstats_save(
         "value",
         0
     };
-    json_t *jn_data = kw_get_propagated_key_values(stats, "id", keys);
 
-    char path[PATH_MAX];
-    const char *directory = json_string_value(json_object_get(stats, "directory"));
-    snprintf(path, sizeof(path), "%s/%s", directory, "__partial_data__.json");
-
-    int ret = json_dump_file(jn_data, path, JSON_INDENT(4));
-    json_decref(jn_data);
+    json_t *variables = kw_get_dict(stats, "variables", 0, KW_REQUIRED);
+    const char *var_name; json_t *variable;
+    json_object_foreach(variables, var_name, variable) {
+        char path[PATH_MAX];
+        json_t *jn_data = kw_get_propagated_key_values(variable, "id", keys);
+        if(jn_data) {
+            const char *directory = kw_get_str(variable, "directory", "", KW_REQUIRED);
+            if(!empty_string(directory)) {
+                snprintf(path, sizeof(path), "%s/%s", directory, "__partial_data__.json");
+                json_dump_file(jn_data, path, JSON_INDENT(4));
+            }
+            json_decref(jn_data);
+        }
+    }
 
     const char *key;
     json_t *jn_value;
@@ -834,18 +786,18 @@ PUBLIC int wstats_save(
         }
     }
 
-    return ret;
+    return 0;
 }
 
 /***************************************************************************
    Restore partial data
  ***************************************************************************/
-PUBLIC int wstats_restore(
-    json_t *stats
+PRIVATE int wstats_restore(
+    json_t *variable
 )
 {
     char path[PATH_MAX];
-    const char *directory = json_string_value(json_object_get(stats, "directory"));
+    const char *directory = kw_get_str(variable, "directory", "", KW_REQUIRED);
     snprintf(path, sizeof(path), "%s/%s", directory, "__partial_data__.json");
 
     size_t flags = 0;
@@ -854,7 +806,7 @@ PUBLIC int wstats_restore(
     if(!jn_data) {
         return -1;
     }
-    int ret = kw_put_propagated_key_values(stats, "id", jn_data);
+    int ret = kw_put_propagated_key_values(variable, "id", jn_data);
     return ret;
 }
 

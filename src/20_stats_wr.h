@@ -128,13 +128,6 @@ PUBLIC int wstats_save(
     json_t *stats
 );
 
-/**rst**
-   Restore partial data
-**rst**/
-PUBLIC int wstats_restore(
-    json_t *stats
-);
-
 
 #ifdef __cplusplus
 }
