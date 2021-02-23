@@ -421,7 +421,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *tranger, // NOT owned
     json_t *node, // NOT owned
-    json_t *jn_options // owned fkey,hook options
+    json_t *jn_options // owned fkey,hook options, "expand_childs" (list with hooks to expand)
 );
 
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
@@ -478,7 +478,7 @@ PUBLIC json_t *treedb_node_jtree(
     const char *rename_hook, // change the hook name in the tree response
     json_t *node,       // NOT owned, pure node
     json_t *jn_filter,  // filter to childs tree
-    json_t *jn_options  // fkey,hook options, "webix"
+    json_t *jn_options  // fkey,hook options, "webix", "expand_childs"
 );
 
 /*----------------------------*
