@@ -393,6 +393,9 @@ PRIVATE int delete_secondary_node(
  ***************************************************************************/
 PUBLIC json_t *_treedb_create_topic_cols_desc(void)
 {
+    /*
+     *  WARNING any change in this must be reflected in treedb_schema_treedb (c-core)
+     */
     json_t *topic_cols_desc = json_array();
     json_array_append_new(
         topic_cols_desc,
