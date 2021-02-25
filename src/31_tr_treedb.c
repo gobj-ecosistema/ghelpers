@@ -848,16 +848,19 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_array_foreach(jn_schema_topics, idx, schema_topic) {
         const char *topic_name = kw_get_str(schema_topic, "topic_name", "", 0);
         if(empty_string(topic_name)) {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Schema topic without topic_name",
-                "treedb_name",  "%s", treedb_name,
-                "schema_topic", "%j", schema_topic,
-                NULL
-            );
-            continue;
+            topic_name = kw_get_str(schema_topic, "id", "", 0);
+            if(empty_string(topic_name)) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                    "msg",          "%s", "Schema topic without id/topic_name",
+                    "treedb_name",  "%s", treedb_name,
+                    "schema_topic", "%j", schema_topic,
+                    NULL
+                );
+                continue;
+            }
         }
         const char *pkey = kw_get_str(schema_topic, "pkey", "", 0);
         if(strcmp(pkey, "id")!=0) {
