@@ -1249,6 +1249,21 @@ PUBLIC int save_json_to_file(
 )
 {
     /*-----------------------------------*
+     *  Check parameters
+     *-----------------------------------*/
+    if(!directory || !filename) {
+        log_critical(on_critical_error|LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "Parameter 'directory' or 'filename' NULL",
+            NULL
+        );
+        JSON_DECREF(jn_data);
+        return -1;
+    }
+
+    /*-----------------------------------*
      *  Create directory if not exists
      *-----------------------------------*/
     if(!is_directory(directory)) {
