@@ -2348,6 +2348,66 @@ PRIVATE int set_tranger_field_value(
             break;
 
         CASES("enum")
+            SWITCHS(real_type) {
+                CASES("string")
+                    if(!value) {
+                        json_object_set_new(record, field, json_string(""));
+                    } else if(json_is_string(value)) {
+                        json_object_set(record, field, value);
+                    } else if(wild_conversion) {
+                        char *v = jn2string(value);
+                        json_object_set_new(record, field, json_string(v));
+                        gbmem_free(v);
+                    } else {
+                        log_error(0,
+                            "gobj",         "%s", __FILE__,
+                            "function",     "%s", __FUNCTION__,
+                            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                            "msg",          "%s", "Value must be string",
+                            "topic_name",   "%s", topic_name,
+                            "col",          "%j", col,
+                            "field",        "%s", field,
+                            "value",        "%j", value,
+                            NULL
+                        );
+                        return -1;
+                    }
+                    break;
+
+                CASES("list")
+                CASES("array")
+                    if(JSON_TYPEOF(value, JSON_ARRAY)) {
+                        json_object_set(record, field, value);
+
+                    } else if(JSON_TYPEOF(value, JSON_STRING)) {
+                        json_t *v = legalstring2json(json_string_value(value), FALSE);
+                        if(json_is_array(v)) {
+                            json_object_set_new(record, field, v);
+                        } else {
+                            json_decref(v);
+                            json_object_set_new(record, field, json_array());
+                        }
+                    } else {
+                        json_object_set_new(record, field, json_array());
+                    }
+                    break;
+
+                DEFAULTS
+                    log_error(0,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                        "msg",          "%s", "Bad enum col type ",
+                        "topic_name",   "%s", topic_name,
+                        "col",          "%j", col,
+                        "field",        "%s", field,
+                        "type",         "%s", type,
+                        NULL
+                    );
+                    return -1;
+            } SWITCHS_END;
+            break;
+
         CASES("list")
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
@@ -2401,7 +2461,7 @@ PRIVATE int set_tranger_field_value(
                     json_object_set_new(record, field, json_object());
                 }
             } else {
-                json_object_set_new(record, field, json_object());
+                // Don't save anything
             }
 
             break;
@@ -2570,9 +2630,7 @@ PRIVATE int set_volatil_field_value(
             break;
 
         CASES("blob")
-            if(!value) {
-                json_object_set_new(record, field, json_object());
-            } else {
+            if(value) {
                 json_object_set(record, field, value);
             }
             break;
