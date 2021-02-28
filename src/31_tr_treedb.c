@@ -1764,12 +1764,12 @@ PUBLIC int parse_hooks(
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                        "msg",          "%s", "hook field not found",
+                        "msg",          "%s", "column def with hook field not found",
                         "topic_name",   "%s", topic_name,
                         "id",           "%s", id,
                         NULL
                     );
-                    log_debug_json(0, col, "hook field not found");
+                    log_debug_json(0, col, "column def with hook field not found");
                     ret += -1;
                     continue;
                 }
