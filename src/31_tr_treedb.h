@@ -129,6 +129,7 @@ PUBLIC int treedb_set_callback(
         "persistent"    // implicit "readable"
         "required"
         "fkey"
+        "enum",
         "hook"
         "uuid"
         "notnull"
