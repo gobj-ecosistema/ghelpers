@@ -690,7 +690,8 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     /*
      *  At least 'topics' must be.
      */
-    json_t *jn_schema_topics = kw_get_list(jn_schema, "topics", 0, KW_REQUIRED);
+    //json_t *jn_schema_topics = kw_get_list(jn_schema, "topics", 0, KW_REQUIRED);
+    json_t *jn_schema_topics = kwid_new_list("verbose", jn_schema, "topics");
     if(!jn_schema_topics) {
         log_error(0,
             "gobj",         "%s", __FILE__,
@@ -717,6 +718,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "treedb_name",  "%s", treedb_name,
             NULL
         );
+        JSON_DECREF(jn_schema_topics);
         JSON_DECREF(jn_schema);
         return 0;
     }
@@ -733,9 +735,9 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *      __snaps__ topic
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
-    const char *snaps_topic_version = "1";
+    int snaps_topic_version = 1;
     json_t *jn_snaps_topic_var = json_object();
-    json_object_set_new(jn_snaps_topic_var, "topic_version", json_string(snaps_topic_version));
+    json_object_set_new(jn_snaps_topic_var, "topic_version", json_integer(snaps_topic_version));
 
     json_t *tag_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"
@@ -915,7 +917,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             );
             continue;
         }
-        const char *topic_version = kw_get_str(schema_topic, "topic_version", "", 0);
+        int topic_version = kw_get_int(schema_topic, "topic_version", 0, KW_WILD_NUMBER);
         const char *topic_tkey = kw_get_str(schema_topic, "tkey", "", 0);
         json_t *topic_pkey2s = kw_get_dict_value(schema_topic, "topic_pkey2s", 0, 0);
 
@@ -942,6 +944,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *------------------------------*/
     load_all_links(tranger, treedb_name);
 
+    JSON_DECREF(jn_schema_topics);
     JSON_DECREF(jn_schema);
     return treedb;
 }
@@ -1022,7 +1025,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *topic_version,
+    int topic_version,
     const char *topic_tkey,
     json_t *topic_pkey2s, // owned, string or dict of string | [strings]
     json_t *cols, // owned
@@ -1089,7 +1092,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
      *------------------------------*/
     // Topic version
     json_t *jn_topic_var = json_object();
-    json_object_set_new(jn_topic_var, "topic_version", json_string(topic_version?topic_version:""));
+    json_object_set_new(jn_topic_var, "topic_version", json_integer(topic_version));
 
     // Topic pkey2s
     if(topic_pkey2s) {

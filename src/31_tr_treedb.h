@@ -155,7 +155,7 @@ PUBLIC json_t *treedb_create_topic( // WARNING Return is NOT YOURS
     json_t *tranger,
     const char *treedb_name,
     const char *topic_name,
-    const char *topic_version,
+    int topic_version,
     const char *topic_tkey,
     json_t *topic_pkey2s, // owned, string or dict of string | [strings]
     json_t *jn_cols, // owned
