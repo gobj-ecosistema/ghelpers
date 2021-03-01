@@ -398,6 +398,12 @@ PUBLIC int treedb_unlink_nodes(
     "with_metadata"
         Return with metadata
 
+    "without_rowid"
+        Don't "id" when is "rowid", by default it's returned
+
+    "expand_childs"
+        list with hooks to expand
+
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
 
@@ -422,7 +428,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *tranger, // NOT owned
     json_t *node, // NOT owned
-    json_t *jn_options // owned fkey,hook options, "expand_childs" (list with hooks to expand)
+    json_t *jn_options // owned fkey,hook options, see Other options
 );
 
 PUBLIC json_t *treedb_list_nodes( // Return MUST be decref

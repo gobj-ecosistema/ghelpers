@@ -6778,6 +6778,8 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *topic_desc = tranger_dict_topic_desc(tranger, topic_name);
 
     BOOL with_metadata = kw_get_bool(jn_options, "with_metadata", 0, KW_WILD_NUMBER);
+    BOOL without_rowid =  kw_get_bool(jn_options, "without_rowid", 0, KW_WILD_NUMBER);
+
     json_t *_expand_childs = kw_get_list(jn_options, "expand_childs", 0, 0);
 
     json_t *node_view = json_object();
@@ -6787,6 +6789,7 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
         json_t *desc_flag = kw_get_dict_value(col, "flag", 0, 0);
         BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
         BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+        BOOL is_rowid = kw_has_word(desc_flag, "rowid", 0)?TRUE:FALSE;
         BOOL is_required = kw_has_word(desc_flag, "required", 0)?TRUE:FALSE;
         json_t *field_data = kw_get_dict_value(node, col_name, 0, is_required?KW_REQUIRED:0);
         if(!field_data) {
@@ -6796,6 +6799,12 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
         if(strncmp(col_name, "__", 2)==0) {
             if(!with_metadata) {
                 // Ignore metadata
+                continue;
+            }
+        }
+        if(is_rowid) {
+            if(without_rowid) {
+                // Ignore rowid
                 continue;
             }
         }
