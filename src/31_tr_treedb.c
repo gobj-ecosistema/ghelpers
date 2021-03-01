@@ -141,7 +141,7 @@ PUBLIC json_t *treedb_topic_pkey2s( // Return list with pkey2s
 )
 {
     json_t *topic_desc = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
-    json_t *list = kw_get_list(topic_desc, "topic_pkey2s", 0, 0);
+    json_t *list = kw_get_list(topic_desc, "pkey2s", 0, 0);
     return json_incref(list);
 }
 
@@ -512,7 +512,7 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     json_array_append_new(
         topic_cols_desc,
         json_pack("{s:s, s:s, s:i, s:s, s:[s,s]}",
-            "id", "topic_pkey2s",
+            "id", "pkey2s",
             "header", "Secondary Keys",
             "fillspace", 8,
             "type",
@@ -945,7 +945,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
         }
         int topic_version = kw_get_int(schema_topic, "topic_version", 0, KW_WILD_NUMBER);
         const char *topic_tkey = kw_get_str(schema_topic, "tkey", "", 0);
-        json_t *topic_pkey2s = kw_get_dict_value(schema_topic, "topic_pkey2s", 0, 0);
+        json_t *pkey2s = kw_get_dict_value(schema_topic, "pkey2s", 0, 0);
 
         treedb_create_topic(
             tranger,
@@ -953,7 +953,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             topic_name,
             topic_version,
             topic_tkey,
-            json_incref(topic_pkey2s),
+            json_incref(pkey2s),
             kwid_new_dict("verbose", schema_topic, "cols"), // owned
             snap_tag,
             FALSE // create_schema
@@ -1053,7 +1053,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
     const char *topic_name,
     int topic_version,
     const char *topic_tkey,
-    json_t *topic_pkey2s, // owned, string or dict of string | [strings]
+    json_t *pkey2s, // owned, string or dict of string | [strings]
     json_t *cols, // owned
     uint32_t snap_tag,
     BOOL create_schema
@@ -1067,7 +1067,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
             "msg",          "%s", "treedb_name empty",
             NULL
         );
-        JSON_DECREF(topic_pkey2s);
+        JSON_DECREF(pkey2s);
         JSON_DECREF(cols);
         return 0;
     }
@@ -1079,7 +1079,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
             "msg",          "%s", "topic_name empty",
             NULL
         );
-        JSON_DECREF(topic_pkey2s);
+        JSON_DECREF(pkey2s);
         JSON_DECREF(cols);
         return 0;
     }
@@ -1098,7 +1098,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
             "topic_name",   "%s", topic_name,
             NULL
         );
-        JSON_DECREF(topic_pkey2s);
+        JSON_DECREF(pkey2s);
         JSON_DECREF(cols);
         return 0;
     }
@@ -1108,7 +1108,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
      *------------------------------*/
     json_t *topic = kw_get_dict(treedb, topic_name, 0, 0);
     if(topic) {
-        JSON_DECREF(topic_pkey2s);
+        JSON_DECREF(pkey2s);
         JSON_DECREF(cols);
         return topic;
     }
@@ -1121,17 +1121,17 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
     json_object_set_new(jn_topic_var, "topic_version", json_integer(topic_version));
 
     // Topic pkey2s
-    if(topic_pkey2s) {
+    if(pkey2s) {
         /*--------------------------------*
          *  Save pkey2s in jn_topic_var
          *--------------------------------*/
-        json_t *pkey2s_list = kwid_get_ids(topic_pkey2s);
+        json_t *pkey2s_list = kwid_get_ids(pkey2s);
         json_object_set_new(
             jn_topic_var,
-            "topic_pkey2s",
+            "pkey2s",
             pkey2s_list
         );
-        JSON_DECREF(topic_pkey2s);
+        JSON_DECREF(pkey2s);
     }
 
     JSON_INCREF(cols);
@@ -1228,7 +1228,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
     /*----------------------*
      *   Secondary indexes
      *----------------------*/
-    json_t *iter_pkey2s = kw_get_list(jn_topic_var, "topic_pkey2s", 0, 0);
+    json_t *iter_pkey2s = kw_get_list(jn_topic_var, "pkey2s", 0, 0);
     int idx; json_t *jn_pkey2_name;
     json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
         const char *pkey2_name = json_string_value(jn_pkey2_name);

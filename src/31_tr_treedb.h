@@ -157,7 +157,7 @@ PUBLIC json_t *treedb_create_topic( // WARNING Return is NOT YOURS
     const char *topic_name,
     int topic_version,
     const char *topic_tkey,
-    json_t *topic_pkey2s, // owned, string or dict of string | [strings]
+    json_t *pkey2s, // owned, string or dict of string | [strings]
     json_t *jn_cols, // owned
     uint32_t snap_tag,
     BOOL create_schema
