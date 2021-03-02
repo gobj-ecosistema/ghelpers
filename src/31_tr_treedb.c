@@ -165,7 +165,13 @@ PUBLIC json_t *treedb_topic_pkey2s_filter(
         if(empty_string(pkey2_name)) {
             continue;
         }
-        json_object_set(jn_filter, pkey2_name, kw_get_dict_value(node, pkey2_name, 0, 0));
+        json_t *jn_value = kw_get_dict_value(node, pkey2_name, 0, 0);
+        if(jn_value) {
+            const char *value = json_string_value(jn_value);
+            if(!empty_string(value)) {
+                json_object_set(jn_filter, pkey2_name, jn_value);
+            }
+        }
     }
     json_decref(iter_pkey2s);
 
