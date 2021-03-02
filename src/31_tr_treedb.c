@@ -2477,25 +2477,7 @@ PRIVATE int set_tranger_field_value(
             break;
 
         CASES("blob")
-            if(JSON_TYPEOF(value, JSON_OBJECT)) {
-                json_object_set(record, field, value);
-            } else if(JSON_TYPEOF(value, JSON_ARRAY)) {
-                json_object_set(record, field, value);
-
-            } else if(JSON_TYPEOF(value, JSON_STRING)) {
-                json_t *v = legalstring2json(json_string_value(value), FALSE);
-                if(json_is_object(v)) {
-                    json_object_set_new(record, field, v);
-                } else if(json_is_array(v)) {
-                    json_object_set_new(record, field, v);
-                } else {
-                    json_decref(v);
-                    json_object_set_new(record, field, json_object());
-                }
-            } else {
-                // Don't save anything
-            }
-
+            json_object_set(record, field, value);
             break;
 
         CASES("string")
