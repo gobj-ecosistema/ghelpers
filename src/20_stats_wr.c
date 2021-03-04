@@ -590,7 +590,7 @@ PRIVATE json_t *calculate_value(
 /***************************************************************************
    Add stats
  ***************************************************************************/
-PUBLIC void wstats_add_value(
+PUBLIC int wstats_add_value(
     json_t *stats,
     const char *variable_name,
     const char *group,
@@ -611,7 +611,7 @@ PUBLIC void wstats_add_value(
             NULL
         );
         JSON_DECREF(jn_value);
-        return;
+        return -1;
     }
 
     char full_variable_name[NAME_MAX];
@@ -638,9 +638,9 @@ PUBLIC void wstats_add_value(
             "variable",     "%s", variable_name?variable_name:"",
             NULL
         );
-        log_debug_json(0, stats, "Metric not configured");
+        //log_debug_json(0, stats, "Metric not configured"); Too much information
         JSON_DECREF(jn_value);
-        return;
+        return -1;
     }
 
     uint64_t last_t = json_integer_value(json_object_get(variable, "last_t"));
@@ -661,7 +661,7 @@ PUBLIC void wstats_add_value(
             NULL
         );
         JSON_DECREF(jn_value);
-        return;
+        return -1;
     }
 
     json_object_set_new(variable, "last_t", json_integer(t));
@@ -744,6 +744,7 @@ PUBLIC void wstats_add_value(
     }
 
     JSON_DECREF(jn_value);
+    return 0;
 }
 
 /***************************************************************************
