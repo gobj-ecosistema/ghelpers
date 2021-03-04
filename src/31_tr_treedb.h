@@ -196,12 +196,16 @@ PUBLIC size_t treedb_topic_size(
  *      Utils
  *------------------------------------*/
 PUBLIC json_t *_treedb_create_topic_cols_desc(void);
+
+PUBLIC int parse_schema(
+    json_t *schema  // not owned
+);
 PUBLIC int parse_schema_cols( // Return 0 if ok or # of errors in negative
     json_t *cols_desc,  // NOT owned
     json_t *data        // owned
 );
 PUBLIC int parse_hooks(
-    json_t *tranger
+    json_t *schema  // not owned
 );
 
 PUBLIC int current_snap_tag(

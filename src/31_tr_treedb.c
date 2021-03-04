@@ -1713,6 +1713,40 @@ PRIVATE int check_desc_field(json_t *desc, json_t *dato)
 /***************************************************************************
  *  Return 0 if ok or # of errors in negative
  ***************************************************************************/
+PUBLIC int parse_schema(
+    json_t *schema  // not owned
+)
+{
+    if(!schema) {
+        return -1;
+    }
+
+    int ret = 0;
+
+    json_t *cols_desc = _treedb_create_topic_cols_desc();
+
+    json_t *topics = kwid_new_dict("verbose", schema, "topics");
+    const char *topic_name; json_t *topic;
+    json_object_foreach(topics, topic_name, topic) {
+        ret += parse_schema_cols(
+            topic_cols_desc,
+            kwid_new_list("verbose", topic, "cols")
+        );
+    }
+
+    ret += parse_hooks(
+        schema  // not owned
+    );
+
+    json_decref(topics);
+    json_decref(cols_desc);
+
+    return ret;
+}
+
+/***************************************************************************
+ *  Return 0 if ok or # of errors in negative
+ ***************************************************************************/
 PUBLIC int parse_schema_cols(
     json_t *cols_desc,  // NOT owned
     json_t *dato  // owned
@@ -1758,12 +1792,12 @@ PUBLIC int parse_schema_cols(
  *  Return 0 if ok or # of errors in negative
  ***************************************************************************/
 PUBLIC int parse_hooks(
-    json_t *tranger
+    json_t *schema  // not owned
 )
 {
     int ret = 0;
 
-    json_t *topics = kw_get_dict(tranger, "topics", 0, 0);
+    json_t *topics = kwid_new_dict("verbose", schema, "topics");
     const char *topic_name; json_t *topic;
     json_object_foreach(topics, topic_name, topic) {
         json_t *cols = kwid_new_list("verbose", topic, "cols");
@@ -1815,7 +1849,7 @@ PUBLIC int parse_hooks(
                      *  Check link: who child node
                      *------------------------------*/
                     json_t *link_topic = kwid_get("",
-                        tranger,
+                        schema,
                         "topics`%s",
                             link_topic_name
                     );
@@ -1930,6 +1964,8 @@ PUBLIC int parse_hooks(
         }
         JSON_DECREF(cols);
     }
+
+    JSON_DECREF(topics);
 
     return ret;
 }
