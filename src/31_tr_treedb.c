@@ -5630,6 +5630,7 @@ PRIVATE int _link_nodes(
             NULL
         );
         log_debug_json(0, child_node, "field not found in the node 5");
+        return -1;
     }
 
     /*--------------------------------------------------*
