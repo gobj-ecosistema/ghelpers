@@ -6776,7 +6776,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
 PUBLIC json_t *node_collapsed_view( // Return MUST be decref
     json_t *tranger, // NOT owned
     json_t *node, // NOT owned
-    json_t *jn_options // owned fkey,hook options, "expand_childs" (list with hooks to expand)
+    json_t *jn_options // owned fkey,hook options
 )
 {
     /*------------------------------*
@@ -6804,8 +6804,6 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
 
     BOOL with_metadata = kw_get_bool(jn_options, "with_metadata", 0, KW_WILD_NUMBER);
     BOOL without_rowid =  kw_get_bool(jn_options, "without_rowid", 0, KW_WILD_NUMBER);
-
-    json_t *_expand_childs = kw_get_list(jn_options, "expand_childs", 0, 0);
 
     json_t *node_view = json_object();
 
@@ -6842,22 +6840,9 @@ PUBLIC json_t *node_collapsed_view( // Return MUST be decref
             );
             json_t *child_list = get_hook_list(field_data);
 
-            if(_expand_childs && json_str_in_list(_expand_childs, col_name, FALSE)) {
-                int idx; json_t *child;
-                json_array_foreach(child_list, idx, child) {
-                    json_t *child_ = node_collapsed_view(
-                        tranger,
-                        child,
-                        json_incref(jn_options)
-                    );
-                    json_array_append_new(list, child_);
-                }
-
-            } else {
-                json_t *childs = apply_child_list_options(child_list, jn_options);
-                json_array_extend(list, childs);
-                json_decref(childs);
-            }
+            json_t *childs = apply_child_list_options(child_list, jn_options);
+            json_array_extend(list, childs);
+            json_decref(childs);
 
             json_decref(child_list);
 
@@ -7736,7 +7721,7 @@ PRIVATE json_t *create_jchild(
     const char *rename_hook, // change the hook name in the tree response
     json_t *node,       // NOT owned, pure node
     BOOL webix,
-    json_t *jn_options  // fkey,hook options, "webix", "expand_childs"
+    json_t *jn_options  // fkey,hook options
 )
 {
     json_t *jchild_ = node_collapsed_view(
@@ -7745,6 +7730,17 @@ PRIVATE json_t *create_jchild(
         json_incref(jn_options)
     );
     json_t *jchild = json_deep_copy(jchild_);
+    if(webix) {
+        if(!kw_has_key(jchild, "value")) {
+            const char *id = kw_get_str(jchild, "id", "", KW_REQUIRED);
+            const char *name = kw_get_str(jchild, "name", "", 0);
+            if(empty_string(name)) {
+                json_object_set_new(jchild, "value", json_string(id));
+            } else {
+                json_object_set_new(jchild, "value", json_string(name));
+            }
+        }
+    }
     json_decref(jchild_);
 
     if(webix || !empty_string(rename_hook)) {
@@ -7826,7 +7822,7 @@ PUBLIC json_t *treedb_node_jtree(
     const char *rename_hook, // change the hook name in the tree response
     json_t *node,       // NOT owned, pure node
     json_t *jn_filter,  // filter to childs tree
-    json_t *jn_options  // fkey,hook options, "webix", "expand_childs"
+    json_t *jn_options  // fkey,hook options
 )
 {
     /*------------------------------*

@@ -405,9 +405,6 @@ PUBLIC int treedb_unlink_nodes(
     "without_rowid"
         Don't "id" when is "rowid", by default it's returned
 
-    "expand_childs"
-        list with hooks to expand
-
     HACK id is converted in ids (using kwid_get_ids())
     HACK if __filter__ exists in jn_filter it will be used as filter
 
@@ -489,7 +486,7 @@ PUBLIC json_t *treedb_node_jtree(
     const char *rename_hook, // change the hook name in the tree response
     json_t *node,       // NOT owned, pure node
     json_t *jn_filter,  // filter to childs tree
-    json_t *jn_options  // fkey,hook options, "webix", "expand_childs"
+    json_t *jn_options  // fkey,hook options
 );
 
 /*----------------------------*
