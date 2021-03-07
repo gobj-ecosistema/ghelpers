@@ -7692,9 +7692,12 @@ PUBLIC json_t *treedb_node_childs(
 }
 
 /***************************************************************************
- *
+ *  Add path to child
  ***************************************************************************/
-PRIVATE int add_jtree_path(json_t *parent, json_t *child)
+PUBLIC int add_jtree_path(
+    json_t *parent,  // not owned
+    json_t *child  // not owned
+)
 {
     const char *parent_path = parent?kw_get_str(parent, "__path__", "", 0):0;
     const char *child_id = kw_get_str(child, "id", "", 0);
@@ -7731,14 +7734,10 @@ PRIVATE json_t *create_jchild(
     json_t *jchild = json_deep_copy(jchild_);
     json_decref(jchild_);
 
-    if(empty_string(rename_hook)) {
+    if(!empty_string(rename_hook)) {
         json_t *jn_hook = kw_get_dict_value(jchild, hook, 0, KW_REQUIRED|KW_EXTRACT);
         json_decref(jn_hook);
-        if(!empty_string(rename_hook)) {
-            json_object_set_new(jchild, rename_hook, json_array());
-        } else {
-            json_object_set_new(jchild, hook, json_array());
-        }
+        json_object_set_new(jchild, rename_hook, json_array());
     }
     return jchild;
 }
@@ -7843,11 +7842,10 @@ PUBLIC json_t *treedb_node_jtree(
         rename_hook = 0;
     }
 
-    json_t *tree = 0;
     json_t *root = create_jchild(tranger, hook, rename_hook, node, jn_options);
     add_jtree_path(0, root);
 
-    tree = root;
+    json_t *tree = root;
 
     // recursive
     add_jtree_childs(tranger, tree, hook, rename_hook, node, root, jn_filter, jn_options);

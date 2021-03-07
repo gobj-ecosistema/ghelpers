@@ -477,6 +477,11 @@ PUBLIC json_t *treedb_node_childs(
     json_t *jn_options  // fkey,hook options, "recursive"
 );
 
+PUBLIC int add_jtree_path( // Add path to child
+    json_t *parent,  // not owned
+    json_t *child  // not owned
+);
+
 /*
  *  Return a tree of childs through the hook
  */
