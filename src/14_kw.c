@@ -4659,3 +4659,67 @@ PUBLIC json_t *kw_collapse(
     return new_kw;
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int _kwid_walk_childs(
+    json_t *parent,  // not owned
+    json_t *node,  // not owned
+    const char *child_key,
+    int (*callback)(
+        json_t *parent,  // not owned
+        json_t *child,  // not owned
+        void *user_data
+    ),
+    void *user_data
+)
+{
+    int ret = 0;
+
+    /*
+     *  Enter in the node
+     */
+    ret = (*callback)(parent, node, user_data);
+    if(ret < 0) {
+        return -1;
+    }
+
+    /*
+     *  Get child list
+     */
+    json_t *childs = kw_get_list(node, child_key, 0, 0);
+    if(!childs) {
+        return 0;
+    }
+
+    int idx; json_t *child;
+    json_array_foreach(childs, idx, child) {
+        /*
+         *  Entra en los hijos
+         */
+        ret = _kwid_walk_childs(node, child, child_key, callback, user_data);
+        if(ret < 0) {
+            break;
+        }
+    }
+
+    return ret;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int kwid_walk_childs(
+    json_t *kw,  // not owned
+    const char *child_key,
+    int (*callback)(
+        json_t *parent,  // not owned
+        json_t *child,  // not owned
+        void *user_data
+    ),
+    void *user_data
+)
+{
+    return _kwid_walk_childs(0, kw, child_key, callback, user_data);
+}
+

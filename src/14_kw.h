@@ -893,6 +893,16 @@ PUBLIC json_t *kw_collapse(
     int collapse_dicts_limit
 );
 
+PUBLIC int kwid_walk_childs(
+    json_t *kw,  // not owned
+    const char *child_key,
+    int (*callback)(
+        json_t *parent,  // not owned
+        json_t *child,  // not owned
+        void *user_data
+    ),
+    void *user_data
+);
 
 #ifdef __cplusplus
 }
