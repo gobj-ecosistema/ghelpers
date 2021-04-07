@@ -1062,6 +1062,7 @@ PUBLIC json_t *create_json_record(
                 json_object_set_new(jn, name, json_real(atof(defaults)));
                 break;
             CASES("bool")
+            CASES("boolean")
                 if(strcasecmp(defaults, "true")==0) {
                     json_object_set_new(jn, name, json_true());
                 } else if(strcasecmp(defaults, "false")==0) {
