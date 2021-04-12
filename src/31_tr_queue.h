@@ -99,6 +99,11 @@ PUBLIC q_msg trq_get_by_rowid(tr_queue trq, uint64_t rowid);
 PUBLIC q_msg trq_get_by_key(tr_queue trq, const char *key);
 
 /**rst**
+    Get number of messages from iter by his key
+**rst**/
+PUBLIC int trq_size_by_key(tr_queue trq, const char *key);
+
+/**rst**
     Check pending status of a rowid (low level)
     Return -1 if rowid not exists, 1 if pending, 0 if not pending
 **rst**/

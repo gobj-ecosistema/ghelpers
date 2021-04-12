@@ -395,6 +395,22 @@ PUBLIC q_msg trq_get_by_key(tr_queue trq, const char *key)
 }
 
 /***************************************************************************
+    Get number of messages from iter by his key
+ ***************************************************************************/
+PUBLIC int trq_size_by_key(tr_queue trq, const char *key)
+{
+    register q_msg_t *msg;
+    int n = 0;
+    qmsg_foreach_forward(trq, msg) {
+        if(strcmp(msg->md_record.key.s, key)==0) {
+            n++;
+        }
+    }
+
+    return n;
+}
+
+/***************************************************************************
     Check pending status of a rowid (low level)
  ***************************************************************************/
 PUBLIC int trq_check_pending_rowid(tr_queue trq_, uint64_t rowid)
