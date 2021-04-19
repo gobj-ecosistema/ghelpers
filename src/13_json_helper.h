@@ -91,6 +91,9 @@ PUBLIC json_t * nonlegalfile2json(const char *path, BOOL verbose);
 **rst**/
 PUBLIC json_t * legalstring2json(const char* str, BOOL verbose);
 
+// Shortcut
+#define str2json legalstring2json
+
 /**rst**
    Formatted output conversion to string json
    Maximum output size of 4K
