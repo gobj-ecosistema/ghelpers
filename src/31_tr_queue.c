@@ -577,13 +577,18 @@ PUBLIC q_msg trq_prev_msg(q_msg msg)
 /***************************************************************************
     Get info of message
  ***************************************************************************/
-PUBLIC md_record_t trq_msg_md_record(q_msg msg)
+PUBLIC md_record_t trq_msg_md_record(q_msg msg_)
 {
-    return ((q_msg_t *)msg)->md_record;
+    register q_msg_t *msg = msg_;
+    return msg->md_record;
 }
-PUBLIC uint64_t trq_msg_rowid(q_msg msg)
+PUBLIC uint64_t trq_msg_rowid(q_msg msg_)
 {
-    return ((q_msg_t *)msg)->md_record.__rowid__;
+    register q_msg_t *msg = msg_;
+    if(!msg) {
+        return 0;
+    }
+    return msg->md_record.__rowid__;
 }
 PUBLIC json_t *trq_msg_json(q_msg msg_) // Return json is NOT YOURS!!
 {
