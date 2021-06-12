@@ -843,9 +843,9 @@ PUBLIC void log_debug_json(
         return;
     }
 
-    if(!jn) {
-        return; // silence
-    }
+//     if(!jn) { Que se pinten los null
+//         return; // silence
+//     }
     __debug_count__++;
 
     const char *direction="";
