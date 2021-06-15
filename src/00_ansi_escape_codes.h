@@ -87,6 +87,8 @@ extern "C"{
 #define On_ICyan "\033[0;106m"    // Cyan
 #define On_IWhite "\033[0;107m"   // White
 
+#define Erase_Whole_Line    "\033[2K"
+#define Move_Horizontal     "\033[%dG"
 
 #ifdef __cplusplus
 }
