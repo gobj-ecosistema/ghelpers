@@ -26,7 +26,7 @@
 PUBLIC int run_command(const char *command, char *bf, size_t bfsize)
 {
     FILE *fp;
-    char temp[1035];
+    char temp[4*1024];
 
     memset(bf, 0, bfsize);
 
