@@ -3727,6 +3727,91 @@ PUBLIC int tranger_prev_record(
 /***************************************************************************
  *
  ***************************************************************************/
+PUBLIC void print_md0_record(
+    json_t *tranger,
+    json_t *topic,
+    const md_record_t *md_record,
+    char *bf,
+    int bfsize
+)
+{
+    char fecha[90];
+    char stamp[64];
+    if(md_record->__system_flag__ & sf_t_ms) {
+        time_t t = md_record->__t__;
+        t /= 1000;
+        strftime(fecha, sizeof(fecha), "%Y-%m-%dT%H:%M:%S%z", localtime(&t));
+    } else {
+        strftime(fecha, sizeof(fecha), "%Y-%m-%dT%H:%M:%S%z",
+            localtime((time_t *)&md_record->__t__)
+        );
+    }
+
+    char fecha_tm[80];
+    if(md_record->__system_flag__ & sf_tm_ms) {
+        time_t t_m = md_record->__tm__;
+        t_m /= 1000;
+        strftime(stamp, sizeof(stamp), "%Y-%m-%dT%H:%M:%S%z", gmtime(&t_m));
+    } else {
+        strftime(fecha_tm, sizeof(fecha_tm), "%Y-%m-%dT%H:%M:%S%z",
+            gmtime((time_t *)&md_record->__tm__)
+        );
+    }
+
+    system_flag_t key_type = md_record->__system_flag__ & KEY_TYPE_MASK;
+
+    if(!key_type) {
+        snprintf(bf, bfsize,
+            "rowid:%"PRIu64", "
+            "t:%"PRIu64" %s, "
+            "tm:%"PRIu64" %s",
+            (uint64_t)md_record->__rowid__,
+            (uint64_t)md_record->__t__,
+            fecha,
+            (uint64_t)md_record->__tm__,
+            fecha_tm
+        );
+    } else if(key_type & (sf_int_key|sf_rowid_key)) {
+        snprintf(bf, bfsize,
+            "rowid:%"PRIu64", "
+            "t:%"PRIu64" %s, "
+            "tm:%"PRIu64" %s, "
+            "key: %"PRIu64,
+            (uint64_t)md_record->__rowid__,
+            (uint64_t)md_record->__t__,
+            fecha,
+            (uint64_t)md_record->__tm__,
+            fecha_tm,
+            md_record->key.i
+        );
+    } else if(key_type & sf_string_key) {
+        snprintf(bf, bfsize,
+            "rowid:%"PRIu64", "
+            "t:%"PRIu64" %s, "
+            "tm:%"PRIu64" %s, "
+            "key:'%s'",
+            (uint64_t)md_record->__rowid__,
+            (uint64_t)md_record->__t__,
+            fecha,
+            (uint64_t)md_record->__tm__,
+            fecha_tm,
+            md_record->key.s
+        );
+    } else {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "BAD metadata, without key type",
+            "topic",        "%s", tranger_topic_name(topic),
+            NULL
+        );
+    }
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PUBLIC void print_md1_record(
     json_t *tranger,
     json_t *topic,

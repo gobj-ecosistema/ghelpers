@@ -527,6 +527,13 @@ PUBLIC int tranger_prev_record(
  *  print_md2_record: info of message record metadata
  *  print_md3_record: info of file record metadata
  */
+PUBLIC void print_md0_record(
+    json_t *tranger,
+    json_t *topic,
+    const md_record_t *md_record,
+    char *bf,
+    int bfsize
+);
 PUBLIC void print_md1_record(
     json_t *tranger,
     json_t *topic,
