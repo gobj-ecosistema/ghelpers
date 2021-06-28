@@ -414,6 +414,20 @@ PUBLIC int kw_delete_metadata_keys(
 );
 
 /**rst**
+    Delete keys from kw
+    Keys:
+        "$key"
+        ["$key1", "$key2", ...]
+        {"$key1":*, "$key2":*, ...}
+
+**rst**/
+PUBLIC int kw_delete_keys(
+    json_t *kw,     // NOT owned
+    json_t *keys,   // owned
+    BOOL verbose
+);
+
+/**rst**
     Return a new kw only with the keys.
     If `keys` is null then return a duplicate of kw.
     A key can be repeated by the tree.
@@ -445,6 +459,22 @@ PUBLIC json_t *kw_clone_by_path(
     If paths are empty return kw
 **rst**/
 PUBLIC json_t *kw_clone_by_keys(
+    json_t *kw,     // owned
+    json_t *keys,   // owned
+    BOOL verbose
+);
+
+/**rst**
+    Return a new kw except the keys got by dict's keys or list's keys (strings).
+    Keys:
+        "$key"
+        ["$key1", "$key2", ...]
+        {"$key1":*, "$key2":*, ...}
+
+    It's not a deep copy, new keys are the paths.
+    If paths are empty return kw
+**rst**/
+PUBLIC json_t *kw_clone_by_not_keys(
     json_t *kw,     // owned
     json_t *keys,   // owned
     BOOL verbose

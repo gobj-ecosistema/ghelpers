@@ -1895,6 +1895,84 @@ PUBLIC int kw_delete_metadata_keys(
 }
 
 /***************************************************************************
+    Delete keys from kw
+    Keys:
+        "$key"
+        ["$key1", "$key2", ...]
+        {"$key1":*, "$key2":*, ...}
+
+ ***************************************************************************/
+PUBLIC int kw_delete_keys(
+    json_t *kw,     // NOT owned
+    json_t *keys,   // owned
+    BOOL verbose
+)
+{
+    if(json_is_string(keys)) {
+        const char *key = json_string_value(keys);
+        json_t *jn_value = kw_get_dict_value(kw, key, 0, 0);
+        if(jn_value) {
+            json_object_del(kw, key);
+        } else {
+            if(verbose) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "key not found",
+                    "key",          "%s", key,
+                    NULL
+                );
+            }
+        }
+    } else if(json_is_object(keys)) {
+        const char *key;
+        json_t *jn_v;
+        json_object_foreach(keys, key, jn_v) {
+            json_t *jn_value = kw_get_dict_value(kw, key, 0, 0);
+            if(jn_value) {
+                json_object_del(kw, key);
+            } else {
+                if(verbose) {
+                    log_error(LOG_OPT_TRACE_STACK,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "key not found",
+                        "key",          "%s", key,
+                        NULL
+                    );
+                }
+            }
+        }
+    } else if(json_is_array(keys)) {
+        int idx;
+        json_t *jn_v;
+        json_array_foreach(keys, idx, jn_v) {
+            const char *key = json_string_value(jn_v);
+            json_t *jn_value = kw_get_dict_value(kw, key, 0, 0);
+            if(jn_value) {
+                json_object_del(kw, key);
+            } else {
+                if(verbose) {
+                    log_error(LOG_OPT_TRACE_STACK,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "key not found",
+                        "key",          "%s", key,
+                        NULL
+                    );
+                }
+            }
+        }
+    }
+
+    KW_DECREF(keys);
+    return 0;
+}
+
+/***************************************************************************
     Return a new kw only with the filter keys.
     If `keys` is null then return a clone of kw.
     A key can be repeated by the tree.
@@ -1983,7 +2061,7 @@ PUBLIC json_t *kw_clone_by_keys(
 )
 {
     json_t *kw_clone = json_object();
-    if(json_is_string(keys)) {
+    if(json_is_string(keys) && !empty_string(json_string_value(keys))) {
         const char *key = json_string_value(keys);
         json_t *jn_value = kw_get_dict_value(kw, key, 0, 0);
         if(jn_value) {
@@ -2000,7 +2078,7 @@ PUBLIC json_t *kw_clone_by_keys(
                 );
             }
         }
-    } else if(json_is_object(keys)) {
+    } else if(json_is_object(keys) && json_object_size(keys)>0) {
         const char *key;
         json_t *jn_v;
         json_object_foreach(keys, key, jn_v) {
@@ -2020,7 +2098,7 @@ PUBLIC json_t *kw_clone_by_keys(
                 }
             }
         }
-    } else if(json_is_array(keys)) {
+    } else if(json_is_array(keys) && json_array_size(keys)>0) {
         int idx;
         json_t *jn_v;
         json_array_foreach(keys, idx, jn_v) {
@@ -2047,8 +2125,97 @@ PUBLIC json_t *kw_clone_by_keys(
         return kw;
     }
 
-    KW_DECREF(kw);
     KW_DECREF(keys);
+    KW_DECREF(kw);
+    return kw_clone;
+}
+
+/***************************************************************************
+    Return a new kw except the keys got by dict's keys or list's keys (strings).
+    Keys:
+        "$key"
+        ["$key1", "$key2", ...]
+        {"$key1":*, "$key2":*, ...}
+
+    It's not a deep copy, new keys are the paths.
+    If paths are empty return empty
+ ***************************************************************************/
+PUBLIC json_t *kw_clone_by_not_keys(
+    json_t *kw,     // owned
+    json_t *keys,   // owned
+    BOOL verbose
+)
+{
+    json_t *kw_clone = json_object();
+    json_object_update(kw_clone, kw);
+
+    if(json_is_string(keys) && !empty_string(json_string_value(keys))) {
+        const char *key = json_string_value(keys);
+        json_t *jn_value = kw_get_dict_value(kw, key, 0, 0);
+        if(jn_value) {
+            json_object_del(kw_clone, key);
+        } else {
+            if(verbose) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "key not found",
+                    "key",          "%s", key,
+                    NULL
+                );
+            }
+        }
+    } else if(json_is_object(keys) && json_object_size(keys)>0) {
+        const char *key;
+        json_t *jn_v;
+        json_object_foreach(keys, key, jn_v) {
+            json_t *jn_value = kw_get_dict_value(kw, key, 0, 0);
+            if(jn_value) {
+                json_object_del(kw_clone, key);
+            } else {
+                if(verbose) {
+                    log_error(LOG_OPT_TRACE_STACK,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "key not found",
+                        "key",          "%s", key,
+                        NULL
+                    );
+                }
+            }
+        }
+    } else if(json_is_array(keys) && json_array_size(keys)>0) {
+        int idx;
+        json_t *jn_v;
+        json_array_foreach(keys, idx, jn_v) {
+            const char *key = json_string_value(jn_v);
+            json_t *jn_value = kw_get_dict_value(kw, key, 0, 0);
+            if(jn_value) {
+                json_object_del(kw_clone, key);
+            } else {
+                if(verbose) {
+                    log_error(LOG_OPT_TRACE_STACK,
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                        "msg",          "%s", "key not found",
+                        "key",          "%s", key,
+                        NULL
+                    );
+                }
+            }
+        }
+    } else {
+        json_decref(kw_clone);
+        KW_DECREF(keys);
+        KW_DECREF(kw);
+        return json_object();
+    }
+
+    KW_DECREF(keys);
+    KW_DECREF(kw);
     return kw_clone;
 }
 
