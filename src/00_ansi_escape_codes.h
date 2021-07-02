@@ -89,6 +89,7 @@ extern "C"{
 
 #define Erase_Whole_Line    "\033[2K"
 #define Move_Horizontal     "\033[%dG"
+#define Clear_Screen        "\033[2J"
 
 #ifdef __cplusplus
 }
