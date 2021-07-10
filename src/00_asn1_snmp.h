@@ -16,9 +16,7 @@
  *      mini-snmpd
  *      Copyright (C) 2008 Robert Ernst <robert.ernst@linux-solutions.at>
  ****************************************************************************/
-
-#ifndef ASN1_SNMP_H
-#define ASN1_SNMP_H
+#pragma once
 
 #include <stdint.h>
 
@@ -275,5 +273,3 @@ typedef uint32_t oid_t;
 #ifdef __cplusplus
 }
 #endif
-
-#endif                          /* ASN1_SNMP_H */
