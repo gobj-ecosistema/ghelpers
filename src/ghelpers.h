@@ -3,10 +3,7 @@
  *              Copyright (c) 1996-2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-
-#ifndef __GHELPERS_H
-#define __GHELPERS_H 1
+#pragma once
 
 #include "00_ansi_escape_codes.h"
 #include "00_asn1_snmp.h"
@@ -75,6 +72,4 @@ PUBLIC void end_ghelpers_library(void);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
