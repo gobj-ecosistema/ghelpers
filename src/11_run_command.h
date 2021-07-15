@@ -5,9 +5,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef ___RUN_EXECUTABLE_H__
-#define ___RUN_EXECUTABLE_H__ 1
+#pragma once
 
 /*
  *  Dependencies
@@ -32,7 +30,3 @@ PUBLIC int run_process2(  // use fork(), synchronous
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

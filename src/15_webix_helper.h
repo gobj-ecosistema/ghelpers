@@ -6,7 +6,6 @@
  *          Copyright (c) 2019 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
 #pragma once
 
 #include <jansson.h>

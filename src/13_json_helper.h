@@ -5,8 +5,7 @@
  *              All Rights Reserved.
  *              Date functions
  ***********************************************************************/
-#ifndef _JSON_HELPER_H
-#define _JSON_HELPER_H 1
+#pragma once
 
 #include <stdarg.h>
 #include <jansson.h>
@@ -319,7 +318,4 @@ PUBLIC int json_print_refcounts(
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif

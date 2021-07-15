@@ -4,9 +4,7 @@
  *          Copyright (c) 2013-2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _KW_H
-#define _KW_H 1
+#pragma once
 
 #include <jansson.h>
 
@@ -937,7 +935,3 @@ PUBLIC int kwid_walk_childs(
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

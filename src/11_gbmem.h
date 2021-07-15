@@ -4,9 +4,7 @@
  *              Copyright (c) 1996-2013 Niyamaka.
  *              All Rights Reserved.
  ***********************************************************************/
-
-#ifndef _GBMEM_H
-#define _GBMEM_H 1
+#pragma once
 
 /*
  *  Dependencies
@@ -163,5 +161,3 @@ PUBLIC void gbmem_enable_log_info(BOOL enable);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _GBMEM_H */

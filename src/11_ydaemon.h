@@ -8,9 +8,7 @@
  *          Copyright (c) 2013 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _daemon_H
-#define _daemon_H 1
+#pragma once
 
 #include "10_glogger.h"
 
@@ -43,7 +41,3 @@ PUBLIC BOOL daemon_get_debug_mode(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

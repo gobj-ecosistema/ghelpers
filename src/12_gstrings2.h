@@ -6,10 +6,7 @@
  *          Copyright (c) 2017 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-
-#ifndef _C_GSTRINGS2_H
-#define _C_GSTRINGS2_H 1
+#pragma once
 
 #include <string.h>
 #include <regex.h>
@@ -84,6 +81,3 @@ PUBLIC void str_concat_free(char *s);
 #ifdef __cplusplus
 }
 #endif
-
-#endif
-

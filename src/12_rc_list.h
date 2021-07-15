@@ -7,9 +7,7 @@
  *        Copyright (c) 2016 Niyamaka.
  *        All Rights Reserved.
  ***********************************************************************/
-
-#ifndef rc_list_s_H
-#define rc_list_s_H 1
+#pragma once
 
 #include <stddef.h>
 /*
@@ -301,6 +299,4 @@ PUBLIC int rc_walk_by_childs_tree(
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

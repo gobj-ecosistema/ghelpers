@@ -1,5 +1,4 @@
-#ifndef BASE64_H_
-#define BASE64_H_
+#pragma once
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -20,6 +19,4 @@ size_t b64_output_decode_len(size_t input_length);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

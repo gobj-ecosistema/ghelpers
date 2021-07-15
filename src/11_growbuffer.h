@@ -6,9 +6,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_GROWBUFFER_H
-#define _C_GROWBUFFER_H 1
+#pragma once
 
 #include <string.h>
 #include "10_glogger.h"
@@ -59,6 +57,4 @@ PUBLIC int growbf_copy(grow_buffer_t *grbf, void *bf, size_t len);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

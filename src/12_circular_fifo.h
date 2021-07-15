@@ -6,9 +6,7 @@
  *              Copyright (c) 1999-2013 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _CIRCULAR_FIFO_H
-#define _CIRCULAR_FIFO_H 1
+#pragma once
 
 /*
  *  Dependencies
@@ -48,7 +46,3 @@ int  cfifo_freespace(CFIFO *cfifo);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

@@ -6,10 +6,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-
-#ifndef _C_GSTRINGS_H
-#define _C_GSTRINGS_H 1
+#pragma once
 
 #include <string.h>
 #include <regex.h>
@@ -362,6 +359,3 @@ PUBLIC BOOL all_numbers(const char* s);
 #ifdef __cplusplus
 }
 #endif
-
-#endif
-

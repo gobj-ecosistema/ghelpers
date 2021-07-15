@@ -4,9 +4,7 @@
  *              All Rights Reserved.
  *              Own type definitions
  ***********************************************************************/
-
-#ifndef _GTYPES_H
-#define _GTYPES_H 1
+#pragma once
 
 #include <sys/types.h>
 #include <stdio.h>
@@ -92,5 +90,3 @@ PUBLIC int get_pid(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _GTYPES_H */

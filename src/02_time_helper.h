@@ -3,9 +3,7 @@
  *              Copyright (c) 2013 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _TIME_HELPER_H
-#define _TIME_HELPER_H 1
+#pragma once
 
 #include <time.h>
 #include <stdint.h>
@@ -95,5 +93,3 @@ PUBLIC time_range_t get_years_range(time_t t, int range, const char *TZ);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _TIME_HELPER_H */

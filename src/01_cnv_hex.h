@@ -3,8 +3,7 @@
  *              Copyright (c) 1995 Niyamaka.
  *              All Rights Reserved.
  ***********************************************************************/
-#ifndef _CONVERT_H
-#define _CONVERT_H 1
+#pragma once
 
 #include "00_gtypes.h"
 #include "01_print_error.h"
@@ -43,6 +42,4 @@ void tdumpsu2(void *user_data, int user_data2, const char *prefix, const char *s
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

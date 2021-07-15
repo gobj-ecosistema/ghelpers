@@ -6,9 +6,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_JSON_CONFIG_H
-#define _C_JSON_CONFIG_H 1
+#pragma once
 
 /*
  *  Dependencies
@@ -164,6 +162,4 @@ PUBLIC char *helper_doublequote2quote(char *str);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

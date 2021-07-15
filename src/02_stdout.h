@@ -6,9 +6,7 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _C_STDOUT_H
-#define _C_STDOUT_H 1
+#pragma once
 
 #include <stdarg.h>
 #include "01_print_error.h"
@@ -42,6 +40,4 @@ PUBLIC int stdout_fwrite(void* v, int priority, const char* format, ...);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

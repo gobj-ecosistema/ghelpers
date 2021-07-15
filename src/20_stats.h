@@ -6,7 +6,6 @@
  *          Copyright (c) 2018 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
 #pragma once
 
 #include <inttypes.h>

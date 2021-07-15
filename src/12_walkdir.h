@@ -3,8 +3,7 @@
  *              Copyright (c) 2014 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#ifndef _WALKDIR_H
-#define _WALKDIR_H
+#pragma once
 
 /*
  *  Dependencies
@@ -84,6 +83,4 @@ PUBLIC void free_ordered_filename_array(char **array, int size);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

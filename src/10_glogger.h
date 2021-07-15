@@ -3,8 +3,7 @@
  *              Copyright (c) 1996-2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#ifndef _GLOGGER_H
-#define _GLOGGER_H 1
+#pragma once
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -288,5 +287,3 @@ PUBLIC int get_real_precision(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _GLOGGER_H */

@@ -1,8 +1,7 @@
 // This file is a part of Julia. License is MIT: https://julialang.org/license
 // https://github.com/JeffBezanson/cutef8/blob/master/utf8.c
 
-#ifndef JL_UTF8_H
-#define JL_UTF8_H
+#pragma once
 
 #include <inttypes.h>
 
@@ -102,6 +101,4 @@ int u8_isvalid(const char *str, size_t length);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

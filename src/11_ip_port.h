@@ -5,9 +5,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _IP_PORT_H
-#define _IP_PORT_H 1
+#pragma once
 
 #include <netinet/in.h>
 #include <uv.h>
@@ -41,7 +39,3 @@ PUBLIC int get_ipp_url(ip_port *ipp, char *url, int urlsize);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

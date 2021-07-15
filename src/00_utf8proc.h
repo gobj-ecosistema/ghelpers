@@ -50,8 +50,7 @@
 
 /** @file */
 
-#ifndef UTF8PROC_H
-#define UTF8PROC_H
+#pragma once
 
 /** @name API version
  *
@@ -694,6 +693,4 @@ UTF8PROC_DLLEXPORT utf8proc_uint8_t *utf8proc_NFKC(const utf8proc_uint8_t *str);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

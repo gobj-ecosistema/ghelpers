@@ -4,9 +4,7 @@
  *              Copyright (c) 2013 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _GBUFFER_H
-#define _GBUFFER_H 1
+#pragma once
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -304,7 +302,3 @@ PUBLIC GBUFFER *kw_get_gbuf_value(
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

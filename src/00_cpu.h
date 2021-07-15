@@ -20,9 +20,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1335 USA              *
  ***************************************************************************
  */
-
-#ifndef __CPU_H_
-#define __CPU_H_
+#pragma once
 
 #include <inttypes.h>
 
@@ -50,6 +48,4 @@ unsigned long proc_vmem_in_kb(unsigned int pid); /* virtual memory in kB */
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

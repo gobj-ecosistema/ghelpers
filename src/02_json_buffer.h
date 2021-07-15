@@ -26,9 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef UMBERLOG_BUFFER_H
-#define UMBERLOG_BUFFER_H 1
+#pragma once
 
 /*
  *  Dependencies
@@ -63,6 +61,4 @@ PUBLIC char * json_get_buf(hgen_t hgen);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

@@ -33,9 +33,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-#ifndef __LINENOISE_H
-#define __LINENOISE_H
+#pragma once
 
 #include <sys/types.h>
 
@@ -105,5 +103,3 @@ void disableRawMode(int fd);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* __LINENOISE_H */

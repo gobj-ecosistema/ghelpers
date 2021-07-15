@@ -5,9 +5,7 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef ___REFERENCE_H__
-#define ___REFERENCE_H__ 1
+#pragma once
 
 #include "00_gtypes.h"
 
@@ -21,7 +19,3 @@ uint64_t long_reference(void);
 #ifdef __cplusplus
 }
 #endif
-
-
-#endif
-

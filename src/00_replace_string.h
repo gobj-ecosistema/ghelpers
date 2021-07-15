@@ -27,8 +27,7 @@
  *  Attribution:    Optional. If you choose to indicate attribution when using this function,
  *      feel free to link to this page.
  ***************************************************************************/
-#ifndef _REPLACE_STRING_H
-#define _REPLACE_STRING_H
+#pragma once
 
 #ifdef __cplusplus
 extern "C"{
@@ -39,6 +38,4 @@ char *replace_string(const char *str, const char *old, const char *snew);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

@@ -7,9 +7,7 @@
  *
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _JSON_XML_H
-#define _JSON_XML_H 1
+#pragma once
 
 #include <jansson.h>
 /*
@@ -57,5 +55,3 @@ PUBLIC int xml_parse(
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _JSON_XML_H */

@@ -3,9 +3,7 @@
  *              Copyright (c) 2014 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _DIRS_H
-#define _DIRS_H 1
+#pragma once
 
 /*
  *  Dependencies
@@ -100,5 +98,3 @@ PUBLIC char *build_path6(
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _DIRS_H */

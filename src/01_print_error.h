@@ -3,9 +3,7 @@
  *              Copyright (c) 2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _PRINT_ERROR_H
-#define _PRINT_ERROR_H 1
+#pragma once
 
 #include <stdarg.h>
 #include "00_gtypes.h"
@@ -42,6 +40,3 @@ PUBLIC const char *get_last_error(void);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _PRINT_ERROR_H */
-

@@ -4,7 +4,6 @@
  *              All Rights Reserved.
  *              Own type definitions
  ***********************************************************************/
-
 #pragma once
 
 #ifdef __cplusplus

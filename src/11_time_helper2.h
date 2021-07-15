@@ -3,9 +3,7 @@
  *              Copyright (C) Linus Torvalds, 2005
  *              Copyright (c) Niyamaka, 2018.
  ****************************************************************************/
-
-#ifndef _TIME_HELPER2_H
-#define _TIME_HELPER2_H 1
+#pragma once
 
 #include <time.h>
 #include <stdint.h>
@@ -142,5 +140,3 @@ int date_overflows(timestamp_t date);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _TIME_HELPER2_H */

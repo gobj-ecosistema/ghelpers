@@ -3,9 +3,7 @@
  *              Copyright (c) 2013, 2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _URLS_H
-#define _URLS_H 1
+#pragma once
 
 /*
  *  Dependencies
@@ -56,5 +54,3 @@ PUBLIC int parse_full_http_url(
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _URLS_H */

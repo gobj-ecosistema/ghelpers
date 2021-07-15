@@ -7,9 +7,7 @@
  *        Copyright (c) 1994-2016 Niyamaka.
  *        All Rights Reserved.
  ***********************************************************************/
-
-#ifndef dl_list_s_H
-#define dl_list_s_H 1
+#pragma once
 
 /*
  *  Dependencies
@@ -82,6 +80,4 @@ void dl_move(dl_list_t *destination, dl_list_t *source);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

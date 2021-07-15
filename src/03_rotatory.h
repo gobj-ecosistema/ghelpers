@@ -4,9 +4,7 @@
  *              Copyright (c) 2013 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-
-#ifndef _ROTATORY_H
-#define _ROTATORY_H 1
+#pragma once
 
 #include <stdio.h>
 
@@ -89,5 +87,3 @@ PUBLIC const char *rotatory_path(hrotatory_t hr);
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* _ROTATORY_H */

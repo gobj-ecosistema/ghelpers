@@ -20,9 +20,7 @@
  *      Please read the file sha1.c for more information.
  *
  */
-
-#ifndef _SHA1_H_
-#define _SHA1_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +52,4 @@ void SHA1Input(SHA1Context *, const unsigned char *, unsigned);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

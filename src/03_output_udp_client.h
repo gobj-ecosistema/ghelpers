@@ -5,9 +5,7 @@
  *          Copyright (c) 2014, 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-
-#ifndef __OUTPUT_UDP_CLIENT_H
-#define __OUTPUT_UDP_CLIENT_H 1
+#pragma once
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -124,7 +122,4 @@ PUBLIC int udpc_fwrite(udpc_t udpc, int priority, const char *format, ...);
 
 #ifdef __cplusplus
 }
-#endif
-
-
 #endif
