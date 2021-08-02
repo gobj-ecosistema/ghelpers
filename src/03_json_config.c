@@ -194,26 +194,27 @@ PRIVATE size_t on_load_op_callback(void *bf_, size_t bfsize, void *data)
         // TODO WARNING algoritmo mal: bf_ es 1024, en lineas mas grandes con comment fallaria
         char *p = op->lines;
         char *begin = p;
-        int maxlen = bfsize-1;
+        int maxlen = bfsize;
         while(p && *p && maxlen > 0) {
-            if(*p == '\n')
+            if(*p == '\n') {
                 break;
+            }
             p++;
             maxlen--;
         }
         int len = p-begin;
+
         if(!len) {
             /*
              */
             return 0;
         }
-        if(*p) {
+        if(*p == '\n') {
             op->lines = p+1;
         } else {
             op->lines = p;
         }
         memmove(bf, begin, len);
-        *(bf + len) = 0;
         p = strstr(bf, INLINE_COMMENT);
         if(p) {
             /*
@@ -221,8 +222,9 @@ PRIVATE size_t on_load_op_callback(void *bf_, size_t bfsize, void *data)
              */
             *(p+0) = '\n';
             *(p+1) = 0;
+            len = strlen(bf);
         }
-        return strlen(bf);
+        return len;
 
     } else {
         /*-----------------------------------*
