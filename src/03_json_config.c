@@ -191,6 +191,7 @@ PRIVATE size_t on_load_op_callback(void *bf_, size_t bfsize, void *data)
         /*-----------------------------------*
          *      Operation in string
          *-----------------------------------*/
+        // TODO WARNING algoritmo mal: bf_ es 1024, en lineas mas grandes con comment fallaria
         char *p = op->lines;
         char *begin = p;
         int maxlen = bfsize-1;
@@ -203,8 +204,6 @@ PRIVATE size_t on_load_op_callback(void *bf_, size_t bfsize, void *data)
         int len = p-begin;
         if(!len) {
             /*
-             *  HACK pop dl_op for next op
-             *  TODO perhaps it's not necessary
              */
             return 0;
         }
@@ -223,8 +222,6 @@ PRIVATE size_t on_load_op_callback(void *bf_, size_t bfsize, void *data)
             *(p+0) = '\n';
             *(p+1) = 0;
         }
-        left_justify(bf);
-        strcat(bf, "\n");
         return strlen(bf);
 
     } else {
@@ -233,18 +230,17 @@ PRIVATE size_t on_load_op_callback(void *bf_, size_t bfsize, void *data)
          *-----------------------------------*/
         if(!fgets(bf, bfsize, op->file)) {
             /*
-             *  HACK pop dl_op for next op
-             *  TODO perhaps it's not necessary
              */
             return 0; /* end of file */
         }
 
+        // TODO WARNING algoritmo mal: bf_ es 1024, en lineas mas grandes con comment fallaria
         register char *p;
         p = strstr(bf, INLINE_COMMENT);
         if(p) {
             /*
-            *  Remove comments
-            */
+             *  Remove comments
+             */
             *(p+0) = '\n';
             *(p+1) = 0;
         }
