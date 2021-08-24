@@ -19,9 +19,15 @@ PUBLIC int parse_http_url(
 {
     struct http_parser_url u;
 
-    if(host) host[0] = 0;
-    if(schema) schema[0] = 0;
-    if(port) port[0] = 0;
+    if(host && host_size > 0) {
+        host[0] = 0;
+    }
+    if(schema && schema_size > 0) {
+        schema[0] = 0;
+    }
+    if(port && port_size > 0) {
+        port[0] = 0;
+    }
 
     int result = http_parser_parse_url(uri, strlen(uri), no_schema, &u);
     if (result != 0) {
