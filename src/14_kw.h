@@ -932,6 +932,8 @@ PUBLIC int kwid_walk_childs(
     void *user_data
 );
 
+PUBLIC int kw_content_size(json_t *kw); // WARNING size for ugly json string (without indent)
+
 #ifdef __cplusplus
 }
 #endif

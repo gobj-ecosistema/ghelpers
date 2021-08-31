@@ -4890,3 +4890,60 @@ PUBLIC int kwid_walk_childs(
     return _kwid_walk_childs(0, kw, child_key, callback, user_data);
 }
 
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int _dict_content_size(json_t *kw)
+{
+    int size = 5;
+
+    const char *key; json_t *v;
+    json_object_foreach(kw, key, v) {
+        size += strlen(key) + 4;
+        size += kw_content_size(v);
+    }
+
+    return size;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int _list_content_size(json_t *kw)
+{
+    int size = 5;
+
+    int idx; json_t *v;
+    json_array_foreach(kw, idx, v) {
+        size += 2;
+        size += kw_content_size(v);
+    }
+
+    return size;
+}
+
+/***************************************************************************
+ *  WARNING size for ugly json string (without indent)
+ ***************************************************************************/
+PUBLIC int kw_content_size(json_t *kw)
+{
+    int size = 0;
+
+    if(json_is_object(kw)) {
+        size = _dict_content_size(kw);
+
+    } else if(json_is_array(kw)) {
+        size = _list_content_size(kw);
+
+    } else if(json_is_string(kw)) {
+        size = strlen(json_string_value(kw));
+
+    } else if(json_is_boolean(kw) || json_is_null(kw)) {
+        size = 8;
+
+    } else {
+        size = 64; // for integer, real
+    }
+
+    return size;
+}

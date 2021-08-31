@@ -50,6 +50,15 @@ PUBLIC int parse_full_http_url(
     BOOL no_schema
 );
 
+PUBLIC int parse_partial_http_url(
+    const char *uri,
+    char *schema, int schema_size,
+    char *host, int host_size,
+    char *port, int port_size,
+    char *path, int path_size,
+    char *query, int query_size,
+    BOOL no_schema
+);
 
 #ifdef __cplusplus
 }
