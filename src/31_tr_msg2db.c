@@ -564,7 +564,9 @@ PRIVATE int set_tranger_field_value(
                 json_int_t v = jn2integer(value);
                 json_object_set_new(record, field, json_integer(v));
             } else {
-                log_error(LOG_OPT_TRACE_STACK,
+                json_int_t v = jn2integer(value);
+                json_object_set_new(record, field, json_integer(v));
+                log_info(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -573,9 +575,9 @@ PRIVATE int set_tranger_field_value(
                     "col",          "%j", col,
                     "field",        "%s", field,
                     "value",        "%j", value,
+                    "v",            "%d", (int)v,
                     NULL
                 );
-                return -1;
             }
             break;
         CASES("real")
@@ -587,7 +589,9 @@ PRIVATE int set_tranger_field_value(
                 double v = jn2real(value);
                 json_object_set_new(record, field, json_real(v));
             } else {
-                log_error(LOG_OPT_TRACE_STACK,
+                double v = jn2real(value);
+                json_object_set_new(record, field, json_real(v));
+                log_info(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -596,9 +600,9 @@ PRIVATE int set_tranger_field_value(
                     "col",          "%j", col,
                     "field",        "%s", field,
                     "value",        "%j", value,
+                    "v",            "%f", v,
                     NULL
                 );
-                return -1;
             }
             break;
 
