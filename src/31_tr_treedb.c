@@ -2252,7 +2252,7 @@ PRIVATE int set_tranger_field_value(
      */
     if(kw_has_word(desc_flag, "required", 0)) {
         if(!value) { // WARNING efecto colateral? 16-oct-2020 || json_is_null(value)) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2282,7 +2282,7 @@ PRIVATE int set_tranger_field_value(
     if(json_is_null(value)) {
         if(!(is_hook || is_fkey || is_enum)) {
             if(kw_has_word(desc_flag, "notnull", 0)) {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2324,7 +2324,7 @@ PRIVATE int set_tranger_field_value(
                 CASES("list")  // HACK disable lists for hooks
                 CASES("array")
                 DEFAULTS
-                    log_error(0,
+                    log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2400,7 +2400,7 @@ PRIVATE int set_tranger_field_value(
                     break;
 
                 DEFAULTS
-                    log_error(0,
+                    log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2427,7 +2427,7 @@ PRIVATE int set_tranger_field_value(
                         json_object_set_new(record, field, json_string(v));
                         gbmem_free(v);
                     } else {
-                        log_error(0,
+                        log_error(LOG_OPT_TRACE_STACK,
                             "gobj",         "%s", __FILE__,
                             "function",     "%s", __FUNCTION__,
                             "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2461,7 +2461,7 @@ PRIVATE int set_tranger_field_value(
                     break;
 
                 DEFAULTS
-                    log_error(0,
+                    log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
                         "function",     "%s", __FUNCTION__,
                         "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2526,7 +2526,7 @@ PRIVATE int set_tranger_field_value(
                 json_object_set_new(record, field, json_string(v));
                 gbmem_free(v);
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2550,7 +2550,7 @@ PRIVATE int set_tranger_field_value(
                 json_int_t v = jn2integer(value);
                 json_object_set_new(record, field, json_integer(v));
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2573,7 +2573,7 @@ PRIVATE int set_tranger_field_value(
                 double v = jn2real(value);
                 json_object_set_new(record, field, json_real(v));
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2594,7 +2594,7 @@ PRIVATE int set_tranger_field_value(
             break;
 
         DEFAULTS
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,
@@ -2686,7 +2686,7 @@ PRIVATE int set_volatil_field_value(
             break;
 
         DEFAULTS
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_TREEDB_ERROR,

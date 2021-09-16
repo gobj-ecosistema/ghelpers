@@ -436,7 +436,7 @@ PRIVATE int set_tranger_field_value(
 {
     const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
     if(!field) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -449,7 +449,7 @@ PRIVATE int set_tranger_field_value(
     }
     const char *type = kw_get_str(col, "type", 0, KW_REQUIRED);
     if(!type) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -468,7 +468,7 @@ PRIVATE int set_tranger_field_value(
      */
     if(kw_has_word(desc_flag, "required", 0)) {
         if(!value || json_is_null(value)) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -540,7 +540,7 @@ PRIVATE int set_tranger_field_value(
                 json_object_set_new(record, field, json_string(v));
                 gbmem_free(v);
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -564,7 +564,7 @@ PRIVATE int set_tranger_field_value(
                 json_int_t v = jn2integer(value);
                 json_object_set_new(record, field, json_integer(v));
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -587,7 +587,7 @@ PRIVATE int set_tranger_field_value(
                 double v = jn2real(value);
                 json_object_set_new(record, field, json_real(v));
             } else {
-                log_error(0,
+                log_error(LOG_OPT_TRACE_STACK,
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -608,7 +608,7 @@ PRIVATE int set_tranger_field_value(
             break;
 
         DEFAULTS
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_MSG2DB_ERROR,
@@ -693,7 +693,7 @@ PRIVATE int set_volatil_field_value(
             break;
 
         DEFAULTS
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_MSG2DB_ERROR,
