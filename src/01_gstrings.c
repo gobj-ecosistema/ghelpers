@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <math.h>
 #include "01_gstrings.h"
 
 /***************************************************************
@@ -732,5 +733,32 @@ PUBLIC BOOL all_numbers(const char* s)
         p++;
     }
     return TRUE;
+}
+
+/***************************************************************************
+ *  Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
+ *  https://www.mbeckler.org/blog/?p=114
+ ***************************************************************************/
+void nice_size(char* bf, int bfsize, uint64_t bytes)
+{
+    const char* suffixes[7];
+    suffixes[0] = "B";
+    suffixes[1] = "Thousands";
+    suffixes[2] = "Millions";
+    suffixes[3] = "GB";
+    suffixes[4] = "TB";
+    suffixes[5] = "PB";
+    suffixes[6] = "EB";
+    uint s = 0; // which suffix to use
+    double count = bytes;
+    while (count >= 1000 && s < 7)
+    {
+        s++;
+        count /= 1000;
+    }
+    if (count - floor(count) == 0.0)
+        snprintf(bf, bfsize, "%d %s", (int)count, suffixes[s]);
+    else
+        snprintf(bf, bfsize, "%.1f %s", count, suffixes[s]);
 }
 

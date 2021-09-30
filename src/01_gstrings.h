@@ -355,6 +355,10 @@ PUBLIC int mem_counter(const char *buffer, int buffer_len, const char *s, int s_
 **rst**/
 PUBLIC BOOL all_numbers(const char* s);
 
+/**rst**
+    Prints to the provided buffer a nice number of bytes (KB, MB, GB, etc)
+**rst**/
+void nice_size(char* bf, int bfsize, uint64_t bytes);
 
 #ifdef __cplusplus
 }
