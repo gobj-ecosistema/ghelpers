@@ -805,13 +805,14 @@ PUBLIC json_int_t kw_get_int(
         value = json_is_true(jn_int)?1:0;
     } else if(json_is_string(jn_int)) {
         const char *v = json_string_value(jn_int);
-        if(*v == '0') {
-            value = strtoll(v, 0, 8);
-        } else if(*v == 'x' || *v == 'X') {
-            value = strtoll(v, 0, 16);
-        } else {
-            value = strtoll(v, 0, 10);
-        }
+//         if(*v == '0') {
+//             value = strtoll(v, 0, 8);
+//         } else if(*v == 'x' || *v == 'X') {
+//             value = strtoll(v, 0, 16);
+//         } else {
+//             value = strtoll(v, 0, 10);
+//         }
+        value = strtoll(v, 0, 0); // WARNING change by this: with base 0 strtoll() does all
     } else if(json_is_null(jn_int)) {
         value = 0;
     } else {
