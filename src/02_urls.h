@@ -36,7 +36,6 @@ PUBLIC int parse_http_url(
     char *port, int port_size,
     BOOL no_schema
 );
-PUBLIC char *host2ip(const char *host);
 
 PUBLIC int parse_full_http_url(
     const char *uri,

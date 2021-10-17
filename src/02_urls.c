@@ -87,19 +87,6 @@ PUBLIC int parse_http_url(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC char *host2ip(const char *host)
-{
-    struct hostent *lh = gethostbyname(host);
-
-    if (lh)
-        return lh->h_name;
-    else
-        return 0;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PUBLIC int parse_full_http_url(
     const char *uri,
     char *schema, int schema_size,
