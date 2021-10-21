@@ -36,6 +36,15 @@ PRIVATE void continue_as_daemon(const char *work_dir, const char *process_name)
     /* Our process ID and Session ID */
     pid_t pid, sid;
 
+    /*
+     *  From fork(2) - Linux man page
+     *
+     *  On success, the PID of the child process is returned in the parent,
+     *  and 0 is returned in the child.
+     *  On failure, -1 is returned **in the parent**, no child process is created,
+     *  and errno is set appropriately.
+     */
+
     /* Fork off the parent process */
     pid = fork();
     if (pid < 0) {
@@ -85,6 +94,14 @@ static int relauncher(
         );
     }
 
+    /*
+     *  From fork(2) - Linux man page
+     *
+     *  On success, the PID of the child process is returned in the parent,
+     *  and 0 is returned in the child.
+     *  On failure, -1 is returned **in the parent**, no child process is created,
+     *  and errno is set appropriately.
+     */
     pid_t pid = fork();
     if(debug) {
         print_info("INFO YUNETA", "fork() return pid %d, process %s, pid %d",
