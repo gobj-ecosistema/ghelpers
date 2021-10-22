@@ -934,6 +934,8 @@ PUBLIC int kwid_walk_childs(
 
 PUBLIC int kw_content_size(json_t *kw); // WARNING size for ugly json string (without indent)
 
+PUBLIC int kw_size(json_t *kw); // size of dict or size of list, remains return 1
+
 #ifdef __cplusplus
 }
 #endif

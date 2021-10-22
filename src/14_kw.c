@@ -4948,3 +4948,23 @@ PUBLIC int kw_content_size(json_t *kw)
 
     return size;
 }
+
+/***************************************************************************
+ *  size of dict or size of list, remains return 1
+ ***************************************************************************/
+PUBLIC int kw_size(json_t *kw)
+{
+    int size = 0;
+
+    if(json_is_object(kw)) {
+        size = json_object_size(kw);
+
+    } else if(json_is_array(kw)) {
+        size = json_array_size(kw);
+
+    } else {
+        size = 1;
+    }
+
+    return size;
+}
