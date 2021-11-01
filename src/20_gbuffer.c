@@ -513,6 +513,20 @@ PUBLIC int gbuf_set_rd_offset(GBUFFER *gbuf, size_t position)
 }
 
 /***************************************************************************
+ *  Unget char
+ ***************************************************************************/
+PUBLIC int gbuf_ungetc(GBUFFER* gbuf, char c)
+{
+    if(gbuf->curp > 0) {
+        gbuf->curp--;
+
+        *(gbuf->data + gbuf->curp) = c;
+    }
+
+    return 0;
+}
+
+/***************************************************************************
  *  Get current output pointer
  ***************************************************************************/
 PUBLIC size_t gbuf_get_rd_offset(GBUFFER* gbuf)

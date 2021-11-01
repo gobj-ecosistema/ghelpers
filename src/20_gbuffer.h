@@ -157,6 +157,7 @@ PUBLIC void *gbuf_cur_rd_pointer(GBUFFER *gbuf);  /* Return current reading poin
 PUBLIC void gbuf_reset_rd(GBUFFER *gbuf);        /* reset read pointer */
 
 PUBLIC int gbuf_set_rd_offset(GBUFFER* gbuf, size_t position);
+PUBLIC int gbuf_ungetc(GBUFFER* gbuf, char c);
 PUBLIC size_t gbuf_get_rd_offset(GBUFFER* gbuf);
 /*
  * Pop 'len' bytes, return the pointer.
