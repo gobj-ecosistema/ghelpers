@@ -1368,4 +1368,3 @@ PUBLIC int get_real_precision(void)
 {
     return __real_precision__;
 }
-
