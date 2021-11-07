@@ -3115,7 +3115,7 @@ PUBLIC json_t *tranger_read_record_content(
                 "__offset__",   "%lu", (unsigned long)md_record->__offset__,
                 NULL
             );
-            log_debug_dump(0, p, md_record->__size__, "");
+            log_debug_dump(0, p, md_record->__size__, "no jn_record");
             return 0;
         }
     }

@@ -1034,8 +1034,7 @@ PUBLIC int gbuf_vprintf(GBUFFER *gbuf, const char *format, va_list ap)
     size_t len;
     int written;
 
-    va_list ap_;
-    va_copy(ap_, ap);
+    va_list aq;
 
     /*--------------------------*
      *  Using data in memory
@@ -1044,7 +1043,9 @@ PUBLIC int gbuf_vprintf(GBUFFER *gbuf, const char *format, va_list ap)
         bf = _gbuf_cur_wr_pointer(gbuf);
         len = gbuf_freebytes(gbuf);
 
-        written = vsnprintf(bf, len, format, ap);
+        va_copy(aq, ap);
+        written = vsnprintf(bf, len, format, aq);
+        va_end(aq);
         if(written < 0) {
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
@@ -1064,8 +1065,9 @@ PUBLIC int gbuf_vprintf(GBUFFER *gbuf, const char *format, va_list ap)
             } else {
                 bf = _gbuf_cur_wr_pointer(gbuf);
                 len = gbuf_freebytes(gbuf);
-                written = vsnprintf(bf, len, format, ap_);
-                va_end(ap_);
+                va_copy(aq, ap);
+                written = vsnprintf(bf, len, format, aq);
+                va_end(aq);
                 if(written < 0) {
                     log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
@@ -1108,7 +1110,10 @@ PUBLIC int gbuf_vprintf(GBUFFER *gbuf, const char *format, va_list ap)
      *  Using data in file
      *--------------------------*/
     _set_writting(gbuf, TRUE);
+
+    va_copy(aq, ap);
     written = vfprintf(gbuf->tmpfile, format, ap);
+    va_end(aq);
     if(written > 0) {
         gbuf->tail += written;
     } else {
@@ -1669,25 +1674,17 @@ PUBLIC void log_debug_gbuf(
     ...
 )
 {
-    va_list ap;
-    char temp[4*1024];
-
     if(!gbuf) {
         return;
-    }
-    if(fmt) {
-        if(*fmt) {
-            va_start(ap, fmt);
-            vsnprintf(temp, sizeof(temp), fmt, ap);
-            va_end(ap);
-        } else {
-            temp[0] = 0;
-        }
     }
 
     int len = gbuf_chunk(gbuf);
     char *bf = gbuf_cur_rd_pointer(gbuf);
-    log_debug_dump(opt, bf, len, fmt?temp:fmt);
+
+    va_list ap;
+    va_start(ap, fmt);
+    log_debug_vdump(opt, bf, len, fmt, ap);
+    va_end(ap);
 }
 
 /*****************************************************************
@@ -1701,25 +1698,17 @@ PUBLIC void log_debug_full_gbuf(
     ...
 )
 {
-    va_list ap;
-    char temp[4*1024];
-
     if(!gbuf) {
         return;
-    }
-    if(fmt) {
-        if(*fmt) {
-            va_start(ap, fmt);
-            vsnprintf(temp, sizeof(temp), fmt, ap);
-            va_end(ap);
-        } else {
-            temp[0] = 0;
-        }
     }
 
     int len = gbuf_totalbytes(gbuf);
     char *bf = gbuf_head_pointer(gbuf);
-    log_debug_dump(opt, bf, len, fmt?temp:fmt);
+
+    va_list ap;
+    va_start(ap, fmt);
+    log_debug_vdump(opt, bf, len, fmt, ap);
+    va_end(ap);
 }
 
 /*****************************************************************

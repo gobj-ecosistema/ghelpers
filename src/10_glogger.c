@@ -656,10 +656,10 @@ PUBLIC void log_debug_vprintf(const char *info, const char *fmt, va_list ap)
     vsnprintf(temp+len, sizeof(temp)-len, fmt, aq);
     _log_bf(priority, opt, temp, strlen(temp));
 
-
     if(__inform_cb__) {
         __inform_cb__(priority, __debug_count__, __inform_cb_user_data__);
     }
+    va_end(aq);
 }
 
 /*****************************************************************
@@ -732,6 +732,85 @@ PUBLIC void log_debug_bf(
 /*****************************************************************
  *      Debug dump hexa
  *****************************************************************/
+PUBLIC void log_debug_vdump(
+    log_opt_t opt,
+    const char *bf,
+    size_t len,
+    const char *fmt,        // Not null will display date, bytes, etc
+    va_list ap
+)
+{
+    int priority = LOG_DEBUG;
+    va_list aq;
+    char dtemp[90];
+    char temp[4*1024];
+
+    if(!__initialized__) {
+        return;
+    }
+    if(!bf) {
+        return;
+    }
+    __debug_count__++;
+
+    const char *direction="";
+    if(opt & LOG_DUMP_INPUT) {
+        direction = "FROM";
+    }
+    if(opt & LOG_DUMP_OUTPUT) {
+        direction = "TO";
+    }
+
+    current_timestamp(dtemp, sizeof(dtemp));
+    snprintf(temp, sizeof(temp),
+        "%s - Data (%zu bytes) %s ",
+        dtemp,
+        len,
+        direction
+    );
+    int l = strlen(temp);
+    va_copy(aq, ap);
+    vsnprintf(temp+l, sizeof(temp)-l, fmt, ap);
+    va_end(aq);
+
+    if(__inside__) {
+        return;
+    }
+    __inside__ = 1;
+
+    log_handler_t *lh = dl_first(&dl_clients);
+    while(lh) {
+        if(must_ignore(lh, priority)) {
+            /*
+             *  Next
+             */
+            lh = dl_next(lh);
+            continue;
+        }
+
+        if(temp[0] && lh->hr->write_fn) {
+            lh->hr->write_fn(lh->h, priority, temp, strlen(temp));
+        }
+        if(lh->hr->fwrite_fn) {
+            tdumpsu(lh->h, priority, 0, bf, len, lh->hr->fwrite_fn);
+        }
+
+        /*
+         *  Next
+         */
+        lh = dl_next(lh);
+    }
+
+    __inside__ = 0;
+
+    if(__inform_cb__) {
+        __inform_cb__(priority, __debug_count__, __inform_cb_user_data__);
+    }
+}
+
+/*****************************************************************
+ *      Debug dump hexa
+ *****************************************************************/
 PUBLIC void log_debug_dump(
     log_opt_t opt,
     const char *bf,
@@ -761,32 +840,17 @@ PUBLIC void log_debug_dump(
         direction = "TO";
     }
 
-    if(fmt) {
-        current_timestamp(dtemp, sizeof(dtemp));
-        if(*fmt) {
-            snprintf(temp, sizeof(temp),
-                "%s - Data (%zu bytes) %s ",
-                dtemp,
-                len,
-                direction
-            );
-        } else {
-            snprintf(temp, sizeof(temp),
-                "%s - Data (%zu bytes)",
-                dtemp,
-                len
-            );
-        }
-        if(*fmt) {
-            int l = strlen(temp);
-            va_start(ap, fmt);
-            vsnprintf(temp+l, sizeof(temp)-l, fmt, ap);
-            va_end(ap);
-
-        }
-    } else {
-        temp[0] = 0;
-    }
+    current_timestamp(dtemp, sizeof(dtemp));
+    snprintf(temp, sizeof(temp),
+        "%s - Data (%zu bytes) %s ",
+        dtemp,
+        len,
+        direction
+    );
+    int l = strlen(temp);
+    va_start(ap, fmt);
+    vsnprintf(temp+l, sizeof(temp)-l, fmt, ap);
+    va_end(ap);
 
     if(__inside__) {
         return;

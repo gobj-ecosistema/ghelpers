@@ -174,7 +174,7 @@ static int relauncher(
             process_name,
             relaunch_times,
             (int)getpid());
-        log_debug_printf("", temp);
+        log_debug_printf("", "%s", temp);
         if(relaunch_times > 0) {
             log_error(0,
                 "gobj",             "%s", __FILE__,

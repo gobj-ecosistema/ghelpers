@@ -236,13 +236,13 @@ PUBLIC void log_debug_gbuf(
     GBUFFER *gbuf,
     const char *fmt,
     ...
-);
+) JANSSON_ATTRS((format(printf, 3, 4)));
 PUBLIC void log_debug_full_gbuf(
     log_opt_t opt,
     GBUFFER *gbuf,
     const char *fmt,
     ...
-);
+) JANSSON_ATTRS((format(printf, 3, 4)));
 
 /*
  *  Encode to base64

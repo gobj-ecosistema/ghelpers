@@ -221,17 +221,16 @@ PUBLIC void log_debug(log_opt_t opt, ...);
 /*
  *  LOG_INFO functions.
  */
-PUBLIC int info_msg(const char *fmt, ...);
-PUBLIC int info_msg0(const char *fmt, ...); // without date
+PUBLIC int info_msg(const char *fmt, ...) JANSSON_ATTRS((format(printf, 1, 2)));
+
+PUBLIC int info_msg0(const char *fmt, ...) JANSSON_ATTRS((format(printf, 1, 2))); // without date
 
 /*
  *  LOG_DEBUG functions.
  */
-PUBLIC int trace_msg(  /* Backward compatibility with yuneta-v1, as log_debug_printf */
-    const char *fmt,
-    ...
-);
-PUBLIC int trace_msg0(const char *fmt, ...); // without date
+PUBLIC int trace_msg(const char *fmt, ... ) JANSSON_ATTRS((format(printf, 1, 2)));
+
+PUBLIC int trace_msg0(const char *fmt, ...) JANSSON_ATTRS((format(printf, 1, 2)));
 
 PUBLIC void trace_hex_msg(
     const char *label,
@@ -242,32 +241,44 @@ PUBLIC void log_debug_vprintf(  /* final lf \n is not needed */
     const char *info,
     const char *fmt,
     va_list ap
-);
+) JANSSON_ATTRS((format(printf, 2, 0)));
+
 PUBLIC void log_debug_printf(  /* final lf \n is not needed */
     const char *info,
     const char *fmt,
     ...
-);
+) JANSSON_ATTRS((format(printf, 2, 3)));
+
 PUBLIC void log_debug_bf(
     log_opt_t opt,
     const char *bf,
     size_t len,
     const char *fmt,
     ...
-);
+) JANSSON_ATTRS((format(printf, 4, 5)));
+
+PUBLIC void log_debug_vdump(
+    log_opt_t opt,
+    const char *bf,
+    size_t len,
+    const char *fmt,        // Not null will display date, bytes, etc
+    va_list ap
+) JANSSON_ATTRS((format(printf, 4, 0)));
+
 PUBLIC void log_debug_dump(
     log_opt_t opt,
     const char *bf,
     size_t len,
     const char *fmt,        // Not null will display date, bytes, etc
     ...
-);
+) JANSSON_ATTRS((format(printf, 4, 5)));
+
 PUBLIC void log_debug_json(
     log_opt_t opt,
     json_t *jn,  // not owned
     const char *fmt,
     ...
-);
+) JANSSON_ATTRS((format(printf, 3, 4)));
 
 /*
  *  LOG_MONITOR functions.

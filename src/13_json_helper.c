@@ -130,22 +130,6 @@ PUBLIC json_t * legalstring2json(const char* str, BOOL verbose)
 }
 
 /***************************************************************************
-   Formatted output conversion to string json
-   Maximum output size of 4K
- ***************************************************************************/
-PUBLIC json_t *json_local_sprintf(const char *fmt, ...)
-{
-    va_list ap;
-    char temp[4*1024];
-
-    va_start(ap, fmt);
-    vsnprintf(temp, sizeof(temp), fmt, ap);
-    va_end(ap);
-
-    return json_string(temp);
-}
-
-/***************************************************************************
  *  Print json to stdout
  ***************************************************************************/
 PUBLIC int print_json(json_t *jn)
