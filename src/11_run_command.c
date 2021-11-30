@@ -7,7 +7,10 @@
  ****************************************************************************/
 #include <unistd.h>
 #include <signal.h>
+#include <sys/ioctl.h>
 #include <sys/wait.h>
+#include <pty.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -151,3 +154,88 @@ PUBLIC int run_process2(const char *path, char *const argv[])
 
     return status;
 }
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int pty_sync_spawn(
+    const char *command
+)
+{
+    int master, pid;
+
+    struct winsize size = {24, 80, 0, 0 };
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &size);
+
+    pid = forkpty(&master, NULL, NULL, &size);
+    if (pid < 0) {
+        // Can't fork
+        log_error(0,
+                "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "forkpty() FAILED",
+            "errno",        "%d", errno,
+            "strerror",     "%s", strerror(errno),
+            NULL
+        );
+        return -1;
+
+    } else if (pid == 0) {
+        // Child
+        int ret = execlp("/bin/sh","/bin/sh", "-c", command, (char *)NULL);
+        if (ret < 0) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msg",          "%s", "execlp() FAILED",
+                "command",      "%s", command,
+                "errno",        "%d", errno,
+                "strerror",     "%s", strerror(errno),
+                NULL
+            );
+            _exit(-errno);
+        }
+    } else {
+        // Parent
+        while(1) {
+            fd_set read_fd;
+            fd_set write_fd;
+            fd_set except_fd;
+
+            FD_ZERO(&read_fd);
+            FD_ZERO(&write_fd);
+            FD_ZERO(&except_fd);
+
+            FD_SET(master, &read_fd);
+            FD_SET(STDIN_FILENO, &read_fd);
+
+            select(master+1, &read_fd, &write_fd, &except_fd, NULL);
+
+            char input;
+            char output;
+
+            if (FD_ISSET(master, &read_fd)) {
+                if (read(master, &output, 1) != -1) {   // read from program
+                    write(STDOUT_FILENO, &output, 1);   // write to tty
+                } else {
+                    break;
+                }
+            }
+
+            if (FD_ISSET(STDIN_FILENO, &read_fd)) {
+                read(STDIN_FILENO, &input, 1);  // read from tty
+                write(master, &input, 1);       // write to program
+            }
+
+            int status;
+            if (waitpid(pid, &status, WNOHANG) && WIFEXITED(status)) {
+                exit(EXIT_SUCCESS);
+            }
+        }
+    }
+
+    return 0;
+}
+

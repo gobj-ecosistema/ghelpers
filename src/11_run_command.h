@@ -27,6 +27,10 @@ PUBLIC int run_process2(  // use fork(), synchronous
     const char *path, char *const argv[]
 );
 
+PUBLIC int pty_sync_spawn( // user forkpty() execlp(), synchronous
+    const char *command
+);
+
 #ifdef __cplusplus
 }
 #endif
