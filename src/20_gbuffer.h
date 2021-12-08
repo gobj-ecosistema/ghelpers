@@ -181,8 +181,8 @@ PUBLIC size_t gbuf_append(GBUFFER *gbuf, void *data, size_t len);   /* return by
 PUBLIC size_t gbuf_append_string(GBUFFER *gbuf, const char *s);
 PUBLIC size_t gbuf_append_char(GBUFFER *gbuf, char c);              /* return bytes written */
 PUBLIC int gbuf_append_gbuf(GBUFFER *dst, GBUFFER *src);
-PUBLIC int gbuf_printf(GBUFFER *gbuf, const char *format, ...);
-PUBLIC int gbuf_vprintf(GBUFFER *gbuf, const char *format, va_list ap);
+PUBLIC int gbuf_printf(GBUFFER *gbuf, const char *format, ...) JANSSON_ATTRS((format(printf, 2, 3)));
+PUBLIC int gbuf_vprintf(GBUFFER *gbuf, const char *format, va_list ap) JANSSON_ATTRS((format(printf, 2, 0)));;
 
 /*
  *  Util
@@ -237,6 +237,7 @@ PUBLIC void log_debug_gbuf(
     const char *fmt,
     ...
 ) JANSSON_ATTRS((format(printf, 3, 4)));
+
 PUBLIC void log_debug_full_gbuf(
     log_opt_t opt,
     GBUFFER *gbuf,
