@@ -58,7 +58,21 @@ PUBLIC int stdout_write(void* v, int priority, const char* bf, size_t len)
         priority = LOG_DEBUG;
     }
 
-    fwrite(priority_names[priority], strlen(priority_names[priority]), 1, stdout);
+    if(priority <= LOG_ERR) {
+        fwrite(On_Red, strlen(On_Red), 1, stdout);
+        fwrite(BWhite, strlen(BWhite), 1, stdout);
+        fwrite(priority_names[priority], strlen(priority_names[priority]), 1, stdout);
+        fwrite(Color_Off, strlen(Color_Off), 1, stdout);
+
+    } else if(priority <= LOG_WARNING) {
+        fwrite(On_Black, strlen(On_Black), 1, stdout);
+        fwrite(BYellow, strlen(BYellow), 1, stdout);
+        fwrite(priority_names[priority], strlen(priority_names[priority]), 1, stdout);
+        fwrite(Color_Off, strlen(Color_Off), 1, stdout);
+    } else {
+        fwrite(priority_names[priority], strlen(priority_names[priority]), 1, stdout);
+    }
+
     fwrite(": ", strlen(": "), 1, stdout);
     fwrite(bf, len, 1, stdout);
     fwrite("\n", strlen("\n"), 1, stdout);

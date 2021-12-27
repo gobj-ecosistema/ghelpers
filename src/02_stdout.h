@@ -9,6 +9,7 @@
 #pragma once
 
 #include <stdarg.h>
+#include "00_ansi_escape_codes.h"
 #include "01_print_error.h"
 
 #ifdef __cplusplus
