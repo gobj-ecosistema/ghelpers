@@ -975,6 +975,7 @@ PUBLIC BOOL kw_get_bool(
             "path",         "%s", path,
             NULL
         );
+        log_debug_json(0, kw, "path MUST BE a simple json element");
         return 0;
     }
     if(flag & KW_EXTRACT) {
