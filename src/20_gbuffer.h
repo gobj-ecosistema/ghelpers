@@ -279,7 +279,13 @@ typedef int (*json_stream_callback_t)(
     void *user_data,
     json_t *dict_found  // owned!!
 );
-PUBLIC int stream_json_filename_parser(
+PUBLIC int stream_json_filename_parser( // work with dicts {} only
+    const char *path,
+    json_stream_callback_t json_stream_callback,
+    void *user_data,
+    int verbose     // 1 log, 2 log+dump
+);
+PUBLIC int stream_json_filename_parser2( // Can work with dicts {} and lists []
     const char *path,
     json_stream_callback_t json_stream_callback,
     void *user_data,

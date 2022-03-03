@@ -1993,7 +1993,7 @@ PUBLIC int stream_json_filename_parser(
     int c;
     int st = WAIT_BEGIN_DICT;
     int brace_indent = 0;
-    GBUFFER *gbuf = gbuf_create(4*1024, gbmem_get_maximum_block(), 0, 0);
+    GBUFFER *gbuf = gbuf_create(16*1024, gbmem_get_maximum_block(), 0, 0);
     while((c=fgetc(file))!=EOF) {
         switch(st) {
         case WAIT_BEGIN_DICT:
@@ -2009,6 +2009,85 @@ PUBLIC int stream_json_filename_parser(
             if(c == '{') {
                 brace_indent++;
             } else if(c == '}') {
+                brace_indent--;
+            }
+            gbuf_append(gbuf, &c, 1);
+            if(brace_indent == 0) {
+                json_t *jn_dict = gbuf2json(gbuf, verbose);
+                if(jn_dict) {
+                    json_stream_callback(user_data, jn_dict);
+                }
+                st = WAIT_BEGIN_DICT;
+            }
+            break;
+        }
+    }
+    fclose(file);
+    gbuf_decref(gbuf);
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int stream_json_filename_parser2(
+    const char *path,
+    json_stream_callback_t json_stream_callback,
+    void *user_data,
+    int verbose     // 1 log, 2 log+dump
+)
+{
+    FILE *file = fopen(path, "r");
+    if(!file) {
+        if(verbose) {
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "process",      "%s", get_process_name(),
+                "hostname",     "%s", get_host_name(),
+                "pid",          "%d", get_pid(),
+                "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                "msg",          "%s", "Cannot open file",
+                "path",         "%s", path,
+                NULL
+            );
+        }
+        return -1;
+    }
+    /*
+     *  Load commands
+     */
+    #define WAIT_BEGIN_DICT 0
+    #define WAIT_END_DICT   1
+    int c;
+    int begin_separator;
+    int end_separator;
+    int st = WAIT_BEGIN_DICT;
+    int brace_indent = 0;
+    GBUFFER *gbuf = gbuf_create(16*1024, gbmem_get_maximum_block(), 0, 0);
+    while((c=fgetc(file))!=EOF) {
+        switch(st) {
+        case WAIT_BEGIN_DICT:
+            if(!(c == '{' || c == '[')) {
+                continue;
+            }
+            if(c == '{') {
+                begin_separator = '{';
+                end_separator = '}';
+            } else {
+                begin_separator = '[';
+                end_separator = ']';
+            }
+            gbuf_clear(gbuf);
+            gbuf_append(gbuf, &c, 1);
+            brace_indent = 1;
+            st = WAIT_END_DICT;
+            break;
+        case WAIT_END_DICT:
+            if(c == begin_separator) {
+                brace_indent++;
+            } else if(c == end_separator) {
                 brace_indent--;
             }
             gbuf_append(gbuf, &c, 1);
