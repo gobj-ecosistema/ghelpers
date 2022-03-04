@@ -2013,7 +2013,9 @@ PUBLIC int stream_json_filename_parser(
             }
             gbuf_append(gbuf, &c, 1);
             if(brace_indent == 0) {
+                gbuf_incref(gbuf);
                 json_t *jn_dict = gbuf2json(gbuf, verbose);
+                gbuf_clear(gbuf);
                 if(jn_dict) {
                     json_stream_callback(user_data, jn_dict);
                 }
@@ -2092,7 +2094,9 @@ PUBLIC int stream_json_filename_parser2(
             }
             gbuf_append(gbuf, &c, 1);
             if(brace_indent == 0) {
+                gbuf_incref(gbuf);
                 json_t *jn_dict = gbuf2json(gbuf, verbose);
+                gbuf_clear(gbuf);
                 if(jn_dict) {
                     json_stream_callback(user_data, jn_dict);
                 }
