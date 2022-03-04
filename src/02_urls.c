@@ -53,7 +53,8 @@ PUBLIC int parse_http_url(
                 ln = schema_size - 1;
                 ret = -2;
             }
-            memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln); schema[ln]=0;
+            memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln);
+            schema[ln]=0;
         }
     }
 
@@ -66,7 +67,8 @@ PUBLIC int parse_http_url(
             ln = host_size - 1;
             ret = -3;
         }
-        memcpy(host, uri + u.field_data[UF_HOST].off, ln); host[ln]=0;
+        memcpy(host, uri + u.field_data[UF_HOST].off, ln);
+        host[ln]=0;
     }
 
     /*
