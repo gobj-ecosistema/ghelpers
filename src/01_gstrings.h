@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
         DEFAULTS
             printf("No match\n");
             break;
-    } SWITCHS_END;
+    } SWITCHS_END
 
     return 0;
 }
