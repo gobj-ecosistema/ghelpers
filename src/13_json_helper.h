@@ -248,7 +248,7 @@ PUBLIC void free_str_list(const char **strls);
  *  type can be: str, int, real, bool, null, dict, list
  *  Example:
 
-static const char *jn_xxx_desc[] = {
+static json_desc_t jn_xxx_desc[] = {
     // Name         Type        Default
     {"string",      "str",      ""},
     {"string2",     "str",      "Pepe"},
