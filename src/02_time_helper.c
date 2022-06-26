@@ -210,9 +210,9 @@ PUBLIC BOOL test_sectimer(time_t value)
  *   El valor retornado es el que hay que usar en la funcion test_msectimer()
  *   para ver si el timer ha cumplido.
  ****************************************************************************/
-PUBLIC int64_t start_msectimer(int64_t miliseconds)
+PUBLIC uint64_t start_msectimer(uint64_t miliseconds)
 {
-    int64_t ms = time_in_miliseconds();
+    uint64_t ms = time_in_miliseconds();
     ms += miliseconds;
     return ms;
 }
@@ -220,13 +220,13 @@ PUBLIC int64_t start_msectimer(int64_t miliseconds)
 /****************************************************************************
  *   Retorna TRUE si ha cumplido el timer 'value', FALSE si no.
  ****************************************************************************/
-PUBLIC BOOL test_msectimer(int64_t value)
+PUBLIC BOOL test_msectimer(uint64_t value)
 {
-    if(value <= 0) {
+    if(value == 0) {
         return FALSE;
     }
 
-    int64_t ms = time_in_miliseconds();
+    uint64_t ms = time_in_miliseconds();
 
     return (ms>value)? TRUE:FALSE;
 }
@@ -234,7 +234,7 @@ PUBLIC BOOL test_msectimer(int64_t value)
 /****************************************************************************
  *  Current time in milisecons
  ****************************************************************************/
-PUBLIC int64_t time_in_miliseconds(void)
+PUBLIC uint64_t time_in_miliseconds(void)
 {
     struct timespec spec;
 
@@ -242,17 +242,17 @@ PUBLIC int64_t time_in_miliseconds(void)
     clock_gettime(CLOCK_REALTIME, &spec);
 
     // Convert to milliseconds
-    return (int64_t)spec.tv_sec*1000 + spec.tv_nsec/1000000;
+    return (uint64_t)spec.tv_sec*1000 + spec.tv_nsec/1000000;
 }
 
 /***************************************************************************
  *  Return current time in seconds (standart time(&t))
  ***************************************************************************/
-PUBLIC int64_t time_in_seconds(void)
+PUBLIC uint64_t time_in_seconds(void)
 {
-    int64_t __t__;
-    time((time_t *)&__t__);
-    return __t__;
+    time_t __t__;
+    time(&__t__);
+    return (uint64_t) __t__;
 }
 
 /***************************************************************************
@@ -398,4 +398,3 @@ PUBLIC time_range_t get_years_range(time_t t, int range, const char *TZ)
 
     return time_range;
 }
-

@@ -59,11 +59,11 @@ PUBLIC int nice_difftime(char *bf, int bfsize, uint32_t diff_time);
 PUBLIC time_t start_sectimer(time_t seconds);   /* value <=0 will disable the timer */
 PUBLIC BOOL   test_sectimer(time_t value);      /* Return TRUE if timer has finish */
 
-PUBLIC int64_t start_msectimer(int64_t miliseconds);   /* value <=0 will disable the timer */
-PUBLIC BOOL   test_msectimer(int64_t value);           /* Return TRUE if timer has finish */
+PUBLIC uint64_t start_msectimer(uint64_t miliseconds);   /* value <=0 will disable the timer */
+PUBLIC BOOL   test_msectimer(uint64_t value);           /* Return TRUE if timer has finish */
 
-PUBLIC int64_t time_in_miliseconds(void);   // Return current time in miliseconds
-PUBLIC int64_t time_in_seconds(void);       // Return current time in seconds (standart time(&t))
+PUBLIC uint64_t time_in_miliseconds(void);   // Return current time in miliseconds
+PUBLIC uint64_t time_in_seconds(void);       // Return current time in seconds (standart time(&t))
 
 /**rst**
     Return in gmt time range in hours of time t, TZ optional
