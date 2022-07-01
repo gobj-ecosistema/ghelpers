@@ -1,6 +1,16 @@
 /****************************************************************************
  *              TIME_HELPER2.H
  *              Code from git/date.c
+ *
+ *
+ check_approxidate 'noon today' '2009-08-30 12:00:00'
+ check_approxidate 'noon yesterday' '2009-08-29 12:00:00'
+ check_approxidate 'January 5th noon pm' '2009-01-05 12:00:00'
++check_approxidate '10am noon' '2009-08-29 12:00:00'
+
+ check_approxidate 'last tuesday' '2009-08-25 19:20:00'
+ check_approxidate 'July 5th' '2009-07-05 19:20:00'
+
  *              Copyright (C) Linus Torvalds, 2005
  *              Copyright (c) Niyamaka, 2018.
  ****************************************************************************/
