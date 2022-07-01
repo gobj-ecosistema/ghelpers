@@ -16,7 +16,7 @@ extern "C"{
  *     Prototypes
  ***********************************************************************/
 char *hex2bin(char *bf, int bfsize, const char *hex, size_t hex_len, size_t *out_len); // return bf
-char *bin2hex(char *bf, int bfsize, const char *bin, size_t bin_len); // return bf
+char *bin2hex(char *bf, int bfsize, const uint8_t *bin, size_t bin_len); // return bf
 
 BOOL all_00(uint8_t *bf, int bfsize);
 BOOL all_ff(uint8_t *bf, int bfsize);
