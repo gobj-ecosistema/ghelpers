@@ -103,6 +103,8 @@ struct date_mode {
     int local;
 };
 
+time_t tm_to_time_t(const struct tm *tm);
+
 /*
  * Convenience helper for passing a constant type, like:
  *
@@ -114,8 +116,6 @@ struct date_mode *date_mode_from_type(enum date_mode_type type);
 const char *show_date(timestamp_t time, int timezone, const struct date_mode *mode);
 void show_date_relative(
     timestamp_t time,
-    int tz,
-    const struct timeval *now,
     char *timebuf,
     int timebufsize
 );
@@ -133,7 +133,7 @@ void datestamp(
 
 #define approxidate(s) approxidate_careful((s), NULL)
 timestamp_t approxidate_careful(const char *, int *);
-timestamp_t approxidate_relative(const char *date, const struct timeval *now);
+timestamp_t approxidate_relative(const char *date);
 void parse_date_format(const char *format, struct date_mode *mode);
 int date_overflows(timestamp_t date);
 
