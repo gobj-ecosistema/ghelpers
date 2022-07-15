@@ -31,10 +31,13 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <sys/types.h>
-#ifdef Linux
+
+#ifdef __unix__
 #include <pwd.h>
 #include <sys/utsname.h>
+#elif defined(_WIN32) || defined(WIN32)
 #endif
+
 #include <sched.h>
 #include "00_cpu.h"
 
@@ -199,7 +202,7 @@ unsigned int get_HZ(void)
     long ticks = 0;
     unsigned int hz;
 
-#ifdef Linux
+#ifdef __linux__
     if ((ticks = sysconf(_SC_CLK_TCK)) == -1) {
         perror("sysconf");
     }
@@ -221,7 +224,7 @@ unsigned int get_kb_shift(void)
     long size = 0;
 
     /* One can also use getpagesize() to get the size of a page */
-#ifdef Linux
+#ifdef __linux__
     if ((size = sysconf(_SC_PAGESIZE)) == -1) {
         perror("sysconf");
     }
