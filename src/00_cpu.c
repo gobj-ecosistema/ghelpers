@@ -965,4 +965,3 @@ unsigned long proc_vmem_in_kb(unsigned int pid)
 
     return pst.vsz;
 }
-
