@@ -31,9 +31,10 @@
 #include <dirent.h>
 #include <ctype.h>
 #include <sys/types.h>
+#ifdef Linux
 #include <pwd.h>
 #include <sys/utsname.h>
-#include <regex.h>
+#endif
 #include <sched.h>
 #include "00_cpu.h"
 
@@ -195,12 +196,14 @@ struct stats_irq {
  */
 unsigned int get_HZ(void)
 {
-    long ticks;
+    long ticks = 0;
     unsigned int hz;
+
+#ifdef Linux
     if ((ticks = sysconf(_SC_CLK_TCK)) == -1) {
         perror("sysconf");
     }
-
+#endif
     hz = (unsigned int) ticks;
     return hz;
 }
@@ -215,13 +218,14 @@ unsigned int get_kb_shift(void)
 {
     unsigned int kb_shift;
     int shift = 0;
-    long size;
+    long size = 0;
 
     /* One can also use getpagesize() to get the size of a page */
+#ifdef Linux
     if ((size = sysconf(_SC_PAGESIZE)) == -1) {
         perror("sysconf");
     }
-
+#endif
     size >>= 10;    /* Assume that a page has a minimum size of 1 kB */
 
     while (size > 1) {
