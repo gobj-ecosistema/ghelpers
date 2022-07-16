@@ -23,22 +23,16 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <dirent.h>
 #include <ctype.h>
-#include <sys/types.h>
 
 #ifdef __unix__
 #include <pwd.h>
-#include <sys/utsname.h>
 #elif defined(_WIN32) || defined(WIN32)
 #endif
 
-#include <sched.h>
 #include "00_cpu.h"
 
 /***************************************************************************
