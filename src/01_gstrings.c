@@ -749,7 +749,7 @@ void nice_size(char* bf, int bfsize, uint64_t bytes)
     suffixes[4] = "TB";
     suffixes[5] = "PB";
     suffixes[6] = "EB";
-    uint s = 0; // which suffix to use
+    unsigned int s = 0; // which suffix to use
     double count = bytes;
     while (count >= 1000 && s < 7)
     {
@@ -761,4 +761,3 @@ void nice_size(char* bf, int bfsize, uint64_t bytes)
     else
         snprintf(bf, bfsize, "%.1f %s", count, suffixes[s]);
 }
-

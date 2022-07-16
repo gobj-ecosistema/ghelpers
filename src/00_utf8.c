@@ -17,7 +17,6 @@
 */
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdarg.h>
 #include <stdint.h>
 #include <wchar.h>
@@ -26,18 +25,8 @@
 #include "00_utf8proc.h"
 #undef JL_DLLEXPORT /* avoid conflicting definition */
 
-#include "00_dtypes.h"
-
-#ifdef _OS_WINDOWS_
-#include <malloc.h>
-#define snprintf _snprintf
-#else
-#ifndef __FreeBSD__
-#include <alloca.h>
-#endif /* __FreeBSD__ */
-#endif
 #include <assert.h>
-
+#include "00_dtypes.h"
 #include "00_utf8.h"
 
 #ifdef __cplusplus
