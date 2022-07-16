@@ -23,12 +23,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
 #include <dirent.h>
 #include <ctype.h>
 
 #ifdef __unix__
+#include <unistd.h>
 #include <pwd.h>
 #elif defined(_WIN32) || defined(WIN32)
 #endif
