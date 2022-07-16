@@ -19,6 +19,11 @@
 #elif defined(__linux__)
   #include <sys/sendfile.h>
 #endif
+
+#ifdef __CYGWIN__
+#define O_LARGEFILE 0
+#endif
+
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -91,6 +96,7 @@ PUBLIC int open_exclusive(const char *path, int flags, int permission)
  ***************************************************************************/
 PUBLIC uint64_t filesize(const char *path)
 {
+#ifndef __CYGWIN__
     struct stat64 st;
     int ret = stat64(path, &st);
     if(ret < 0) {
@@ -98,6 +104,15 @@ PUBLIC uint64_t filesize(const char *path)
     }
     uint64_t size = st.st_size;
     return size;
+#else
+    struct stat st;
+    int ret = stat(path, &st);
+    if(ret < 0) {
+        return 0;
+    }
+    uint64_t size = st.st_size;
+    return size;
+#endif
 }
 
 /***************************************************************************
@@ -105,6 +120,7 @@ PUBLIC uint64_t filesize(const char *path)
  ***************************************************************************/
 PUBLIC uint64_t filesize2(int fd)
 {
+#ifndef __CYGWIN__
     struct stat64 st;
     int ret = fstat64(fd, &st);
     if(ret < 0) {
@@ -112,6 +128,15 @@ PUBLIC uint64_t filesize2(int fd)
     }
     uint64_t size = st.st_size;
     return size;
+#else
+    struct stat st;
+    int ret = fstat(fd, &st);
+    if(ret < 0) {
+        return 0;
+    }
+    uint64_t size = st.st_size;
+    return size;
+#endif
 }
 
 /*****************************************************************
@@ -674,4 +699,3 @@ PUBLIC char *build_path6(
     }
     return path;
 }
-

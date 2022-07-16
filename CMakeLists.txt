@@ -13,6 +13,11 @@ set(LIB_DEST_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
 
+if(CYGWIN)
+  add_definitions(-D__CYGWIN__)
+  add_definitions(-DNOT_INCLUDE_LIBUNWIND)
+endif()
+
 if(CMAKE_BUILD_TYPE MATCHES Debug)
   add_definitions(-DDEBUG)
 #  option(SHOWNOTES "Show preprocessor notes" OFF)

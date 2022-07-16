@@ -27,10 +27,9 @@
 #include <dirent.h>
 #include <ctype.h>
 
-#ifdef __unix__
+#ifndef __CYGWIN__
 #include <unistd.h>
 #include <pwd.h>
-#elif defined(_WIN32) || defined(WIN32)
 #endif
 
 #include "00_cpu.h"

@@ -9,7 +9,11 @@
 #include <string.h>
 #include <stdlib.h>
 #define UNW_LOCAL_ONLY
+
+#ifndef __CYGWIN__
 #include <libunwind.h>
+#endif
+
 #include "01_print_error.h"
 
 static char last_error[BUFSIZ];
@@ -110,4 +114,3 @@ PUBLIC const char *get_last_error(void)
 {
     return last_error;
 }
-
