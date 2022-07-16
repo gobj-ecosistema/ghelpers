@@ -12,6 +12,16 @@
 #include <stdio.h>
 #include <errno.h>
 #include <stdio.h>
+
+#ifdef __CYGWIN__
+#define O_LARGEFILE 0
+#define fseeko64 fseeko
+#define lseek64 lseek
+#define fopen64 fopen
+#define ftello64 ftello
+#define tmpfile64 tmpfile
+#endif
+
 #include "20_gbuffer.h"
 
 /****************************************************************
@@ -2190,4 +2200,3 @@ PUBLIC GBUFFER *kw_get_gbuf_value(
     }
     return gbuf;
 }
-

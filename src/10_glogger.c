@@ -20,8 +20,12 @@
 #include <stdarg.h>
 #include <wchar.h>
 #include <pwd.h>
+
+#ifndef NOT_INCLUDE_LIBUNWIND
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
+#endif
+
 #include <uv.h>
 #include "10_glogger.h"
 

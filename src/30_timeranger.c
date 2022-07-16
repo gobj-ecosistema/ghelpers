@@ -10,6 +10,13 @@
   #define _LARGEFILE64_SOURCE
 #endif
 
+#ifdef __CYGWIN__
+#define O_LARGEFILE 0
+#define fseeko64 fseeko
+#define lseek64 lseek
+#define fopen64 fopen
+#endif
+
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -722,7 +729,11 @@ PRIVATE int new_record_md_to_file(
         // Error already logged
         return -1;
     }
+#ifndef __CYGWIN__
     uint64_t offset = lseek64(fd, 0, SEEK_END);
+#else
+    uint64_t offset = lseek(fd, 0, SEEK_END);
+#endif
     if(offset != ((md_record->__rowid__-1) * sizeof(md_record_t))) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,

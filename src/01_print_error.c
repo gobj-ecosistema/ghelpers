@@ -8,9 +8,9 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#define UNW_LOCAL_ONLY
 
-#ifndef __CYGWIN__
+#ifndef NOT_INCLUDE_LIBUNWIND
+#define UNW_LOCAL_ONLY
 #include <libunwind.h>
 #endif
 

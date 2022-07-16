@@ -10,6 +10,15 @@
 #include <errno.h>
 #include "20_stats_rd.h"
 
+#ifdef __CYGWIN__
+#define O_LARGEFILE 0
+#define fseeko64 fseeko
+#define lseek64 lseek
+#define fopen64 fopen
+#define ftello64 ftello
+#define tmpfile64 tmpfile
+#endif
+
 /***************************************************************
  *              Constants
  ***************************************************************/
