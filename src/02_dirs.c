@@ -9,7 +9,6 @@
 
 #include <sys/types.h>
 #include <unistd.h>
-#include <time.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <stdint.h>
@@ -29,9 +28,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
-#include <dirent.h>
 #include <string.h>
-#include <libgen.h>
 #include "02_dirs.h"
 
 /*****************************************************************
