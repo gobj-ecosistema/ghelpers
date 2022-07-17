@@ -119,7 +119,7 @@ typedef bool utf8proc_bool;
 #endif
 #include <limits.h>
 
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 #  ifdef UTF8PROC_EXPORTS
 //#    define UTF8PROC_DLLEXPORT __declspec(dllexport)
 #    define UTF8PROC_DLLEXPORT

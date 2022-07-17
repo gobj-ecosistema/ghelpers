@@ -383,6 +383,13 @@ PRIVATE int linux_search_process(
 
     return found;
 }
+#elif defined(__CYGWIN__)
+PRIVATE int linux_search_process(
+        const char *process_name,
+        void (*cb)(void *self, const char *name, pid_t pid),
+        void *self) {
+    return 0;
+}
 #endif
 
 /***************************************************************************

@@ -1259,7 +1259,7 @@ PRIVATE void json_vappend(hgen_t hgen, va_list ap)
                         break;
                     case 'c':
                         if (fmt [i - 1] == 'l') {
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
                             (void)va_arg (ap, int);
 #else
                             (void)va_arg (ap, wint_t);

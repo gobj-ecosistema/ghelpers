@@ -196,7 +196,7 @@ unsigned int get_HZ(void)
     long ticks = 0;
     unsigned int hz;
 
-#ifdef __linux__
+#if defined(__linux__)
     if ((ticks = sysconf(_SC_CLK_TCK)) == -1) {
         perror("sysconf");
     }
@@ -218,7 +218,7 @@ unsigned int get_kb_shift(void)
     long size = 0;
 
     /* One can also use getpagesize() to get the size of a page */
-#ifdef __linux__
+#if defined(__linux__)
     if ((size = sysconf(_SC_PAGESIZE)) == -1) {
         perror("sysconf");
     }
