@@ -14,6 +14,7 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <wchar.h>
 
 #ifndef NOT_INCLUDE_LIBUNWIND
 #define UNW_LOCAL_ONLY
