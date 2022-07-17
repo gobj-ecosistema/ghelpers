@@ -725,7 +725,7 @@ PUBLIC BOOL all_numbers(const char* s)
     if(empty_string(s))
         return 0;
 
-    const char* p = s;
+    const unsigned char* p = (unsigned char *)s;
     while(*p != '\0') {
         if(!isdigit(*p)) {
             return FALSE;
