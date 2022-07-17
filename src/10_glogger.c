@@ -8,25 +8,18 @@
  *
  ****************************************************************************/
 #define _GNU_SOURCE 1   /* */
-#define _DEFAULT_SOURCE     /* to get gethostname() */
 
 #include <sys/types.h>
 #include <string.h>
-#include <strings.h>
 #include <limits.h>
-#include <unistd.h>
-#include <time.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <wchar.h>
-#include <pwd.h>
 
 #ifndef NOT_INCLUDE_LIBUNWIND
 #define UNW_LOCAL_ONLY
 #include <libunwind.h>
 #endif
 
-#include <uv.h>
 #include "10_glogger.h"
 
 /*****************************************************************

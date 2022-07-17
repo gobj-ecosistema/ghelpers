@@ -11,7 +11,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
-#include <stdio.h>
 
 #ifdef __CYGWIN__
 #define O_LARGEFILE 0
