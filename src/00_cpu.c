@@ -877,7 +877,7 @@ int read_proc_pid_fd(unsigned int pid, struct pid_stats *pst,
 
     /* Count number of entries if fd directory */
     while ((drp = readdir(dir)) != NULL) {
-        if (isdigit(drp->d_name[0])) {
+        if (isdigit(((unsigned char *)drp->d_name)[0])) {
             (pst->fd_nr)++;
         }
     }
