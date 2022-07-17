@@ -374,7 +374,7 @@ static int match_string(const char *date, const char *str)
             continue;
         if (toupper(*date) == toupper(*str))
             continue;
-        if (!isalnum(*date))
+        if (!isalnum(*((unsigned char *)date)))
             break;
         return 0;
     }
@@ -386,7 +386,7 @@ static int skip_alpha(const char *date)
     int i = 0;
     do {
         i++;
-    } while (isalpha(date[i]));
+    } while (isalpha(((unsigned char *)date)[i]));
     return i;
 }
 
@@ -513,7 +513,7 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
 
     num2 = strtol(end+1, &end, 10);
     num3 = -1;
-    if (*end == c && isdigit(end[1]))
+    if (*end == c && isdigit(((unsigned char *)end)[1]))
         num3 = strtol(end+1, &end, 10);
 
     /* Time? Date? */
@@ -527,7 +527,7 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
              * Consider (& discard) it as fractional second
              * if %Y%m%d is parsed before.
              */
-            if (*end == '.' && isdigit(end[1]) && is_date_known(tm))
+            if (*end == '.' && isdigit(((unsigned char *)end)[1]) && is_date_known(tm))
                 strtol(end + 1, &end, 10);
             break;
         }
@@ -616,7 +616,7 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
     case '.':
     case '/':
     case '-':
-        if (isdigit(end[1])) {
+        if (isdigit(((unsigned char *)end)[1])) {
             int match = match_multi_number(num, *end, date, end, tm, 0);
             if (match)
                 return match;
@@ -631,7 +631,7 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
     n = 0;
     do {
         n++;
-    } while (isdigit(date[n]));
+    } while (isdigit(((unsigned char *)date)[n]));
 
     /* 8 digits, compact style of ISO-8601's date: YYYYmmDD */
     /* 6 digits, compact style of ISO-8601's time: HHMMSS */
@@ -642,7 +642,7 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
         if (n == 8)
             set_date(num1, num2, num3, NULL, time(NULL), tm);
         else if (n == 6 && set_time(num1, num2, num3, tm) == 0 &&
-             *end == '.' && isdigit(end[1]))
+             *end == '.' && isdigit(((unsigned char *)end)[1]))
             strtoul(end + 1, &end, 10);
         return end - date;
     }
@@ -810,7 +810,7 @@ int parse_date_basic(const char *date, timestamp_t *timestamp, int *offset)
             match = match_alpha(date, &tm, offset);
         else if (isdigit(c))
             match = match_digit(date, &tm, offset, &tm_gmt);
-        else if ((c == '-' || c == '+') && isdigit(date[1]))
+        else if ((c == '-' || c == '+') && isdigit(((unsigned char *)date)[1]))
             match = match_tz(date, offset);
 
         if (!match) {
@@ -1111,7 +1111,7 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
     const char *end = date;
     int i;
 
-    while (isalpha(*++end))
+    while (isalpha(*((unsigned char *)(++end))))
         ;
 
     for (i = 0; i < 12; i++) {
@@ -1213,7 +1213,7 @@ static const char *approxidate_digit(const char *date, struct tm *tm, int *num,
     case '.':
     case '/':
     case '-':
-        if (isdigit(end[1])) {
+        if (isdigit(((unsigned char *)end)[1])) {
             int match = match_multi_number(number, *end, date, end,
                                tm, now);
             if (match)
