@@ -21,6 +21,7 @@
 #include <stdint.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <alloca.h>
 
 #include "00_utf8proc.h"
 #undef JL_DLLEXPORT /* avoid conflicting definition */
