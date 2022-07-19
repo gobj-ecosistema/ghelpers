@@ -24,7 +24,7 @@ if(CMAKE_BUILD_TYPE MATCHES Debug)
 
   if(CMAKE_COMPILER_IS_GNUCC)
     # GCC specific debug options
-#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g3 -ggdb3 -gdwarf-2")
+#    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -g3 -ggdb")
 #    set(AVOID_VERSION -avoid-version)
   endif(CMAKE_COMPILER_IS_GNUCC)
 endif(CMAKE_BUILD_TYPE MATCHES Debug)
