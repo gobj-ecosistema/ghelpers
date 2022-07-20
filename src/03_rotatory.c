@@ -7,8 +7,8 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE  /* get gnu version of basename() */
 #endif
+
 #include <string.h>
-#include <libgen.h>
 #include <time.h>
 #include <stdio.h>
 #include <time.h>
@@ -16,10 +16,13 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <inttypes.h>
-#include <dirent.h>
 #include <sys/stat.h>
+#ifndef WIN32
+#include <libgen.h>
+#include <dirent.h>
 #include <sys/statvfs.h>
 #include <unistd.h>
+#endif
 #include "03_rotatory.h"
 
 /*****************************************************************

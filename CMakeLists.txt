@@ -16,7 +16,6 @@ if(LINUX)
 endif()
 
 if(WIN32)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
   add_definitions(-DNOT_INCLUDE_LIBUNWIND)
 endif()
 
@@ -47,7 +46,11 @@ ELSE(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
 
 ENDIF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
 
-include_directories(/yuneta/development/output/include)
+IF(WIN32)
+  include_directories(/cygwin64/yuneta/development/output/include)
+ELSE(WIN32)
+  include_directories(/yuneta/development/output/include)
+ENDIF(WIN32)
 
 ##############################################
 #   Source

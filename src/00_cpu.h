@@ -68,7 +68,7 @@ extern "C" {
 /***************************************************
  *              Structures
  **************************************************/
-#ifdef __linux__
+#ifndef WIN32
 /* Structure for memory and swap space utilization statistics */
 struct stats_memory {
     unsigned long frmkb __attribute__ ((aligned (8)));
@@ -180,8 +180,6 @@ struct stats_irq {
  **************************************************/
 
 unsigned long total_ram_in_kb(void); /* Total memory in kB */
-unsigned long free_ram_in_kb(void); /* Free memory in kB */
-int cpu_usage(unsigned int pid, uint64_t *system_time, uint64_t *process_time);
 unsigned long proc_vmem_in_kb(unsigned int pid); /* virtual memory in kB */
 int read_proc_pid_cmdline(unsigned int pid, struct pid_stats *pst, unsigned int tgid);
 int read_proc_pid_fd(unsigned int pid, struct pid_stats *pst, unsigned int tgid);
@@ -193,7 +191,18 @@ void read_uptime(unsigned long long *uptime);
 void read_meminfo(struct stats_memory *st_memory);
 void read_stat_cpu(struct stats_cpu *st_cpu, int nbr, unsigned long long *uptime, unsigned long long *uptime0);
 
-#endif /* __linux__ */
+#else
+struct pid_stats {
+    char               comm[MAX_COMM_LEN];
+    char               cmdline[MAX_CMDLINE_LEN];
+};
+
+#endif /* WIN32 */
+
+unsigned long free_ram_in_kb(void); /* Free memory in kB */
+int cpu_usage(unsigned int pid, uint64_t *system_time, uint64_t *process_time);
+int read_proc_pid_cmdline(unsigned int pid, struct pid_stats *pst, unsigned int tgid);
+
 
 #ifdef __cplusplus
 }

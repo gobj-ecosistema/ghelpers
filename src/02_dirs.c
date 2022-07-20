@@ -8,9 +8,7 @@
 #endif
 
 #include <sys/types.h>
-#include <unistd.h>
 #include <sys/stat.h>
-#include <sys/file.h>
 #include <stdint.h>
 #include <fcntl.h>
 #if defined(__APPLE__) || defined(__FreeBSD__)
@@ -19,16 +17,31 @@
   #include <sys/sendfile.h>
 #endif
 
-#ifdef __CYGWIN__
+#if defined(__CYGWIN__) || defined(WIN32)
 #define O_LARGEFILE 0
 #endif
 
-#include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
 #include <errno.h>
 #include <string.h>
+
+#ifdef WIN32
+#include <direct.h>
+#include <io.h>
+#include <fcntl.h>
+#include <sys\types.h>
+#include <sys\stat.h>
+
+int umask(int x) {return 0;}
+
+#else
+#include <unistd.h>
+#include <sys/file.h>
+#include <dirent.h>
+#endif
+
 #include "02_dirs.h"
 
 /*****************************************************************
@@ -47,7 +60,11 @@ PUBLIC int newdir(const char *path, int permission)
         umask(0);
         umask_cleared = TRUE;
     }
+#ifdef WIN32
+    return _mkdir(path);
+#else
     return mkdir(path, permission);
+#endif
 }
 
 /***************************************************************************
@@ -68,7 +85,11 @@ PUBLIC int newfile(const char *path, int permission, BOOL overwrite)
         flags |= O_TRUNC;
     else
         flags |= O_EXCL;
+#ifdef WIN32
+    return _open(path, flags, _S_IREAD | _S_IWRITE);
+#else
     return open(path, flags, permission);
+#endif
 }
 
 /***************************************************************************
@@ -76,6 +97,15 @@ PUBLIC int newfile(const char *path, int permission, BOOL overwrite)
  ***************************************************************************/
 PUBLIC int open_exclusive(const char *path, int flags, int permission)
 {
+#ifdef WIN32
+    if(!flags) {
+        flags = O_RDWR|O_LARGEFILE;
+    }
+
+    int fp = _open(path, flags);
+    // TODO LockFileEx()
+    return fp;
+#else
     if(!flags) {
         flags = O_RDWR|O_LARGEFILE|O_NOFOLLOW;
     }
@@ -86,6 +116,7 @@ PUBLIC int open_exclusive(const char *path, int flags, int permission)
         return -1;
     }
     return fp;
+#endif
 }
 
 /***************************************************************************
@@ -93,17 +124,17 @@ PUBLIC int open_exclusive(const char *path, int flags, int permission)
  ***************************************************************************/
 PUBLIC uint64_t filesize(const char *path)
 {
-#ifndef __CYGWIN__
-    struct stat64 st;
-    int ret = stat64(path, &st);
+#if defined(__CYGWIN__) || defined(WIN32)
+    struct stat st;
+    int ret = stat(path, &st);
     if(ret < 0) {
         return 0;
     }
     uint64_t size = st.st_size;
     return size;
 #else
-    struct stat st;
-    int ret = stat(path, &st);
+    struct stat64 st;
+    int ret = stat64(path, &st);
     if(ret < 0) {
         return 0;
     }
@@ -117,17 +148,17 @@ PUBLIC uint64_t filesize(const char *path)
  ***************************************************************************/
 PUBLIC uint64_t filesize2(int fd)
 {
-#ifndef __CYGWIN__
-    struct stat64 st;
-    int ret = fstat64(fd, &st);
+#if defined(__CYGWIN__) || defined(WIN32)
+    struct stat st;
+    int ret = fstat(fd, &st);
     if(ret < 0) {
         return 0;
     }
     uint64_t size = st.st_size;
     return size;
 #else
-    struct stat st;
-    int ret = fstat(fd, &st);
+    struct stat64 st;
+    int ret = fstat64(fd, &st);
     if(ret < 0) {
         return 0;
     }
@@ -141,6 +172,10 @@ PUBLIC uint64_t filesize2(int fd)
  *****************************************************************/
 PUBLIC int lock_file(int fd)
 {
+#if defined(WIN32)
+    // TODO LockFileEx()
+    return -1;
+#else
     struct flock fl;
     if(fd <= 0) {
         return -1;
@@ -151,6 +186,7 @@ PUBLIC int lock_file(int fd)
     fl.l_len = 0;
 
     return fcntl(fd, F_SETLKW, &fl);
+#endif
 }
 
 /*****************************************************************
@@ -158,6 +194,10 @@ PUBLIC int lock_file(int fd)
  *****************************************************************/
 PUBLIC int unlock_file(int fd)
 {
+#if defined(WIN32)
+    // TODO LockFileEx()
+    return -1;
+#else
     struct flock fl;
     if(fd <= 0) {
         return -1;
@@ -168,6 +208,7 @@ PUBLIC int unlock_file(int fd)
     fl.l_len = 0;
 
     return fcntl(fd, F_SETLKW, &fl);
+#endif
 }
 
 /***************************************************************************
@@ -180,7 +221,11 @@ PUBLIC BOOL is_regular_file(const char *path)
     if(ret < 0) {
         return FALSE;
     }
+#ifdef WIN32
+    return (buf.st_mode & S_IFREG)?TRUE:FALSE;
+#else
     return S_ISREG(buf.st_mode)?TRUE:FALSE;
+#endif
 }
 
 /***************************************************************************
@@ -193,7 +238,11 @@ PUBLIC BOOL is_directory(const char *path)
     if(ret < 0) {
         return FALSE;
     }
+#ifdef WIN32
+    return (buf.st_mode & S_IFDIR)?TRUE:FALSE;
+#else
     return S_ISDIR(buf.st_mode)?TRUE:FALSE;
+#endif
 }
 
 /***************************************************************************
@@ -288,6 +337,9 @@ PUBLIC int mkrdir(const char *path, int index, int permission)
  ****************************************************************************/
 PUBLIC int rmrdir(const char *root_dir)
 {
+#ifdef WIN32
+    return -1; //TODO
+#else
     struct dirent *dent;
     DIR *dir;
     struct stat st;
@@ -343,6 +395,7 @@ PUBLIC int rmrdir(const char *root_dir)
         return -1;
     }
     return 0;
+#endif
 }
 
 /****************************************************************************
@@ -350,6 +403,9 @@ PUBLIC int rmrdir(const char *root_dir)
  ****************************************************************************/
 PUBLIC int rmrcontentdir(const char *root_dir)
 {
+#ifdef WIN32
+    return -1; //TODO
+#else
     struct dirent *dent;
     DIR *dir;
     struct stat st;
@@ -395,6 +451,7 @@ PUBLIC int rmrcontentdir(const char *root_dir)
     }
     closedir(dir);
     return 0;
+#endif
 }
 
 /***************************************************************************
@@ -428,14 +485,14 @@ PUBLIC int copyfile(
     fstat(input, &fileinfo);
     int result = sendfile(output, input, &bytesCopied, fileinfo.st_size);
 #else
-    ssize_t nread;
+    size_t nread;
     int result = 0;
     int error = 0;
     char buf[4096];
 
     while (nread = read(input, buf, sizeof buf), nread > 0 && !error) {
         char *out_ptr = buf;
-        ssize_t nwritten;
+        size_t nwritten;
 
         do {
             nwritten = write(output, out_ptr, nread);

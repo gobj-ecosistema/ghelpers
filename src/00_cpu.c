@@ -21,17 +21,18 @@
  ***************************************************************************
  */
 
-#ifdef __linux__
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <ctype.h>
 
+#include "00_cpu.h"
+
+#ifndef WIN32
+
 #include <dirent.h>
 #include <unistd.h>
 #include <pwd.h>
-
-#include "00_cpu.h"
 
 /***************************************************************************
  *              Constants
@@ -822,4 +823,27 @@ unsigned long proc_vmem_in_kb(unsigned int pid)
     return pst.vsz;
 }
 
-#endif /* __linux__ */
+#else /* WIN32 */
+
+/*
+ ***************************************************************************
+ *  Free memory in kB
+ ***************************************************************************
+ */
+unsigned long free_ram_in_kb(void)
+{
+    // TODO
+    return 0;
+}
+
+/*
+ ***************************************************************************
+ *  Cpu usage
+ ***************************************************************************
+ */
+int cpu_usage(unsigned int pid, uint64_t *system_time, uint64_t *process_time)
+{
+    return 0;
+}
+
+#endif /* WIN32 */

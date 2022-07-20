@@ -9,7 +9,9 @@
 #include <locale.h>
 #include <inttypes.h>
 #include <time.h>
+#ifndef WIN32
 #include <sys/time.h>
+#endif
 #include "02_time_helper.h"
 
 /*****************************************************************
