@@ -21,17 +21,15 @@
  ***************************************************************************
  */
 
+#ifdef __linux__
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <dirent.h>
 #include <ctype.h>
 
-#ifndef __CYGWIN__
+#include <dirent.h>
 #include <unistd.h>
 #include <pwd.h>
-#endif
 
 #include "00_cpu.h"
 
@@ -823,3 +821,5 @@ unsigned long proc_vmem_in_kb(unsigned int pid)
 
     return pst.vsz;
 }
+
+#endif /* __linux__ */

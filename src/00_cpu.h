@@ -68,6 +68,7 @@ extern "C" {
 /***************************************************
  *              Structures
  **************************************************/
+#ifdef __linux__
 /* Structure for memory and swap space utilization statistics */
 struct stats_memory {
     unsigned long frmkb __attribute__ ((aligned (8)));
@@ -192,6 +193,7 @@ void read_uptime(unsigned long long *uptime);
 void read_meminfo(struct stats_memory *st_memory);
 void read_stat_cpu(struct stats_cpu *st_cpu, int nbr, unsigned long long *uptime, unsigned long long *uptime0);
 
+#endif /* __linux__ */
 
 #ifdef __cplusplus
 }

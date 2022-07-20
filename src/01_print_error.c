@@ -3,11 +3,14 @@
  *              Copyright (c) 2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#include <syslog.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+
+#ifdef __linux__
+#include <syslog.h>
+#include <unistd.h>
+#endif
 
 #ifndef NOT_INCLUDE_LIBUNWIND
 #define UNW_LOCAL_ONLY
@@ -76,8 +79,9 @@ PUBLIC void print_error(pe_flag_t quit, const char *prefix, const char *fmt, ...
     }
 
     fprintf(stderr, "%s: %s\r\n\r\n", prefix, temp);
+#ifdef __linux__
     syslog(LOG_ERR, "%s: %s", prefix, temp);
-
+#endif
     switch(quit) {
         case PEF_ABORT:
             show_backtrace();
@@ -103,8 +107,9 @@ PUBLIC void print_info(const char *prefix, const char *fmt, ...)
     va_end(ap);
 
     fprintf(stderr, "%s: %s\r\n\r\n", prefix, temp);
+#ifdef __linux__
     syslog(LOG_INFO, "%s: %s", prefix, temp);
-
+#endif
 }
 
 /***************************************************************************

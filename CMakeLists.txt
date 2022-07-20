@@ -11,7 +11,14 @@ set(CMAKE_INSTALL_PREFIX /yuneta/development/output)
 set(INC_DEST_DIR ${CMAKE_INSTALL_PREFIX}/include)
 set(LIB_DEST_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
+if(LINUX)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
+endif()
+
+if(WIN32)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+  add_definitions(-DNOT_INCLUDE_LIBUNWIND)
+endif()
 
 if(CYGWIN)
   add_definitions(-D__CYGWIN__)

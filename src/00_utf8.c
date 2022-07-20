@@ -21,7 +21,6 @@
 #include <stdint.h>
 #include <wchar.h>
 #include <wctype.h>
-#include <alloca.h>
 
 #include "00_utf8proc.h"
 #undef JL_DLLEXPORT /* avoid conflicting definition */
@@ -491,42 +490,42 @@ char *u8_memrchr(const char *s, uint32_t ch, size_t sz)
     return NULL;
 }
 
-size_t u8_vprintf(const char *fmt, va_list ap)
-{
-    size_t cnt, sz=0, nc, needfree=0;
-    char *buf;
-    uint32_t *wcs;
-
-    sz = 512;
-    buf = (char*)alloca(sz);
-    cnt = vsnprintf(buf, sz, fmt, ap);
-    if ((intptr_t)cnt < 0)
-        return 0;
-    if (cnt >= sz) {
-        buf = (char*)malloc(cnt + 1);
-        needfree = 1;
-        vsnprintf(buf, cnt+1, fmt, ap);
-    }
-    wcs = (uint32_t*)alloca((cnt+1) * sizeof(uint32_t));
-    nc = u8_toucs(wcs, cnt+1, buf, cnt);
-    wcs[nc] = 0;
-    printf("%ls", (wchar_t*)wcs);
-    if (needfree) free(buf);
-    return nc;
-}
-
-size_t u8_printf(const char *fmt, ...)
-{
-    size_t cnt;
-    va_list args;
-
-    va_start(args, fmt);
-
-    cnt = u8_vprintf(fmt, args);
-
-    va_end(args);
-    return cnt;
-}
+//size_t u8_vprintf(const char *fmt, va_list ap)
+//{
+//    size_t cnt, sz=0, nc, needfree=0;
+//    char *buf;
+//    uint32_t *wcs;
+//
+//    sz = 512;
+//    buf = (char*)alloca(sz);
+//    cnt = vsnprintf(buf, sz, fmt, ap);
+//    if ((intptr_t)cnt < 0)
+//        return 0;
+//    if (cnt >= sz) {
+//        buf = (char*)malloc(cnt + 1);
+//        needfree = 1;
+//        vsnprintf(buf, cnt+1, fmt, ap);
+//    }
+//    wcs = (uint32_t*)alloca((cnt+1) * sizeof(uint32_t));
+//    nc = u8_toucs(wcs, cnt+1, buf, cnt);
+//    wcs[nc] = 0;
+//    printf("%ls", (wchar_t*)wcs);
+//    if (needfree) free(buf);
+//    return nc;
+//}
+//
+//size_t u8_printf(const char *fmt, ...)
+//{
+//    size_t cnt;
+//    va_list args;
+//
+//    va_start(args, fmt);
+//
+//    cnt = u8_vprintf(fmt, args);
+//
+//    va_end(args);
+//    return cnt;
+//}
 
 /* Rewritten completely, original code not based on anything else
 
