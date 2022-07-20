@@ -9,7 +9,6 @@
 #pragma once
 
 #include <string.h>
-#include <regex.h>
 #include <stdbool.h>
 
 #include "11_gbmem.h"

@@ -8,7 +8,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <dirent.h>
-#include <regex.h>
+#include <pcre2posix.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
