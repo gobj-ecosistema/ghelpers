@@ -28,7 +28,11 @@ PUBLIC char *current_timestamp(char *bf, int bfsize)
     struct timespec ts;
     struct tm *tm;
     char stamp[64], zone[16];
+#ifdef WIN32
+    timespec_get(&ts, TIME_UTC);
+#else
     clock_gettime(CLOCK_REALTIME, &ts);
+#endif
     tm = localtime(&ts.tv_sec);
 
     strftime(stamp, sizeof (stamp), "%Y-%m-%dT%H:%M:%S", tm);
@@ -58,6 +62,9 @@ PUBLIC char *tm2timestamp(char *bf, int bfsize, struct tm *tm)
  *****************************************************************/
 PUBLIC time_t gmtime2timezone(time_t t, const char *tz, struct tm *ltm, time_t *offset)
 {
+#ifdef WIN32
+    return 0; // TODO
+#else
     /*
      *  Save current TZ of env
      */
@@ -106,6 +113,7 @@ PUBLIC time_t gmtime2timezone(time_t t, const char *tz, struct tm *ltm, time_t *
      */
     t += mt_epoch.tm_gmtoff;
     return t;
+#endif
 }
 
 /***********************************************************************
@@ -240,8 +248,12 @@ PUBLIC uint64_t time_in_miliseconds(void)
 {
     struct timespec spec;
 
+#ifdef WIN32
+    timespec_get(&spec, TIME_UTC);
+#else
     //clock_gettime(CLOCK_MONOTONIC, &spec); //Este no da el time from Epoch
     clock_gettime(CLOCK_REALTIME, &spec);
+#endif
 
     // Convert to milliseconds
     return (uint64_t)spec.tv_sec*1000 + spec.tv_nsec/1000000;
@@ -268,7 +280,12 @@ PUBLIC time_range_t get_hours_range(time_t t, int range, const char *TZ)
     if(!empty_string(TZ)) {
         gmtime2timezone(t, TZ, &tm, 0);
     } else {
+#ifdef WIN32
+        struct tm *tm_ = gmtime(&t);
+        memmove(&tm, tm_, sizeof(struct tm));
+#else
         gmtime_r(&t, &tm);
+#endif
     }
 
     struct tm tm_x = {0};
@@ -295,7 +312,12 @@ PUBLIC time_range_t get_days_range(time_t t, int range, const char *TZ)
     if(!empty_string(TZ)) {
         gmtime2timezone(t, TZ, &tm, 0);
     } else {
+#ifdef WIN32
+        struct tm *tm_ = gmtime(&t);
+        memmove(&tm, tm_, sizeof(struct tm));
+#else
         gmtime_r(&t, &tm);
+#endif
     }
 
     struct tm tm_x = {0};
@@ -322,7 +344,12 @@ PUBLIC time_range_t get_weeks_range(time_t t, int range, const char *TZ)
         gmtime2timezone(t, TZ, &tm, 0);
 
     } else {
+#ifdef WIN32
+        struct tm *tm_ = gmtime(&t);
+        memmove(&tm, tm_, sizeof(struct tm));
+#else
         gmtime_r(&t, &tm);
+#endif
     }
 
     int day = tm.tm_mday;
@@ -361,7 +388,12 @@ PUBLIC time_range_t get_months_range(time_t t, int range, const char *TZ)
     if(!empty_string(TZ)) {
         gmtime2timezone(t, TZ, &tm, 0);
     } else {
+#ifdef WIN32
+        struct tm *tm_ = gmtime(&t);
+        memmove(&tm, tm_, sizeof(struct tm));
+#else
         gmtime_r(&t, &tm);
+#endif
     }
 
     struct tm tm_x = {0};
@@ -387,7 +419,12 @@ PUBLIC time_range_t get_years_range(time_t t, int range, const char *TZ)
     if(!empty_string(TZ)) {
         gmtime2timezone(t, TZ, &tm, 0);
     } else {
+#ifdef WIN32
+        struct tm *tm_ = gmtime(&t);
+        memmove(&tm, tm_, sizeof(struct tm));
+#else
         gmtime_r(&t, &tm);
+#endif
     }
 
     struct tm tm_x = {0};
