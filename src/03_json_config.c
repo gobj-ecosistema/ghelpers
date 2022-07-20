@@ -10,7 +10,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
+#ifndef WIN32
 #include <unistd.h>
+#endif
 #include <jansson.h>
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
@@ -1149,4 +1151,3 @@ PUBLIC char *helper_doublequote2quote(char *str)
     }
     return str;
 }
-
