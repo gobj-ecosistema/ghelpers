@@ -9,7 +9,7 @@
 #pragma once
 
 #include <string.h>
-#include <regex.h>
+#include <pcre2posix.h>
 #include <stdbool.h>
 
 #include "00_gtypes.h"
