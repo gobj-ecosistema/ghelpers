@@ -315,7 +315,6 @@ PUBLIC void daemon_shutdown(const char *process_name)
  *  Search process by his name and exec
  *  Return number of processes found.
  ***************************************************************************/
-#if defined(__linux__)
 PRIVATE int linux_search_process(
     const char *process_name,
     void (*cb)(void *self, const char *name, pid_t pid),
@@ -383,14 +382,6 @@ PRIVATE int linux_search_process(
 
     return found;
 }
-#elif defined(__CYGWIN__)
-PRIVATE int linux_search_process(
-        const char *process_name,
-        void (*cb)(void *self, const char *name, pid_t pid),
-        void *self) {
-    return 0;
-}
-#endif
 
 /***************************************************************************
  *  Search process by his name and exec callback if not null.

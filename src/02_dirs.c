@@ -17,10 +17,6 @@
   #include <sys/sendfile.h>
 #endif
 
-#if defined(__CYGWIN__) || defined(WIN32)
-#define O_LARGEFILE 0
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
@@ -35,6 +31,7 @@
 #include <sys\stat.h>
 
 int umask(int x) {return 0;}
+#define O_LARGEFILE 0
 
 #else
 #include <unistd.h>
@@ -124,7 +121,7 @@ PUBLIC int open_exclusive(const char *path, int flags, int permission)
  ***************************************************************************/
 PUBLIC uint64_t filesize(const char *path)
 {
-#if defined(__CYGWIN__) || defined(WIN32)
+#if defined(WIN32)
     struct stat st;
     int ret = stat(path, &st);
     if(ret < 0) {
@@ -148,7 +145,7 @@ PUBLIC uint64_t filesize(const char *path)
  ***************************************************************************/
 PUBLIC uint64_t filesize2(int fd)
 {
-#if defined(__CYGWIN__) || defined(WIN32)
+#if defined(WIN32)
     struct stat st;
     int ret = fstat(fd, &st);
     if(ret < 0) {

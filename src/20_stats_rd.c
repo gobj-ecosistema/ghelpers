@@ -10,7 +10,7 @@
 #include <errno.h>
 #include "20_stats_rd.h"
 
-#ifdef __CYGWIN__
+#if defined(WIN32)
 #define O_LARGEFILE 0
 #define fseeko64 fseeko
 #define lseek64 lseek

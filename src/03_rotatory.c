@@ -250,11 +250,7 @@ PUBLIC hrotatory_t rotatory_open(
         }
         close(fd);
     }
-#ifndef __CYGWIN__
     hr->flog = fopen64(hr->path, "a");
-#else
-    hr->flog = fopen(hr->path, "a");
-#endif
     if(!hr->flog) {
         print_error(
             hr->pe_flag,
@@ -411,11 +407,7 @@ PRIVATE void _rotatory_trunk(rotatory_log_t *hr)
     if(hr->flog) {
         rotatory_flush(hr);
         fclose(hr->flog);
-#ifndef __CYGWIN__
         hr->flog = fopen64(hr->path, "w");
-#else
-        hr->flog = fopen(hr->path, "w");
-#endif
         if(!hr->flog) {
             print_error(
                 hr->pe_flag,
@@ -560,11 +552,7 @@ PRIVATE int _rotatory(rotatory_log_t *hr, const char *bf, size_t len)
             }
             close(fd);
         }
-#ifndef __CYGWIN__
         hr->flog = fopen64(hr->path, "w");
-#else
-        hr->flog = fopen(hr->path, "w");
-#endif
         if(!hr->flog) {
             print_error(
                 hr->pe_flag,
@@ -587,13 +575,8 @@ PRIVATE int _rotatory(rotatory_log_t *hr, const char *bf, size_t len)
          *  Check filesystem free only periodically,
          *  each MAX_COUNTER_STATVFS times.
          */
-#ifndef __CYGWIN__
         struct statvfs64 fiData;
         if(fstatvfs64(fileno(hr->flog), &fiData) == 0) {
-#else
-        struct statvfs fiData;
-        if(fstatvfs(fileno(hr->flog), &fiData) == 0) {
-#endif
             int free_percent = (fiData.f_bavail * 100)/fiData.f_blocks;
             if(free_percent < hr->min_free_disk_percentage) {
                 // No escribo nada con %free menor que x
