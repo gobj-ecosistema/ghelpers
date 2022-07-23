@@ -99,10 +99,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <unistd.h>
 #include <termios.h>
 #include <sys/ioctl.h>
 #include "00_linenoise.h"

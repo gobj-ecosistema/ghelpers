@@ -11,9 +11,7 @@
  *
 ***********************************************************************/
 #include <string.h>
-#include <unistd.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <uuid/uuid.h>
 #include "31_tr_msg2db.h"
 

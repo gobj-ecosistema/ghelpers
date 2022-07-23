@@ -21,7 +21,6 @@
 #include "00_http_parser.h"
 #include <assert.h>
 #include <stddef.h>
-#include <ctype.h>
 #include <string.h>
 #include <limits.h>
 

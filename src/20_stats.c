@@ -6,7 +6,6 @@
  *          Copyright (c) 2018 Niyamaka.
  *          All Rights Reserved.
 ***********************************************************************/
-#include <inttypes.h>
 #include "20_stats.h"
 
 /***************************************************************
@@ -64,4 +63,3 @@ PUBLIC const char *filtra_time_mask(const char *mask)
     }
     return mask;
 }
-

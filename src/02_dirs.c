@@ -24,19 +24,18 @@
 #include <string.h>
 
 #ifdef WIN32
-#include <direct.h>
-#include <io.h>
-#include <fcntl.h>
-#include <sys\types.h>
-#include <sys\stat.h>
+    #include <direct.h>
+    #include <io.h>
+    #include <fcntl.h>
+    #include <sys\types.h>
+    #include <sys\stat.h>
 
-int umask(int x) {return 0;}
-#define O_LARGEFILE 0
-
+    int umask(int x) {return 0;}
+    #define O_LARGEFILE 0
 #else
-#include <unistd.h>
-#include <sys/file.h>
-#include <dirent.h>
+    #include <unistd.h>
+    #include <sys/file.h>
+    #include <dirent.h>
 #endif
 
 #include "02_dirs.h"

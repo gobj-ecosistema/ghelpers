@@ -9,14 +9,10 @@
 #endif
 
 #include <string.h>
-#include <time.h>
 #include <stdio.h>
-#include <time.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <inttypes.h>
-#include <sys/stat.h>
 #ifndef WIN32
 #include <libgen.h>
 #include <dirent.h>

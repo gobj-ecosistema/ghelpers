@@ -21,7 +21,6 @@
  ***********************************************************************/
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
 #include <jansson.h> /* by gbmem_json_info */
 #include <uv.h> /* by mutex */
 #include "11_gbmem.h"

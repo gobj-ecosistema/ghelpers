@@ -28,7 +28,7 @@
 
 #include "00_cpu.h"
 
-#ifndef WIN32
+#ifdef __linux__
 
 #include <dirent.h>
 #include <unistd.h>

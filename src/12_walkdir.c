@@ -3,13 +3,11 @@
  *              Copyright (c) 2014 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <dirent.h>
 #include <regex.h>
-#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include "12_walkdir.h"

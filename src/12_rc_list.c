@@ -7,7 +7,6 @@
  *        Copyright (c) 2016 Niyamaka.
  *        All Rights Reserved.
  ***********************************************************************/
-#include <stdlib.h>
 #include <string.h>
 #include "12_rc_list.h"
 

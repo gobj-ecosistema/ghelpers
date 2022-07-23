@@ -8,14 +8,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <syslog.h>
-#include <fcntl.h>
 #include <errno.h>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <pwd.h>
-#include <grp.h>
 #include <signal.h>
 #include "11_ydaemon.h"
 

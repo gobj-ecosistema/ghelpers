@@ -10,7 +10,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
-#include <fcntl.h>
 #include "20_stats_wr.h"
 
 /***************************************************************
@@ -810,5 +809,3 @@ PRIVATE int wstats_restore(
     int ret = kw_put_propagated_key_values(variable, "id", jn_data);
     return ret;
 }
-
-

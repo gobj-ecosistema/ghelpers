@@ -10,7 +10,6 @@
   #define _LARGEFILE64_SOURCE
 #endif
 
-#include <sys/types.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <inttypes.h>

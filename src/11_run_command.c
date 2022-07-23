@@ -10,12 +10,10 @@
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <pty.h>
-#include <fcntl.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <errno.h>
 #include <string.h>
 #include "11_run_command.h"
 
@@ -238,4 +236,3 @@ PUBLIC int pty_sync_spawn(
 
     return 0;
 }
-

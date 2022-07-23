@@ -9,7 +9,6 @@
 
 #ifdef __linux__
 #include <syslog.h>
-#include <unistd.h>
 #endif
 
 #ifndef NOT_INCLUDE_LIBUNWIND

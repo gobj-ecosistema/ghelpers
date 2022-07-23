@@ -4,7 +4,6 @@
  *              Copyright (c) 2013, 2015 Niyamaka.
  *              All Rights Reserved.
  ***********************************************************************/
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>

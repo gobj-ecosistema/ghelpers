@@ -5,7 +5,6 @@
  *              Copyright (c) Niyamaka.
  *              All Rights Reserved.
  ***********************************************************************/
-#include <string.h>
 #include "12_urls2.h"
 
 /****************************************************************
@@ -111,4 +110,3 @@ PUBLIC char *url_encode(const char *s, code_url_as_t coding)
     }
     return enc;
 }
-

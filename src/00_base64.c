@@ -41,7 +41,6 @@
  */
 
 #include <ctype.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "00_base64.h"
@@ -314,5 +313,3 @@ size_t b64_output_decode_len(size_t input_length)
     size_t output_length = (input_length/4 + 1)*3 + 1;
     return output_length;
 }
-
-

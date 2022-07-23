@@ -35,7 +35,6 @@ THE SOFTWARE.
 #include <stdbool.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>
-#include <sys/time.h>
 #include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>

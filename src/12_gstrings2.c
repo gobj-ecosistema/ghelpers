@@ -7,8 +7,6 @@
  *          All Rights Reserved.
  ***********************************************************************/
 #include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
 #include "12_gstrings2.h"
 
 /***************************************************************
@@ -326,4 +324,3 @@ PUBLIC void str_concat_free(char *s)
 {
     gbmem_free(s);
 }
-
