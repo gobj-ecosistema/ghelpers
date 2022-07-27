@@ -13,11 +13,12 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <inttypes.h>
-#ifndef WIN32
-#include <libgen.h>
-#include <dirent.h>
-#include <sys/statvfs.h>
-#include <unistd.h>
+#ifdef WIN32
+#else
+    #include <libgen.h>
+    #include <dirent.h>
+    #include <sys/statvfs.h>
+    #include <unistd.h>
 #endif
 #include "03_rotatory.h"
 
