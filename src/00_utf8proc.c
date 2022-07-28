@@ -44,6 +44,14 @@
 #include "00_utf8proc.h"
 #include "00_utf8proc_data.c"
 
+#ifndef SSIZE_MAX
+#define SSIZE_MAX ((size_t)SIZE_MAX/2)
+#endif
+
+#ifndef UINT16_MAX
+#  define UINT16_MAX 65535U
+#endif
+
 
 PUBLIC const utf8proc_int8_t utf8proc_utf8class[256] = {
   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

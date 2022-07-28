@@ -20,7 +20,6 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <limits.h>
 
 /**
  * @mainpage
@@ -88,20 +87,11 @@ typedef int16_t utf8proc_int16_t;
 typedef uint16_t utf8proc_uint16_t;
 typedef int32_t utf8proc_int32_t;
 typedef uint32_t utf8proc_uint32_t;
-typedef size_t utf8proc_size_t;
 typedef ptrdiff_t utf8proc_ssize_t;
 typedef bool utf8proc_bool;
 
 #ifdef __cplusplus
 extern "C" {
-#endif
-
-#ifndef SSIZE_MAX
-#define SSIZE_MAX ((size_t)SIZE_MAX/2)
-#endif
-
-#ifndef UINT16_MAX
-#  define UINT16_MAX 65535U
 #endif
 
 /**
