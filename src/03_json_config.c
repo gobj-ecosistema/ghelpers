@@ -12,6 +12,7 @@
 #include <stddef.h>
 #ifdef WIN32
     #include <io.h>
+    #include <winsock2.h>
 #else
     #include <unistd.h>
 #endif

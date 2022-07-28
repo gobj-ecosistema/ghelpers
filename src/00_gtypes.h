@@ -40,7 +40,7 @@ typedef void *      PTR;
 
     #define fopen64 fopen
     #define tmpfile64 tmpfile
-    #define ftello64 ftello
+    #define ftello64 _ftelli64
     #define tmpfile64 tmpfile
     #define fileno _fileno
     #define getpid _getpid
