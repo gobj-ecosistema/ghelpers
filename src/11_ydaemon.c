@@ -3,6 +3,7 @@
  * https://bitbucket.org/yarosla/nxweb/overview
  * Copyright (c) 2011-2012 Yaroslav Stavnichiy <yarosla@gmail.com>
  */
+#ifdef __linux__
 #include <glob.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -424,3 +425,4 @@ PUBLIC int get_watcher_pid()
 {
     return watcher_pid;
 }
+#endif /* __linux__ */

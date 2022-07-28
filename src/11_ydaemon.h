@@ -19,6 +19,7 @@ extern "C"{
 /*********************************************************************
  *      Prototypes
  *********************************************************************/
+#ifdef __linux__
 PUBLIC int get_watcher_pid(void);
 PUBLIC void daemon_shutdown(const char *process_name);
 PUBLIC int daemon_run(
@@ -37,6 +38,7 @@ PUBLIC int search_process(
 PUBLIC int get_relaunch_times(void);
 PUBLIC int daemon_set_debug_mode(BOOL set);
 PUBLIC BOOL daemon_get_debug_mode(void);
+#endif  /* __linux__ */
 
 #ifdef __cplusplus
 }
