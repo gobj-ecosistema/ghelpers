@@ -22,7 +22,7 @@
 #include "02_dirs.h"
 #include "02_dl_list.h"
 #include "02_json_buffer.h"
-#include "02_stdout.h"
+//#include "02_stdout.h"
 #include "02_time_helper.h"
 #include "02_urls.h"
 #include "03_rotatory.h"
@@ -31,8 +31,8 @@
 //#include "10_glogger.h"
 //#include "11_gbmem.h"
 //#include "11_growbuffer.h"
-//#include "11_ip_port.h"
-//#include "11_time_helper2.h" TODO error
+#include "11_ip_port.h"
+//#include "11_time_helper2.h"
 #include "11_run_command.h"
 #include "11_ydaemon.h"
 #include "12_circular_fifo.h"
@@ -60,8 +60,8 @@ extern "C"{
 /*********************************************************************
  *      Prototypes
  *********************************************************************/
-//PUBLIC int init_ghelpers_library(const char *process_name);
-//PUBLIC void end_ghelpers_library(void);
+PUBLIC int init_ghelpers_library(const char *process_name);
+PUBLIC void end_ghelpers_library(void);
 
 /*********************************************************************
  *      Version

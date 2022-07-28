@@ -7,8 +7,8 @@
 
 #include <time.h>
 #include <stdint.h>
+#include "00_gtypes.h"
 
-#ifdef PEPE
 /*
  *  Dependencies
  */
@@ -93,6 +93,4 @@ PUBLIC time_range_t get_years_range(time_t t, int range, const char *TZ);
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif
