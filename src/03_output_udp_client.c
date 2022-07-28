@@ -17,7 +17,6 @@
     #include <ws2tcpip.h>
     #include <process.h>
     #include <io.h>
-    #include <fcntl.h>
     #define close _close
     #define getpid _getpid
 #else
@@ -507,8 +506,8 @@ PRIVATE int _udpc_socket(uclient_t *uc)
         );
     }
 #else
-    // TODO
-    int x;
+    u_long mode = 1;  // 1 to enable non-blocking socket
+    ioctlsocket(uc->_s, FIONBIO, &mode);
 #endif
 
     memset((char *) &uc->si_other, 0, sizeof(uc->si_other));
@@ -516,7 +515,7 @@ PRIVATE int _udpc_socket(uclient_t *uc)
     uc->si_other.sin_port = htons(atoi(uc->port));
 
     //if (inet_aton(uc->host, &uc->si_other.sin_addr) == 0) {
-    if (inet_pton(AF_INET, uc->host, &uc->si_other.sin_addr) == 0) {
+    if (inet_pton(AF_INET, uc->host, &uc->si_other.sin_addr) <= 0) {
         print_error(
             PEF_CONTINUE,
             "ERROR YUNETA",
@@ -536,7 +535,7 @@ PRIVATE int _udpc_socket(uclient_t *uc)
         si_bind.sin_family = AF_INET;
 
         //if (inet_aton(uc->bindip , &si_bind.sin_addr) == 0) {
-        if (inet_pton(AF_INET, uc->bindip , &si_bind.sin_addr) == 0) {
+        if (inet_pton(AF_INET, uc->bindip , &si_bind.sin_addr) <= 0) {
             print_error(
                 PEF_CONTINUE,
                 "ERROR YUNETA",
