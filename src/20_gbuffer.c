@@ -13,18 +13,6 @@
 
 #ifdef WIN32
     #include <io.h>
-    #define O_LARGEFILE 0
-    #define fseeko64 fseek
-    #define fopen64 fopen
-    #define ftello64 ftell
-    #define tmpfile64 tmpfile
-    #define open _open
-    #define read _read
-    #define close _close
-    #define access _access
-    #define lseek _lseek
-    #define write _write
-    #define fileno _fileno
 #else
     #include <unistd.h>
 #endif

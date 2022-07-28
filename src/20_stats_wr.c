@@ -11,8 +11,6 @@
 #include <errno.h>
 #ifdef WIN32
     #include <io.h>
-    #define unlink _unlink
-    #define close _close
 #else
     #include <unistd.h>
 #endif

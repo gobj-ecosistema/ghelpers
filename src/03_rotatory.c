@@ -15,11 +15,6 @@
 #include <inttypes.h>
 #ifdef WIN32
     #include  <io.h>
-    #define fopen64 fopen
-    #define access _access
-    #define close _close
-    #define unlink _unlink
-    #define fileno _fileno
 #else
     #include <libgen.h>
     #include <dirent.h>

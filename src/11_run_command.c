@@ -12,8 +12,7 @@
 #include <stdio.h>
 #include <string.h>
 #ifdef WIN32
-    #define popen _popen
-    #define pclose _pclose
+    #include <io.h>
 #else
     #include <unistd.h>
     #include <sys/ioctl.h>

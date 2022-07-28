@@ -11,11 +11,6 @@
 #include <errno.h>
 #ifdef WIN32
     #include <io.h>
-    #define access _access
-    #define chmod _chmod
-    #define open _open
-    #define close _close
-    #define O_NOFOLLOW 0
 #else
     #include <unistd.h>
 #endif

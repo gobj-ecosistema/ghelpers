@@ -11,13 +11,6 @@
 
 #ifdef WIN32
     #include <io.h>
-    #define fileno _fileno
-    #define O_LARGEFILE 0
-    #define fseeko64 _fseeki64
-    #define fopen64 fopen
-    #define ftello64 ftello
-    #define tmpfile64 tmpfile
-    #define close _close
 #else
     #include <unistd.h>
 #endif

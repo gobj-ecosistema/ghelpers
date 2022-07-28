@@ -31,7 +31,6 @@
     #include <sys\stat.h>
 
     int umask(int x) {return 0;}
-    #define O_LARGEFILE 0
 #else
     #include <unistd.h>
     #include <sys/file.h>

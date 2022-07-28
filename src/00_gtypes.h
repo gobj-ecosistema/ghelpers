@@ -22,11 +22,33 @@ extern "C"{
 typedef int         BOOL;
 typedef void *      PTR;
 
-#if defined(_WIN32) || defined(_WIN64)
-  #define snprintf _snprintf
-  #define vsnprintf _vsnprintf
-  #define strcasecmp _stricmp
-  #define strncasecmp _strnicmp
+#if defined(_WIN32) || defined(_WIN64) || defined(WIN32)
+    #define snprintf _snprintf
+    #define vsnprintf _vsnprintf
+    #define strcasecmp _stricmp
+    #define strncasecmp _strnicmp
+    #define O_LARGEFILE 0
+    #define O_NOFOLLOW 0
+    #define open _open
+    #define close _close
+    #define lseek64 _lseek
+    #define fseeko64 _fseeki64
+    #define lseek _lseek
+    #define read _read
+    #define write _write
+    #define access _access
+
+    #define fopen64 fopen
+    #define tmpfile64 tmpfile
+    #define ftello64 ftello
+    #define tmpfile64 tmpfile
+    #define fileno _fileno
+    #define getpid _getpid
+    #define unlink _unlink
+    #define popen _popen
+    #define pclose _pclose
+    #define isatty _isatty
+    #define chmod _chmod
 #endif
 
 #ifndef MIN

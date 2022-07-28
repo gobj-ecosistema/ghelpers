@@ -17,8 +17,6 @@
     #include <ws2tcpip.h>
     #include <process.h>
     #include <io.h>
-    #define close _close
-    #define getpid _getpid
 #else
     #include <syslog.h>
     #include <unistd.h>

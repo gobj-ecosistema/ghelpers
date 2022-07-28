@@ -10,7 +10,6 @@
 #include <errno.h>
 #ifdef WIN32
     #include <io.h>
-    #define access _access
 #else
     #include <unistd.h>
     #include <dirent.h>

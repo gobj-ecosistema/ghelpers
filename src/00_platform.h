@@ -65,7 +65,7 @@
 #define _OS_FREEBSD_
 #elif defined(__linux__)
 #define _OS_LINUX_
-#elif defined(_WIN32) || defined(_WIN64)
+#elif defined(_WIN32) || defined(_WIN64) || defined(WIN32)
 #define _OS_WINDOWS_
 #elif defined(__APPLE__) && defined(__MACH__)
 #define _OS_DARWIN_

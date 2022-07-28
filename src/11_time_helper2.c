@@ -24,7 +24,6 @@
 #include <time.h>
 #ifdef WIN32
     #include <io.h>
-    #define isatty _isatty
 #else
     #include <unistd.h>
     #include <sys/time.h>
