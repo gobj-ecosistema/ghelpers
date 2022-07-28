@@ -66,17 +66,6 @@ typedef void *      PTR;
 
 #define EXEC_AND_RESET(funcion, variable) if(variable) {funcion(variable); variable=0;}
 
-#define UTF8_TO_UNICODE(dst, src) \
-    utf8proc_decompose((const utf8proc_uint8_t *)src, strlen(src), dst, sizeof(dst), 0)
-
-#define UNICODE_TO_UTF8(wide) \
-    utf8proc_reencode((utf8proc_int32_t *)wide, wcslen((const wchar_t *)wide), 0)
-#define UNICODE_TO_UTF8_2(dst,src) \
-    u8_toutf8(dst, sizeof(dst), (const uint32_t *)src,  wcslen(src));
-
-#define TEXT_NOT_NULL(s) (s)?(s):""
-
-
 /*********************************************************************
  *      Prototypes of ghelpers.c
  *********************************************************************/
