@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>15.0</VCProjectVersion>
+    <ProjectGuid>{074A21A3-D8E1-4B27-B50C-AF477F8A19E6}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HTTP_PARSER_STRICT=0;NOT_INCLUDE_LIBUNWIND;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>\yuneta\development\output\include;\yuneta\development\output\include\regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HTTP_PARSER_STRICT=0;NOT_INCLUDE_LIBUNWIND;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <AdditionalIncludeDirectories>\yuneta\development\output\include;\yuneta\development\output\include\regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <TargetMachine>MachineX86</TargetMachine>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>\yuneta\development\output\include;\yuneta\development\output\include\regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HTTP_PARSER_STRICT=0;NOT_INCLUDE_LIBUNWIND;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>\yuneta\development\output\include;\yuneta\development\output\include\regex;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;HTTP_PARSER_STRICT=0;NOT_INCLUDE_LIBUNWIND;WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\00_base64.c" />
+    <ClCompile Include="src\00_cpu.c" />
+    <ClCompile Include="src\00_http_parser.c" />
+    <ClCompile Include="src\00_replace_string.c" />
+    <ClCompile Include="src\00_sha1.c" />
+    <ClCompile Include="src\00_utf8.c" />
+    <ClCompile Include="src\00_utf8proc.c" />
+    <ClCompile Include="src\01_cnv_hex.c" />
+    <ClCompile Include="src\01_gstrings.c" />
+    <ClCompile Include="src\01_print_error.c" />
+    <ClCompile Include="src\01_reference.c" />
+    <ClCompile Include="src\02_dirs.c" />
+    <ClCompile Include="src\02_dl_list.c" />
+    <ClCompile Include="src\02_json_buffer.c" />
+    <ClCompile Include="src\02_stdout.c" />
+    <ClCompile Include="src\02_time_helper.c" />
+    <ClCompile Include="src\02_urls.c" />
+    <ClCompile Include="src\03_json_config.c" />
+    <ClCompile Include="src\03_output_udp_client.c" />
+    <ClCompile Include="src\03_rotatory.c" />
+    <ClCompile Include="src\10_glogger.c" />
+    <ClCompile Include="src\11_gbmem.c" />
+    <ClCompile Include="src\11_growbuffer.c" />
+    <ClCompile Include="src\11_ip_port.c" />
+    <ClCompile Include="src\11_run_command.c" />
+    <ClCompile Include="src\11_time_helper2.c" />
+    <ClCompile Include="src\11_ydaemon.c" />
+    <ClCompile Include="src\12_circular_fifo.c" />
+    <ClCompile Include="src\12_gstrings2.c" />
+    <ClCompile Include="src\12_rc_list.c" />
+    <ClCompile Include="src\12_urls2.c" />
+    <ClCompile Include="src\12_walkdir.c" />
+    <ClCompile Include="src\13_json_helper.c" />
+    <ClCompile Include="src\14_kw.c" />
+    <ClCompile Include="src\15_webix_helper.c" />
+    <ClCompile Include="src\20_gbuffer.c" />
+    <ClCompile Include="src\20_stats.c" />
+    <ClCompile Include="src\20_stats_rd.c" />
+    <ClCompile Include="src\20_stats_wr.c" />
+    <ClCompile Include="src\21_json_xml.c" />
+    <ClCompile Include="src\21_termbox.c" />
+    <ClCompile Include="src\30_timeranger.c" />
+    <ClCompile Include="src\31_tr_msg.c" />
+    <ClCompile Include="src\31_tr_msg2db.c" />
+    <ClCompile Include="src\31_tr_queue.c" />
+    <ClCompile Include="src\31_tr_treedb.c" />
+    <ClCompile Include="src\ghelpers.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\00_ansi_escape_codes.h" />
+    <ClInclude Include="src\00_asn1_snmp.h" />
+    <ClInclude Include="src\00_base64.h" />
+    <ClInclude Include="src\00_cpu.h" />
+    <ClInclude Include="src\00_dtypes.h" />
+    <ClInclude Include="src\00_gtypes.h" />
+    <ClInclude Include="src\00_http_parser.h" />
+    <ClInclude Include="src\00_platform.h" />
+    <ClInclude Include="src\00_replace_string.h" />
+    <ClInclude Include="src\00_security.h" />
+    <ClInclude Include="src\00_sha1.h" />
+    <ClInclude Include="src\00_utf8.h" />
+    <ClInclude Include="src\00_utf8proc.h" />
+    <ClInclude Include="src\01_cnv_hex.h" />
+    <ClInclude Include="src\01_gstrings.h" />
+    <ClInclude Include="src\01_print_error.h" />
+    <ClInclude Include="src\01_reference.h" />
+    <ClInclude Include="src\02_dirs.h" />
+    <ClInclude Include="src\02_dl_list.h" />
+    <ClInclude Include="src\02_json_buffer.h" />
+    <ClInclude Include="src\02_stdout.h" />
+    <ClInclude Include="src\02_time_helper.h" />
+    <ClInclude Include="src\02_urls.h" />
+    <ClInclude Include="src\03_json_config.h" />
+    <ClInclude Include="src\03_output_udp_client.h" />
+    <ClInclude Include="src\03_rotatory.h" />
+    <ClInclude Include="src\10_glogger.h" />
+    <ClInclude Include="src\11_gbmem.h" />
+    <ClInclude Include="src\11_growbuffer.h" />
+    <ClInclude Include="src\11_ip_port.h" />
+    <ClInclude Include="src\11_run_command.h" />
+    <ClInclude Include="src\11_time_helper2.h" />
+    <ClInclude Include="src\11_ydaemon.h" />
+    <ClInclude Include="src\12_circular_fifo.h" />
+    <ClInclude Include="src\12_gstrings2.h" />
+    <ClInclude Include="src\12_rc_list.h" />
+    <ClInclude Include="src\12_urls2.h" />
+    <ClInclude Include="src\12_walkdir.h" />
+    <ClInclude Include="src\13_json_helper.h" />
+    <ClInclude Include="src\14_kw.h" />
+    <ClInclude Include="src\15_webix_helper.h" />
+    <ClInclude Include="src\20_gbuffer.h" />
+    <ClInclude Include="src\20_stats.h" />
+    <ClInclude Include="src\20_stats_rd.h" />
+    <ClInclude Include="src\20_stats_wr.h" />
+    <ClInclude Include="src\21_json_xml.h" />
+    <ClInclude Include="src\21_termbox.h" />
+    <ClInclude Include="src\30_timeranger.h" />
+    <ClInclude Include="src\31_tr_msg.h" />
+    <ClInclude Include="src\31_tr_msg2db.h" />
+    <ClInclude Include="src\31_tr_queue.h" />
+    <ClInclude Include="src\31_tr_treedb.h" />
+    <ClInclude Include="src\ghelpers.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
