@@ -21,9 +21,14 @@
 #include <ctype.h>
 #include <locale.h>
 #include <inttypes.h>
-#include <unistd.h>
 #include <time.h>
-#include <sys/time.h>
+#ifdef WIN32
+    #include <io.h>
+    #define isatty _isatty
+#else
+    #include <unistd.h>
+    #include <sys/time.h>
+#endif
 #include "11_time_helper2.h"
 
 #define _
@@ -89,13 +94,23 @@ static time_t gm_time_t(timestamp_t time, int tz)
 static struct tm *time_to_tm(timestamp_t time, int tz, struct tm *tm)
 {
     time_t t = gm_time_t(time, tz);
+#ifdef WIN32
+    gmtime_s(tm, &t);
+    return tm;
+#else
     return gmtime_r(&t, tm);
+#endif
 }
 
 static struct tm *time_to_tm_local(timestamp_t time, struct tm *tm)
 {
     time_t t = time;
+#ifdef WIN32
+    localtime_s(tm, &t);
+    return tm;
+#else
     return localtime_r(&t, tm);
+#endif
 }
 
 /*
@@ -107,7 +122,11 @@ static int local_time_tzoffset(time_t t, struct tm *tm)
     time_t t_local;
     int offset, eastwest;
 
+#ifdef WIN32
+    localtime_s(tm, &t);
+#else
     localtime_r(&t, tm);
+#endif
     t_local = tm_to_time_t(tm);
     if (t_local == -1)
         return 0; /* error; just use +0000 */
@@ -137,28 +156,23 @@ static int local_tzoffset(timestamp_t time)
     return local_time_tzoffset((time_t)time, &tm);
 }
 
-static void get_time(struct timeval *now)
-{
-    gettimeofday(now, NULL);
-}
-
 /***********************************************************************
  *   Get a string with some now! date or time formatted
  ***********************************************************************/
 void show_date_relative(
-    timestamp_t time,
+    timestamp_t tim,
     char *timebuf,
     int timebufsize)
 {
-    struct timeval now;
+    time_t tv_sec;
     timestamp_t diff;
 
-    get_time(&now);
-    if (now.tv_sec < time) {
+    time(&tv_sec);
+    if (tv_sec < tim) {
         snprintf(timebuf, timebufsize, _("in the future"));
         return;
     }
-    diff = now.tv_sec - time;
+    diff = tv_sec - tim;
     if (diff < 90) {
         snprintf(timebuf, timebufsize,
              _("%"PRItime" seconds ago"), diff);
@@ -231,37 +245,34 @@ struct date_mode *date_mode_from_type(enum date_mode_type type)
     return &mode;
 }
 
-const char *show_date(timestamp_t time, int tz, const struct date_mode *mode)
+const char *show_date(timestamp_t tim, int tz, const struct date_mode *mode)
 {
     struct tm *tm;
     static char timebuf[1024];
     struct tm tmbuf = { 0 };
 
     if (mode->type == DATE_UNIX) {
-        snprintf(timebuf, sizeof(timebuf), "%"PRItime, time);
+        snprintf(timebuf, sizeof(timebuf), "%"PRItime, tim);
         return timebuf;
     }
 
     if (mode->local)
-        tz = local_tzoffset(time);
+        tz = local_tzoffset(tim);
 
     if (mode->type == DATE_RAW) {
-        snprintf(timebuf, sizeof(timebuf), "%"PRItime" %+05d", time, tz);
+        snprintf(timebuf, sizeof(timebuf), "%"PRItime" %+05d", tim, tz);
         return timebuf;
     }
 
     if (mode->type == DATE_RELATIVE) {
-        struct timeval now;
-
-        gettimeofday(&now, NULL);
-        show_date_relative(time, timebuf, sizeof(timebuf));
+        show_date_relative(tim, timebuf, sizeof(timebuf));
         return timebuf;
     }
 
     if (mode->local)
-        tm = time_to_tm_local(time, &tmbuf);
+        tm = time_to_tm_local(tim, &tmbuf);
     else
-        tm = time_to_tm(time, tz, &tmbuf);
+        tm = time_to_tm(tim, tz, &tmbuf);
     if (!tm) {
         tm = time_to_tm(0, 0, &tmbuf);
         tz = 0;
@@ -539,7 +550,12 @@ static int match_multi_number(timestamp_t num, char c, const char *date,
         if (!now)
             now = time(NULL);
         refuse_future = NULL;
-        if (gmtime_r(&now, &now_tm))
+
+#ifdef WIN32
+            if (gmtime_s(&now_tm, &now))
+#else
+            if (gmtime_r(&now, &now_tm))
+#endif
             refuse_future = &now_tm;
 
         if (num > 70) {
@@ -602,7 +618,12 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
      */
     if (num >= 100000000 && nodate(tm)) {
         time_t time = num;
+
+#ifdef WIN32
+        if (gmtime_s(tm, &time)) {
+#else
         if (gmtime_r(&time, tm)) {
+#endif
             *tm_gmt = 1;
             return end - date;
         }
@@ -942,7 +963,12 @@ void datestamp(char *out, int outsize)
 
     time(&now);
 
+#ifdef WIN32
+    localtime_s(&tm, &now);
+    offset = tm_to_time_t(&tm) - now;
+#else
     offset = tm_to_time_t(localtime_r(&now, &tm)) - now;
+#endif
     offset /= 60;
 
     date_string(now, offset, out, outsize);
@@ -965,9 +991,12 @@ static time_t update_tm(struct tm *tm, struct tm *now, time_t sec)
         if (tm->tm_mon > now->tm_mon)
             tm->tm_year--;
     }
-
     n = mktime(tm) - sec;
+#ifdef WIN32
+    localtime_s(tm, &n);
+#else
     localtime_r(&n, tm);
+#endif
     return n;
 }
 
@@ -1068,7 +1097,11 @@ static void date_am(struct tm *tm, struct tm *now, int *num)
 static void date_never(struct tm *tm, struct tm *now, int *num)
 {
     time_t n = 0;
+#ifdef WIN32
+    localtime_s(tm, &n);
+#else
     localtime_r(&n, tm);
+#endif
     *num = 0;
 }
 
@@ -1227,17 +1260,23 @@ static const char *approxidate_digit(const char *date, struct tm *tm, int *num,
     return end;
 }
 
-static timestamp_t approxidate_str(const char *date,
-                   const struct timeval *tv,
-                   int *error_ret)
+static timestamp_t approxidate_str(
+    const char *date,
+    time_t time_sec,
+    int *error_ret)
 {
     int number = 0;
     int touched = 0;
     struct tm tm, now;
-    time_t time_sec;
 
-    time_sec = tv->tv_sec;
+#ifdef WIN32
+    localtime_s(&tm, &time_sec);
+#else
     localtime_r(&time_sec, &tm);
+#endif
+
+
+
     now = tm;
 
     tm.tm_year = -1;
@@ -1266,7 +1305,7 @@ static timestamp_t approxidate_str(const char *date,
 
 timestamp_t approxidate_relative(const char *date)
 {
-    struct timeval tv;
+    time_t tv;
     timestamp_t timestamp;
     int offset;
     int errors = 0;
@@ -1274,13 +1313,13 @@ timestamp_t approxidate_relative(const char *date)
     if (!parse_date_basic(date, &timestamp, &offset))
         return timestamp;
 
-    get_time(&tv);
-    return approxidate_str(date, (const struct timeval *) &tv, &errors);
+    time(&tv);
+    return approxidate_str(date, tv, &errors);
 }
 
 timestamp_t approxidate_careful(const char *date, int *error_ret)
 {
-    struct timeval tv;
+    time_t tv;
     timestamp_t timestamp;
     int offset;
     int dummy = 0;
@@ -1292,8 +1331,8 @@ timestamp_t approxidate_careful(const char *date, int *error_ret)
         return timestamp;
     }
 
-    get_time(&tv);
-    return approxidate_str(date, &tv, error_ret);
+    time(&tv);
+    return approxidate_str(date, tv, error_ret);
 }
 
 int date_overflows(timestamp_t t)
