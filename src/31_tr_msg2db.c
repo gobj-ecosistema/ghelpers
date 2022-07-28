@@ -12,7 +12,6 @@
 ***********************************************************************/
 #include <string.h>
 #include <stdio.h>
-#include <uuid/uuid.h>
 #include "31_tr_msg2db.h"
 
 /***************************************************************
@@ -1002,9 +1001,7 @@ PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
                 topic_name
         );
         if(kw_has_word(id_col_flag, "uuid", 0)) {
-            uuid_t binuuid;
-            uuid_generate_random(binuuid);
-            uuid_unparse_lower(binuuid, uuid);
+            create_uuid(uuid, sizeof(uuid));
             id = uuid;
             json_object_set_new(kw, "id", json_string(id));
         } else {

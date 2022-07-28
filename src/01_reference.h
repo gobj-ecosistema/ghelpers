@@ -16,6 +16,8 @@ extern "C"{
 uint32_t short_reference(void);
 uint64_t long_reference(void);
 
+PUBLIC int create_uuid(char *bf, int bfsize);
+
 #ifdef __cplusplus
 }
 #endif

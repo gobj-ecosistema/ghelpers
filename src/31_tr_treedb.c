@@ -10,10 +10,6 @@
  ***********************************************************************/
 #include <string.h>
 #include <stdio.h>
-#ifdef WIN32
-#else
-    #include <uuid/uuid.h>
-#endif
 #include "31_tr_treedb.h"
 
 /***************************************************************
@@ -4128,9 +4124,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
         );
         if(kw_has_word(id_col_flag, "uuid", 0)) {
             char uuid[RECORD_KEY_VALUE_MAX];
-            uuid_t binuuid;
-            uuid_generate_random(binuuid);
-            uuid_unparse_lower(binuuid, uuid);
+            create_uuid(uuid, sizeof(uuid));
             id = uuid;
             json_object_set_new(kw, "id", json_string(id));
         } else if(kw_has_word(id_col_flag, "rowid", 0)) {
