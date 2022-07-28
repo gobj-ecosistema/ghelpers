@@ -33,11 +33,17 @@ PUBLIC int init_ghelpers_library(const char *process_name)
         snprintf(__process_name__, sizeof(__process_name__), "%s", process_name);
     }
     gethostname(__hostname__, sizeof(__hostname__));
+
+#ifdef WIN32
+    long unsigned int bufsize = sizeof(__username__);
+    GetUserNameA(__username__, &bufsize);
+#else
     uid_t uid = geteuid();
     struct passwd *pw = getpwuid(uid);
     if(pw) {
         snprintf(__username__, sizeof(__username__), "%s", pw->pw_name);
     }
+#endif
 
     int ret = 0;
 
