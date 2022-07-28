@@ -5,7 +5,6 @@
  *          Copyright (c) 2014 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#include <netinet/in.h>
 #include <string.h>
 #include "11_ip_port.h"
 

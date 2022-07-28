@@ -7,7 +7,6 @@
  ****************************************************************************/
 #pragma once
 
-#include <netinet/in.h>
 #include <uv.h>
 #include "10_glogger.h"
 
