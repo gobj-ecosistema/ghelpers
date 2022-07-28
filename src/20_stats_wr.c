@@ -7,9 +7,16 @@
  *          All Rights Reserved.
 ***********************************************************************/
 #include <inttypes.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#ifdef WIN32
+    #include <io.h>
+    #define unlink _unlink
+    #define close _close
+#else
+    #include <unistd.h>
+#endif
+
 #include "20_stats_wr.h"
 
 /***************************************************************
