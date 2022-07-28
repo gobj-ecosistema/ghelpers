@@ -7,9 +7,16 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <errno.h>
+#ifdef WIN32
+    #include <io.h>
+    #define access _access
+    #define O_NOFOLLOW 0
+#else
+    #include <unistd.h>
+#endif
+
 #include "13_json_helper.h"
 
 /***************************************************************************
@@ -1130,7 +1137,9 @@ PUBLIC json_t *load_persistent_json(
     int fd;
     if(exclusive) {
         fd = open_exclusive(full_path, O_RDONLY|O_NOFOLLOW, 0);
+#ifdef __linux__
         fcntl(fd, F_SETFD, FD_CLOEXEC); // Que no vaya a los child
+#endif
     } else {
         fd = open(full_path, O_RDONLY|O_NOFOLLOW);
     }
