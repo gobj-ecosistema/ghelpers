@@ -8,17 +8,25 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <string.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
 
-#if defined(WIN32)
-#define O_LARGEFILE 0
-#define fseeko64 fseeko
-#define lseek64 lseek
-#define fopen64 fopen
-#define ftello64 ftello
-#define tmpfile64 tmpfile
+#ifdef WIN32
+    #include <io.h>
+    #define O_LARGEFILE 0
+    #define fseeko64 fseek
+    #define fopen64 fopen
+    #define ftello64 ftell
+    #define tmpfile64 tmpfile
+    #define open _open
+    #define read _read
+    #define close _close
+    #define access _access
+    #define lseek _lseek
+    #define write _write
+    #define fileno _fileno
+#else
+    #include <unistd.h>
 #endif
 
 #include "20_gbuffer.h"
