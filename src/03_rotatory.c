@@ -14,6 +14,15 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #ifdef WIN32
+    #include  <io.h>
+    #include <sys/stat.h>
+    #define fopen64 fopen
+    #define access _access
+    #define close _close
+    #define unlink _unlink
+    #define fileno _fileno
+    #define fstatvfs64 _fstat
+    #define statvfs64 _stat
 #else
     #include <libgen.h>
     #include <dirent.h>
@@ -572,6 +581,7 @@ PRIVATE int _rotatory(rotatory_log_t *hr, const char *bf, size_t len)
          *  Check filesystem free only periodically,
          *  each MAX_COUNTER_STATVFS times.
          */
+#ifdef __linux__
         struct statvfs64 fiData;
         if(fstatvfs64(fileno(hr->flog), &fiData) == 0) {
             int free_percent = (fiData.f_bavail * 100)/fiData.f_blocks;
@@ -591,6 +601,7 @@ PRIVATE int _rotatory(rotatory_log_t *hr, const char *bf, size_t len)
                 return -1;
             }
         }
+#endif /* __linux__ */
     }
 
     // TODO perhaps I would remove lock file in order to get more speed.
