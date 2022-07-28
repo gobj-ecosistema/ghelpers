@@ -42,7 +42,7 @@
  *****************************************************************/
 typedef struct rotatory_log_s {
     DL_ITEM_FIELDS
-    char schema[32], path[2*NAME_MAX+1], port[32];
+    char path[2*NAME_MAX+1];
     size_t buffer_size;
     uint64_t max_megas_rotatoryfile_size;
     size_t min_free_disk_percentage;
@@ -57,11 +57,7 @@ typedef struct rotatory_log_s {
     int (*cb_newfile)(void *user_data, const char *old_filename, const char *new_filename);
     void *user_data;
     FILE *flog;
-    int week_day;
-    int month_day;
-    int year_day;
     char *buffer;
-    char temp[8*1024];
 
 } rotatory_log_t;
 
