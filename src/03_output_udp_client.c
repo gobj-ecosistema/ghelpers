@@ -12,13 +12,16 @@
 #include <stdlib.h>
 #include <inttypes.h>
 #include <errno.h>
-#include <syslog.h>
 #include <time.h>
 #include <string.h>
-#include <unistd.h>
 #include <fcntl.h>
-#include <arpa/inet.h>
-#include <sys/socket.h>
+#ifdef WIN32
+#else
+    #include <syslog.h>
+    #include <unistd.h>
+    #include <arpa/inet.h>
+    #include <sys/socket.h>
+#endif
 #include "03_output_udp_client.h"
 
 /***************************************************************************
