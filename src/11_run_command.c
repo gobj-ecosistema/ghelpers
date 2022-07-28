@@ -5,16 +5,21 @@
  *          Copyright (c) 2015 Niyamaka.
  *          All Rights Reserved.
  ****************************************************************************/
-#include <unistd.h>
 #include <signal.h>
-#include <sys/ioctl.h>
-#include <sys/wait.h>
-#include <pty.h>
 #include <sys/types.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef WIN32
+    #define popen _popen
+    #define pclose _pclose
+#else
+    #include <unistd.h>
+    #include <sys/ioctl.h>
+    #include <sys/wait.h>
+    #include <pty.h>
+#endif
 #include "11_run_command.h"
 
 /***************************************************************************
@@ -76,6 +81,7 @@ PUBLIC int run_command(const char *command, char *bf, size_t bfsize)
 \*************************************************************************/
 PUBLIC int run_process2(const char *path, char *const argv[])
 {
+#ifdef __linux__
     sigset_t blockMask, origMask;
     struct sigaction saIgnore, saOrigQuit, saOrigInt, saDefault;
     pid_t childPid;
@@ -151,6 +157,9 @@ PUBLIC int run_process2(const char *path, char *const argv[])
     errno = savedErrno;
 
     return status;
+#else
+    return -1;
+#endif
 }
 
 /***************************************************************************
@@ -160,6 +169,7 @@ PUBLIC int pty_sync_spawn(
     const char *command
 )
 {
+#ifdef __linux__
     int master, pid;
 
     struct winsize size = {24, 80, 0, 0 };
@@ -234,5 +244,7 @@ PUBLIC int pty_sync_spawn(
         }
     }
 
-    return 0;
+#else
+    return -1;
+#endif
 }
