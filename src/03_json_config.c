@@ -10,8 +10,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stddef.h>
-#ifndef WIN32
+#ifdef WIN32
     #include <io.h>
+#else
     #include <unistd.h>
 #endif
 #include <jansson.h>
