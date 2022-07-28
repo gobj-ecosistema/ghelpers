@@ -5,7 +5,7 @@
  ****************************************************************************/
 #pragma once
 
-#include "00_ansi_escape_codes.h"
+//#include "00_ansi_escape_codes.h"
 #include "00_asn1_snmp.h"
 #include "00_base64.h"
 #include "00_cpu.h"
@@ -28,12 +28,11 @@
 #include "03_rotatory.h"
 #include "03_json_config.h"
 #include "03_output_udp_client.h"
-#include "10_glogger.h"
-#include "11_gbmem.h"
-//#include "11_gbmem2.h"
-#include "11_growbuffer.h"
-#include "11_ip_port.h"
-#include "11_time_helper2.h"
+//#include "10_glogger.h"
+//#include "11_gbmem.h"
+//#include "11_growbuffer.h"
+//#include "11_ip_port.h"
+//#include "11_time_helper2.h" TODO error
 #include "11_run_command.h"
 #include "11_ydaemon.h"
 #include "12_circular_fifo.h"
@@ -61,8 +60,8 @@ extern "C"{
 /*********************************************************************
  *      Prototypes
  *********************************************************************/
-PUBLIC int init_ghelpers_library(const char *process_name);
-PUBLIC void end_ghelpers_library(void);
+//PUBLIC int init_ghelpers_library(const char *process_name);
+//PUBLIC void end_ghelpers_library(void);
 
 /*********************************************************************
  *      Version
