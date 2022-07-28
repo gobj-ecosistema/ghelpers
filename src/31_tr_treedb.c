@@ -10,7 +10,10 @@
  ***********************************************************************/
 #include <string.h>
 #include <stdio.h>
-#include <uuid/uuid.h>
+#ifdef WIN32
+#else
+    #include <uuid/uuid.h>
+#endif
 #include "31_tr_treedb.h"
 
 /***************************************************************
