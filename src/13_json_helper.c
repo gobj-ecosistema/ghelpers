@@ -12,6 +12,9 @@
 #ifdef WIN32
     #include <io.h>
     #define access _access
+    #define chmod _chmod
+    #define open _open
+    #define close _close
     #define O_NOFOLLOW 0
 #else
     #include <unistd.h>
@@ -1049,7 +1052,7 @@ PUBLIC json_t *create_json_record(
                 json_object_set_new(jn, name, json_integer(v));
                 break;
             CASES("real")
-                json_object_set_new(jn, name, json_real(atof(defaults)));
+                json_object_set_new(jn, name, json_real(strtod(defaults, NULL)));
                 break;
             CASES("bool")
             CASES("boolean")
