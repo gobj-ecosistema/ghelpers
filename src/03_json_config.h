@@ -11,6 +11,7 @@
 /*
  *  Dependencies
  */
+#include "00_gtypes.h"
 #include "00_replace_string.h"
 #include "01_cnv_hex.h"
 #include "01_print_error.h"

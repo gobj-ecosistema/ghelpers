@@ -8092,7 +8092,13 @@ PUBLIC int treedb_shoot_snap( // tag the current tree db
     time_t t;
     time(&t);
     struct tm tm;
+
+#ifdef WIN32
+    gmtime_s(&tm, &t);
+#else
     gmtime_r(&t, &tm);
+#endif
+
     char date[80];
     strftime(date, sizeof(date), "%d %b %Y %T %z", &tm);
     json_t *jn_new_snap = json_pack("{s:s, s:s, s:s, s:b}",

@@ -49,6 +49,8 @@ typedef void *      PTR;
     #define pclose _pclose
     #define isatty _isatty
     #define chmod _chmod
+    #define umask _umask
+    #define strdup _strdup
 #endif
 
 #ifndef MIN

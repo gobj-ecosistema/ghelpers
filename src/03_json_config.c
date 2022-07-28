@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stddef.h>
 #ifndef WIN32
+    #include <io.h>
     #include <unistd.h>
 #endif
 #include <jansson.h>

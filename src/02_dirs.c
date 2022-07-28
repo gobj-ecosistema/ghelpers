@@ -29,8 +29,6 @@
     #include <fcntl.h>
     #include <sys\types.h>
     #include <sys\stat.h>
-
-    int umask(int x) {return 0;}
 #else
     #include <unistd.h>
     #include <sys/file.h>
