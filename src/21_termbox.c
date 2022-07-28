@@ -25,6 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
 ****************************************************************************/
+#ifdef __linux__
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -33,12 +34,12 @@ THE SOFTWARE.
 #include <signal.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <wchar.h>
 #include <sys/select.h>
 #include <sys/ioctl.h>
-#include <sys/stat.h>
 #include <termios.h>
 #include <unistd.h>
-#include <wchar.h>
 #include "21_termbox.h"
 
 /*****************************************************************
@@ -1407,3 +1408,4 @@ static int wait_fill_event(struct tb_event *event, struct timeval *timeout)
         }
     }
 }
+#endif /* __linux__ */
