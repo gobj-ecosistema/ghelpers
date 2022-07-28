@@ -10,12 +10,26 @@
   #define _LARGEFILE64_SOURCE
 #endif
 
-#include <unistd.h>
 #include <sys/stat.h>
 #include <inttypes.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
+#ifdef WIN32
+    #include <io.h>
+    #define O_LARGEFILE 0
+    #define O_NOFOLLOW 0
+    #define open _open
+    #define close _close
+    #define lseek64 _lseek
+    #define fseeko64 _fseeki64
+    #define lseek _lseek
+    #define read _read
+    #define write _write
+    #define access _access
+#else
+    #include <unistd.h>
+#endif
 #include "30_timeranger.h"
 
 /***************************************************************
