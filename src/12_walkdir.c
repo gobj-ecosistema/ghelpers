@@ -4,12 +4,18 @@
  *              All Rights Reserved.
  ****************************************************************************/
 #include <sys/stat.h>
-#include <unistd.h>
 #include <stdlib.h>
-#include <dirent.h>
 #include <regex.h>
 #include <string.h>
 #include <errno.h>
+#ifdef WIN32
+    #include <io.h>
+    #define access _access
+#else
+    #include <unistd.h>
+    #include <dirent.h>
+#endif
+
 #include "12_walkdir.h"
 
 /*****************************************************************
@@ -39,6 +45,7 @@ PRIVATE int _walk_tree(
     int level,
     walkdir_cb cb)
 {
+#if defined(__linux__)
     struct dirent *dent;
     DIR *dir;
     struct stat st;
@@ -154,6 +161,12 @@ PRIVATE int _walk_tree(
     }
     closedir(dir);
     return 0;
+#elif defined(WIN32)
+    int TODO; // TODO
+    return 0;
+#else
+    #error "S.O. not defined"
+#endif
 }
 
 /****************************************************************************

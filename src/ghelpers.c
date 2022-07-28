@@ -3,7 +3,10 @@
  *              Copyright (c) 1996-2015 Niyamaka.
  *              All Rights Reserved.
  ****************************************************************************/
-#include <unistd.h>
+#ifdef WIN32
+#else
+    #include <unistd.h>
+#endif
 #include "ghelpers.h"
 
 PRIVATE BOOL initialized = FALSE;
