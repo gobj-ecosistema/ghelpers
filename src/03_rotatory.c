@@ -15,14 +15,11 @@
 #include <inttypes.h>
 #ifdef WIN32
     #include  <io.h>
-    #include <sys/stat.h>
     #define fopen64 fopen
     #define access _access
     #define close _close
     #define unlink _unlink
     #define fileno _fileno
-    #define fstatvfs64 _fstat
-    #define statvfs64 _stat
 #else
     #include <libgen.h>
     #include <dirent.h>

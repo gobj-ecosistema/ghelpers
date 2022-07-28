@@ -5,9 +5,6 @@
  *          Copyright (c) 2014, 2015 Niyamaka.
  *          All Rights Reserved.
 ***********************************************************************/
-#ifndef _POSIX_SOURCE
-#define _POSIX_SOURCE
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
@@ -16,6 +13,13 @@
 #include <string.h>
 #include <fcntl.h>
 #ifdef WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <process.h>
+    #include <io.h>
+    #include <fcntl.h>
+    #define close _close
+    #define getpid _getpid
 #else
     #include <syslog.h>
     #include <unistd.h>
@@ -302,7 +306,9 @@ PUBLIC int udpc_write(udpc_t udpc, int priority, const char* bf, size_t len)
 
     case OUTPUT_FORMAT_SYSLOG:
         if(priority <= LOG_DEBUG) {
+            #ifdef __linux__
             syslog(priority, "%s", bf);
+            #endif
         }
         return 0;
 
@@ -488,6 +494,7 @@ PRIVATE int _udpc_socket(uclient_t *uc)
         return -1;
     }
 
+#ifdef __linux__
     int flags = fcntl(uc->_s, F_GETFL, 0);
     if(fcntl(uc->_s, F_SETFL, flags | O_NONBLOCK)<0) {
         print_error(
@@ -499,16 +506,21 @@ PRIVATE int _udpc_socket(uclient_t *uc)
             strerror(errno)
         );
     }
+#else
+    // TODO
+    int x;
+#endif
 
     memset((char *) &uc->si_other, 0, sizeof(uc->si_other));
     uc->si_other.sin_family = AF_INET;
     uc->si_other.sin_port = htons(atoi(uc->port));
 
-    if (inet_aton(uc->host, &uc->si_other.sin_addr) == 0) {
+    //if (inet_aton(uc->host, &uc->si_other.sin_addr) == 0) {
+    if (inet_pton(AF_INET, uc->host, &uc->si_other.sin_addr) == 0) {
         print_error(
             PEF_CONTINUE,
             "ERROR YUNETA",
-            "_udpc_socket(%s): inet_aton() failed %d '%s'",
+            "_udpc_socket(%s): inet_pton() failed %d '%s'",
             uc->host,
             errno,
             strerror(errno)
@@ -522,11 +534,13 @@ PRIVATE int _udpc_socket(uclient_t *uc)
         static struct sockaddr_in si_bind;
         memset((char *) &si_bind, 0, sizeof(si_bind));
         si_bind.sin_family = AF_INET;
-        if (inet_aton(uc->bindip , &si_bind.sin_addr) == 0) {
+
+        //if (inet_aton(uc->bindip , &si_bind.sin_addr) == 0) {
+        if (inet_pton(AF_INET, uc->bindip , &si_bind.sin_addr) == 0) {
             print_error(
                 PEF_CONTINUE,
                 "ERROR YUNETA",
-                "_udpc_socket(%s): inet_aton() failed %d '%s'",
+                "_udpc_socket(%s): inet_pton() failed %d '%s'",
                 uc->host,
                 errno,
                 strerror(errno)
