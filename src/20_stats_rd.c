@@ -6,18 +6,22 @@
  *          Copyright (c) 2018,2019 Niyamaka.
  *          All Rights Reserved.
 ***********************************************************************/
-#include <unistd.h>
+#include <stdio.h>
 #include <errno.h>
-#include "20_stats_rd.h"
 
-#if defined(WIN32)
-#define O_LARGEFILE 0
-#define fseeko64 fseeko
-#define lseek64 lseek
-#define fopen64 fopen
-#define ftello64 ftello
-#define tmpfile64 tmpfile
+#ifdef WIN32
+    #include <io.h>
+    #define fileno _fileno
+    #define O_LARGEFILE 0
+    #define fseeko64 _fseeki64
+    #define fopen64 fopen
+    #define ftello64 ftello
+    #define tmpfile64 tmpfile
+    #define close _close
+#else
+    #include <unistd.h>
 #endif
+#include "20_stats_rd.h"
 
 /***************************************************************
  *              Constants
