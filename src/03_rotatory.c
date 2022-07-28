@@ -215,10 +215,23 @@ PUBLIC hrotatory_t rotatory_open(
     /*------------------------------------------------*
      *  Split path in log_directory and filenamemask
      *------------------------------------------------*/
-    char *filenamemask = basename(hr->path);
+    char *filenamemask = "";
+    char *log_directory = "";
+
+#ifdef WIN32
+    char drive[_MAX_DRIVE] = {0};
+    char dir[_MAX_DIR] = {0};
+    char fname[_MAX_FNAME] = {0};
+    char ext[_MAX_EXT] = {0};
+    _splitpath( hr->path, drive, dir, fname, ext );
+    filenamemask = fname;
+    log_directory = dir;
+#else
+    filenamemask = basename(hr->path);
     strncpy(hr->filenamemask, filenamemask, sizeof(hr->filenamemask) -1);
-    char *log_directory = dirname(hr->path);
+    log_directory = dirname(hr->path);
     strncpy(hr->log_directory, log_directory, sizeof(hr->log_directory) -1);
+#endif
 
     /*-----------------------------*
      *  Create the log directory
