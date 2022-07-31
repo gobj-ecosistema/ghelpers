@@ -22,7 +22,7 @@ extern "C"{
 typedef int         BOOL;
 typedef void *      PTR;
 
-#if defined(_WIN32) || defined(_WINDOWS)
+#if defined(WIN32) || defined(_WINDOWS)
     #include <process.h>
     #define snprintf _snprintf
     #define vsnprintf _vsnprintf
