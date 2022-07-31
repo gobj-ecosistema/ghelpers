@@ -68,7 +68,7 @@ extern "C" {
 /***************************************************
  *              Structures
  **************************************************/
-#ifndef WIN32
+#ifdef __linux__
 /* Structure for memory and swap space utilization statistics */
 struct stats_memory {
     unsigned long frmkb __attribute__ ((aligned (8)));
@@ -197,7 +197,7 @@ struct pid_stats {
     char               cmdline[MAX_CMDLINE_LEN];
 };
 
-#endif /* WIN32 */
+#endif /* __linux__ */
 
 unsigned long free_ram_in_kb(void); /* Free memory in kB */
 int cpu_usage(unsigned int pid, uint64_t *system_time, uint64_t *process_time);
