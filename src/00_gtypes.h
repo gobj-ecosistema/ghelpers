@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
+#include <process.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -51,6 +52,7 @@ typedef void *      PTR;
     #define chmod _chmod
     #define umask _umask
     #define strdup _strdup
+    #define getpid _getpid
 #endif
 
 #ifndef MIN
