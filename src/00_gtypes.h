@@ -11,7 +11,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <limits.h>
-#include <process.h>
 
 #ifdef __cplusplus
 extern "C"{
@@ -23,7 +22,8 @@ extern "C"{
 typedef int         BOOL;
 typedef void *      PTR;
 
-#if defined(_WIN32) || defined(_WIN64) || defined(WIN32)
+#if defined(_WIN32) || defined(_WINDOWS)
+    #include <process.h>
     #define snprintf _snprintf
     #define vsnprintf _vsnprintf
     #define strcasecmp _stricmp
