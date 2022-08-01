@@ -45,7 +45,7 @@ IF(WIN32)
   include_directories(c:/yuneta/development/output/include/regex)
   include_directories(c:/yuneta/development/output/OpenSSL-Win64/include)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-ELSEIF(LINUX)
+ELSEIF(UNIX)
   include_directories(/yuneta/development/output/include)
 ENDIF()
 
