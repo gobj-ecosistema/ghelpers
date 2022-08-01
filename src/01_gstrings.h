@@ -360,6 +360,10 @@ PUBLIC BOOL all_numbers(const char* s);
 **rst**/
 void nice_size(char* bf, int bfsize, uint64_t bytes);
 
+#if defined(WIN32) || defined(_WINDOWS)
+char * strsep(char **sp, char *sep)
+#endif
+
 #ifdef __cplusplus
 }
 #endif

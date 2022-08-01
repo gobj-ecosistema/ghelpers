@@ -761,3 +761,19 @@ void nice_size(char* bf, int bfsize, uint64_t bytes)
     else
         snprintf(bf, bfsize, "%.1f %s", count, suffixes[s]);
 }
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+#if defined(WIN32) || defined(_WINDOWS)
+char * strsep(char **sp, char *sep)
+{
+    char *p, *s;
+    if (sp == NULL || *sp == NULL || **sp == '\0') return(NULL);
+    s = *sp;
+    p = s + strcspn(s, sep);
+    if (*p != '\0') *p++ = '\0';
+    *sp = p;
+    return(s);
+}
+#endif
