@@ -11,8 +11,10 @@ set(CMAKE_INSTALL_PREFIX /yuneta/development/output)
 set(INC_DEST_DIR ${CMAKE_INSTALL_PREFIX}/include)
 set(LIB_DEST_DIR ${CMAKE_INSTALL_PREFIX}/lib)
 
+set(CMAKE_C_STANDARD 99)
+
 if(LINUX)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -std=c99")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 endif()
 
 if(WIN32)
@@ -41,10 +43,11 @@ ENDIF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
 IF(WIN32)
   include_directories(c:/yuneta/development/output/include)
   include_directories(c:/yuneta/development/output/include/regex)
+  include_directories(c:/yuneta/development/output/OpenSSL-Win64/include)
   add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-ELSE(WIN32)
+ELSEIF(LINUX)
   include_directories(/yuneta/development/output/include)
-ENDIF(WIN32)
+ENDIF()
 
 ##############################################
 #   Source
