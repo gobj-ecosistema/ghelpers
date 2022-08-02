@@ -17,6 +17,7 @@
     #include <unistd.h>
 #endif
 #include <jansson.h>
+#define PCRE2_STATIC
 #define PCRE2_CODE_UNIT_WIDTH 8
 #include <pcre2.h>
 #include "03_json_config.h"
