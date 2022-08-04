@@ -567,7 +567,7 @@ PUBLIC void * gbuf_get(GBUFFER *gbuf, size_t len)
             "hostname",     "%s", get_host_name(),
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "len is <= 0",
+            "msg",          "%s", "gbuf: len is <= 0",
             "len",          "%d", (int)len,
             NULL
         );
