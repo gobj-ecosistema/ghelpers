@@ -542,7 +542,7 @@ PUBLIC void trq_clear_retries(q_msg msg)
 PUBLIC BOOL trq_test_retries(q_msg msg)
 {
     if( ((q_msg_t *)msg)->trq->maximum_retries == 0) {
-        return TRUE;
+        return 0;
     }
     return (((q_msg_t *)msg)->retries >= ((q_msg_t *)msg)->trq->maximum_retries)?TRUE:FALSE;
 }
