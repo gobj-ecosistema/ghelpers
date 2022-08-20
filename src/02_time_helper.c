@@ -209,6 +209,7 @@ PUBLIC BOOL test_sectimer(time_t value)
     time_t timer_actual;
 
     if(value <= 0) {
+        // No value no test true
         return FALSE;
     }
     time(&timer_actual);
@@ -233,6 +234,7 @@ PUBLIC uint64_t start_msectimer(uint64_t miliseconds)
 PUBLIC BOOL test_msectimer(uint64_t value)
 {
     if(value == 0) {
+        // No value no test true
         return FALSE;
     }
 
