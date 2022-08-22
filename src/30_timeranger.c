@@ -272,7 +272,7 @@ PUBLIC json_t *tranger_startup(
         json_decref(jn_disk_tranger);
     } else {
         if(!master) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,

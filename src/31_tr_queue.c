@@ -244,6 +244,18 @@ PUBLIC int trq_load(tr_queue trq_)
 {
     register tr_queue_t *trq = trq_;
 
+    if(!trq) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "trq NULL",
+            NULL
+        );
+        return -1;
+    }
     json_t *match_cond = json_object();
     json_object_set_new(
         match_cond,
