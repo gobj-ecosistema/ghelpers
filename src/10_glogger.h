@@ -66,6 +66,8 @@ extern "C"{
 #define MSGSET_TREEDB_ERROR                 "TreeDb Error"
 #define MSGSET_MSG2DB_ERROR                 "Msg2Db Error"
 
+#define MSGSET_QUEUE_ALARM                  "Queue Alarm"
+
 // Info/Debug MSGSETs
 #define MSGSET_STATISTICS                   "Statistics"
 #define MSGSET_STARTUP                      "Startup"
