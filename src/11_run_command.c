@@ -238,9 +238,10 @@ PUBLIC int pty_sync_spawn(
 
             int status;
             if (waitpid(pid, &status, WNOHANG) && WIFEXITED(status)) {
-                exit(EXIT_SUCCESS);
+                return 0;
             }
         }
+        return -1;
     }
 
 #else
