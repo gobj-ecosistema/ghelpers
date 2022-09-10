@@ -178,7 +178,7 @@ PUBLIC int pty_sync_spawn(
     if (pid < 0) {
         // Can't fork
         log_error(0,
-                "gobj",         "%s", __FILE__,
+            "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
             "msg",          "%s", "forkpty() FAILED",
