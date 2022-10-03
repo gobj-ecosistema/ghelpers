@@ -188,11 +188,25 @@ PUBLIC json_t *wstats_add_variable(
     json_t *jn_variable  // owned
 )
 {
+    if(!stats) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "stats NULL",
+            NULL
+        );
+        json_decref(jn_variable);
+        return 0;
+    }
     const char *variable_name = kw_get_str(jn_variable, "variable_name", "", KW_REQUIRED);
     const char *group = kw_get_str(jn_variable, "group", "", 0);
     json_int_t version = kw_get_int(jn_variable, "version", -1, KW_WILD_NUMBER|KW_REQUIRED);
     if(empty_string(variable_name)) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "process",      "%s", get_process_name(),
@@ -341,6 +355,20 @@ PUBLIC void wstats_close(
     json_t *stats
 )
 {
+    if(!stats) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "process",      "%s", get_process_name(),
+            "hostname",     "%s", get_host_name(),
+            "pid",          "%d", get_pid(),
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "stats NULL",
+            NULL
+        );
+        return;
+    }
+
     /*-------------------------------*
      *  Close FILE files
      *-------------------------------*/
@@ -603,7 +631,7 @@ PUBLIC int wstats_add_value(
 )
 {
     if(!t) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "process",      "%s", get_process_name(),
@@ -629,7 +657,7 @@ PUBLIC int wstats_add_value(
     json_t *variable = kw_get_dict(variables, full_variable_name, 0, 0);
 
     if(!variable) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "process",      "%s", get_process_name(),
