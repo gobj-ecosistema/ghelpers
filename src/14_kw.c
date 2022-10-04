@@ -1028,6 +1028,7 @@ PUBLIC const char *kw_get_str(
                 "path",         "%s", path,
                 NULL
             );
+            log_debug_json(0, kw, "path MUST BE a json str");
         }
         return default_value;
     }
