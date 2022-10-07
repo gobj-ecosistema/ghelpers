@@ -735,10 +735,11 @@ PUBLIC json_t *kw_get_list(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                "msg",          "%s", "path MUST BE a json list",
+                "msg",          "%s", "path MUST BE a json list, default value returned",
                 "path",         "%s", path,
                 NULL
             );
+            log_debug_json(0, kw, "path '%s' MUST BE a json list, default value returned", path);
         }
         return default_value;
     }
@@ -824,6 +825,7 @@ PUBLIC json_int_t kw_get_int(
             "path",         "%s", path,
             NULL
         );
+        log_debug_json(0, kw, "path MUST BE a simple json element '%s'", path);
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -896,6 +898,7 @@ PUBLIC double kw_get_real(
             "path",         "%s", path,
             NULL
         );
+        log_debug_json(0, kw, "path MUST BE a simple json element '%s'", path);
         return 0;
     }
     if(flag & KW_EXTRACT) {
@@ -975,7 +978,7 @@ PUBLIC BOOL kw_get_bool(
             "path",         "%s", path,
             NULL
         );
-        log_debug_json(0, kw, "path MUST BE a simple json element");
+        log_debug_json(0, kw, "path MUST BE a simple json element '%s'", path);
         return 0;
     }
     if(flag & KW_EXTRACT) {
