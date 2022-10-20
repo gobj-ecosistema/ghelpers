@@ -36,9 +36,14 @@ add_definitions(-D_GNU_SOURCE)
 add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64)
 add_definitions(-DHTTP_PARSER_STRICT=0)
 
-IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+IF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
+ELSE()
   add_definitions(-DNOT_INCLUDE_LIBUNWIND=1)
-ENDIF(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+ENDIF()
+
+if(WIN32)
+  add_definitions(-DNOT_INCLUDE_LIBUNWIND)
+endif()
 
 IF(WIN32)
   include_directories(c:/yuneta/development/output/include)
