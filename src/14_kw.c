@@ -782,7 +782,7 @@ PUBLIC json_int_t kw_get_int(
         }
         return default_value;
     }
-    if(!json_is_integer(jn_int)) {
+    if(!(json_is_real(jn_int) || json_is_integer(jn_int))) {
         if(!(flag & KW_WILD_NUMBER)) {
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
@@ -863,7 +863,7 @@ PUBLIC double kw_get_real(
         }
         return default_value;
     }
-    if(!json_is_real(jn_real)) {
+    if(!(json_is_real(jn_real) || json_is_integer(jn_real))) {
         if(!(flag & KW_WILD_NUMBER)) {
             log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
