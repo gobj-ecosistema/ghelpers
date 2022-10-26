@@ -4979,6 +4979,9 @@ PUBLIC int kw_size(json_t *kw)
  ***************************************************************************/
 PUBLIC BOOL is_metadata_key(const char *key)
 {
+    if(!key) {
+        return FALSE;
+    }
     int i;
     for(i = 0; i < strlen(key); i++) {
         if (key[i] != '_') {
@@ -4996,6 +4999,9 @@ PUBLIC BOOL is_metadata_key(const char *key)
  ***************************************************************************/
 PUBLIC BOOL is_private_key(const char *key)
 {
+    if(!key) {
+        return FALSE;
+    }
     int i;
     for(i = 0; i < strlen(key); i++) {
         if (key[i] != '_') {
