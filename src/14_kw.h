@@ -936,6 +936,9 @@ PUBLIC int kw_content_size(json_t *kw); // WARNING size for ugly json string (wi
 
 PUBLIC int kw_size(json_t *kw); // size of dict or size of list, remains return 1
 
+PUBLIC BOOL is_metadata_key(const char *key); // Metadata key (variable) has a prefix of 2 underscore
+PUBLIC BOOL is_private_key(const char *key); // Private key (variable) has a prefix of 1 underscore
+
 #ifdef __cplusplus
 }
 #endif

@@ -4973,3 +4973,37 @@ PUBLIC int kw_size(json_t *kw)
 
     return size;
 }
+
+/***************************************************************************
+ *  Metadata key (variable) has a prefix of 2 underscore
+ ***************************************************************************/
+PUBLIC BOOL is_metadata_key(const char *key)
+{
+    int i;
+    for(i = 0; i < strlen(key); i++) {
+        if (key[i] != '_') {
+            break;
+        }
+        if(i > 2) {
+            break;
+        }
+    }
+    return (i == 2)?TRUE:FALSE;
+}
+
+/***************************************************************************
+ *  Private key (variable) has a prefix of 1 underscore
+ ***************************************************************************/
+PUBLIC BOOL is_private_key(const char *key)
+{
+    int i;
+    for(i = 0; i < strlen(key); i++) {
+        if (key[i] != '_') {
+            break;
+        }
+        if(i > 2) {
+            break;
+        }
+    }
+    return (i == 1)?TRUE:FALSE;
+}
