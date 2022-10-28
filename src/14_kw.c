@@ -1105,6 +1105,7 @@ PUBLIC int kw_set_dict_value(
             "path",         "%s", path,
             NULL
         );
+        JSON_DECREF(value);
         return -1;
     }
 
