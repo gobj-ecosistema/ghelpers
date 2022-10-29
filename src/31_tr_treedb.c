@@ -1080,6 +1080,7 @@ PUBLIC json_t *treedb_create_topic(  // WARNING Return is NOT YOURS
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "topic_name empty",
+            "treedb_name",  "%s", treedb_name,
             NULL
         );
         JSON_DECREF(pkey2s);
@@ -6242,6 +6243,7 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
                 "msg",          "%s", "fkey empty",
                 "topic_name",   "%s", topic_name,
+                "treedb_name",  "%s", treedb_name,
                 "col",          "%s", col_name,
                 "record",       "%j", kw,
                 NULL
@@ -6285,6 +6287,7 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
                     "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
+                    "treedb_name",          "%s", treedb_name,
                     "topic_name",           "%s", topic_name,
                     "ref",                  "%s", ref,
                     NULL
@@ -6307,6 +6310,7 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
                     "function",             "%s", __FUNCTION__,
                     "msgset",               "%s", MSGSET_TREEDB_ERROR,
                     "msg",                  "%s", "update_node, new link: parent node not found",
+                    "treedb_name",          "%s", treedb_name,
                     "topic_name",           "%s", topic_name,
                     "parent",               "%s", ref,
                     NULL
