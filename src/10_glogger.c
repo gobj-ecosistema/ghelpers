@@ -684,7 +684,7 @@ PUBLIC void log_debug_bf(
     int priority = LOG_DEBUG;
     va_list ap;
     char dtemp[90];
-    char temp[4*1024];
+    char temp[BUFSIZ];
 
     if(!bf) {
         return;
@@ -739,7 +739,7 @@ PUBLIC void log_debug_vdump(
     int priority = LOG_DEBUG;
     va_list aq;
     char dtemp[90];
-    char temp[4*1024];
+    char temp[BUFSIZ];
 
     if(!__initialized__) {
         return;
@@ -818,7 +818,7 @@ PUBLIC void log_debug_dump(
     int priority = LOG_DEBUG;
     va_list ap;
     char dtemp[90];
-    char temp[4*1024];
+    char temp[2*BUFSIZ];
 
     if(!__initialized__) {
         return;
@@ -897,7 +897,7 @@ PUBLIC void log_debug_json(
     int priority = LOG_DEBUG;
     va_list ap;
     char dtemp[90];
-    char temp[4*1024];
+    char temp[2*BUFSIZ];
 
     if(!__initialized__) {
         return;
