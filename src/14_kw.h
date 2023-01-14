@@ -339,7 +339,7 @@ PUBLIC double jn2real(
 /**rst**
     Simple json to int
 **rst**/
-PUBLIC int64_t jn2integer(
+PUBLIC json_int_t jn2integer(
     json_t *jn_var
 );
 
