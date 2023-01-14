@@ -1510,11 +1510,11 @@ PUBLIC double jn2real(json_t *jn_var)
 /***************************************************************************
  *  Simple json to int
  ***************************************************************************/
-PUBLIC int64_t jn2integer(json_t *jn_var)
+PUBLIC json_int_t jn2integer(json_t *jn_var)
 {
-    int64_t val = 0;
+    json_int_t val = 0;
     if(json_is_real(jn_var)) {
-        val = (int64_t)json_real_value(jn_var);
+        val = (json_int_t)json_real_value(jn_var);
     } else if(json_is_integer(jn_var)) {
         val = json_integer_value(jn_var);
     } else if(json_is_string(jn_var)) {
@@ -2284,8 +2284,8 @@ PUBLIC int cmp_two_simple_json(
      *  Try integer
      */
     if(json_is_integer(jn_var1) || json_is_integer(jn_var2)) {
-        int64_t val1 = jn2integer(jn_var1);
-        int64_t val2 = jn2integer(jn_var2);
+        json_int_t val1 = jn2integer(jn_var1);
+        json_int_t val2 = jn2integer(jn_var2);
         if(val1 > val2) {
             return 1;
         } else if(val1 < val2) {
@@ -2299,8 +2299,8 @@ PUBLIC int cmp_two_simple_json(
      *  Try boolean
      */
     if(json_is_boolean(jn_var1) || json_is_boolean(jn_var2)) {
-        int64_t val1 = jn2integer(jn_var1);
-        int64_t val2 = jn2integer(jn_var2);
+        json_int_t val1 = jn2integer(jn_var1);
+        json_int_t val2 = jn2integer(jn_var2);
         if(val1 > val2) {
             return 1;
         } else if(val1 < val2) {
