@@ -149,7 +149,10 @@ PUBLIC const char ** split3(const char *str, const char *delim, int *plist_size)
     // Get list size
     int list_size = 0;
 
+    #ifndef __linux__
     int TODO; // strsep in windows
+    #endif
+
     p = buffer;
     while ((ptr = strsep(&p, delim)) != NULL) {
         list_size++;

@@ -247,4 +247,5 @@ PUBLIC int pty_sync_spawn(
 #else
     return -1;
 #endif
+    return -1;
 }
