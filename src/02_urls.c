@@ -17,6 +17,7 @@ PUBLIC int parse_http_url(
     BOOL no_schema)
 {
     struct http_parser_url u;
+    http_parser_url_init(&u);
 
     if(host && host_size > 0) {
         host[0] = 0;
@@ -29,7 +30,7 @@ PUBLIC int parse_http_url(
     }
 
     int result = http_parser_parse_url(uri, strlen(uri), no_schema, &u);
-    if (result != 0) {
+    if (result != 0) { // WARNING with error return 1
         print_error(
             PEF_SILENCE,
             "ERROR YUNETA",
@@ -45,41 +46,45 @@ PUBLIC int parse_http_url(
     /*
      *  Schema
      */
-    if(schema) {
+    if(schema && schema_size > 0) {
         if(!no_schema) {
             ln = u.field_data[UF_SCHEMA].len;
-            if(ln >= schema_size) {
-                ln = schema_size - 1;
-                ret = -2;
+            if(ln > 0) {
+                if(ln >= schema_size) {
+                    ln = schema_size - 1;
+                    ret = -2;
+                }
+                memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln);
+                schema[ln] = 0;
             }
-            memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln);
-            schema[ln]=0;
         }
     }
 
     /*
      *  Host
      */
-    if(host) {
+    if(host && host_size > 0) {
         ln = u.field_data[UF_HOST].len;
-        if(ln >= host_size) {
-            ln = host_size - 1;
-            ret = -3;
+        if(ln > 0) {
+            if(ln >= host_size) {
+                ln = host_size - 1;
+            }
+            memcpy(host, uri + u.field_data[UF_HOST].off, ln);
+            host[ln] = 0;
         }
-        memcpy(host, uri + u.field_data[UF_HOST].off, ln);
-        host[ln]=0;
     }
 
     /*
      *  Port
      */
-    if(port) {
+    if(port && port_size > 0) {
         ln = u.field_data[UF_PORT].len;
-        if(ln >= port_size) {
-            ln = port_size - 1;
-            ret = -4;
+        if(ln > 0) {
+            if(ln >= port_size) {
+                ln = port_size - 1;
+            }
+            memcpy(port, uri + u.field_data[UF_PORT].off, ln); port[ln]=0;
         }
-        memcpy(port, uri + u.field_data[UF_PORT].off, ln); port[ln]=0;
     }
 
     return ret;
@@ -101,6 +106,7 @@ PUBLIC int parse_full_http_url(
 )
 {
     struct http_parser_url u;
+    http_parser_url_init(&u);
 
     if(host) host[0] = 0;
     if(schema) schema[0] = 0;
@@ -111,7 +117,7 @@ PUBLIC int parse_full_http_url(
     if(user_info) user_info[0] = 0;
 
     int result = http_parser_parse_url(uri, strlen(uri), no_schema, &u);
-    if (result != 0) {
+    if (result != 0) { // WARNING with error return 1
         print_error(
             PEF_SILENCE,
             "ERROR YUNETA",
@@ -127,87 +133,101 @@ PUBLIC int parse_full_http_url(
     /*
      *  Schema
      */
-    if(schema) {
+    if(schema && schema_size > 0) {
         if(!no_schema) {
             ln = u.field_data[UF_SCHEMA].len;
-            if(ln >= schema_size) {
-                ln = schema_size - 1;
-                ret = -2;
+            if(ln > 0) {
+                if(ln >= schema_size) {
+                    ln = schema_size - 1;
+                }
+                memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln);
+                schema[ln] = 0;
             }
-            memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln); schema[ln]=0;
         }
     }
 
     /*
      *  Host
      */
-    if(host) {
+    if(host && host_size > 0) {
         ln = u.field_data[UF_HOST].len;
-        if(ln >= host_size) {
-            ln = host_size - 1;
-            ret = -3;
+        if(ln > 0) {
+            if(ln >= host_size) {
+                ln = host_size - 1;
+            }
+            memcpy(host, uri + u.field_data[UF_HOST].off, ln);
+            host[ln] = 0;
         }
-        memcpy(host, uri + u.field_data[UF_HOST].off, ln); host[ln]=0;
     }
 
     /*
      *  Port
      */
-    if(port) {
+    if(port && port_size > 0) {
         ln = u.field_data[UF_PORT].len;
-        if(ln >= port_size) {
-            ln = port_size - 1;
-            ret = -4;
+        if(ln > 0) {
+            if(ln >= port_size) {
+                ln = port_size - 1;
+            }
+            memcpy(port, uri + u.field_data[UF_PORT].off, ln);
+            port[ln] = 0;
         }
-        memcpy(port, uri + u.field_data[UF_PORT].off, ln); port[ln]=0;
     }
 
     /*
      *  Path
      */
-    if(path) {
+    if(path && path_size > 0) {
         ln = u.field_data[UF_PATH].len;
-        if(ln >= path_size) {
-            ln = path_size - 1;
-            ret = -5;
+        if(ln > 0) {
+            if(ln >= path_size) {
+                ln = path_size - 1;
+            }
+            memcpy(path, uri + u.field_data[UF_PATH].off, ln);
+            path[ln] = 0;
         }
-        memcpy(path, uri + u.field_data[UF_PATH].off, ln); path[ln]=0;
     }
 
     /*
      *  Query
      */
-    if(query) {
+    if(query && query_size > 0) {
         ln = u.field_data[UF_QUERY].len;
-        if(ln >= query_size) {
-            ln = query_size - 1;
-            ret = -6;
+        if(ln > 0) {
+            if(ln >= query_size) {
+                ln = query_size - 1;
+            }
+            memcpy(query, uri + u.field_data[UF_QUERY].off, ln);
+            query[ln] = 0;
         }
-        memcpy(query, uri + u.field_data[UF_QUERY].off, ln); query[ln]=0;
     }
 
     /*
      *  Fragment
      */
-    if(fragment) {
+    if(fragment && fragment_size > 0) {
         ln = u.field_data[UF_FRAGMENT].len;
-        if(ln >= fragment_size) {
-            ln = fragment_size - 1;
-            ret = -7;
+        if(ln > 0) {
+            if(ln >= fragment_size) {
+                ln = fragment_size - 1;
+            }
+            memcpy(fragment, uri + u.field_data[UF_FRAGMENT].off, ln);
+            fragment[ln] = 0;
         }
-        memcpy(fragment, uri + u.field_data[UF_FRAGMENT].off, ln); fragment[ln]=0;
     }
 
     /*
      *  User_info
      */
-    if(user_info) {
+    if(user_info && user_info_size > 0) {
         ln = u.field_data[UF_USERINFO].len;
-        if(ln >= user_info_size) {
-            ln = user_info_size - 1;
-            ret = -8;
+        if(ln > 0) {
+            if(ln >= user_info_size) {
+                ln = user_info_size - 1;
+            }
+            memcpy(user_info, uri + u.field_data[UF_USERINFO].off, ln);
+            user_info[ln] = 0;
         }
-        memcpy(user_info, uri + u.field_data[UF_USERINFO].off, ln); user_info[ln]=0;
     }
 
     return ret;
@@ -251,63 +271,73 @@ PUBLIC int parse_partial_http_url(
     /*
      *  Schema
      */
-    if(schema) {
+    if(schema && schema_size > 0) {
         if(!no_schema) {
             ln = u.field_data[UF_SCHEMA].len;
-            if(ln >= schema_size) {
-                ln = schema_size - 1;
-                ret = -2;
+            if(ln > 0) {
+                if(ln >= schema_size) {
+                    ln = schema_size - 1;
+                }
+                memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln);
+                schema[ln] = 0;
             }
-            memcpy(schema, uri + u.field_data[UF_SCHEMA].off, ln); schema[ln]=0;
         }
     }
 
     /*
      *  Host
      */
-    if(host) {
+    if(host && host_size > 0) {
         ln = u.field_data[UF_HOST].len;
-        if(ln >= host_size) {
-            ln = host_size - 1;
-            ret = -3;
+        if(ln > 0) {
+            if(ln >= host_size) {
+                ln = host_size - 1;
+            }
+            memcpy(host, uri + u.field_data[UF_HOST].off, ln);
+            host[ln] = 0;
         }
-        memcpy(host, uri + u.field_data[UF_HOST].off, ln); host[ln]=0;
     }
 
     /*
      *  Port
      */
-    if(port) {
+    if(port && port_size > 0) {
         ln = u.field_data[UF_PORT].len;
-        if(ln >= port_size) {
-            ln = port_size - 1;
-            ret = -4;
+        if(ln > 0) {
+            if(ln >= port_size) {
+                ln = port_size - 1;
+            }
+            memcpy(port, uri + u.field_data[UF_PORT].off, ln);
+            port[ln] = 0;
         }
-        memcpy(port, uri + u.field_data[UF_PORT].off, ln); port[ln]=0;
     }
 
     /*
      *  Path
      */
-    if(path) {
+    if(path && path_size > 0) {
         ln = u.field_data[UF_PATH].len;
-        if(ln >= path_size) {
-            ln = path_size - 1;
-            ret = -5;
+        if(ln > 0) {
+            if(ln >= path_size) {
+                ln = path_size - 1;
+            }
+            memcpy(path, uri + u.field_data[UF_PATH].off, ln);
+            path[ln] = 0;
         }
-        memcpy(path, uri + u.field_data[UF_PATH].off, ln); path[ln]=0;
     }
 
     /*
      *  Query
      */
-    if(query) {
+    if(query && query_size > 0) {
         ln = u.field_data[UF_QUERY].len;
-        if(ln >= query_size) {
-            ln = query_size - 1;
-            ret = -6;
+        if(ln > 0) {
+            if(ln >= query_size) {
+                ln = query_size - 1;
+            }
+            memcpy(query, uri + u.field_data[UF_QUERY].off, ln);
+            query[ln] = 0;
         }
-        memcpy(query, uri + u.field_data[UF_QUERY].off, ln); query[ln]=0;
     }
 
     return ret;
