@@ -247,6 +247,7 @@ PUBLIC int parse_partial_http_url(
 )
 {
     struct http_parser_url u;
+    http_parser_url_init(&u);
 
     if(host) host[0] = 0;
     if(schema) schema[0] = 0;
