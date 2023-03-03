@@ -66,7 +66,7 @@ PUBLIC void end_ghelpers_library(void);
 /*********************************************************************
  *      Version
  *********************************************************************/
-#define __ghelpers_version__  "6.3.4"  /* XX__yuneta_version__XX */
+#define __ghelpers_version__  "6.3.5"  /* XX__yuneta_version__XX */
 
 
 #ifdef __cplusplus
