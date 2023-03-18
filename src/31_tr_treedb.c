@@ -4814,8 +4814,13 @@ PUBLIC int treedb_delete_node(
          *      Borra indexy data
          *-------------------------------*/
         json_t *iter_pkey2s = treedb_topic_pkey2s(tranger, topic_name);
-        const char *pkey2_name; json_t *jn_pkey2_fields;
-        json_object_foreach(iter_pkey2s, pkey2_name, jn_pkey2_fields) {
+        int idx; json_t *jn_pkey2_name;
+        json_array_foreach(iter_pkey2s, idx, jn_pkey2_name) {
+            const char *pkey2_name = json_string_value(jn_pkey2_name);
+            if(empty_string(pkey2_name)) {
+                continue;
+            }
+
             /*---------------------------------*
              *  Get indexy: to delete node
              *---------------------------------*/
