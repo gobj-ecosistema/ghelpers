@@ -517,8 +517,9 @@ PRIVATE int _udpc_socket(uclient_t *uc)
         print_error(
             PEF_CONTINUE,
             "ERROR YUNETA",
-            "_udpc_socket(%s): inet_pton() failed %d '%s'",
+            "_udpc_socket(%s:%s): inet_pton() failed %d '%s'",
             uc->host,
+            uc->port,
             errno,
             strerror(errno)
         );
@@ -537,8 +538,9 @@ PRIVATE int _udpc_socket(uclient_t *uc)
             print_error(
                 PEF_CONTINUE,
                 "ERROR YUNETA",
-                "_udpc_socket(%s): inet_pton() failed %d '%s'",
+                "_udpc_socket(%s:%s): inet_pton() failed %d '%s'",
                 uc->host,
+                uc->port,
                 errno,
                 strerror(errno)
             );
@@ -546,8 +548,9 @@ PRIVATE int _udpc_socket(uclient_t *uc)
             print_error(
                 PEF_CONTINUE,
                 "ERROR YUNETA",
-                "_udpc_socket(%s): bind() failed %d '%s'",
+                "_udpc_socket(%s:%s): bind() failed %d '%s'",
                 uc->host,
+                uc->port,
                 errno,
                 strerror(errno)
             );
@@ -566,7 +569,9 @@ PRIVATE int _udpc_write(uclient_t *uc, char *bf, int len)
         print_error(
             PEF_CONTINUE,
             "ERROR YUNETA",
-            "_udpc_write(): sendto() failed %d '%s'",
+            "_udpc_write(%s:%s): sendto() failed %d '%s'",
+            uc->host,
+            uc->port,
             errno,
             strerror(errno)
         );
