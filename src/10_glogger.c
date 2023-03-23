@@ -766,7 +766,7 @@ PUBLIC void log_debug_vdump(
     );
     int l = strlen(temp);
     va_copy(aq, ap);
-    vsnprintf(temp+l, sizeof(temp)-l, fmt, ap);
+    vsnprintf(temp+l, sizeof(temp)-l, fmt, aq);
     va_end(aq);
 
     if(__inside__) {
