@@ -3903,6 +3903,34 @@ PUBLIC size_t kw_find_json_in_list(
 }
 
 /***************************************************************************
+    Get a the idx of simple json item in a json list.
+    Return -1 if not found
+ ***************************************************************************/
+PUBLIC size_t kw_find_str_in_list(
+    json_t *kw_list,
+    const char *str
+)
+{
+    if(!str || !json_is_array(kw_list)) {
+        return -1;
+    }
+
+    size_t idx;
+    json_t *jn_str;
+    json_array_foreach(kw_list, idx, jn_str) {
+        const char *str_ = json_string_value(jn_str);
+        if(!str_) {
+            continue;
+        }
+        if(strcmp(str, str_)==0) {
+            return idx;
+        }
+    }
+
+    return -1;
+}
+
+/***************************************************************************
     Compare deeply two json **records**. Can be disordered.
  ***************************************************************************/
 PUBLIC BOOL kwid_compare_records(

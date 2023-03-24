@@ -811,6 +811,15 @@ PUBLIC size_t kw_find_json_in_list(
 );
 
 /**rst**
+    Get a the idx of string in a json list.
+    Return -1 if not found
+**rst**/
+PUBLIC size_t kw_find_str_in_list(
+    json_t *kw_list,
+    const char *str
+);
+
+/**rst**
     Compare deeply two json **records**. Can be disordered.
 **rst**/
 PUBLIC BOOL kwid_compare_records(
