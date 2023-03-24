@@ -1254,7 +1254,7 @@ PUBLIC json_t *kw_get_list_value(
 /***************************************************************************
  *  Get a string value from an json list search by idx
  ***************************************************************************/
-PUBLIC const char *kw_get_list_str(json_t *list, size_t idx)
+PUBLIC const char *kw_get_list_str(json_t *list, int idx)
 {
     json_t *jn_str;
     const char *str;
@@ -3807,7 +3807,7 @@ PUBLIC json_t *kwid_get_id_records(
     Being field `kw` a list of id record [{id...},...] return the record idx with `id`
     Return -1 if not found
  ***************************************************************************/
-size_t kwid_find_record_in_list(
+int kwid_find_record_in_list(
     const char *options, // "verbose"
     json_t *kw_list,
     const char *id
@@ -3826,7 +3826,7 @@ size_t kwid_find_record_in_list(
         return -1;
     }
 
-    size_t idx; json_t *record;
+    int idx; json_t *record;
     json_array_foreach(kw_list, idx, record) {
         const char *id_ = kw_get_str(record, "id", 0, 0);
         if(!id_) {
@@ -3861,7 +3861,7 @@ size_t kwid_find_record_in_list(
     Get a the idx of simple json item in a json list.
     Return -1 if not found
  ***************************************************************************/
-PUBLIC size_t kw_find_json_in_list(
+PUBLIC int kw_find_json_in_list(
     const char *options, // "verbose"
     json_t *kw_list,
     json_t *item
@@ -3880,7 +3880,7 @@ PUBLIC size_t kw_find_json_in_list(
         return -1;
     }
 
-    size_t idx;
+    int idx;
     json_t *jn_item;
 
     json_array_foreach(kw_list, idx, jn_item) {
@@ -3906,7 +3906,7 @@ PUBLIC size_t kw_find_json_in_list(
     Get a the idx of simple json item in a json list.
     Return -1 if not found
  ***************************************************************************/
-PUBLIC size_t kw_find_str_in_list(
+PUBLIC int kw_find_str_in_list(
     json_t *kw_list,
     const char *str
 )
@@ -3915,7 +3915,7 @@ PUBLIC size_t kw_find_str_in_list(
         return -1;
     }
 
-    size_t idx;
+    int idx;
     json_t *jn_str;
     json_array_foreach(kw_list, idx, jn_str) {
         const char *str_ = json_string_value(jn_str);

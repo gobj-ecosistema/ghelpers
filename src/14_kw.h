@@ -271,7 +271,7 @@ PUBLIC json_t *kw_get_list_value(
 /**rst**
    Get list value that must be a string
 **rst**/
-PUBLIC const char *kw_get_list_str(json_t *list, size_t idx); // backward V1
+PUBLIC const char *kw_get_list_str(json_t *list, int idx); // backward V1
 
 /**rst**
    like json_array_append but with a path into a dict
@@ -794,7 +794,7 @@ PUBLIC json_t *kwid_get_id_records(
     Being field `kw` a list of id record [{id...},...] return the record idx with `id`
     Return -1 if not found
 **rst**/
-size_t kwid_find_record_in_list(
+int kwid_find_record_in_list(
     const char *options, // "verbose"
     json_t *kw_list,
     const char *id
@@ -804,7 +804,7 @@ size_t kwid_find_record_in_list(
     Get a the idx of simple json item in a json list.
     Return -1 if not found
 **rst**/
-PUBLIC size_t kw_find_json_in_list(
+PUBLIC int kw_find_json_in_list(
     const char *options, // "verbose"
     json_t *kw_list,
     json_t *item
@@ -814,7 +814,7 @@ PUBLIC size_t kw_find_json_in_list(
     Get a the idx of string in a json list.
     Return -1 if not found
 **rst**/
-PUBLIC size_t kw_find_str_in_list(
+PUBLIC int kw_find_str_in_list(
     json_t *kw_list,
     const char *str
 );
