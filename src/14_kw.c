@@ -581,6 +581,7 @@ PUBLIC int kw_delete_subkey(json_t *kw, const char *path, const char *key)
             "key",          "%s", key,
             NULL
         );
+        log_debug_json(0, kw, "key not found");
         return -1;
     }
     return json_object_del(jn_dict, key);
