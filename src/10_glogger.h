@@ -204,6 +204,8 @@ PUBLIC int log_add_handler(
 );
 PUBLIC int log_del_handler(const char* handler_name); // Return # handlers deleted.
 PUBLIC json_t *log_list_handlers(void);
+PUBLIC BOOL log_exist_handler(const char *handler_name);
+
 PUBLIC void _log_bf(int priority, log_opt_t opt, const char *bf, int len);
 
 PUBLIC void log_clear_counters(void);

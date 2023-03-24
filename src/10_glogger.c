@@ -341,6 +341,28 @@ PUBLIC json_t *log_list_handlers(void)
 }
 
 /*****************************************************************
+ *  Return if handler exists
+ *****************************************************************/
+PUBLIC BOOL log_exist_handler(const char *handler_name)
+{
+    if(empty_string(handler_name)) {
+        return FALSE;
+    }
+    log_handler_t *lh = dl_first(&dl_clients);
+    while(lh) {
+        log_handler_t *next = dl_next(lh);
+        if(strcmp(lh->handler_name, handler_name)==0) {
+            return TRUE;
+        }
+        /*
+         *  Next
+         */
+        lh = next;
+    }
+    return FALSE;
+}
+
+/*****************************************************************
  *      Clear counters
  *****************************************************************/
 PUBLIC void log_clear_counters(void)
