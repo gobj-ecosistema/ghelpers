@@ -212,8 +212,7 @@ size_t b64_decode(const char *src, uint8_t *target, size_t targsize)
                 if ((size_t)tarindex + 1 >= targsize)
                     return (-1);
                 target[tarindex]   |=  (pos - Base64) >> 4;
-                target[tarindex+1]  = ((pos - Base64) & 0x0f)
-                            << 4 ;
+                target[tarindex+1]  = ((pos - Base64) & 0x0f) << 4 ;
             }
             tarindex++;
             state = 2;
@@ -223,8 +222,7 @@ size_t b64_decode(const char *src, uint8_t *target, size_t targsize)
                 if ((size_t)tarindex + 1 >= targsize)
                     return (-1);
                 target[tarindex]   |=  (pos - Base64) >> 2;
-                target[tarindex+1]  = ((pos - Base64) & 0x03)
-                            << 6;
+                target[tarindex+1]  = ((pos - Base64) & 0x03) << 6;
             }
             tarindex++;
             state = 3;
