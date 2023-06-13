@@ -253,10 +253,10 @@ PUBLIC void udpc_close(udpc_t udpc)
 /***************************************************************************
  *  max len 64K bytes
  ***************************************************************************/
-PUBLIC int udpc_write(udpc_t udpc, int priority, const char* bf, size_t len)
+PUBLIC int udpc_write(udpc_t udpc, int priority, const char* bf_, size_t len)
 {
     uclient_t *uc = udpc;
-
+    const unsigned char* bf = (unsigned char*)bf_;
     if(!udpc || !bf) {
         print_error(
             PEF_CONTINUE,
@@ -362,55 +362,21 @@ PUBLIC int udpc_write(udpc_t udpc, int priority, const char* bf, size_t len)
         }
         break;
 
-    case OUTPUT_OLD_FORMAT_YUNETA:
-        {
-            uint32_t i, crc;
-
-            if(!uc->buffer) {
-                return -1;
-            }
-            char temp[12];
-            snprintf(
-                temp,
-                sizeof(temp),
-                "%08"PRIX32,
-                sequence
-            );
-            crc = 0;
-            for(i=0; i<strlen(temp); i++) {
-                crc += temp[i];
-            }
-            for(i=0; i<len; i++) {
-                crc += bf[i];
-            }
-            snprintf(
-                uc->buffer,
-                uc->buffer_size - 1,
-                "%08"PRIX32"%s%08"PRIX32,
-                sequence,
-                bf,
-                crc
-            );
-            len = strlen(uc->buffer);
-            len++; // add final null
-        }
-        break;
-
     case OUTPUT_FORMAT_YUNETA:
     default:
         {
             uint32_t i, crc;
 
-            char temp[12];
+            unsigned char temp[12];
             snprintf( // NEW TODO
-                temp,
+                (char *)temp,
                 sizeof(temp),
                 "%c%08"PRIX32,
                 '0' + priority,
                 sequence
             );
             crc = 0;
-            for(i=0; i<strlen(temp); i++) {
+            for(i=0; i<strlen((char *)temp); i++) {
                 crc += temp[i];
             }
             for(i=0; i<len; i++) {
