@@ -7528,15 +7528,15 @@ PUBLIC json_t *treedb_parent_refs( // Return MUST be decref
     return parents;
 }
 /***************************************************************************
- *  Return a list of parent collapsed view nodes pointed by the link (fkey)
+ *  Return a list of parent nodes pointed by the link (fkey)
  ***************************************************************************/
 PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_t *tranger,
     const char *fkey, // must be a fkey field
     json_t *node, // not owned
-    json_t *jn_options  // owned, fkey options
-)
-{
+    BOOL collapsed_view, // TRUE return collapsed views
+    json_t *jn_options // owned, fkey,hook options when collapsed_view is true
+) {
     const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
     const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
 
@@ -7589,12 +7589,16 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
             continue;
         }
 
-        json_t *view_parent_node = node_collapsed_view( // Return MUST be decref
-            tranger, // not owned
-            parent_node, // not owned
-            json_incref(jn_options) // owned
-        );
-        json_array_append_new(parents, view_parent_node);
+        if(collapsed_view) {
+            json_t *view_parent_node = node_collapsed_view( // Return MUST be decref
+                tranger, // not owned
+                parent_node, // not owned
+                json_incref(jn_options) // owned
+            );
+            json_array_append_new(parents, view_parent_node);
+        } else {
+            json_array_append(parents, parent_node);
+        }
     }
 
     JSON_DECREF(jn_options);
