@@ -468,6 +468,16 @@ PUBLIC json_t *treedb_parent_refs( // Return MUST be decref
 );
 
 /*
+ *  Return a list of parent collapsed view nodes pointed by the link (fkey)
+ */
+PUBLIC json_t *treedb_list_parents( // Return MUST be decref
+    json_t *tranger,
+    const char *fkey,   // must be a fkey field
+    json_t *node,       // NOT owned, pure node
+    json_t *jn_options  // owned, fkey options ("collapsed"???)
+);
+
+/*
  *  Return a list of childs through the hook
  */
 PUBLIC json_t *treedb_node_childs(

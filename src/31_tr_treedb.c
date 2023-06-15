@@ -7527,6 +7527,81 @@ PUBLIC json_t *treedb_parent_refs( // Return MUST be decref
     json_decref(cols);
     return parents;
 }
+/***************************************************************************
+ *  Return a list of parent collapsed view nodes pointed by the link (fkey)
+ ***************************************************************************/
+PUBLIC json_t *treedb_list_parents( // Return MUST be decref
+    json_t *tranger,
+    const char *fkey, // must be a fkey field
+    json_t *node, // not owned
+    json_t *jn_options  // owned, fkey options
+)
+{
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, KW_REQUIRED);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
+
+    json_t *refs = treedb_parent_refs( // Return MUST be decref
+        tranger,
+        fkey,
+        node,       // NOT owned, pure node
+        json_pack("{s:b, s:b}",
+            "list_dict", 1,
+            "with_metadata", 1
+        )
+    );
+    if(!refs) {
+        log_error(0,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "treedb_parent_refs: no refs",
+            "parent",               "%s", fkey,
+            "topic_name",           "%s", topic_name,
+            NULL
+        );
+        JSON_DECREF(jn_options);
+        return NULL;
+    }
+
+    json_t *parents = json_array();
+
+    int idx; json_t *parent_ref;
+    json_array_foreach(refs, idx, parent_ref) {
+        const char *parent_topic_name = kw_get_str(parent_ref, "topic_name", "", KW_REQUIRED);
+        const char *parent_id = kw_get_str(parent_ref, "id", "", KW_REQUIRED);
+        const char *hook_name = kw_get_str(parent_ref, "hook_name", "", KW_REQUIRED);
+
+        json_t *parent_node = treedb_get_node( // Return is NOT YOURS
+            tranger,
+            treedb_name,
+            parent_topic_name,
+            parent_id
+        );
+        if(!parent_node) {
+            log_error(0,
+                "gobj",                 "%s", __FILE__,
+                "function",             "%s", __FUNCTION__,
+                "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                "msg",                  "%s", "get_parent_nodes: parent node not found",
+                "parent_topic_name",    "%s", parent_topic_name,
+                "parent_id",            "%s", parent_id,
+                NULL
+            );
+            continue;
+        }
+
+        json_t *view_parent_node = node_collapsed_view( // Return MUST be decref
+            tranger, // not owned
+            parent_node, // not owned
+            json_incref(jn_options) // owned
+        );
+        json_array_append_new(parents, view_parent_node);
+    }
+
+    JSON_DECREF(jn_options);
+    JSON_DECREF(refs);
+    return parents;
+}
 
 /***************************************************************************
  *  Return a list of childs of the hook
