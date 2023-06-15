@@ -7569,7 +7569,6 @@ PUBLIC json_t *treedb_list_parents( // Return MUST be decref
     json_array_foreach(refs, idx, parent_ref) {
         const char *parent_topic_name = kw_get_str(parent_ref, "topic_name", "", KW_REQUIRED);
         const char *parent_id = kw_get_str(parent_ref, "id", "", KW_REQUIRED);
-        const char *hook_name = kw_get_str(parent_ref, "hook_name", "", KW_REQUIRED);
 
         json_t *parent_node = treedb_get_node( // Return is NOT YOURS
             tranger,
