@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
  ***********************************************************************/
 /** Begin a switch for the string x */
 #define SWITCHS(x) \
-    { const char *__sw = (x); bool __done = false; bool __cont = false; \
+    { regmatch_t pmatch[1]; (void)pmatch; const char *__sw = (x); bool __done = false; bool __cont = false; \
         regex_t __regex; regcomp(&__regex, ".*", 0); do {
 
 /** Check if the string matches the cases argument (case sensitive) */
@@ -87,7 +87,7 @@ int main(int argc, char **argv) {
                         __done = true; __cont = true;
 
 /** Check if the string matches the specified regular expression using regcomp(3) */
-#define CASES_RE(x,flags) } regfree ( &__regex ); regmatch_t pmatch[1]; if ( __cont || ( \
+#define CASES_RE(x,flags) } regfree ( &__regex ); if ( __cont || ( \
                               0 == regcomp ( &__regex, x, flags ) && \
                               0 == regexec ( &__regex, __sw, ARRAY_SIZE(pmatch), pmatch, 0 ) ) ) { \
                                 __done = true; __cont = true;
