@@ -87,9 +87,9 @@ int main(int argc, char **argv) {
                         __done = true; __cont = true;
 
 /** Check if the string matches the specified regular expression using regcomp(3) */
-#define CASES_RE(x,flags) } regfree ( &__regex ); if ( __cont || ( \
+#define CASES_RE(x,flags) } regfree ( &__regex ); regmatch_t pmatch[1]; if ( __cont || ( \
                               0 == regcomp ( &__regex, x, flags ) && \
-                              0 == regexec ( &__regex, __sw, 0, NULL, 0 ) ) ) { \
+                              0 == regexec ( &__regex, __sw, ARRAY_SIZE(pmatch), pmatch, 0 ) ) ) { \
                                 __done = true; __cont = true;
 
 /** Default behaviour */
