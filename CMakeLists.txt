@@ -1,8 +1,8 @@
 ##############################################
 #   CMake
 ##############################################
-project(ghelpers C)
 cmake_minimum_required(VERSION 3.0)
+project(ghelpers C)
 include(CheckIncludeFiles)
 include(CheckSymbolExists)
 
