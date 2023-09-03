@@ -122,7 +122,7 @@ PUBLIC time_t gmtime2timezone(time_t t, const char *tz, struct tm *ltm, time_t *
  ***********************************************************************/
 PUBLIC char *formatdate(time_t t, char *bf, int bfsize, const char *format)
 {
-    char sfechahora[32];
+    char sfechahora[64];
 
     struct tm *tm;
     tm = localtime(&t);
