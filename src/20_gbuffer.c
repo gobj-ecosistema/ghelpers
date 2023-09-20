@@ -1853,7 +1853,7 @@ PUBLIC GBUFFER *gbuf_decodebase64stringn(const char* base64, int base64_len)
             "hostname",     "%s", get_host_name(),
             "pid",          "%d", get_pid(),
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "gbuf_create() FAILED",
+            "msg",          "%s", "b64_decode() FAILED",
             "len",          "%d", (int)output_len,
             NULL
         );
