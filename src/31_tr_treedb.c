@@ -2319,8 +2319,13 @@ PRIVATE int set_tranger_field_value(
                     json_object_set_new(record, field, json_string(""));
                     break;
 
-                CASES("list")  // HACK disable lists for hooks
+                CASES("list")   // re-enable lists for hooks
                 CASES("array")
+                    json_object_set_new(record, field, json_array());
+                    break;
+
+                //CASES("list")  // HACK disable lists for hooks TODO si dejo esto fallan los test!!
+                //CASES("array")
                 DEFAULTS
                     log_error(LOG_OPT_TRACE_STACK,
                         "gobj",         "%s", __FILE__,
