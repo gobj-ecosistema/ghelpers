@@ -5052,11 +5052,11 @@ PUBLIC BOOL is_private_key(const char *key)
         - If it's a list of dict: the records have "id" field as primary key
         - If it's a dict, the key is the `id`
  ***************************************************************************/
-PUBLIC json_t *kwjr_get(
+PUBLIC json_t *kwjr_get( // Return is NOT yours, unless use of KW_EXTRACT
     json_t *kw,  // NOT owned
     const char *id,
-    json_t *default_value,  // owned
-    json_desc_t *json_desc,
+    json_t *new_record,  // owned
+    const json_desc_t *json_desc,
     size_t *idx_,      // If not null set the idx in case of array
     kw_flag_t flag
 )
@@ -5075,7 +5075,7 @@ PUBLIC json_t *kwjr_get(
             "msg",          "%s", "kw must be dict or list",
             NULL
         );
-        JSON_DECREF(default_value)
+        JSON_DECREF(new_record)
         return NULL;
     }
     if(empty_string(id)) {
@@ -5085,7 +5085,7 @@ PUBLIC json_t *kwjr_get(
             "msg",          "%s", "id NULL",
             NULL
         );
-        JSON_DECREF(default_value)
+        JSON_DECREF(new_record)
         return NULL;
     }
 
@@ -5095,29 +5095,30 @@ PUBLIC json_t *kwjr_get(
         if(!v) {
             if((flag & KW_CREATE)) {
                 json_t *jn_record = create_json_record(json_desc);
-                json_object_update_new(jn_record, json_deep_copy(default_value));
+                json_object_update_new(jn_record, json_deep_copy(new_record));
                 json_object_set_new(kw, id, jn_record);
-                JSON_DECREF(default_value)
+                JSON_DECREF(new_record)
                 return jn_record;
             }
             if(flag & KW_REQUIRED) {
                 log_error(LOG_OPT_TRACE_STACK,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "record NOT FOUND, default value returned",
+                    "msg",          "%s", "record NOT FOUND",
                     "id",           "%s", id,
                     NULL
                 );
-                log_debug_json(0, kw, "record NOT FOUND, default value returned, id='%s'", id);
+                log_debug_json(0, kw, "record NOT FOUND");
             }
-            return default_value;
+            JSON_DECREF(new_record)
+            return NULL;
         }
         if(flag & KW_EXTRACT) {
             json_incref(v);
             json_object_del(kw, id);
         }
 
-        JSON_DECREF(default_value)
+        JSON_DECREF(new_record)
         return v;
 
     case JSON_ARRAY:
@@ -5131,7 +5132,7 @@ PUBLIC json_t *kwjr_get(
                         if(idx_) {
                             *idx_ = idx;
                         }
-                        JSON_DECREF(default_value)
+                        JSON_DECREF(new_record)
                         if(flag & KW_EXTRACT) {
                             json_incref(v);
                             json_array_remove(kw, idx);
@@ -5147,7 +5148,7 @@ PUBLIC json_t *kwjr_get(
                         if(idx_) {
                             *idx_ = idx;
                         }
-                        JSON_DECREF(default_value)
+                        JSON_DECREF(new_record)
                         if(flag & KW_EXTRACT) {
                             json_incref(v);
                             json_array_remove(kw, idx);
@@ -5159,9 +5160,9 @@ PUBLIC json_t *kwjr_get(
 
             if((flag & KW_CREATE)) {
                 json_t *jn_record = create_json_record(json_desc);
-                json_object_update_new(jn_record, json_deep_copy(default_value));
+                json_object_update_new(jn_record, json_deep_copy(new_record));
                 json_array_append_new(kw, jn_record);
-                JSON_DECREF(default_value)
+                JSON_DECREF(new_record)
                 return jn_record;
             }
 
@@ -5169,13 +5170,14 @@ PUBLIC json_t *kwjr_get(
                 log_error(LOG_OPT_TRACE_STACK,
                     "function",     "%s", __FUNCTION__,
                     "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-                    "msg",          "%s", "record NOT FOUND, default value returned",
+                    "msg",          "%s", "record NOT FOUND",
                     "id",           "%s", id,
                     NULL
                 );
-                log_debug_json(0, kw, "record NOT FOUND, default value returned, id='%s'", id);
+                log_debug_json(0, kw, "record NOT FOUND");
             }
-            return default_value;
+            JSON_DECREF(new_record)
+            return NULL;
         }
         break;
     default:
@@ -5189,6 +5191,6 @@ PUBLIC json_t *kwjr_get(
         break;
     }
 
-    JSON_DECREF(default_value)
+    JSON_DECREF(new_record)
     return NULL;
 }

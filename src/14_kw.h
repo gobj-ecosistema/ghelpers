@@ -957,11 +957,11 @@ PUBLIC BOOL is_private_key(const char *key); // Private key (variable) has a pre
         - If it's a list of dict: the records have "id" field as primary key
         - If it's a dict, the key is the `id`
  ***************************************************************************/
-PUBLIC json_t *kwjr_get(
+PUBLIC json_t *kwjr_get( // Return is NOT yours, unless use of KW_EXTRACT
     json_t *kw,  // NOT owned
     const char *id,
-    json_t *default_value,
-    json_desc_t *json_desc,
+    json_t *new_record,
+    const json_desc_t *json_desc,
     size_t *idx_,      // If not null set the idx in case of array
     kw_flag_t flag
 );
