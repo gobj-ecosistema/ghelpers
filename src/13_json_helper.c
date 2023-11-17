@@ -987,7 +987,8 @@ PUBLIC void free_str_list(const char **strls)
 
 /***************************************************************************
  *  fields: DESC str array with: key, type, defaults
- *  type can be: str, int, real, bool, null, dict, list
+ *  type can be:
+ *  str|string, int|integer, real, bool|boolean, null, dict|object, list|array
  ***************************************************************************/
 PUBLIC json_t *create_json_record(
     const json_desc_t *json_desc
@@ -1062,6 +1063,7 @@ PUBLIC json_t *create_json_record(
             CASES("null")
                 json_object_set_new(jn, name, json_null());
                 break;
+            CASES("object")
             CASES("dict")
                 char desc_name[80+1];
                 if(sscanf(defaults, "{%80s}", desc_name)==1) {
@@ -1071,6 +1073,7 @@ PUBLIC json_t *create_json_record(
                 }
                 json_object_set_new(jn, name, json_object());
                 break;
+            CASES("array")
             CASES("list")
                 char desc_name[80+1];
                 if(sscanf(defaults, "{%80s}", desc_name)==1) {
