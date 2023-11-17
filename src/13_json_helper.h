@@ -245,7 +245,7 @@ PUBLIC void free_str_list(const char **strls);
 
 /***************************************************************************
  *
- *  type can be: str, int, real, bool, null, dict, list
+ *  type can be: str, string, int, integer, real, bool, boolean, null, dict, list
  *  Example:
 
 static json_desc_t jn_xxx_desc[] = {
@@ -262,11 +262,35 @@ typedef struct {
     const char *name;
     const char *type;   // type can be: "str", "int", "real", "bool", "null", "dict", "list"
     const char *defaults;
+    const char *fillspace;
 } json_desc_t;
 
 PUBLIC json_t *create_json_record(
     const json_desc_t *json_desc
 );
+
+/***************************************************************************
+ *
+ *  Convert a json record desc to a topic schema
+ *
+    json_record
+    {
+        name: string
+        type: string
+        defaults: string
+        fillspace: string
+    }
+
+    schema
+    {
+        id: string
+        header: string
+        type: string
+        fillspace: integer
+    }
+
+ ***************************************************************************/
+PUBLIC json_t *json_record_to_schema(const json_desc_t *json_desc);
 
 /*
  *  If exclusive then let file opened and return the fd, else close the file
