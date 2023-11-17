@@ -250,9 +250,9 @@ PUBLIC void free_str_list(const char **strls);
 
 static json_desc_t jn_xxx_desc[] = {
     // Name         Type        Default     Fillspace
-    {"string",      "str",      "",         "10"},
+    {"string",      "str",      "",         "10"},  // First item is the pkey
     {"string2",     "str",      "Pepe",     "20"},
-    {"integer",     "int",      "0660",     "8"},     // beginning with "0":octal,"x":hexa, others: integer
+    {"integer",     "int",      "0660",     "8"},   // beginning with "0":octal,"x":hexa, others: integer
     {"boolean",     "bool",     "false",    "8"},
     {0}   // HACK important, final null
 };

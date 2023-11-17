@@ -5043,3 +5043,152 @@ PUBLIC BOOL is_private_key(const char *key)
     }
     return (i == 1)?TRUE:FALSE;
 }
+
+/***************************************************************************
+    Utility for databases of json records.
+    Get a json list or dict, get the **first** record that match `id`
+    WARNING `id` is the first key of json_desc
+    Convention:
+        - If it's a list of dict: the records have "id" field as primary key
+        - If it's a dict, the key is the `id`
+ ***************************************************************************/
+PUBLIC json_t *kwjr_get(
+    json_t *kw,  // NOT owned
+    const char *id,
+    json_t *default_value,  // owned
+    json_desc_t *json_desc,
+    size_t *idx_,      // If not null set the idx in case of array
+    kw_flag_t flag
+)
+{
+    json_t *v = NULL;
+    BOOL backward = flag & KW_BACKWARD;
+
+    if(idx_) { // error case
+        *idx_ = 0;
+    }
+
+    if(!(json_is_array(kw) || json_is_object(kw))) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw must be dict or list",
+            NULL
+        );
+        JSON_DECREF(default_value)
+        return NULL;
+    }
+    if(empty_string(id)) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "id NULL",
+            NULL
+        );
+        JSON_DECREF(default_value)
+        return NULL;
+    }
+
+    switch(json_typeof(kw)) {
+    case JSON_OBJECT:
+        v = json_object_get(kw, id);
+        if(!v) {
+            if((flag & KW_CREATE)) {
+                json_t *jn_record = create_json_record(json_desc);
+                json_object_update_new(jn_record, json_deep_copy(default_value));
+                json_object_set_new(kw, id, jn_record);
+                JSON_DECREF(default_value)
+                return jn_record;
+            }
+            if(flag & KW_REQUIRED) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "record NOT FOUND, default value returned",
+                    "id",           "%s", id,
+                    NULL
+                );
+                log_debug_json(0, kw, "record NOT FOUND, default value returned, id='%s'", id);
+            }
+            return default_value;
+        }
+        if(flag & KW_EXTRACT) {
+            json_incref(v);
+            json_object_del(kw, id);
+        }
+
+        JSON_DECREF(default_value)
+        return v;
+
+    case JSON_ARRAY:
+        {
+            const char *pkey = json_desc->name;
+            if(!backward) {
+                size_t idx;
+                json_array_foreach(kw, idx, v) {
+                    const char *id_ = json_string_value(json_object_get(v, pkey));
+                    if(id_ && strcmp(id_, id)==0) {
+                        if(idx_) {
+                            *idx_ = idx;
+                        }
+                        JSON_DECREF(default_value)
+                        if(flag & KW_EXTRACT) {
+                            json_incref(v);
+                            json_array_remove(kw, idx);
+                        }
+                        return v;
+                    }
+                }
+            } else {
+                int idx;
+                json_array_backward(kw, idx, v) {
+                    const char *id_ = json_string_value(json_object_get(v, pkey));
+                    if(id_ && strcmp(id_, id)==0) {
+                        if(idx_) {
+                            *idx_ = idx;
+                        }
+                        JSON_DECREF(default_value)
+                        if(flag & KW_EXTRACT) {
+                            json_incref(v);
+                            json_array_remove(kw, idx);
+                        }
+                        return v;
+                    }
+                }
+            }
+
+            if((flag & KW_CREATE)) {
+                json_t *jn_record = create_json_record(json_desc);
+                json_object_update_new(jn_record, json_deep_copy(default_value));
+                json_array_append_new(kw, jn_record);
+                JSON_DECREF(default_value)
+                return jn_record;
+            }
+
+            if(flag & KW_REQUIRED) {
+                log_error(LOG_OPT_TRACE_STACK,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+                    "msg",          "%s", "record NOT FOUND, default value returned",
+                    "id",           "%s", id,
+                    NULL
+                );
+                log_debug_json(0, kw, "record NOT FOUND, default value returned, id='%s'", id);
+            }
+            return default_value;
+        }
+        break;
+    default:
+        log_error(LOG_OPT_TRACE_STACK,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
+            "msg",          "%s", "kw must be dict or list",
+            "id",           "%s", id,
+            NULL
+        );
+        break;
+    }
+
+    JSON_DECREF(default_value)
+    return NULL;
+}

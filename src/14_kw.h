@@ -34,8 +34,9 @@ __name__ = __func__(kw, #__name__, __default__, KW_REQUIRED);
 typedef enum {
     KW_REQUIRED         = 0x0001,   // Log error message if not exist.
     KW_CREATE           = 0x0002,   // Create if not exist
-    KW_WILD_NUMBER      = 0x0004,   // For numbers work indistinctly with real/int/bool/string without error logging
+    KW_WILD_NUMBER      = 0x0004,   // For numbers work with real/int/bool/string without error logging
     KW_EXTRACT          = 0x0008,   // Extract (delete) the key on read from dictionary.
+    KW_BACKWARD         = 0x0010,   // Search backward in lists or arrays
 } kw_flag_t;
 
 typedef void (*incref_fn_t)(void *);
@@ -947,6 +948,23 @@ PUBLIC int kw_size(json_t *kw); // size of dict or size of list, remains return 
 
 PUBLIC BOOL is_metadata_key(const char *key); // Metadata key (variable) has a prefix of 2 underscore
 PUBLIC BOOL is_private_key(const char *key); // Private key (variable) has a prefix of 1 underscore
+
+/***************************************************************************
+    Utility for databases of json records.
+    Get a json list or dict, get the **first** record that match `id`
+    WARNING `id` is the first key of json_desc
+    Convention:
+        - If it's a list of dict: the records have "id" field as primary key
+        - If it's a dict, the key is the `id`
+ ***************************************************************************/
+PUBLIC json_t *kwjr_get(
+    json_t *kw,  // NOT owned
+    const char *id,
+    json_t *default_value,
+    json_desc_t *json_desc,
+    size_t *idx_,      // If not null set the idx in case of array
+    kw_flag_t flag
+);
 
 #ifdef __cplusplus
 }
