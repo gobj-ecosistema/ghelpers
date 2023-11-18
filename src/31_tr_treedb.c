@@ -467,12 +467,13 @@ PUBLIC json_t *_treedb_create_topic_cols_desc(void)
     );
     json_array_append_new(
         topic_cols_desc,
-        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[s,s,s]}",
+        json_pack("{s:s, s:s, s:i, s:s, s:[s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s,s], s:[s,s,s]}",
             "id", "flag",
             "header", "Flag",
             "fillspace", 14,
             "type", "array",
             "enum",
+                "",
                 "persistent",
                 "required",
                 "fkey",
