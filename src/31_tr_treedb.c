@@ -5386,6 +5386,24 @@ PRIVATE int _link_nodes(
         return -1;
     }
 
+    /*--------------------------------------------------*
+     *  Check treedb_name's
+     *--------------------------------------------------*/
+    const char *parent_node_treedb_name = kw_get_str(parent_node, "__md_treedb__`treedb_name", 0, 0);
+    const char *treedb_name = kw_get_str(child_node, "__md_treedb__`treedb_name", 0, 0);
+    if(strcmp(parent_node_treedb_name, treedb_name)!=0) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot link node's of different treedb",
+            "treedb_parent","%s", parent_node_treedb_name,
+            "treedb_child", "%s", treedb_name,
+            NULL
+        );
+        return -1;
+    }
+
     /*---------------------------------------*
      *  Check parent has `hook_name` field
      *---------------------------------------*/
@@ -5660,6 +5678,50 @@ PRIVATE int _link_nodes(
         break;
     }
 
+    /*--------------------------------------------------*
+     *      Call Callback
+     *      TODO implement EV_LINK_NODE/EV_UNLINK_NODE ?
+     *--------------------------------------------------*/
+    json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
+    treedb_callback_t treedb_callback =
+        (treedb_callback_t)(size_t)kw_get_int(
+            treedb,
+            "__treedb_callback__",
+            0,
+            0
+    );
+    if(treedb_callback) {
+        /*
+         *  Inform user in real time
+         */
+        void *user_data =
+            (treedb_callback_t)(size_t)kw_get_int(
+                treedb,
+                "__treedb_callback_user_data__",
+                0,
+                0
+            );
+
+        JSON_INCREF(parent_node);
+        treedb_callback(
+            user_data,
+            tranger,
+            treedb_name,
+            parent_topic_name,
+            "EV_TREEDB_NODE_UPDATED",
+            parent_node
+        );
+        JSON_INCREF(child_node);
+        treedb_callback(
+            user_data,
+            tranger,
+            treedb_name,
+            child_topic_name,
+            "EV_TREEDB_NODE_UPDATED",
+            child_node
+        );
+    }
+
     return 0;
 }
 
@@ -5713,6 +5775,24 @@ PRIVATE int _unlink_nodes(
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "Cannot unlink self node",
             "parent_node",  "%j", parent_node,
+            NULL
+        );
+        return -1;
+    }
+
+    /*--------------------------------------------------*
+     *  Check treedb_name's
+     *--------------------------------------------------*/
+    const char *parent_node_treedb_name = kw_get_str(parent_node, "__md_treedb__`treedb_name", 0, 0);
+    const char *treedb_name = kw_get_str(child_node, "__md_treedb__`treedb_name", 0, 0);
+    if(strcmp(parent_node_treedb_name, treedb_name)!=0) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Cannot link node's of different treedb",
+            "treedb_parent","%s", parent_node_treedb_name,
+            "treedb_child", "%s", treedb_name,
             NULL
         );
         return -1;
@@ -6060,6 +6140,50 @@ PRIVATE int _unlink_nodes(
 
     default:
         break;
+    }
+
+    /*--------------------------------------------------*
+     *      Call Callback
+     *      TODO implement EV_LINK_NODE/EV_UNLINK_NODE ?
+     *--------------------------------------------------*/
+    json_t *treedb = kwid_get("", tranger, "treedbs`%s", treedb_name);
+    treedb_callback_t treedb_callback =
+        (treedb_callback_t)(size_t)kw_get_int(
+            treedb,
+            "__treedb_callback__",
+            0,
+            0
+    );
+    if(treedb_callback) {
+        /*
+         *  Inform user in real time
+         */
+        void *user_data =
+            (treedb_callback_t)(size_t)kw_get_int(
+                treedb,
+                "__treedb_callback_user_data__",
+                0,
+                0
+            );
+
+        JSON_INCREF(parent_node);
+        treedb_callback(
+            user_data,
+            tranger,
+            treedb_name,
+            parent_topic_name,
+            "EV_TREEDB_NODE_UPDATED",
+            parent_node
+        );
+        JSON_INCREF(child_node);
+        treedb_callback(
+            user_data,
+            tranger,
+            treedb_name,
+            child_topic_name,
+            "EV_TREEDB_NODE_UPDATED",
+            child_node
+        );
     }
 
     return 0;
