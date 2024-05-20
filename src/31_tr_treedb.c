@@ -1366,7 +1366,7 @@ PUBLIC int treedb_delete_topic(
 )
 {
     /*-----------------------------------*
-     *      Check appropiate topic
+     *      Check appropriate topic
      *-----------------------------------*/
     if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
         log_error(0,
@@ -4102,7 +4102,7 @@ PUBLIC json_t *treedb_create_node( // WARNING Return is NOT YOURS, pure node
 )
 {
     /*-----------------------------------*
-     *      Check appropiate topic
+     *      Check appropriate topic
      *-----------------------------------*/
     if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
         log_error(0,
@@ -6694,7 +6694,7 @@ PUBLIC json_t *treedb_get_node( // WARNING Return is NOT YOURS, pure node
 )
 {
     /*-----------------------------------*
-     *      Check appropiate topic
+     *      Check appropriate topic
      *-----------------------------------*/
     if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
         log_error(0,
@@ -6738,7 +6738,7 @@ PUBLIC json_t *treedb_get_instance( // WARNING Return is NOT YOURS, pure node
 )
 {
     /*-----------------------------------*
-     *      Check appropiate topic
+     *      Check appropriate topic
      *-----------------------------------*/
     if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
         log_error(0,
@@ -6916,7 +6916,7 @@ PUBLIC json_t *treedb_list_nodes( // Return MUST be decref
 )
 {
     /*-----------------------------------*
-     *      Check appropiate topic
+     *      Check appropriate topic
      *-----------------------------------*/
     if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
         log_error(0,
@@ -7056,7 +7056,7 @@ PUBLIC json_t *treedb_list_instances( // Return MUST be decref
 )
 {
     /*-----------------------------------*
-     *      Check appropiate topic
+     *      Check appropriate topic
      *-----------------------------------*/
     if(!treedb_is_treedbs_topic(tranger, treedb_name, topic_name)) {
         log_error(0,
