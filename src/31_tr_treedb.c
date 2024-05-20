@@ -3399,7 +3399,7 @@ PRIVATE int link_child_to_parent(
         break;
     default:
         {
-            const char *parent_topic_name = json_string_value(
+            const char *parent_topic_name_ = json_string_value(
                 kwid_get("", parent_node, "__md_treedb__`topic_name")
             );
             log_error(0,
@@ -3407,7 +3407,7 @@ PRIVATE int link_child_to_parent(
                 "function",             "%s", __FUNCTION__,
                 "msgset",               "%s", MSGSET_TREEDB_ERROR,
                 "msg",                  "%s", "Review the scheme: wrong parent hook type",
-                "parent_topic_name",    "%s", parent_topic_name,
+                "parent_topic_name",    "%s", parent_topic_name_,
                 "link",                 "%s", hook_name,
                 NULL
             );
