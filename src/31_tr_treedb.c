@@ -5200,124 +5200,6 @@ PUBLIC int treedb_delete_instance(
 /***************************************************************************
  *
  ***************************************************************************/
-PUBLIC int treedb_clean_node(
-    json_t *tranger,
-    json_t *node,       // NOT owned, pure node
-    BOOL save
-)
-{
-    /*------------------------------*
-     *      Check original node
-     *------------------------------*/
-    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "Not a pure node",
-            NULL
-        );
-        log_debug_json(0, node, "Not a pure node");
-        return -1;
-    }
-
-    /*-------------------------------*
-     *      Get node info
-     *-------------------------------*/
-    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
-    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
-
-    int ret = 0;
-    BOOL to_save = FALSE;
-    json_t *up_refs = get_node_up_refs(tranger, node);
-    if(json_array_size(up_refs)>0) {
-        int idx; json_t *old_fkey;
-        json_array_foreach(up_refs, idx, old_fkey) {
-            /*
-             *  Delete link
-             */
-            const char *ref = json_string_value(old_fkey);
-
-            /*
-             *  Get parent info
-             */
-            char parent_topic_name[NAME_MAX];
-            char parent_id[NAME_MAX];
-            char hook_name[NAME_MAX];
-            if(!decode_parent_ref(
-                ref,
-                parent_topic_name, sizeof(parent_topic_name),
-                parent_id, sizeof(parent_id),
-                hook_name, sizeof(hook_name)
-            )) {
-                // It's not a fkey
-                log_error(0,
-                    "gobj",                 "%s", __FILE__,
-                    "function",             "%s", __FUNCTION__,
-                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
-                    "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
-                    "ref",                  "%s", ref,
-                    NULL
-                );
-                continue;
-            }
-
-            json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
-                tranger,
-                treedb_name,
-                parent_topic_name,
-                parent_id
-            );
-            if(parent_node) {
-                ret += _unlink_nodes(
-                    tranger,
-                    hook_name,
-                    parent_node,    // NOT owned
-                    node      // NOT owned
-                );
-            } else {
-                search_and_remove_wrong_up_ref(
-                    tranger,
-                    node,
-                    topic_name,
-                    ref
-                );
-            }
-        }
-
-        /*
-         *  Re-checks up links
-         */
-        json_t *up_refs_ = get_node_up_refs(tranger, node);
-        if(json_array_size(up_refs_)>0) {
-            ret += -1;
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_TREEDB_ERROR,
-                "msg",          "%s", "Cannot clean the links",
-                "topic_name",   "%s", topic_name,
-                NULL
-            );
-        } else {
-            to_save = TRUE;
-        }
-        JSON_DECREF(up_refs_);
-    }
-
-    if(save) {
-        if(to_save) {
-            treedb_save_node(tranger, node);
-        }
-    }
-
-    JSON_DECREF(up_refs);
-    return ret;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
 PRIVATE int remove_wrong_up_ref(
     json_t *tranger,
     json_t *node,
@@ -6181,6 +6063,124 @@ PRIVATE int _unlink_nodes(
     }
 
     return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC int treedb_clean_node(
+    json_t *tranger,
+    json_t *node,       // NOT owned, pure node
+    BOOL save
+)
+{
+    /*------------------------------*
+     *      Check original node
+     *------------------------------*/
+    if(!kw_get_bool(node, "__md_treedb__`__pure_node__", 0, 0)) {
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Not a pure node",
+            NULL
+        );
+        log_debug_json(0, node, "Not a pure node");
+        return -1;
+    }
+
+    /*-------------------------------*
+     *      Get node info
+     *-------------------------------*/
+    const char *treedb_name = kw_get_str(node, "__md_treedb__`treedb_name", 0, 0);
+    const char *topic_name = kw_get_str(node, "__md_treedb__`topic_name", 0, 0);
+
+    int ret = 0;
+    BOOL to_save = FALSE;
+    json_t *up_refs = get_node_up_refs(tranger, node);
+    if(json_array_size(up_refs)>0) {
+        int idx; json_t *old_fkey;
+        json_array_foreach(up_refs, idx, old_fkey) {
+            /*
+             *  Delete link
+             */
+            const char *ref = json_string_value(old_fkey);
+
+            /*
+             *  Get parent info
+             */
+            char parent_topic_name[NAME_MAX];
+            char parent_id[NAME_MAX];
+            char hook_name[NAME_MAX];
+            if(!decode_parent_ref(
+                ref,
+                parent_topic_name, sizeof(parent_topic_name),
+                parent_id, sizeof(parent_id),
+                hook_name, sizeof(hook_name)
+            )) {
+                // It's not a fkey
+                log_error(0,
+                    "gobj",                 "%s", __FILE__,
+                    "function",             "%s", __FUNCTION__,
+                    "msgset",               "%s", MSGSET_TREEDB_ERROR,
+                    "msg",                  "%s", "Wrong parent reference: must be \"parent_topic_name^parent_id^hook_name\"",
+                    "ref",                  "%s", ref,
+                    NULL
+                );
+                continue;
+            }
+
+            json_t *parent_node = treedb_get_node( // Return is NOT YOURS, pure node
+                tranger,
+                treedb_name,
+                parent_topic_name,
+                parent_id
+            );
+            if(parent_node) {
+                ret += _unlink_nodes(
+                    tranger,
+                    hook_name,
+                    parent_node,    // NOT owned
+                    node      // NOT owned
+                );
+            } else {
+                search_and_remove_wrong_up_ref(
+                    tranger,
+                    node,
+                    topic_name,
+                    ref
+                );
+            }
+        }
+
+        /*
+         *  Re-checks up links
+         */
+        json_t *up_refs_ = get_node_up_refs(tranger, node);
+        if(json_array_size(up_refs_)>0) {
+            ret += -1;
+            log_error(0,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_TREEDB_ERROR,
+                "msg",          "%s", "Cannot clean the links",
+                "topic_name",   "%s", topic_name,
+                NULL
+            );
+        } else {
+            to_save = TRUE;
+        }
+        JSON_DECREF(up_refs_);
+    }
+
+    if(save) {
+        if(to_save) {
+            treedb_save_node(tranger, node);
+        }
+    }
+
+    JSON_DECREF(up_refs);
+    return ret;
 }
 
 /***************************************************************************
