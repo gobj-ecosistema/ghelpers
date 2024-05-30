@@ -3306,6 +3306,11 @@ PRIVATE int link_child_to_parent(
         return 0;
     }
 
+    const char *child_topic_name = json_string_value(
+        kwid_get("", child_node, "__md_treedb__`topic_name")
+    );
+    const char *child_id = kw_get_str(child_node, "id", "", KW_REQUIRED);
+
     /*
      *  Find the parent node
      */
@@ -3317,14 +3322,16 @@ PRIVATE int link_child_to_parent(
     );
     if(!parent_node) {
         log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_PARAMETER_ERROR,
-            "msg",          "%s", "Node not found",
-            "treedb_name",  "%s", treedb_name,
-            "topic_name",   "%s", parent_topic_name,
-            "fkey_col_name","%s", fkey_col_name,
-            "id",           "%s", parent_id,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_PARAMETER_ERROR,
+            "msg",                  "%s", "Node not found",
+            "treedb_name",          "%s", treedb_name,
+            "child_topic_name",     "%s", child_topic_name,
+            "child_id",             "%s", child_id,
+            "parent_topic_name",    "%s", parent_topic_name,
+            "parent_id",            "%s", parent_id,
+            "fkey_col_name",        "%s", fkey_col_name,
             NULL
         );
         return -1;
@@ -3352,16 +3359,16 @@ PRIVATE int link_child_to_parent(
 
     json_t *child_data = kw_get_dict_value(child_node, fkey_col_name, 0, 0);
     if(!child_data) {
-        const char *child_topic_name = json_string_value(
-            kwid_get("", child_node, "__md_treedb__`topic_name")
-        );
         log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_TREEDB_ERROR,
-            "msg",          "%s", "fkey field not found in the node",
-            "topic_name",   "%s", child_topic_name,
-            "field",        "%s", fkey_col_name,
+            "gobj",                 "%s", __FILE__,
+            "function",             "%s", __FUNCTION__,
+            "msgset",               "%s", MSGSET_TREEDB_ERROR,
+            "msg",                  "%s", "fkey field not found in the node",
+            "child_topic_name",     "%s", child_topic_name,
+            "child_id",             "%s", child_id,
+            "parent_topic_name",    "%s", parent_topic_name,
+            "parent_id",            "%s", parent_id,
+            "fkey_col_name",        "%s", fkey_col_name,
             NULL
         );
         log_debug_json(0, child_node, "fkey field not found in the node");
@@ -3381,13 +3388,9 @@ PRIVATE int link_child_to_parent(
         break;
     case JSON_OBJECT:
         {
-            const char *child_id = kw_get_str(child_node, "id", "", KW_REQUIRED);
-            char pref[NAME_MAX];
+            char pref_[NAME_MAX];
             if(is_child_hook) {
-                const char *child_topic_name = json_string_value(
-                    kwid_get("", child_node, "__md_treedb__`topic_name")
-                );
-                snprintf(pref, sizeof(pref), "%s~%s~%s",
+                snprintf(pref_, sizeof(pref_), "%s~%s~%s",
                     child_topic_name,
                     child_id,
                     fkey_col_name
@@ -3400,15 +3403,12 @@ PRIVATE int link_child_to_parent(
         break;
     default:
         {
-            const char *parent_topic_name_ = json_string_value(
-                kwid_get("", parent_node, "__md_treedb__`topic_name")
-            );
             log_error(0,
                 "gobj",                 "%s", __FILE__,
                 "function",             "%s", __FUNCTION__,
                 "msgset",               "%s", MSGSET_TREEDB_ERROR,
                 "msg",                  "%s", "Review the scheme: wrong parent hook type",
-                "parent_topic_name",    "%s", parent_topic_name_,
+                "parent_topic_name",    "%s", parent_topic_name,
                 "link",                 "%s", hook_name,
                 NULL
             );
