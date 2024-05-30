@@ -151,6 +151,7 @@ PUBLIC int treedb_set_callback(
         "time"
         "color"
         "image"
+        "tel"
 
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic( // WARNING Return is NOT YOURS
