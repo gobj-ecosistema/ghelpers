@@ -853,35 +853,27 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *      __graphs__
      *-------------------------------*/
     char *graphs_topic_name = "__graphs__";
-    int graphs_topic_version = 4;
+    int graphs_topic_version = 5;
     json_t *jn_graphs_topic_var = json_object();
     json_object_set_new(jn_graphs_topic_var, "topic_version", json_integer(graphs_topic_version));
 
     json_t *tag_graphs_schema = json_pack(
-        "{s:{s:s, s:s, s:i, s:s, s:[s,s]},"         /* id */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* topic */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* description */
+        "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* name */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* active */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* properties */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s,s,s]}}", /* time */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s,s,s]},"  /* time */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]}}",     /* properties */
         "id",
             "id", "id",
             "header", "Id",
             "fillspace", 8,
             "type", "string",
             "flag",
-                "persistent","required",
+                "persistent","required","rowid",
 
-        "topic",
-            "id", "topic",
-            "header", "Topic",
-            "fillspace", 28,
-            "type", "string",
-            "flag",
-                "persistent", "required", "writable",
-        "description",
-            "id", "description",
-            "header", "Description",
+        "name",
+            "id", "name",
+            "header", "Name",
             "fillspace", 28,
             "type", "string",
             "flag",
@@ -893,20 +885,20 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "type", "boolean",
             "flag",
                 "persistent", "required", "writable",
-        "properties",
-            "id", "properties",
-            "header", "Properties",
-            "fillspace", 40,
-            "type", "blob",
-            "flag",
-                "persistent", "writable",
         "time",
             "id", "time",
             "header", "Time",
             "fillspace", 28,
             "type", "string",
             "flag",
-                "persistent", "required", "time", "writable"
+                "persistent", "required", "time", "writable",
+        "properties",
+            "id", "properties",
+            "header", "Properties",
+            "fillspace", 40,
+            "type", "blob",
+            "flag",
+                "persistent", "writable"
     );
     if(!tag_graphs_schema) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
