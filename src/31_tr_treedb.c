@@ -771,7 +771,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_t *jn_snaps_topic_var = json_object();
     json_object_set_new(jn_snaps_topic_var, "topic_version", json_integer(snaps_topic_version));
 
-    json_t *tag_schema = json_pack(
+    json_t *tag_snaps_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* name */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* date */
@@ -814,7 +814,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "flag",
                 "persistent"
     );
-    if(!tag_schema) {
+    if(!tag_snaps_schema) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -830,7 +830,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
         "id",
         "",
         sf_string_key,
-        tag_schema,
+        tag_snaps_schema,
         jn_snaps_topic_var
     );
 
@@ -844,6 +844,92 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "msgset",       "%s", MSGSET_TREEDB_ERROR,
             "msg",          "%s", "parse_schema_cols failed",
             "schema",       "%s", "__snaps__",
+            NULL
+        );
+    }
+
+    /*-------------------------------*
+     *  Create "system" topics:
+     *      __graphs__
+     *-------------------------------*/
+    char *graphs_topic_name = "__graphs__";
+    int graphs_topic_version = 1;
+    json_t *jn_graphs_topic_var = json_object();
+    json_object_set_new(jn_graphs_topic_var, "topic_version", json_integer(graphs_topic_version));
+
+    json_t *tag_graphs_schema = json_pack(
+        "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* name */
+            "s:{s:s, s:s, s:i, s:s, s:[s]},",       /* description */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* date */
+            "s:{s:s, s:s, s:i, s:s, s:[s]}"         /* properties */
+        "id",
+            "id", "id",
+            "header", "Id",
+            "fillspace", 8,
+            "type", "string",
+            "flag",
+                "persistent","required","rowid",
+
+        "name",
+            "id", "name",
+            "header", "Name",
+            "fillspace", 28,
+            "type", "string",
+            "flag",
+                "persistent", "required",
+        "description",
+            "id", "description",
+            "header", "Description",
+            "fillspace", 40,
+            "type", "string",
+            "flag",
+                "persistent"
+        "date",
+            "id", "date",
+            "header", "Date",
+            "fillspace", 28,
+            "type", "string",
+            "flag",
+                "persistent", "required", "time",
+        "properties",
+            "id", "properties",
+            "header", "Properties",
+            "fillspace", 8,
+            "type", "blob",
+            "flag",
+                "persistent"
+    );
+    if(!tag_graphs_schema) {
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "Bad __graphs__ json schema",
+            NULL
+        );
+    }
+
+    json_t *graphs_topic = tranger_create_topic( // System topic
+        tranger,    // If topic exists then only needs (tranger,name) parameters
+        graphs_topic_name,
+        "id",
+        "",
+        sf_string_key,
+        tag_graphs_schema,
+        jn_graphs_topic_var
+    );
+
+    if(parse_schema_cols(
+        topic_cols_desc,
+        kwid_new_list("verbose", graphs_topic, "cols")
+    )<0) {
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_TREEDB_ERROR,
+            "msg",          "%s", "parse_schema_cols failed",
+            "schema",       "%s", "__graphs__",
             NULL
         );
     }
