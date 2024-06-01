@@ -764,7 +764,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
 
     /*-------------------------------*
      *  Create "system" topics:
-     *      __snaps__ topic
+     *      __snaps__
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
     int snaps_topic_version = 1;
@@ -850,7 +850,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
 
     /*------------------------------*
      *  Open "system" lists:
-     *      __snaps__ topic
+     *      __snaps__
      *------------------------------*/
     char path[NAME_MAX];
     build_id_index_path(path, sizeof(path), treedb_name, snaps_topic_name);
