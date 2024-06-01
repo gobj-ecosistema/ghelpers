@@ -938,26 +938,55 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *  Open "system" lists:
      *      __snaps__
      *------------------------------*/
-    char path[NAME_MAX];
-    build_id_index_path(path, sizeof(path), treedb_name, snaps_topic_name);
-    kw_get_dict_value(tranger, path, json_object(), KW_CREATE);
+    if(1) {
+        char path[NAME_MAX];
+        build_id_index_path(path, sizeof(path), treedb_name, snaps_topic_name);
+        kw_get_dict_value(tranger, path, json_object(), KW_CREATE);
 
-    json_t *jn_filter = json_pack("{s:b}",
-        "backward", 1
-    );
+        json_t *jn_filter = json_pack("{s:b}",
+            "backward", 1
+        );
 
-    json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
-        "id", path,
-        "topic_name", snaps_topic_name,
-        "match_cond", jn_filter,
-        "load_record_callback", (json_int_t)(size_t)load_id_callback,
-        "treedb_name", treedb_name,
-        "deleted_records"
-    );
-    tranger_open_list(
-        tranger,
-        jn_list // owned
-    );
+        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
+            "id", path,
+            "topic_name", snaps_topic_name,
+            "match_cond", jn_filter,
+            "load_record_callback", (json_int_t)(size_t)load_id_callback,
+            "treedb_name", treedb_name,
+            "deleted_records"
+        );
+        tranger_open_list(
+            tranger,
+            jn_list // owned
+        );
+    }
+
+    /*------------------------------*
+     *  Open "system" lists:
+     *      __graphs__
+     *------------------------------*/
+    if(1) {
+        char path[NAME_MAX];
+        build_id_index_path(path, sizeof(path), treedb_name, graphs_topic_name);
+        kw_get_dict_value(tranger, path, json_object(), KW_CREATE);
+
+        json_t *jn_filter = json_pack("{s:b}",
+            "backward", 1
+        );
+
+        json_t *jn_list = json_pack("{s:s, s:s, s:o, s:I, s:s, s:{}}",
+            "id", path,
+            "topic_name", graphs_topic_name,
+            "match_cond", jn_filter,
+            "load_record_callback", (json_int_t)(size_t)load_id_callback,
+            "treedb_name", treedb_name,
+            "deleted_records"
+        );
+        tranger_open_list(
+            tranger,
+            jn_list // owned
+        );
+    }
 
     /*------------------------------*
      *  Get snap tab
