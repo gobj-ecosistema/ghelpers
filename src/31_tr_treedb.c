@@ -767,7 +767,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *      __snaps__
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
-    int snaps_topic_version = 1;
+    int snaps_topic_version = 2;
     json_t *jn_snaps_topic_var = json_object();
     json_object_set_new(jn_snaps_topic_var, "topic_version", json_integer(snaps_topic_version));
 
@@ -860,9 +860,9 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_t *tag_graphs_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* name */
-            "s:{s:s, s:s, s:i, s:s, s:[s]},",       /* description */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* date */
-            "s:{s:s, s:s, s:i, s:s, s:[s]}",        /* properties */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* active */
+            "s:{s:s, s:s, s:i, s:s, s:[s]}}",       /* properties */
         "id",
             "id", "id",
             "header", "Id",
@@ -878,13 +878,6 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "type", "string",
             "flag",
                 "persistent", "required",
-        "description",
-            "id", "description",
-            "header", "Description",
-            "fillspace", 40,
-            "type", "string",
-            "flag",
-                "persistent"
         "date",
             "id", "date",
             "header", "Date",
@@ -892,10 +885,17 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "type", "string",
             "flag",
                 "persistent", "required", "time",
+        "active",
+            "id", "active",
+            "header", "Active",
+            "fillspace", 8,
+            "type", "boolean",
+            "flag",
+                "persistent", "required",
         "properties",
             "id", "properties",
             "header", "Properties",
-            "fillspace", 8,
+            "fillspace", 40,
             "type", "blob",
             "flag",
                 "persistent"
