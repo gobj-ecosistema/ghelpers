@@ -772,11 +772,11 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_object_set_new(jn_snaps_topic_var, "topic_version", json_integer(snaps_topic_version));
 
     json_t *tag_schema = json_pack(
-        "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"
-            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
-            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
-            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"
-            "s:{s:s, s:s, s:i, s:s, s:[s]}}",
+        "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* name */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* date */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* active */
+            "s:{s:s, s:s, s:i, s:s, s:[s]}}",       /* description */
         "id",
             "id", "id",
             "header", "Id",
@@ -798,7 +798,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "fillspace", 28,
             "type", "string",
             "flag",
-                "persistent", "required",
+                "persistent", "required", "time",
         "active",
             "id", "active",
             "header", "Active",
