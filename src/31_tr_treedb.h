@@ -65,6 +65,10 @@ extern "C"{
 
     Return a dict inside of tranger with path "treedbs`{treedb_name}" DO NOT use it directly
 
+    System topics:
+        __snaps__
+        __graphs__
+
 **rst**/
 PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_t *tranger,
