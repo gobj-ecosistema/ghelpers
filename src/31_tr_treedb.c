@@ -862,7 +862,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* name */
             "s:{s:s, s:s, s:i, s:s, s:[s]},",       /* description */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* date */
-            "s:{s:s, s:s, s:i, s:s, s:[s]}"         /* properties */
+            "s:{s:s, s:s, s:i, s:s, s:[s]}",        /* properties */
         "id",
             "id", "id",
             "header", "Id",
