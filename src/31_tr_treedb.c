@@ -860,7 +860,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
     json_t *tag_graphs_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* topic */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* active */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* active */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s,s]},"  /* time */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]}}",     /* properties */
         "id",
@@ -884,7 +884,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "fillspace", 8,
             "type", "boolean",
             "flag",
-                "persistent", "required", "writable",
+                "persistent", "writable",
         "time",
             "id", "time",
             "header", "Time",
