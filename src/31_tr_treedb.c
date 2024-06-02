@@ -767,14 +767,14 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *      __snaps__
      *-------------------------------*/
     char *snaps_topic_name = "__snaps__";
-    int snaps_topic_version = 2;
+    int snaps_topic_version = 3;
     json_t *jn_snaps_topic_var = json_object();
     json_object_set_new(jn_snaps_topic_var, "topic_version", json_integer(snaps_topic_version));
 
     json_t *tag_snaps_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* name */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* date */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* date (string!!!) */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* active */
             "s:{s:s, s:s, s:i, s:s, s:[s]}}",       /* description */
         "id",
@@ -798,7 +798,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "fillspace", 28,
             "type", "string",
             "flag",
-                "persistent", "required", "time",
+                "persistent", "required",
         "active",
             "id", "active",
             "header", "Active",
@@ -853,7 +853,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *      __graphs__
      *-------------------------------*/
     char *graphs_topic_name = "__graphs__";
-    int graphs_topic_version = 7;
+    int graphs_topic_version = 8;
     json_t *jn_graphs_topic_var = json_object();
     json_object_set_new(jn_graphs_topic_var, "topic_version", json_integer(graphs_topic_version));
 
@@ -889,7 +889,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "id", "time",
             "header", "Time",
             "fillspace", 28,
-            "type", "string",
+            "type", "integer",
             "flag",
                 "persistent", "required", "time", "writable",
         "properties",
