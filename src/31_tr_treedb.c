@@ -854,13 +854,12 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *      __graphs__
      *-------------------------------*/
     char *graphs_topic_name = "__graphs__";
-    int graphs_topic_version = 10;
+    int graphs_topic_version = 11;
     json_t *jn_graphs_topic_var = json_object();
     json_object_set_new(jn_graphs_topic_var, "topic_version", json_integer(graphs_topic_version));
 
     json_t *tag_graphs_schema = json_pack(
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"           /* id */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"        /* treedb */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"        /* topic */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"          /* active */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s,s,s]},"    /* time */
@@ -873,13 +872,6 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "flag",
                 "persistent","required","rowid",
 
-        "treedb",
-            "id", "treedb",
-            "header", "Treedb",
-            "fillspace", 28,
-            "type", "string",
-            "flag",
-                "persistent", "required", "writable",
         "topic",
             "id", "topic",
             "header", "Topic",
