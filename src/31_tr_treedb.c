@@ -862,12 +862,12 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
         "{s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"       /* id */
             "s:{s:s, s:s, s:i, s:s, s:[s,s,s]},"    /* topic */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]},"      /* active */
-            "s:{s:s, s:s, s:i, s:s, s:[s,s,s,s]},"  /* time */
+            "s:{s:s, s:s, s:i, s:s, s:[s,s,s,s,s]},"  /* time */
             "s:{s:s, s:s, s:i, s:s, s:[s,s]}}",     /* properties */
         "id",
             "id", "id",
             "header", "RowId",
-            "fillspace", 8,
+            "fillspace", 9,
             "type", "string",
             "flag",
                 "persistent","required","rowid",
@@ -892,7 +892,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
             "fillspace", 28,
             "type", "integer",
             "flag",
-                "persistent", "required", "time", "writable",
+                "persistent", "required", "time", "now", "writable",
         "properties",
             "id", "properties",
             "header", "Properties",
