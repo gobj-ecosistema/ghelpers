@@ -854,7 +854,7 @@ PUBLIC json_t *treedb_open_db( // WARNING Return IS NOT YOURS!
      *      __graphs__
      *-------------------------------*/
     char *graphs_topic_name = "__graphs__";
-    int graphs_topic_version = 8;
+    int graphs_topic_version = 9;
     json_t *jn_graphs_topic_var = json_object();
     json_object_set_new(jn_graphs_topic_var, "topic_version", json_integer(graphs_topic_version));
 
