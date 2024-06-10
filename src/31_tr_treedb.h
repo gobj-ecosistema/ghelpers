@@ -127,6 +127,7 @@ PUBLIC int treedb_set_callback(
         "boolean"
         "enum"
         "blob"
+        "number" ("integer" or "real")
 
     "flag" enum
     -----------
@@ -156,6 +157,13 @@ PUBLIC int treedb_set_callback(
         "color"
         "image"
         "tel"
+        "template"
+        "id"
+        "currency"
+        "hex"
+        "binary"
+        "percent"
+        "base64"
 
  ***************************************************************************/
 PUBLIC json_t *treedb_create_topic( // WARNING Return is NOT YOURS
