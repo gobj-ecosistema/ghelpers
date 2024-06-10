@@ -42,7 +42,7 @@ PUBLIC json_t * nonlegalstring2json(const char *str, BOOL verbose)
                 "position",     "%d", error.position,
                 NULL
             );
-            log_debug_dump(0, str, strlen(str), "json_loads(1) FAILED");
+            fprintf(stderr, "\n%s\n", str);     // WARNING output to console
         }
     }
     return jn;
@@ -128,6 +128,7 @@ PUBLIC json_t * legalstring2json(const char* str, BOOL verbose)
                 "position",     "%d", error.position,
                 NULL
             );
+            fprintf(stderr, "\n%s\n", str);     // WARNING output to console
         }
     }
     return jn;
