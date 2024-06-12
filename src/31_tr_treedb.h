@@ -154,6 +154,7 @@ PUBLIC int treedb_set_callback(
         "email"
         "url"
         "time"
+        "now"
         "color"
         "image"
         "tel"
