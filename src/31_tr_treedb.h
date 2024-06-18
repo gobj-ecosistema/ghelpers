@@ -119,37 +119,41 @@ PUBLIC int treedb_set_callback(
     "type" enum
     -----------
 
+        // Real types
+
         "string"
         "integer"
         "object" or "dict"
         "array" or "list"
         "real"
         "boolean"
-        "enum"
         "blob"
         "number" ("integer" or "real")
 
     "flag" enum
     -----------
 
+        // Field attributes
+
         "persistent"    // implicit "readable"
         "required"
-        "fkey"
-        "enum",
-        "hook"
-        "uuid"
         "notnull"
         "wild"
-        "rowid"
         "inherit"
-
                         // For use in gobj attributes
         "readable"      // Field readable by user
-        "writable"      // Field writable by user, implicit "readable"
-        "stats"         // field with stats, implicit "readable"
-        "rstats"        // field with resettable stats, implicit "stats"
-        "pstats"        // field with persistent stats, implicit "stats"
+        "writable"      // Field writable by user implicit "readable"
+        "stats"         // field with stats implicit "readable"
+        "rstats"        // field with resettable stats implicit "stats"
+        "pstats"        // field with persistent stats implicit "stats"
 
+        // Field types
+
+        "fkey"
+        "hook"
+        "enum"
+        "uuid"
+        "rowid"
         "password"
         "email"
         "url"
