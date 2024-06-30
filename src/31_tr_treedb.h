@@ -114,6 +114,7 @@ PUBLIC int treedb_set_callback(
             "type":         enum
             "flag":         enum
             "default":      blob
+            "placeholder":  string
         }
 
     "type" enum
