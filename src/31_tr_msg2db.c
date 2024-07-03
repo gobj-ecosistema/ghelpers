@@ -91,7 +91,8 @@ PUBLIC json_t *msg2db_open_db(
     const char *options // "persistent"
 )
 {
-    const char *msg2db_name = kw_get_str(jn_schema, "id", msg2db_name_, KW_REQUIRED);
+    char msg2db_name[NAME_MAX];
+    snprintf(msg2db_name, sizeof(msg2db_name), "%s", kw_get_str(jn_schema, "id", msg2db_name_, KW_REQUIRED));
 
     BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
 
@@ -374,10 +375,11 @@ PUBLIC int msg2db_close_db(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_MSG2DB_ERROR,
-            "msg",          "%s", "TreeDB not found.",
+            "msg",          "%s", "Msg2db not found",
             "msg2db_name",  "%s", msg2db_name,
             NULL
         );
+        log_debug_json(0, tranger, "Msg2db not found");
         return -1;
     }
 
