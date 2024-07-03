@@ -331,7 +331,7 @@ PUBLIC json_t *msg2db_open_db(
      *  Open "user" lists
      *------------------------------*/
     json_array_foreach(jn_schema_topics, idx, schema_topic) {
-        const char *topic_name = kw_get_str(schema_topic, "topic_name", "", 0);
+        const char *topic_name = kw_get_str(schema_topic, "id", kw_get_str(schema_topic, "topic_name", "", 0), 0);
         if(empty_string(topic_name)) {
             continue;
         }
