@@ -6590,7 +6590,7 @@ PUBLIC int treedb_autolink( // use fkeys fields of kw to auto-link
                     "msg",                  "%s", "update_node, new link: parent node not found",
                     "treedb_name",          "%s", treedb_name,
                     "topic_name",           "%s", topic_name,
-                    "parent",               "%s", ref,
+                    "parent-ref",           "%s", ref,
                     NULL
                 );
                 json_decref(jn_fkeys);
