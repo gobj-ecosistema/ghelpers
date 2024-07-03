@@ -91,8 +91,7 @@ PUBLIC json_t *msg2db_open_db(
     const char *options // "persistent"
 )
 {
-    char msg2db_name[NAME_MAX];
-    snprintf(msg2db_name, sizeof(msg2db_name), "%s", msg2db_name_);
+    const char *msg2db_name = kw_get_str(jn_schema, "id", msg2db_name_, KW_REQUIRED);
 
     BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
 
