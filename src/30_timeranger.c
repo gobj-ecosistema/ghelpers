@@ -2095,6 +2095,7 @@ PUBLIC int tranger_append_record(
                 NULL
             );
             log_debug_json(0, jn_record, "Cannot append record, gbuf_create() FAILED");
+            jsonp_free(srecord);
             JSON_DECREF(jn_record);
             return -1;
         }
