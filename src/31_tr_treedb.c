@@ -8692,3 +8692,40 @@ PUBLIC json_t *treedb_list_snaps( // Return MUST be decref, list of snaps
 
     return snaps;
 }
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PUBLIC json_t *create_template_record(
+    const char *template_name,
+    json_t *cols,       // NOT owned
+    json_t *kw          // Owned
+)
+{
+    json_t *new_record = json_object();
+    if(!template_name) {
+        template_name = "";
+    }
+    if(!kw) {
+        kw = json_object();
+    }
+
+    const char *field; json_t *col;
+    json_object_foreach(cols, field, col) {
+        json_t *value = kw_get_dict_value(kw, field, 0, 0);
+        if(!value) {
+            value = kw_get_dict_value(col, "default", 0, 0);
+        }
+        set_tranger_field_value(
+            template_name,
+            col,
+            new_record,
+            value,
+            TRUE
+        );
+    }
+
+    JSON_DECREF(kw)
+
+    return new_record;
+}
