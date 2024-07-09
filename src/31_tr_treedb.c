@@ -2354,13 +2354,16 @@ PRIVATE json_t *filtra_fkeys(
  ***************************************************************************/
 PRIVATE int set_tranger_field_value(
     const char *topic_name,
+    const char *field,
     json_t *col,    // NOT owned
     json_t *record, // NOT owned
     json_t *value,  // NOT owned
     BOOL create
 )
 {
-    const char *field = kw_get_str(col, "id", 0, KW_REQUIRED);
+    if(!field) {
+        field = kw_get_str(col, "id", 0, KW_REQUIRED);
+    }
     if(!field) {
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
@@ -3012,6 +3015,7 @@ PRIVATE json_t *record2tranger(
         }
         if(set_tranger_field_value(
                 topic_name,
+                field,
                 col,
                 new_record,
                 value,
@@ -8718,6 +8722,7 @@ PUBLIC json_t *create_template_record(
         }
         set_tranger_field_value(
             template_name,
+            field,
             col,
             new_record,
             value,
