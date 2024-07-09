@@ -2416,6 +2416,7 @@ PRIVATE int set_tranger_field_value(
     BOOL is_enum = kw_has_word(desc_flag, "enum", 0)?TRUE:FALSE;
     BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
     BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+    BOOL is_template = kw_has_word(desc_flag, "template", 0)?TRUE:FALSE;
     if(!(is_persistent || is_hook || is_fkey)) {
         // Not save to tranger
         return 0;
@@ -2452,6 +2453,8 @@ PRIVATE int set_tranger_field_value(
         type = "fkey";
     } else if(is_enum) {
         type = "enum";
+    } else if(is_template) {
+        type = "template";
     }
 
     SWITCHS(type) {
@@ -2624,6 +2627,21 @@ PRIVATE int set_tranger_field_value(
                     );
                     return -1;
             } SWITCHS_END;
+            break;
+
+        CASES("template")
+            json_t *template = kwid_new_dict("verbose", col, "template");
+            if(template) {
+                json_t *v = create_template_record(
+                    field,
+                    template,           // NOT owned
+                    json_incref(value)  // Owned
+                );
+                json_object_set_new(record, field, v);
+                json_decref(template);
+            } else {
+                json_object_set_new(record, field, json_object());
+            }
             break;
 
         CASES("list")
