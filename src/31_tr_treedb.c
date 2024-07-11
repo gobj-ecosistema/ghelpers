@@ -2629,21 +2629,6 @@ PRIVATE int set_tranger_field_value(
             } SWITCHS_END;
             break;
 
-        CASES("template")
-            json_t *template = kwid_new_dict("verbose", col, "template");
-            if(template) {
-                json_t *v = create_template_record(
-                    field,
-                    template,           // NOT owned
-                    json_incref(value)  // Owned
-                );
-                json_object_set_new(record, field, v);
-                json_decref(template);
-            } else {
-                json_object_set_new(record, field, json_object());
-            }
-            break;
-
         CASES("list")
         CASES("array")
             if(JSON_TYPEOF(value, JSON_ARRAY)) {
@@ -2662,6 +2647,7 @@ PRIVATE int set_tranger_field_value(
             }
             break;
 
+        CASES("template")
         CASES("dict")
         CASES("object")
             if(JSON_TYPEOF(value, JSON_OBJECT)) {
