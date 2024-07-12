@@ -2416,6 +2416,7 @@ PRIVATE int set_tranger_field_value(
     BOOL is_enum = kw_has_word(desc_flag, "enum", 0)?TRUE:FALSE;
     BOOL is_hook = kw_has_word(desc_flag, "hook", 0)?TRUE:FALSE;
     BOOL is_fkey = kw_has_word(desc_flag, "fkey", 0)?TRUE:FALSE;
+    BOOL is_now = kw_has_word(desc_flag, "now", 0)?TRUE:FALSE;
     BOOL is_template = kw_has_word(desc_flag, "template", 0)?TRUE:FALSE;
     if(!(is_persistent || is_hook || is_fkey)) {
         // Not save to tranger
@@ -2696,7 +2697,11 @@ PRIVATE int set_tranger_field_value(
             break;
 
         CASES("integer")
-            if(!value) {
+            if(is_now) {
+                time_t t_now;
+                time(&t_now);
+                json_object_set_new(record, field, json_integer(t_now));
+            } else if(!value) {
                 json_object_set_new(record, field, json_integer(0));
             } else if(json_is_integer(value)) {
                 json_object_set(record, field, value);
