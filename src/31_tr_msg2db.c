@@ -1006,7 +1006,7 @@ PUBLIC json_t *msg2db_append_message( // Return is NOT YOURS
             id = uuid;
             json_object_set_new(kw, "id", json_string(id));
         } else {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_MSG2DB_ERROR,
