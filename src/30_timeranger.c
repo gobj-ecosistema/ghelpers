@@ -177,7 +177,7 @@ PUBLIC json_t *tranger_startup(
     const char *path_ = kw_get_str(tranger, "path", "", 0);
     build_path2(path, sizeof(path), path_, ""); // I want modify path
     if(empty_string(path)) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
@@ -193,7 +193,7 @@ PUBLIC json_t *tranger_startup(
     if(empty_string(database)) {
         database = pop_last_segment(path);
         if(empty_string(database)) {
-            log_error(0,
+            log_error(LOG_OPT_TRACE_STACK,
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_PARAMETER_ERROR,
