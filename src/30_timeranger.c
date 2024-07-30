@@ -1885,7 +1885,7 @@ PUBLIC int tranger_append_record(
 
     BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
     if(!master) {
-        log_error(0,
+        log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_PARAMETER_ERROR,
