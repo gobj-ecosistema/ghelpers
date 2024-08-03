@@ -2943,7 +2943,7 @@ PUBLIC int tranger_get_record(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "rowid greather than last_rowid",
+                "msg",          "%s", "rowid greater than last_rowid",
                 "topic",        "%s", tranger_topic_name(topic),
                 "rowid",        "%lu", (unsigned long)rowid,
                 "last_rowid",   "%lu", (unsigned long)__last_rowid__,
