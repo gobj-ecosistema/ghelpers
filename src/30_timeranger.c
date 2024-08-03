@@ -1978,7 +1978,7 @@ PUBLIC int tranger_append_record(
         } else {
             if(json_is_string(jn_tval)) {
                 int offset;
-                timestamp_t timestamp; // TODO if is it a milisecond time?
+                timestamp_t timestamp; // TODO if is it a millisecond time?
                 parse_date_basic(json_string_value(jn_tval), &timestamp, &offset);
                 md_record->__tm__ = timestamp;
             } else if(json_is_number(jn_tval)) {
