@@ -25,7 +25,7 @@
 /***************************************************************
  *              Constants
  ***************************************************************/
-PRIVATE const char *topic_fieds[] = {
+PRIVATE const char *topic_fields[] = {
     "topic_name",
     "pkey",
     "tkey",
@@ -96,7 +96,7 @@ typedef GBUFFER * (*filter_callback_t) (   // Remember to free returned gbuffer
     GBUFFER * gbuf  // must be owned
 );
 
-PRIVATE int _get_record_for_wr(
+PRIVATE int _get_md_record_for_wr(
     json_t *tranger,
     json_t *topic,
     uint64_t rowid,
@@ -539,7 +539,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
 
         json_t *topic_desc = kw_clone_by_path(
             jn_topic_desc, // owned
-            topic_fieds
+            topic_fields
         );
         save_json_to_file(
             directory,
@@ -860,7 +860,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
         "topic_var.json"
     );
 
-    kw_update_except(topic, topic_var, topic_fieds); // data from topic disk are inmutable!
+    kw_update_except(topic, topic_var, topic_fields); // data from topic disk are inmutable!
     json_decref(topic_var);
 
     /*
@@ -1418,7 +1418,7 @@ PUBLIC int tranger_write_topic_var(
 
     json_t *topic = kw_get_subdict_value(tranger, "topics", topic_name, 0, 0);
     if(topic) {
-        kw_update_except(topic, topic_var, topic_fieds); // data from topic disk are inmutable!
+        kw_update_except(topic, topic_var, topic_fields); // data from topic disk are inmutable!
     }
 
     save_json_to_file(
@@ -2213,9 +2213,9 @@ PUBLIC int tranger_append_record(
 }
 
 /***************************************************************************
-    Get record by rowid (by fd, for write)
+    Get md record by rowid (by fd, for write)
  ***************************************************************************/
-PRIVATE int _get_record_for_wr(
+PRIVATE int _get_md_record_for_wr(
     json_t *tranger,
     json_t *topic,
     uint64_t rowid,
@@ -2251,7 +2251,7 @@ PRIVATE int _get_record_for_wr(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "rowid greather than last_rowid",
+                "msg",          "%s", "rowid greater than last_rowid",
                 "topic",        "%s", tranger_topic_name(topic),
                 "rowid",        "%lu", (unsigned long)rowid,
                 "last_rowid",   "%lu", (unsigned long)__last_rowid__,
@@ -2389,7 +2389,7 @@ PUBLIC int tranger_delete_record(
     }
 
     md_record_t md_record;
-    if(_get_record_for_wr(
+    if(_get_md_record_for_wr(
         tranger,
         topic,
         rowid,
@@ -2496,7 +2496,7 @@ PUBLIC int tranger_write_mark1(
     }
 
     md_record_t md_record;
-    if(_get_record_for_wr(
+    if(_get_md_record_for_wr(
         tranger,
         topic,
         rowid,
@@ -2549,7 +2549,7 @@ PUBLIC int tranger_write_user_flag(
     }
 
     md_record_t md_record;
-    if(_get_record_for_wr(
+    if(_get_md_record_for_wr(
         tranger,
         topic,
         rowid,
@@ -2593,7 +2593,7 @@ PUBLIC int tranger_set_user_flag(
     }
 
     md_record_t md_record;
-    if(_get_record_for_wr(
+    if(_get_md_record_for_wr(
         tranger,
         topic,
         rowid,
@@ -2646,7 +2646,7 @@ PUBLIC uint32_t tranger_read_user_flag(
     }
 
     md_record_t md_record;
-    if(_get_record_for_wr(
+    if(_get_md_record_for_wr(
         tranger,
         topic,
         rowid,
