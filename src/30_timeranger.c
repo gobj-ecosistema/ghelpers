@@ -2681,6 +2681,8 @@ PUBLIC json_t *tranger_open_list(
     json_object_update(list, jn_list);
     JSON_DECREF(jn_list);
 
+    BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
+
     json_t *topic = tranger_topic(tranger, kw_get_str(list, "topic_name", "", KW_REQUIRED));
     if(!topic) {
         log_error(0,
@@ -2723,7 +2725,10 @@ PUBLIC json_t *tranger_open_list(
      */
     json_int_t __last_rowid__ = kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
     if(__last_rowid__ <= 0) {
-        return list;
+        if(master) {
+            return list;
+        }
+        // HACK no "master" (tranger readonly) don't have updated __last_rowid__
     }
 
     BOOL only_md = kw_get_bool(match_cond, "only_md", 0, 0);
@@ -2915,6 +2920,8 @@ PUBLIC int tranger_get_record(
     BOOL verbose
 )
 {
+    BOOL master = kw_get_bool(tranger, "master", 0, KW_REQUIRED);
+
     memset(md_record, 0, sizeof(md_record_t));
 
     if(rowid == 0) {
@@ -2932,25 +2939,30 @@ PUBLIC int tranger_get_record(
         return -1;
     }
 
-    json_int_t __last_rowid__ = kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
-    if(__last_rowid__ <= 0) {
-        return -1;
-    }
+    uint64_t __last_rowid__ = (uint64_t)kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
 
-    if(rowid > __last_rowid__) {
-        if(verbose) {
-            log_error(0,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "rowid greater than last_rowid",
-                "topic",        "%s", tranger_topic_name(topic),
-                "rowid",        "%lu", (unsigned long)rowid,
-                "last_rowid",   "%lu", (unsigned long)__last_rowid__,
-                NULL
-            );
+        // HACK no "master" (tranger readonly) don't have updated __last_rowid__
+    if(__last_rowid__ <= 0) {
+        if(master) {
+            return -1;
         }
-        return -1;
+    }
+    if(rowid > __last_rowid__) {
+        if(master) {
+            if(verbose) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "rowid greater than last_rowid",
+                    "topic",        "%s", tranger_topic_name(topic),
+                    "rowid",        "%lu", (unsigned long)rowid,
+                    "last_rowid",   "%lu", (unsigned long)__last_rowid__,
+                    NULL
+                );
+            }
+            return -1;
+        }
     }
 
     int fd = get_topic_idx_fd(tranger, topic, FALSE);
@@ -2961,32 +2973,48 @@ PUBLIC int tranger_get_record(
     uint64_t offset = (rowid-1) * sizeof(md_record_t);
     uint64_t offset_ = lseek64(fd, offset, SEEK_SET);
     if(offset != offset_) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "topic_idx.md corrupted, lseek() FAILED",
-            "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
-            NULL
-        );
+        if(master) {
+            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "topic_idx.md corrupted, lseek() FAILED",
+                "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
+                NULL
+            );
+        }
         return -1;
     }
 
-    int ln = read(
+    size_t ln = read(
         fd,
         md_record,
         sizeof(md_record_t)
     );
     if(ln != sizeof(md_record_t)) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot read record metadata, read FAILED",
-            "topic",        "%s", tranger_topic_name(topic),
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
+        if(master) {
+            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                "msg",          "%s", "Cannot read record metadata, read FAILED",
+                "topic",        "%s", tranger_topic_name(topic),
+                "errno",        "%s", strerror(errno),
+                NULL
+            );
+        } else {
+            if(ln != 0) {
+                log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                    "msg",          "%s", "Cannot read record metadata, read FAILED",
+                    "topic",        "%s", tranger_topic_name(topic),
+                    "errno",        "%s", strerror(errno),
+                    NULL
+                );
+            }
+        }
         return -1;
     }
 
@@ -3004,6 +3032,11 @@ PUBLIC int tranger_get_record(
         return -1;
     }
 
+    if(!master) {
+        if(md_record->__rowid__ > __last_rowid__) {
+            json_object_set_new(topic, "__last_rowid__", json_integer(md_record->__rowid__));
+        }
+    }
     return 0;
 }
 
