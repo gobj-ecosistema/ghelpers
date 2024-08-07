@@ -875,7 +875,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
     );
 
     /*
-     *  Add topic to topics
+     *  Add the topic to topics
      */
     kw_set_subdict_value(tranger, "topics", topic_name, topic);
 
