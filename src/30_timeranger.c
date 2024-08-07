@@ -738,7 +738,7 @@ PRIVATE int new_record_md_to_file(
         return -1;
     }
 
-    int ln = write( // write new (record content)
+    size_t ln = write( // write new (record content)
         fd,
         md_record,
         sizeof(md_record_t)
