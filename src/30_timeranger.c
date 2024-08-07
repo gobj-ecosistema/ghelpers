@@ -752,6 +752,18 @@ PRIVATE int open_topic_idx_fd(json_t *tranger, json_t *topic)
 /***************************************************************************
  *
  ***************************************************************************/
+PRIVATE int close_topic_idx_fd(json_t *tranger, json_t *topic)
+{
+    int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
+    if(fd >= 0) {
+        close(fd);
+    }
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
 PRIVATE int get_topic_idx_fd(
     json_t *tranger,
     json_t *topic,
@@ -783,18 +795,6 @@ PRIVATE int get_topic_idx_fd(
     }
 
     return fd;
-}
-
-/***************************************************************************
- *
- ***************************************************************************/
-PRIVATE int close_topic_idx_fd(json_t *tranger, json_t *topic)
-{
-    int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
-    if(fd >= 0) {
-        close(fd);
-    }
-    return 0;
 }
 
 /***************************************************************************
