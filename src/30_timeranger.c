@@ -768,7 +768,7 @@ PRIVATE int get_topic_idx_fd(
     json_t *tranger,
     json_t *topic,
     BOOL required,
-    BOOL create   // WARNING it is created in json topic
+    BOOL create   // WARNING it's to create in the json topic
 )
 {
     /*-----------------------------*
