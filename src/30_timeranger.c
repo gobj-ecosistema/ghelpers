@@ -411,7 +411,7 @@ PUBLIC system_flag_t tranger_str2system_flag(const char *system_flag)
    HACK IDEMPOTENT function
  ***************************************************************************/
 PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
-    json_t *tranger,    // If topic exists then only needs (tranger, topic_name) parameters
+    json_t *tranger,    // If the topic exists then only needs (tranger, topic_name) parameters
     const char *topic_name,
     const char *pkey,
     const char *tkey,
