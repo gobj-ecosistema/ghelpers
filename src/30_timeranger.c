@@ -2311,8 +2311,8 @@ PRIVATE int _get_md_record_for_wr(
         return -1;
     }
 
-    uint64_t offset = (rowid-1) * sizeof(md_record_t);
-    uint64_t offset_ = lseek64(fd, offset, SEEK_SET);
+    off64_t offset = (off64_t) ((rowid-1) * sizeof(md_record_t));
+    off64_t offset_ = lseek64(fd, offset, SEEK_SET);
     if(offset != offset_) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
@@ -2327,7 +2327,7 @@ PRIVATE int _get_md_record_for_wr(
         return -1;
     }
 
-    int ln = read(
+    size_t ln = read(
         fd,
         md_record,
         sizeof(md_record_t)
@@ -2372,9 +2372,8 @@ PRIVATE int rewrite_md_record_to_file(json_t *tranger, json_t *topic, md_record_
         // Error already logged
         return -1;
     }
-    uint64_t offset = (md_record->__rowid__ - 1) * sizeof(md_record_t);
-    uint64_t offset_ = lseek64(fd, offset, SEEK_SET);
-
+    off64_t offset = (off64_t) ((md_record->__rowid__-1) * sizeof(md_record_t));
+    off64_t offset_ = lseek64(fd, offset, SEEK_SET);
     if(offset != offset_) {
         log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             "gobj",         "%s", __FILE__,
@@ -2389,7 +2388,7 @@ PRIVATE int rewrite_md_record_to_file(json_t *tranger, json_t *topic, md_record_
         return -1;
     }
 
-    int ln = write( // write new (record content)
+    size_t ln = write( // write new (record content)
         fd,
         md_record,
         sizeof(md_record_t)
@@ -2487,7 +2486,7 @@ PUBLIC int tranger_delete_record(
     }
     char *p = gbuf_cur_rd_pointer(gbuf);
 
-    int ln = write(fd, p, __size__);    // blank content
+    size_t ln = write(fd, p, __size__);    // blank content
     gbuf_decref(gbuf);
     if(ln != __size__) {
         log_error(0,
@@ -3014,8 +3013,9 @@ PUBLIC int tranger_get_record(
         // Error already logged
         return -1;
     }
-    uint64_t offset = (rowid-1) * sizeof(md_record_t);
-    uint64_t offset_ = lseek64(fd, offset, SEEK_SET);
+
+    off64_t offset = (off64_t) ((rowid-1) * sizeof(md_record_t));
+    off64_t offset_ = lseek64(fd, offset, SEEK_SET);
     if(offset != offset_) {
         if(master) {
             log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
