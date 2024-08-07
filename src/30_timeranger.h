@@ -1,13 +1,13 @@
 /****************************************************************************
- *  TIMERANGER.H
+ *      TIMERANGER.H
  *
- *  Time Ranger, a series time-key-value database over flat files
+ *      Time Ranger, a serie-time key-value database over flat files
  *
- *  Copyright (c) 2017-2019 Niyamaka.
- *  All Rights Reserved.
+ *      Copyright (c) 2017-2024 Niyamaka.
+ *      All Rights Reserved.
  *
  *  Básicamente un resource (topic) está implementado como:
- *      - Diccionario de id's (key's) con lista de imagenes en tiempo.
+ *      - Diccionario de id's (key's) con lista de imágenes en tiempo.
  *      - !persistente! en disco.
  *
  *  Conteniendo un objeto basado en

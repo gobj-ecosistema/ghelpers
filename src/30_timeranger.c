@@ -1,9 +1,9 @@
 /***********************************************************************
  *          TIMERANGER.C
  *
- *          Time Ranger, a series time-key-value database over flat files
+ *          Time Ranger, a serie-time key-value database over flat files
  *
- *          Copyright (c) 2017-2018 Niyamaka.
+ *          Copyright (c) 2017-2014 Niyamaka.
  *          All Rights Reserved.
  ***********************************************************************/
 #ifndef _LARGEFILE64_SOURCE
