@@ -613,7 +613,6 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
          *      topic_version
          *      topic_cols.json
          *---------------------------------------------*/
-        char directory[PATH_MAX];
         snprintf(
             directory,
             sizeof(directory),
