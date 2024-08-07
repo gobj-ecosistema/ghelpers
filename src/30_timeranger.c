@@ -287,13 +287,13 @@ PUBLIC json_t *tranger_startup(
          *  I'm MASTER
          */
         const char *filename_mask = kw_get_str(tranger, "filename_mask", "%Y-%m-%d", KW_REQUIRED);
-        int xpermission = kw_get_int(tranger, "xpermission", 02770, KW_REQUIRED);
-        int rpermission = kw_get_int(tranger, "rpermission", 0660, KW_REQUIRED);
-        json_t *jn_tranger = json_object();
-        kw_get_str(jn_tranger, "database", database, KW_CREATE);
-        kw_get_str(jn_tranger, "filename_mask", filename_mask, KW_CREATE);
-        kw_get_int(jn_tranger, "rpermission", rpermission, KW_CREATE);
-        kw_get_int(jn_tranger, "xpermission", xpermission, KW_CREATE);
+        int xpermission = (int)kw_get_int(tranger, "xpermission", 02770, KW_REQUIRED);
+        int rpermission = (int)kw_get_int(tranger, "rpermission", 0660, KW_REQUIRED);
+        json_t *jn_tranger_ = json_object();
+        kw_get_str(jn_tranger_, "database", database, KW_CREATE);
+        kw_get_str(jn_tranger_, "filename_mask", filename_mask, KW_CREATE);
+        kw_get_int(jn_tranger_, "rpermission", rpermission, KW_CREATE);
+        kw_get_int(jn_tranger_, "xpermission", xpermission, KW_CREATE);
         save_json_to_file(
             directory,
             "__timeranger__.json",
@@ -302,7 +302,7 @@ PUBLIC json_t *tranger_startup(
             on_critical_error,
             TRUE,   //create
             TRUE,  //only_read
-            jn_tranger  // owned
+            jn_tranger_  // owned
         );
         // Re-open
         json_t *jn_disk_tranger = load_persistent_json(
