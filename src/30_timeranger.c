@@ -370,7 +370,7 @@ PUBLIC int tranger_shutdown(json_t *tranger)
     json_t *jn_value;
     json_t *opened_files = kw_get_dict(tranger, "fd_opened_files", 0, KW_REQUIRED);
     json_object_foreach(opened_files, key, jn_value) {
-        int fd = kw_get_int(opened_files, key, 0, KW_REQUIRED);
+        int fd = (int)kw_get_int(opened_files, key, 0, KW_REQUIRED);
         if(fd >= 0) {
             close(fd);
         }
@@ -483,7 +483,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
             JSON_DECREF(jn_var);
             return 0;
         }
-        if(mkrdir(directory, 0, kw_get_int(tranger, "xpermission", 0, KW_REQUIRED))<0) {
+        if(mkrdir(directory, 0, (int)kw_get_int(tranger, "xpermission", 0, KW_REQUIRED))<0) {
             log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
@@ -503,7 +503,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
             directory,
             "topic_idx.md"
         );
-        int fp = newfile(full_path, kw_get_int(tranger, "rpermission", 0, KW_REQUIRED), FALSE);
+        int fp = newfile(full_path, (int)kw_get_int(tranger, "rpermission", 0, KW_REQUIRED), FALSE);
         if(fp < 0) {
             log_error(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                 "gobj",         "%s", __FILE__,
@@ -544,8 +544,8 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
         save_json_to_file(
             directory,
             "topic_desc.json",
-            kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
-            kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+            (int)kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+            (int)kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
             kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
             master? TRUE:FALSE, //create
             TRUE,  //only_read
@@ -596,7 +596,7 @@ PUBLIC json_t *tranger_create_topic( // WARNING returned json IS NOT YOURS
         snprintf(full_path, sizeof(full_path), "%s/data",
             directory
         );
-        if(mkrdir(full_path, 0, kw_get_int(tranger, "xpermission", 0, KW_REQUIRED))<0) {
+        if(mkrdir(full_path, 0, (int)kw_get_int(tranger, "xpermission", 0, KW_REQUIRED))<0) {
             log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
@@ -696,7 +696,7 @@ PRIVATE int get_topic_idx_fd(json_t *tranger, json_t *topic, BOOL verbose)
     /*-----------------------------*
      *  Open topix idx for writing
      *-----------------------------*/
-    int fd = kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
+    int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
     if(fd<0) {
         if(verbose) {
             log_error(0,
@@ -1020,7 +1020,7 @@ PUBLIC int tranger_close_topic(
         return -1;
     }
 
-    int fd = kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
+    int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
     if(fd >= 0) {
         close(fd);
     }
@@ -1029,7 +1029,7 @@ PUBLIC int tranger_close_topic(
     json_t *jn_value;
     json_t *fd_opened_files = kw_get_dict(topic, "fd_opened_files", 0, KW_REQUIRED);
     json_object_foreach(fd_opened_files, key, jn_value) {
-        int fd = kw_get_int(fd_opened_files, key, 0, KW_REQUIRED);
+        fd = (int)kw_get_int(fd_opened_files, key, 0, KW_REQUIRED);
         if(fd >= 0) {
             close(fd);
         }
@@ -1061,7 +1061,7 @@ PRIVATE int close_fd_opened_files(
 
     json_t *fd_opened_files = kw_get_dict(topic, "fd_opened_files", 0, KW_REQUIRED);
     json_object_foreach_safe(fd_opened_files, tmp, key, jn_value) {
-        int fd = kw_get_int(fd_opened_files, key, 0, KW_REQUIRED);
+        int fd = (int)kw_get_int(fd_opened_files, key, 0, KW_REQUIRED);
         if(fd >= 0) {
             close(fd);
         }
@@ -1424,8 +1424,8 @@ PUBLIC int tranger_write_topic_var(
     save_json_to_file(
         directory,
         "topic_var.json",
-        kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
-        kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+        (int)kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+        (int)kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
         0,
         master? TRUE:FALSE, //create
         FALSE,  //only_read
@@ -1499,8 +1499,8 @@ PUBLIC int tranger_write_topic_cols(
     save_json_to_file(
         directory,
         "topic_cols.json",
-        kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
-        kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
+        (int)kw_get_int(tranger, "xpermission", 0, KW_REQUIRED),
+        (int)kw_get_int(tranger, "rpermission", 0, KW_REQUIRED),
         0,
         master? TRUE:FALSE, //create
         FALSE,  //only_read
@@ -1742,7 +1742,7 @@ PRIVATE int get_content_fd(json_t *tranger, json_t *topic, uint64_t __t__)
     /*-----------------------------*
      *      Open content file
      *-----------------------------*/
-    int fd = kw_get_int(
+    int fd = (int)kw_get_int(
         kw_get_dict(topic, "fd_opened_files", 0, KW_REQUIRED),
         full_path,
         -1,
@@ -2707,7 +2707,7 @@ PUBLIC json_t *tranger_open_list(
 
     json_t *match_cond = kw_get_dict(list, "match_cond", 0, KW_REQUIRED);
 
-    int trace_level = kw_get_int(tranger, "trace_level", 0, 0);
+    int trace_level = (int)kw_get_int(tranger, "trace_level", 0, 0);
 
     tranger_load_record_callback_t load_record_callback =
         (tranger_load_record_callback_t)(size_t)kw_get_int(
