@@ -760,27 +760,6 @@ PRIVATE int new_record_md_to_file(
 }
 
 /***************************************************************************
-
- ***************************************************************************/
-PRIVATE json_int_t get_last_rowid(json_t *tranger, json_t *topic, int fd)
-{
-    uint64_t offset = lseek64(fd, 0, SEEK_END);
-    if(offset < 0) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "topic_idx.md corrupted",
-            "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
-            "offset",       "%lu", (unsigned long)offset,
-            NULL
-        );
-        return 0;
-    }
-    return offset/sizeof(md_record_t);
-}
-
-/***************************************************************************
    Open topic
  ***************************************************************************/
 PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
@@ -921,10 +900,29 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
             return 0;
         }
         json_object_set_new(topic, "topic_idx_fd", json_integer(fd));
+
+        /*
+         *  Get last rowid
+         */
+        uint64_t offset = lseek64(fd, 0, SEEK_END);
+        if(offset < 0) {
+            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "topic_idx.md corrupted",
+                "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
+                "offset",       "%lu", (unsigned long)offset,
+                NULL
+            );
+            json_decref(topic);
+            return 0;
+        }
+        uint64_t last_rowid = offset/sizeof(md_record_t);
         json_object_set_new(
             topic,
             "__last_rowid__",
-            json_integer(get_last_rowid(tranger, topic, fd))
+            json_integer((json_int_t)last_rowid)
         );
     }
 
