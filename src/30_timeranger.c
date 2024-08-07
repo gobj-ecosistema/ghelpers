@@ -914,7 +914,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "Cannot open TimeRanger resource. open() FAILED",
+                "msg",          "%s", "Cannot open TimeRanger topic_idx",
                 "path",         "%s", full_path,
                 "errno",        "%s", strerror(errno),
                 NULL
@@ -1695,11 +1695,20 @@ PRIVATE int get_content_fd(json_t *tranger, json_t *topic, uint64_t __t__)
             return -1;
         }
 
-        int fp = newfile(full_path, kw_get_int(tranger, "rpermission", 0, KW_REQUIRED), FALSE);
+        int fp = newfile(full_path, (int)kw_get_int(tranger, "rpermission", 0, KW_REQUIRED), FALSE);
         if(fp < 0) {
             if(errno == EMFILE) {
+                log_error(0,
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "path",         "%s", full_path,
+                    "msg",          "%s", "TOO MANY OPEN FILES",
+                    NULL
+                );
                 close_fd_opened_files(topic);
-                int fp = newfile(full_path, kw_get_int(tranger, "rpermission", 0, KW_REQUIRED), FALSE);
+
+                fp = newfile(full_path, (int)kw_get_int(tranger, "rpermission", 0, KW_REQUIRED), FALSE);
                 if(fp < 0) {
                     log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                         "gobj",         "%s", __FILE__,
