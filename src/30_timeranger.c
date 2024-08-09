@@ -715,7 +715,7 @@ PRIVATE int open_topic_idx_fd(json_t *tranger, json_t *topic)
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot open TimeRanger topic_idx",
+            "msg",          "%s", "Cannot open TimeRanger topic_idx fd",
             "path",         "%s", full_path,
             "errno",        "%s", strerror(errno),
             NULL
@@ -758,6 +758,7 @@ PRIVATE int close_topic_idx_fd(json_t *tranger, json_t *topic)
     int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
     if(fd >= 0) {
         close(fd);
+        json_object_set_new(topic, "topic_idx_fd", json_integer(-1));
     }
     return 0;
 }
@@ -770,9 +771,6 @@ PRIVATE int get_topic_idx_fd(
     json_t *topic
 )
 {
-    /*-----------------------------*
-     *  Open topix idx for writing
-     *-----------------------------*/
     int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
     if(fd<0) {
         log_error(LOG_OPT_TRACE_STACK,
@@ -785,6 +783,83 @@ PRIVATE int get_topic_idx_fd(
     }
 
     return fd;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int open_topic_idx_file(json_t *tranger, json_t *topic)
+{
+    char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s/%s",
+        kw_get_str(topic, "directory", "", KW_REQUIRED),
+        "topic_idx.md"
+    );
+    FILE *file = fopen(full_path, "r");;
+    if(!file) {
+        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "Cannot open TimeRanger topic_idx file",
+            "path",         "%s", full_path,
+            "errno",        "%s", strerror(errno),
+            NULL
+        );
+        return -1;
+    }
+
+    if(setvbuf(file, NULL, _IOFBF, 0) != 0) { // TODO set own buffer to control memory
+        log_error(0,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+            "msg",          "%s", "setvbuf() FAILED",
+            "path",         "%s", full_path,
+            "errno",        "%s", strerror(errno),
+            NULL
+        );
+        // Continue to work
+    }
+
+    json_object_set_new(topic, "topic_idx_file", json_integer((json_int_t)file));
+
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE int close_topic_idx_file(json_t *tranger, json_t *topic)
+{
+    FILE *file = (FILE *)(size_t)kw_get_int(topic, "topic_idx_file", 0, KW_REQUIRED);
+    if(file) {
+        fclose(file);
+        json_object_set_new(topic, "topic_idx_file", json_integer(0));
+    }
+    return 0;
+}
+
+/***************************************************************************
+ *
+ ***************************************************************************/
+PRIVATE FILE *get_topic_idx_file(
+    json_t *tranger,
+    json_t *topic
+)
+{
+    FILE *file = (FILE *)(size_t)kw_get_int(topic, "topic_idx_file", 0, KW_REQUIRED);
+    if(!file) {
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "NO topic_idx_file",
+            NULL
+        );
+    }
+
+    return file;
 }
 
 /***************************************************************************
@@ -908,6 +983,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
             json_decref(topic);
             return 0;
         }
+        open_topic_idx_file(tranger, topic);
     }
 
     return topic;
@@ -1001,6 +1077,7 @@ PUBLIC int tranger_close_topic(
     }
 
     close_topic_idx_fd(tranger, topic);
+    close_topic_idx_file(tranger, topic);
 
     const char *key;
     json_t *jn_value;
