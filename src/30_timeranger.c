@@ -33,6 +33,7 @@ PRIVATE const char *topic_fields[] = {
     "directory",
     "__last_rowid__",
     "topic_idx_fd",
+    "topic_idx_file",
     "fd_opened_files",
     "file_opened_files",
     "lists",
@@ -892,6 +893,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
     kw_get_int(topic, "__last_rowid__", 0, KW_CREATE);
 
     kw_get_int(topic, "topic_idx_fd", -1, KW_CREATE);
+    kw_get_int(topic, "topic_idx_file", 0, KW_CREATE);
 
     kw_get_dict(topic, "fd_opened_files", json_object(), KW_CREATE);
     kw_get_dict(topic, "file_opened_files", json_object(), KW_CREATE);
