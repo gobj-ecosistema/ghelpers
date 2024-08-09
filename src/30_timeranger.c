@@ -766,32 +766,21 @@ PRIVATE int close_topic_idx_fd(json_t *tranger, json_t *topic)
  ***************************************************************************/
 PRIVATE int get_topic_idx_fd(
     json_t *tranger,
-    json_t *topic,
-    BOOL required,
-    BOOL create   // WARNING it's to create in the json topic
+    json_t *topic
 )
 {
     /*-----------------------------*
      *  Open topix idx for writing
      *-----------------------------*/
-    kw_flag_t flag = 0;
-    if(required) {
-        flag |= KW_REQUIRED;
-    }
-    if(create) {
-        flag |= KW_CREATE;
-    }
-    int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, flag);
+    int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
     if(fd<0) {
-        if(required) {
-            log_error(LOG_OPT_TRACE_STACK,
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "NO topic_idx_fd",
-                NULL
-            );
-        }
+        log_error(LOG_OPT_TRACE_STACK,
+            "gobj",         "%s", __FILE__,
+            "function",     "%s", __FUNCTION__,
+            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+            "msg",          "%s", "NO topic_idx_fd",
+            NULL
+        );
     }
 
     return fd;
@@ -902,8 +891,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
     kw_get_str(topic, "directory", directory, KW_CREATE);
     kw_get_int(topic, "__last_rowid__", 0, KW_CREATE);
 
-    // Only to create the "topic_idx_fd" variable
-    get_topic_idx_fd(tranger, topic, FALSE, TRUE); // OLD kw_get_int(topic, "topic_idx_fd", -1, KW_CREATE);
+    kw_get_int(topic, "topic_idx_fd", -1, KW_CREATE);
 
     kw_get_dict(topic, "fd_opened_files", json_object(), KW_CREATE);
     kw_get_dict(topic, "file_opened_files", json_object(), KW_CREATE);
@@ -2216,7 +2204,7 @@ PRIVATE int new_record_md_to_file(
     json_t *topic,
     md_record_t *md_record)
 {
-    int fd = get_topic_idx_fd(tranger, topic, TRUE, FALSE);
+    int fd = get_topic_idx_fd(tranger, topic);
     if(fd < 0) {
         // Error already logged
         return -1;
@@ -2306,7 +2294,7 @@ PRIVATE int _get_md_record_for_wr(
         return -1;
     }
 
-    int fd = get_topic_idx_fd(tranger, topic, TRUE, FALSE);
+    int fd = get_topic_idx_fd(tranger, topic);
     if(fd < 0) {
         // Error already logged
         return -1;
@@ -2368,7 +2356,7 @@ PRIVATE int _get_md_record_for_wr(
  ***************************************************************************/
 PRIVATE int rewrite_md_record_to_file(json_t *tranger, json_t *topic, md_record_t *md_record)
 {
-    int fd = get_topic_idx_fd(tranger, topic, TRUE, FALSE);
+    int fd = get_topic_idx_fd(tranger, topic);
     if(fd < 0) {
         // Error already logged
         return -1;
@@ -3009,7 +2997,7 @@ PUBLIC int tranger_get_record(
         }
     }
 
-    int fd = get_topic_idx_fd(tranger, topic, TRUE, FALSE);
+    int fd = get_topic_idx_fd(tranger, topic);
     if(fd < 0) {
         // Error already logged
         return -1;
