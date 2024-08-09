@@ -2454,12 +2454,12 @@ PUBLIC int tranger_delete_record(
     }
 
     uint64_t __offset__ = md_record.__offset__;
-    if(lseek(fd, __offset__, SEEK_SET) != __offset__) {
+    if(lseek64(fd, __offset__, SEEK_SET) != __offset__) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot read record data. lseek() FAILED",
+            "msg",          "%s", "Cannot read record data. lseek FAILED",
             "topic",        "%s", tranger_topic_name(topic),
             "directory",    "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
             "errno",        "%s", strerror(errno),
@@ -3023,7 +3023,7 @@ PUBLIC int tranger_get_record(
                 "gobj",         "%s", __FILE__,
                 "function",     "%s", __FUNCTION__,
                 "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "topic_idx.md corrupted, lseek() FAILED",
+                "msg",          "%s", "topic_idx.md corrupted, lseek64 FAILED",
                 "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
                 NULL
             );
@@ -3115,7 +3115,7 @@ PUBLIC json_t *tranger_read_record_content(
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
             "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot read record data. lseek() FAILED",
+            "msg",          "%s", "Cannot read record data. fseeko64 FAILED",
             "topic",        "%s", tranger_topic_name(topic),
             "directory",    "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
             "errno",        "%s", strerror(errno),
