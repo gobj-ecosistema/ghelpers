@@ -458,7 +458,7 @@ PUBLIC int tranger_close_list(
 );
 
 /**rst**
-    Get record by rowid
+    Get md record by rowid
 **rst**/
 PUBLIC int tranger_get_record(
     json_t *tranger,
@@ -478,7 +478,7 @@ PUBLIC json_t *tranger_read_record_content(
 );
 
 /**rst**
-    Match record
+    Match md record
 **rst**/
 PUBLIC BOOL tranger_match_record(
     json_t *tranger,
@@ -489,7 +489,7 @@ PUBLIC BOOL tranger_match_record(
 );
 
 /**rst**
-    Get the first record matching conditions
+    Get the first md record matching conditions
 **rst**/
 PUBLIC int tranger_find_record(
     json_t *tranger,
@@ -499,7 +499,7 @@ PUBLIC int tranger_find_record(
 );
 
 /**rst**
-    Walk over records (disk!)
+    Walk over md records (disk!)
 **rst**/
 PUBLIC int tranger_first_record(
     json_t *tranger,

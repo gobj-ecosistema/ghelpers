@@ -3208,7 +3208,7 @@ PUBLIC json_t *tranger_read_record_content(
 }
 
 /***************************************************************************
- *  Match record
+ *  Match md record
  ***************************************************************************/
 PUBLIC BOOL tranger_match_record(
     json_t *tranger,
@@ -3601,7 +3601,7 @@ PUBLIC BOOL tranger_match_record(
 }
 
 /***************************************************************************
-    Get the first matched record
+    Get the first matched md record
     Return 0 if found. Set metadata in md_record
     Return -1 if not found
  ***************************************************************************/
@@ -3642,7 +3642,7 @@ PUBLIC int tranger_find_record(
 }
 
 /***************************************************************************
- *  Read first record
+ *  Read first md record
  ***************************************************************************/
 PUBLIC int tranger_first_record(
     json_t *tranger,
@@ -3682,7 +3682,7 @@ PUBLIC int tranger_first_record(
 }
 
 /***************************************************************************
- *  Read last record
+ *  Read last md record
  ***************************************************************************/
 PUBLIC int tranger_last_record(
     json_t *tranger,
@@ -3723,7 +3723,7 @@ PUBLIC int tranger_last_record(
 }
 
 /***************************************************************************
- *  Read next record
+ *  Read next md record
  ***************************************************************************/
 PUBLIC int tranger_next_record(
     json_t *tranger,
@@ -3765,7 +3765,7 @@ PUBLIC int tranger_next_record(
 }
 
 /***************************************************************************
- *  Read prev record
+ *  Read prev md record
  ***************************************************************************/
 PUBLIC int tranger_prev_record(
     json_t *tranger,
