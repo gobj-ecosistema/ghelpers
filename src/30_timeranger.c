@@ -902,6 +902,7 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
     kw_get_str(topic, "directory", directory, KW_CREATE);
     kw_get_int(topic, "__last_rowid__", 0, KW_CREATE);
 
+    // Only to create the "topic_idx_fd" variable
     get_topic_idx_fd(tranger, topic, FALSE, TRUE); // OLD kw_get_int(topic, "topic_idx_fd", -1, KW_CREATE);
 
     kw_get_dict(topic, "fd_opened_files", json_object(), KW_CREATE);
