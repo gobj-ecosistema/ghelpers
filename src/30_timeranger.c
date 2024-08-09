@@ -2985,7 +2985,7 @@ PUBLIC int tranger_get_record(
 
     uint64_t __last_rowid__ = (uint64_t)kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
 
-        // HACK no "master" (tranger readonly) don't have updated __last_rowid__
+    // HACK no "master" (tranger readonly) don't have updated __last_rowid__
     if(__last_rowid__ <= 0) {
         if(master) {
             return -1;
