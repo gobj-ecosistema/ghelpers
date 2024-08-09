@@ -3053,13 +3053,11 @@ PUBLIC int tranger_get_record(
     uint64_t __last_rowid__ = (uint64_t)kw_get_int(topic, "__last_rowid__", 0, KW_REQUIRED);
 
     // HACK no "master" (tranger readonly) don't have updated __last_rowid__
-    if(__last_rowid__ <= 0) {
-        if(master) {
+    if(master) {
+        if(__last_rowid__ <= 0) {
             return -1;
         }
-    }
-    if(rowid > __last_rowid__) {
-        if(master) {
+        if(rowid > __last_rowid__) {
             if(verbose) {
                 log_error(0,
                     "gobj",         "%s", __FILE__,
