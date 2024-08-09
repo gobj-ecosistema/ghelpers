@@ -809,7 +809,7 @@ PRIVATE int open_topic_idx_file(json_t *tranger, json_t *topic)
         return -1;
     }
 
-    if(setvbuf(file, NULL, _IOFBF, 0) != 0) { // TODO set own buffer to control memory
+    if(setvbuf(file, NULL, _IOFBF, 96*10000) != 0) { // TODO set own buffer to control memory
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -841,22 +841,25 @@ PRIVATE int close_topic_idx_file(json_t *tranger, json_t *topic)
 }
 
 /***************************************************************************
- *
+ *  ====> Total: 6.262.492 records; 100,676852 seconds; 62.203 op/sec
  ***************************************************************************/
 PRIVATE FILE *get_topic_idx_file(
     json_t *tranger,
-    json_t *topic
+    json_t *topic,
+    BOOL verbose
 )
 {
     FILE *file = (FILE *)(size_t)kw_get_int(topic, "topic_idx_file", 0, KW_REQUIRED);
     if(!file) {
-        log_error(LOG_OPT_TRACE_STACK,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-            "msg",          "%s", "NO topic_idx_file",
-            NULL
-        );
+        if(verbose) {
+            log_error(LOG_OPT_TRACE_STACK,
+                "gobj",         "%s", __FILE__,
+                "function",     "%s", __FUNCTION__,
+                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                "msg",          "%s", "NO topic_idx_file",
+                NULL
+            );
+        }
     }
 
     return file;
@@ -3074,14 +3077,13 @@ PUBLIC int tranger_get_record(
         }
     }
 
-    FILE *file = get_topic_idx_file(tranger, topic);
+    FILE *file = get_topic_idx_file(tranger, topic, FALSE);
     if(file) {
         /*----------------------------------*
          *      topic idx by file
          *----------------------------------*/
         off64_t offset = (off64_t) ((rowid-1) * sizeof(md_record_t));
-        off64_t offset_ = fseeko64(file, offset, SEEK_SET);
-        if(offset != offset_) {
+        if(fseeko64(file, offset, SEEK_SET)<0) {
             if(master) {
                 log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                     "gobj",         "%s", __FILE__,
