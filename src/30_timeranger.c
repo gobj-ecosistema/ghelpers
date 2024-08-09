@@ -2954,7 +2954,7 @@ PUBLIC int tranger_close_list(
 }
 
 /***************************************************************************
-    Get record by rowid (by FILE, for reads)
+    Get md record by rowid (by FILE, for reads)
  ***************************************************************************/
 PUBLIC int tranger_get_record(
     json_t *tranger,
