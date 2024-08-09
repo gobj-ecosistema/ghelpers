@@ -3074,47 +3074,90 @@ PUBLIC int tranger_get_record(
         }
     }
 
-    int fd = get_topic_idx_fd(tranger, topic);
-    if(fd < 0) {
-        // Error already logged
-        return -1;
-    }
-
-    off64_t offset = (off64_t) ((rowid-1) * sizeof(md_record_t));
-    off64_t offset_ = lseek64(fd, offset, SEEK_SET);
-    if(offset != offset_) {
-        if(master) {
-            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_INTERNAL_ERROR,
-                "msg",          "%s", "topic_idx.md corrupted, lseek64 FAILED",
-                "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
-                NULL
-            );
+    FILE *file = get_topic_idx_file(tranger, topic);
+    if(file) {
+        /*----------------------------------*
+         *      topic idx by file
+         *----------------------------------*/
+        off64_t offset = (off64_t) ((rowid-1) * sizeof(md_record_t));
+        off64_t offset_ = fseeko64(file, offset, SEEK_SET);
+        if(offset != offset_) {
+            if(master) {
+                log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "topic_idx.md corrupted, lseek64 FAILED",
+                    "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
+                    NULL
+                );
+            }
+            return -1;
         }
-        return -1;
-    }
 
-    size_t ln = read(
-        fd,
-        md_record,
-        sizeof(md_record_t)
-    );
-    if(ln != sizeof(md_record_t)) {
-        // HACK no "master" (tranger readonly): we try to read new records
-        if(master) {
-            log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-                "gobj",         "%s", __FILE__,
-                "function",     "%s", __FUNCTION__,
-                "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-                "msg",          "%s", "Cannot read record metadata, read FAILED",
-                "topic",        "%s", tranger_topic_name(topic),
-                "errno",        "%s", strerror(errno),
-                NULL
-            );
-        } else {
-            if(ln != 0) {
+        size_t ln = fread(md_record, sizeof(md_record_t), 1, file);
+        if(ln != 1) {
+            // HACK no "master" (tranger readonly): we try to read new records
+            if(master) {
+                log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                    "msg",          "%s", "Cannot read record metadata, fread FAILED",
+                    "topic",        "%s", tranger_topic_name(topic),
+                    "errno",        "%s", strerror(errno),
+                    NULL
+                );
+            } else {
+                if(!feof(file)) {
+                    log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                        "msg",          "%s", "Cannot read record metadata, fread FAILED",
+                        "topic",        "%s", tranger_topic_name(topic),
+                        "errno",        "%s", strerror(errno),
+                        NULL
+                    );
+                }
+            }
+            return -1;
+        }
+
+    } else {
+        /*----------------------------------*
+         *      topic idx by fd
+         *----------------------------------*/
+        int fd = get_topic_idx_fd(tranger, topic);
+        if(fd < 0) {
+            // Error already logged
+            return -1;
+        }
+
+        off64_t offset = (off64_t) ((rowid-1) * sizeof(md_record_t));
+        off64_t offset_ = lseek64(fd, offset, SEEK_SET);
+        if(offset != offset_) {
+            if(master) {
+                log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                    "gobj",         "%s", __FILE__,
+                    "function",     "%s", __FUNCTION__,
+                    "msgset",       "%s", MSGSET_INTERNAL_ERROR,
+                    "msg",          "%s", "topic_idx.md corrupted, lseek64 FAILED",
+                    "topic",        "%s", kw_get_str(topic, "directory", 0, KW_REQUIRED),
+                    NULL
+                );
+            }
+            return -1;
+        }
+
+        size_t ln = read(
+            fd,
+            md_record,
+            sizeof(md_record_t)
+        );
+        if(ln != sizeof(md_record_t)) {
+            // HACK no "master" (tranger readonly): we try to read new records
+            if(master) {
                 log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                     "gobj",         "%s", __FILE__,
                     "function",     "%s", __FUNCTION__,
@@ -3124,9 +3167,21 @@ PUBLIC int tranger_get_record(
                     "errno",        "%s", strerror(errno),
                     NULL
                 );
+            } else {
+                if(ln != 0) {
+                    log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+                        "gobj",         "%s", __FILE__,
+                        "function",     "%s", __FUNCTION__,
+                        "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+                        "msg",          "%s", "Cannot read record metadata, read FAILED",
+                        "topic",        "%s", tranger_topic_name(topic),
+                        "errno",        "%s", strerror(errno),
+                        NULL
+                    );
+                }
             }
+            return -1;
         }
-        return -1;
     }
 
     if(md_record->__rowid__ != rowid) {
