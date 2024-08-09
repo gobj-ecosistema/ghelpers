@@ -3037,6 +3037,7 @@ PUBLIC int tranger_get_record(
         sizeof(md_record_t)
     );
     if(ln != sizeof(md_record_t)) {
+        // HACK no "master" (tranger readonly): we try to read new records
         if(master) {
             log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
                 "gobj",         "%s", __FILE__,
@@ -3078,6 +3079,7 @@ PUBLIC int tranger_get_record(
     }
 
     if(!master) {
+        // HACK no "master" (tranger readonly): found new records
         if(md_record->__rowid__ > __last_rowid__) {
             json_object_set_new(topic, "__last_rowid__", json_integer(md_record->__rowid__));
         }
