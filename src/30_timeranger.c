@@ -773,6 +773,10 @@ PRIVATE int get_topic_idx_fd(
 {
     int fd = (int)kw_get_int(topic, "topic_idx_fd", -1, KW_REQUIRED);
     if(fd<0) {
+        system_flag_t system_flag = kw_get_int(topic, "system_flag", 0, KW_REQUIRED);
+        if((system_flag & sf_no_md_disk)) {
+            return -1;
+        }
         log_error(LOG_OPT_TRACE_STACK,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
@@ -809,7 +813,9 @@ PRIVATE int open_topic_idx_file(json_t *tranger, json_t *topic)
         return -1;
     }
 
-    if(setvbuf(file, NULL, _IOFBF, 96*10000) != 0) { // TODO set own buffer to control memory
+    // TODO set own buffer to control memory ???
+    size_t vbuf_size = 20000;
+    if(setvbuf(file, NULL, _IOFBF, vbuf_size * sizeof(md_record_t)) != 0) {
         log_error(0,
             "gobj",         "%s", __FILE__,
             "function",     "%s", __FUNCTION__,
