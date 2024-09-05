@@ -187,7 +187,7 @@ typedef int (*trmsg_instance_callback_t)(
     json_t *instance    // not yours
 );
 
-PUBLIC json_t *trmsg_open_list(
+PUBLIC json_t *trmsg_open_list( // TODO esta fn provoca el retardo en arrancar de las aplicaciones
     json_t *tranger,
     const char *topic_name,
     json_t *jn_filter  // owned
