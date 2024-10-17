@@ -792,46 +792,46 @@ PRIVATE int get_topic_idx_fd(
 /***************************************************************************
  *
  ***************************************************************************/
-PRIVATE int open_topic_idx_file(json_t *tranger, json_t *topic)
-{
-    char full_path[PATH_MAX];
-    snprintf(full_path, sizeof(full_path), "%s/%s",
-        kw_get_str(topic, "directory", "", KW_REQUIRED),
-        "topic_idx.md"
-    );
-    FILE *file = fopen(full_path, "r");;
-    if(!file) {
-        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "Cannot open TimeRanger topic_idx file",
-            "path",         "%s", full_path,
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
-        return -1;
-    }
-
-    // TODO set own buffer to control memory ???
-    size_t vbuf_size = 20000;
-    if(setvbuf(file, NULL, _IOFBF, vbuf_size * sizeof(md_record_t)) != 0) {
-        log_error(0,
-            "gobj",         "%s", __FILE__,
-            "function",     "%s", __FUNCTION__,
-            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
-            "msg",          "%s", "setvbuf() FAILED",
-            "path",         "%s", full_path,
-            "errno",        "%s", strerror(errno),
-            NULL
-        );
-        // Continue to work
-    }
-
-    json_object_set_new(topic, "topic_idx_file", json_integer((json_int_t)file));
-
-    return 0;
-}
+//PRIVATE int open_topic_idx_file(json_t *tranger, json_t *topic)
+//{
+//    char full_path[PATH_MAX];
+//    snprintf(full_path, sizeof(full_path), "%s/%s",
+//        kw_get_str(topic, "directory", "", KW_REQUIRED),
+//        "topic_idx.md"
+//    );
+//    FILE *file = fopen(full_path, "r");;
+//    if(!file) {
+//        log_critical(kw_get_int(tranger, "on_critical_error", 0, KW_REQUIRED),
+//            "gobj",         "%s", __FILE__,
+//            "function",     "%s", __FUNCTION__,
+//            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+//            "msg",          "%s", "Cannot open TimeRanger topic_idx file",
+//            "path",         "%s", full_path,
+//            "errno",        "%s", strerror(errno),
+//            NULL
+//        );
+//        return -1;
+//    }
+//
+//    // TODO set own buffer to control memory ???
+//    size_t vbuf_size = 20000;
+//    if(setvbuf(file, NULL, _IOFBF, vbuf_size * sizeof(md_record_t)) != 0) {
+//        log_error(0,
+//            "gobj",         "%s", __FILE__,
+//            "function",     "%s", __FUNCTION__,
+//            "msgset",       "%s", MSGSET_SYSTEM_ERROR,
+//            "msg",          "%s", "setvbuf() FAILED",
+//            "path",         "%s", full_path,
+//            "errno",        "%s", strerror(errno),
+//            NULL
+//        );
+//        // Continue to work
+//    }
+//
+//    json_object_set_new(topic, "topic_idx_file", json_integer((json_int_t)file));
+//
+//    return 0;
+//}
 
 /***************************************************************************
  *
