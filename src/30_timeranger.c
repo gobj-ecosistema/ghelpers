@@ -992,8 +992,9 @@ PUBLIC json_t *tranger_open_topic( // WARNING returned json IS NOT YOURS
             json_decref(topic);
             return 0;
         }
-        // HACK WARNING TODO cannot use file, when deleting a record it's not update in FILE reads, test fails!!!
-        open_topic_idx_file(tranger, topic);
+        // HACK WARNING cannot use "FILE *" for idx file, it's not updated
+        // when deleting a record it's not update in FILE reads, test fails!!!
+        //open_topic_idx_file(tranger, topic); //FORGET this merde
     }
 
     return topic;
