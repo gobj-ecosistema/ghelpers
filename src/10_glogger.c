@@ -649,6 +649,9 @@ PUBLIC void log_debug_vprintf(const char *info, const char *fmt, va_list ap)
     char dtemp[90];
     char temp[BUFSIZ];
 
+    if(!fmt) {
+        fmt = "";
+    }
     if(info) {
         current_timestamp(dtemp, sizeof(dtemp));
         if(*info) {
@@ -687,6 +690,9 @@ PUBLIC void log_debug_printf(const char *info, const char *fmt, ...)
 {
     va_list ap;
 
+    if(!fmt) {
+        fmt = "";
+    }
     va_start(ap, fmt);
     log_debug_vprintf(info, fmt, ap);
     va_end(ap);
@@ -710,6 +716,9 @@ PUBLIC void log_debug_bf(
 
     if(!bf) {
         return;
+    }
+    if(!fmt) {
+        fmt = "";
     }
     __debug_count__++;
 
@@ -929,6 +938,9 @@ PUBLIC void log_debug_json(
 
     if(!__initialized__) {
         return;
+    }
+    if(!fmt) {
+        fmt = "";
     }
 
 //     if(!jn) { Que se pinten los null
