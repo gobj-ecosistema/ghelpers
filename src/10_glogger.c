@@ -769,6 +769,9 @@ PUBLIC void log_debug_vdump(
     if(!bf) {
         return;
     }
+    if(!fmt) {
+        fmt = "";
+    }
     __debug_count__++;
 
     const char *direction="";
@@ -850,6 +853,9 @@ PUBLIC void log_debug_dump(
     }
     __debug_count__++;
 
+    if(!fmt) {
+        fmt = "";
+    }
     const char *direction="";
     if(opt & LOG_DUMP_INPUT) {
         direction = "FROM";
