@@ -51,6 +51,23 @@ PUBLIC char *tm2timestamp(char *bf, int bfsize, struct tm *tm)
 }
 
 /*****************************************************************
+ *  Get timestamp from t (zulu or local)
+ *****************************************************************/
+PUBLIC char *t2timestamp(char *bf, int bfsize, time_t t, BOOL local)
+{
+    struct tm *tm;
+
+    if(local) {
+        tm = localtime(&t);
+    } else {
+        tm = gmtime(&t);
+    }
+
+    strftime(bf, bfsize, "%Y-%m-%dT%H:%M:%S.0%z", tm);
+    return bf;
+}
+
+/*****************************************************************
  *  Convert GMT time `t` (seconds from Epoch) to Time Zone `tz`
  *  filling `ltm` and `offset`.
  *  Return t plus the offset of search time zone
